@@ -1,10 +1,12 @@
 --[[
-    Spectre X - MM2 Script (Rayfield UI)
-    Функции: Silent Aim (только убийца) + Wallcheck, ESP (сквозь стены), Chams, Auto Shoot, Auto Farm
-    Загрузка Rayfield автоматическая.
+    SPECTRE X - MM2 Script
+    Версия: 2.0 (исправленная)
+    Функции: Silent Aim (только убийца) + Wallcheck, ESP (сквозь стены), 
+    Chams, Auto Shoot, Auto Farm
+    UI: Rayfield с круглой кнопкой открытия
 --]]
 
--- Загружаем Rayfield (если уже загружен, пропускаем)
+-- === ЗАГРУЗКА RAYFIELD ===
 if not game:IsLoaded() then game.Loaded:Wait() end
 
 local Rayfield = nil
@@ -16,15 +18,16 @@ else
     Rayfield = getgenv().Rayfield
 end
 
--- Основные переменные
+-- === ОСНОВНЫЕ СЕРВИСЫ ===
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Состояния
+-- === СОСТОЯНИЯ ===
 local silentAim = false
 local wallcheck = false
 local autoShoot = false
@@ -32,11 +35,11 @@ local espEnabled = false
 local chamsEnabled = false
 local farmEnabled = false
 
--- Ссылки на Remote (могут отличаться, проверьте в игре)
+-- === REMOTE СОБЫТИЯ ===
 local shootRemote = ReplicatedStorage:FindFirstChild("Shoot") or ReplicatedStorage:FindFirstChild("Fire")
 local collectCoinRemote = ReplicatedStorage:FindFirstChild("CollectCoin") or ReplicatedStorage:FindFirstChild("CoinCollected")
 
--- === Вспомогательные функции ===
+-- === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
 local function getPlayerRole(player)
     if player.Character then
         for _, tool in pairs(player.Character:GetChildren()) do
@@ -81,22 +84,93 @@ local function getMurderer()
     return nil
 end
 
--- === UI (Rayfield) ===
+-- === СОЗДАНИЕ КРУГЛОЙ КНОПКИ ===
+local menuVisible = true
+
+local function createToggleButton()
+    local button = Instance.new("ImageButton")
+    button.Name = "SpectreToggle"
+    button.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    button.Size = UDim2.new(0, 50, 0, 50)
+    button.Position = UDim2.new(0.02, 0, 0.15, 0)
+    button.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+    button.BackgroundTransparency = 0.2
+    button.BorderSizePixel = 0
+    button.Image = "rbxassetid://4483362458"
+    button.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    button.ImageTransparency = 0.3
+    button.ScaleType = Enum.ScaleType.Fit
+    
+    -- Создаём скругление
+    local corner = Instance.new("UICorner")
+    corner.Parent = button
+    corner.CornerRadius = UDim.new(1, 0)
+    
+    -- Обводка
+    local stroke = Instance.new("UIStroke")
+    stroke.Parent = button
+    stroke.Color = Color3.fromRGB(100, 100, 255)
+    stroke.Thickness = 2
+    stroke.Transparency = 0.5
+    
+    -- Эффект свечения
+    local glow = Instance.new("ImageLabel")
+    glow.Parent = button
+    glow.Size = UDim2.new(1.4, 0, 1.4, 0)
+    glow.Position = UDim2.new(-0.2, 0, -0.2, 0)
+    glow.BackgroundTransparency = 1
+    glow.Image = "rbxassetid://4483362458"
+    glow.ImageColor3 = Color3.fromRGB(100, 100, 255)
+    glow.ImageTransparency = 0.8
+    glow.ScaleType = Enum.ScaleType.Fit
+    
+    -- Анимация пульсации
+    task.spawn(function()
+        while true do
+            for i = 0.5, 1, 0.1 do
+                task.wait(0.05)
+                glow.ImageTransparency = 0.8 - (i * 0.5)
+            end
+            for i = 1, 0.5, -0.1 do
+                task.wait(0.05)
+                glow.ImageTransparency = 0.8 - (i * 0.5)
+            end
+        end
+    end)
+    
+    return button
+end
+
+local toggleButton = createToggleButton()
+
+-- === СОЗДАНИЕ GUI (RAYFIELD) ===
 local Window = Rayfield:CreateWindow({
     Name = "Spectre X",
-    Icon = 0, -- иконка (можно 0)
-    LoadingTitle = "Spectre X Loading...",
-    LoadingSubtitle = "by YourName",
-    Theme = "Dark", -- или "Light"
+    Icon = 0,
+    LoadingTitle = "Spectre X",
+    LoadingSubtitle = "v2.0",
+    Theme = "Dark",
     DisableBlur = false,
-    Keybind = Enum.KeyCode.RightControl, -- закрыть/открыть
+    Keybind = Enum.KeyCode.RightControl,
 })
 
--- Вкладка Aimbot
-local AimbotTab = Window:CreateTab("Aimbot", 4483362458) -- иконка (можно любое число)
+-- Обработчик кнопки
+toggleButton.MouseButton1Click:Connect(function()
+    menuVisible = not menuVisible
+    if menuVisible then
+        Window:Show()
+        toggleButton.ImageTransparency = 0.3
+    else
+        Window:Hide()
+        toggleButton.ImageTransparency = 0.8
+    end
+end)
+
+-- === ВКЛАДКА AIMBOT ===
+local AimbotTab = Window:CreateTab("Aimbot", 4483362458)
 
 AimbotTab:CreateToggle({
-    Name = "Silent Aim (Только убийца)",
+    Name = "Silent Aim (только убийца)",
     CurrentValue = false,
     Flag = "SilentAim",
     Callback = function(state)
@@ -122,7 +196,19 @@ AimbotTab:CreateToggle({
     end,
 })
 
--- Вкладка Visuals
+AimbotTab:CreateSlider({
+    Name = "Auto Shoot Distance",
+    Range = {50, 400},
+    Increment = 10,
+    Suffix = "px",
+    CurrentValue = 200,
+    Flag = "ShootDistance",
+    Callback = function(value)
+        shootDistance = value
+    end,
+})
+
+-- === ВКЛАДКА VISUALS ===
 local VisualsTab = Window:CreateTab("Visuals", 4483362458)
 
 VisualsTab:CreateToggle({
@@ -153,7 +239,7 @@ VisualsTab:CreateToggle({
     end,
 })
 
--- Вкладка Misc
+-- === ВКЛАДКА MISC ===
 local MiscTab = Window:CreateTab("Misc", 4483362458)
 
 MiscTab:CreateToggle({
@@ -165,9 +251,10 @@ MiscTab:CreateToggle({
     end,
 })
 
--- === ESP и Chams функции ===
+-- === ESP И CHAMS ФУНКЦИИ ===
 local espObjects = {}
 local chamsObjects = {}
+local shootDistance = 200
 
 function updateESP()
     if not espEnabled then return end
@@ -178,13 +265,15 @@ function updateESP()
                 local bill = Instance.new("BillboardGui")
                 bill.Name = "ESP_Billboard"
                 bill.Parent = head
-                bill.Size = UDim2.new(0, 100, 0, 40)
+                bill.Size = UDim2.new(0, 120, 0, 50)
                 bill.Adornee = head
                 bill.AlwaysOnTop = true
+                bill.StudsOffset = Vector3.new(0, 1.5, 0)
+                bill.MaxDistance = 500
 
                 local label = Instance.new("TextLabel")
                 label.Parent = bill
-                label.Size = UDim2.new(1, 0, 1, 0)
+                label.Size = UDim2.new(1, 0, 0.6, 0)
                 label.BackgroundTransparency = 1
                 label.Text = player.Name
                 label.TextScaled = true
@@ -204,7 +293,7 @@ function updateESP()
 
                 espObjects[player] = bill
             end
-            -- Обновляем цвет имени по роли
+            -- Обновляем цвет
             local role = getPlayerRole(player)
             local color = role == "Murderer" and Color3.fromRGB(255, 0, 0) or
                          role == "Sheriff" and Color3.fromRGB(0, 100, 255) or
@@ -233,9 +322,10 @@ function updateChams()
                 hl.Parent = char
                 hl.Adornee = char
                 hl.FillColor = Color3.fromRGB(255, 255, 255)
-                hl.FillTransparency = 0.5
+                hl.FillTransparency = 0.6
                 hl.OutlineColor = Color3.fromRGB(255, 255, 255)
                 hl.OutlineTransparency = 0.2
+                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                 chamsObjects[player] = hl
             end
             local role = getPlayerRole(player)
@@ -256,7 +346,7 @@ function clearChams()
     chamsObjects = {}
 end
 
--- Обработка появления/исчезновения игроков
+-- === ОБРАБОТКА ИГРОКОВ ===
 Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function()
         task.wait(0.5)
@@ -264,12 +354,19 @@ Players.PlayerAdded:Connect(function(player)
         if chamsEnabled then updateChams() end
     end)
 end)
+
 Players.PlayerRemoving:Connect(function(player)
-    if espObjects[player] then espObjects[player]:Destroy(); espObjects[player] = nil end
-    if chamsObjects[player] then chamsObjects[player]:Destroy(); chamsObjects[player] = nil end
+    if espObjects[player] then 
+        espObjects[player]:Destroy() 
+        espObjects[player] = nil 
+    end
+    if chamsObjects[player] then 
+        chamsObjects[player]:Destroy() 
+        chamsObjects[player] = nil 
+    end
 end)
 
--- === Основной цикл (Silent Aim + Auto Shoot + Farm) ===
+-- === ОСНОВНОЙ ЦИКЛ ===
 RunService.RenderStepped:Connect(function()
     -- Silent Aim
     if silentAim then
@@ -292,7 +389,7 @@ RunService.RenderStepped:Connect(function()
                 if onScreen then
                     local mousePos = UserInputService:GetMouseLocation()
                     local dist = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
-                    if dist < 200 then -- радиус прицела
+                    if dist < shootDistance then
                         if shootRemote then
                             shootRemote:FireServer(head.Position)
                         end
@@ -314,7 +411,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Периодическое обновление ESP и Chams
+-- === ПЕРИОДИЧЕСКОЕ ОБНОВЛЕНИЕ ===
 task.spawn(function()
     while true do
         task.wait(0.5)
@@ -323,4 +420,6 @@ task.spawn(function()
     end
 end)
 
-print("Spectre X with Rayfield loaded! Use RightControl to toggle GUI.")
+print("Spectre X v2.0 loaded!")
+print("Нажмите на круглую кнопку в левом верхнем углу, чтобы открыть/закрыть меню")
+print("Или нажмите RightControl")
