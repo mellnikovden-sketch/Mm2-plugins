@@ -1,9 +1,22 @@
 --[[
-    Spectre X - MM2 Script
-    Функции: Silent Aim (только убийца), Wallcheck, ESP (сквозь стены), Chams, Auto Shoot, Auto Farm
-    GUI с вкладками
+    Spectre X - MM2 Script (Rayfield UI)
+    Функции: Silent Aim (только убийца) + Wallcheck, ESP (сквозь стены), Chams, Auto Shoot, Auto Farm
+    Загрузка Rayfield автоматическая.
 --]]
 
+-- Загружаем Rayfield (если уже загружен, пропускаем)
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+local Rayfield = nil
+if not getgenv().Rayfield then
+    local RayfieldLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+    getgenv().Rayfield = RayfieldLib
+    Rayfield = RayfieldLib
+else
+    Rayfield = getgenv().Rayfield
+end
+
+-- Основные переменные
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -11,7 +24,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Переменные состояний
+-- Состояния
 local silentAim = false
 local wallcheck = false
 local autoShoot = false
@@ -19,20 +32,19 @@ local espEnabled = false
 local chamsEnabled = false
 local farmEnabled = false
 
--- Ссылки на удалённые события (названия могут меняться)
+-- Ссылки на Remote (могут отличаться, проверьте в игре)
 local shootRemote = ReplicatedStorage:FindFirstChild("Shoot") or ReplicatedStorage:FindFirstChild("Fire")
 local collectCoinRemote = ReplicatedStorage:FindFirstChild("CollectCoin") or ReplicatedStorage:FindFirstChild("CoinCollected")
 
 -- === Вспомогательные функции ===
 local function getPlayerRole(player)
-    -- Определяем роль по наличию инструментов
     if player.Character then
-        local tools = player.Character:GetChildren()
-        for _, tool in pairs(tools) do
+        for _, tool in pairs(player.Character:GetChildren()) do
             if tool:IsA("Tool") then
-                if tool.Name:lower():find("knife") or tool.Name:lower():find("dagger") then
+                local name = tool.Name:lower()
+                if name:find("knife") or name:find("dagger") then
                     return "Murderer"
-                elseif tool.Name:lower():find("gun") or tool.Name:lower():find("pistol") then
+                elseif name:find("gun") or name:find("pistol") then
                     return "Sheriff"
                 end
             end
@@ -45,11 +57,13 @@ local function isVisible(targetPart)
     if not wallcheck then return true end
     local origin = Camera.CFrame.Position
     local direction = (targetPart.Position - origin).Unit * 500
-    local ray = Ray.new(origin, direction)
-    local hit, position = workspace:FindPartOnRay(ray, LocalPlayer.Character)
-    if hit then
-        local part = hit.Parent
-        if part and (part:IsDescendantOf(targetPart.Parent) or part == targetPart) then
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    local result = workspace:Raycast(origin, direction, raycastParams)
+    if result then
+        local hit = result.Instance
+        if hit and hit:IsDescendantOf(targetPart.Parent) then
             return true
         end
     end
@@ -58,9 +72,8 @@ end
 
 local function getMurderer()
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local role = getPlayerRole(player)
-            if role == "Murderer" then
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            if getPlayerRole(player) == "Murderer" then
                 return player
             end
         end
@@ -68,207 +81,95 @@ local function getMurderer()
     return nil
 end
 
--- === Создание UI ===
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.Name = "SpectreX_GUI"
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.75, 0, 0.2, 0)
-MainFrame.Size = UDim2.new(0, 250, 0, 320)
-MainFrame.ClipsDescendants = true
-MainFrame.Active = true
-MainFrame.Draggable = true
-
--- Заголовок
-local Title = Instance.new("TextLabel")
-Title.Parent = MainFrame
-Title.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Text = "Spectre X"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextScaled = true
-Title.Font = Enum.Font.GothamBold
-
--- Панель вкладок
-local TabBar = Instance.new("Frame")
-TabBar.Parent = MainFrame
-TabBar.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-TabBar.Position = UDim2.new(0, 0, 0, 30)
-TabBar.Size = UDim2.new(1, 0, 0, 30)
-
-local tabs = {"Aimbot", "Visuals", "Misc"}
-local tabButtons = {}
-local currentTab = "Aimbot"
-
-local function createTabButton(text, xPos)
-    local btn = Instance.new("TextButton")
-    btn.Parent = TabBar
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-    btn.BorderSizePixel = 0
-    btn.Position = UDim2.new(xPos, 0, 0, 0)
-    btn.Size = UDim2.new(1/3, 0, 1, 0)
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    btn.TextScaled = true
-    btn.Font = Enum.Font.Gotham
-    return btn
-end
-
-for i, tab in ipairs(tabs) do
-    local btn = createTabButton(tab, (i-1)/3)
-    tabButtons[tab] = btn
-end
-
--- Контент вкладок (ScrollingFrame)
-local ContentFrame = Instance.new("ScrollingFrame")
-ContentFrame.Parent = MainFrame
-ContentFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-ContentFrame.BorderSizePixel = 0
-ContentFrame.Position = UDim2.new(0, 0, 0, 60)
-ContentFrame.Size = UDim2.new(1, 0, 1, -60)
-ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ContentFrame.ScrollBarThickness = 4
-
--- Функция создания переключателя
-local function createToggle(parent, text, yPos, defaultValue, callback)
-    local frame = Instance.new("Frame")
-    frame.Parent = parent
-    frame.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
-    frame.Position = UDim2.new(0.05, 0, 0, yPos)
-    frame.Size = UDim2.new(0.9, 0, 0, 35)
-    frame.BorderSizePixel = 0
-
-    local label = Instance.new("TextLabel")
-    label.Parent = frame
-    label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0.05, 0, 0, 0)
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextScaled = true
-    label.Font = Enum.Font.Gotham
-
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Parent = frame
-    toggleBtn.BackgroundColor3 = defaultValue and Color3.fromRGB(0, 200, 80) or Color3.fromRGB(80, 80, 80)
-    toggleBtn.Position = UDim2.new(0.8, 0, 0.1, 0)
-    toggleBtn.Size = UDim2.new(0.15, 0, 0.8, 0)
-    toggleBtn.Text = defaultValue and "ON" or "OFF"
-    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.TextScaled = true
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.BorderSizePixel = 0
-
-    local state = defaultValue
-    toggleBtn.MouseButton1Click:Connect(function()
-        state = not state
-        toggleBtn.BackgroundColor3 = state and Color3.fromRGB(0, 200, 80) or Color3.fromRGB(80, 80, 80)
-        toggleBtn.Text = state and "ON" or "OFF"
-        callback(state)
-    end)
-
-    return toggleBtn
-end
-
--- === Создание вкладок ===
+-- === UI (Rayfield) ===
+local Window = Rayfield:CreateWindow({
+    Name = "Spectre X",
+    Icon = 0, -- иконка (можно 0)
+    LoadingTitle = "Spectre X Loading...",
+    LoadingSubtitle = "by YourName",
+    Theme = "Dark", -- или "Light"
+    DisableBlur = false,
+    Keybind = Enum.KeyCode.RightControl, -- закрыть/открыть
+})
 
 -- Вкладка Aimbot
-local aimbotTab = Instance.new("Frame")
-aimbotTab.Parent = ContentFrame
-aimbotTab.BackgroundTransparency = 1
-aimbotTab.Size = UDim2.new(1, 0, 0, 150)
+local AimbotTab = Window:CreateTab("Aimbot", 4483362458) -- иконка (можно любое число)
 
-local yPos = 5
-createToggle(aimbotTab, "Silent Aim", yPos, false, function(state) silentAim = state end)
-yPos = yPos + 45
-createToggle(aimbotTab, "Wallcheck", yPos, false, function(state) wallcheck = state end)
-yPos = yPos + 45
-createToggle(aimbotTab, "Auto Shoot", yPos, false, function(state) autoShoot = state end)
+AimbotTab:CreateToggle({
+    Name = "Silent Aim (Только убийца)",
+    CurrentValue = false,
+    Flag = "SilentAim",
+    Callback = function(state)
+        silentAim = state
+    end,
+})
+
+AimbotTab:CreateToggle({
+    Name = "Wallcheck (проверка стен)",
+    CurrentValue = false,
+    Flag = "Wallcheck",
+    Callback = function(state)
+        wallcheck = state
+    end,
+})
+
+AimbotTab:CreateToggle({
+    Name = "Auto Shoot",
+    CurrentValue = false,
+    Flag = "AutoShoot",
+    Callback = function(state)
+        autoShoot = state
+    end,
+})
 
 -- Вкладка Visuals
-local visualsTab = Instance.new("Frame")
-visualsTab.Parent = ContentFrame
-visualsTab.BackgroundTransparency = 1
-visualsTab.Size = UDim2.new(1, 0, 0, 100)
-visualsTab.Visible = false
+local VisualsTab = Window:CreateTab("Visuals", 4483362458)
 
-yPos = 5
-createToggle(visualsTab, "ESP", yPos, false, function(state) espEnabled = state; if state then updateESP() else clearESP() end end)
-yPos = yPos + 45
-createToggle(visualsTab, "Chams", yPos, false, function(state) chamsEnabled = state; if state then updateChams() else clearChams() end end)
+VisualsTab:CreateToggle({
+    Name = "ESP (сквозь стены)",
+    CurrentValue = false,
+    Flag = "ESP",
+    Callback = function(state)
+        espEnabled = state
+        if state then
+            updateESP()
+        else
+            clearESP()
+        end
+    end,
+})
+
+VisualsTab:CreateToggle({
+    Name = "Chams (подсветка)",
+    CurrentValue = false,
+    Flag = "Chams",
+    Callback = function(state)
+        chamsEnabled = state
+        if state then
+            updateChams()
+        else
+            clearChams()
+        end
+    end,
+})
 
 -- Вкладка Misc
-local miscTab = Instance.new("Frame")
-miscTab.Parent = ContentFrame
-miscTab.BackgroundTransparency = 1
-miscTab.Size = UDim2.new(1, 0, 0, 50)
-miscTab.Visible = false
+local MiscTab = Window:CreateTab("Misc", 4483362458)
 
-yPos = 5
-createToggle(miscTab, "Auto Farm", yPos, false, function(state) farmEnabled = state end)
+MiscTab:CreateToggle({
+    Name = "Auto Farm (монеты)",
+    CurrentValue = false,
+    Flag = "AutoFarm",
+    Callback = function(state)
+        farmEnabled = state
+    end,
+})
 
--- Переключение вкладок
-local function switchTab(tabName)
-    for _, child in pairs(ContentFrame:GetChildren()) do
-        if child:IsA("Frame") then
-            child.Visible = (child.Name == tabName)
-        end
-    end
-    -- Обновляем стиль кнопок
-    for name, btn in pairs(tabButtons) do
-        btn.BackgroundColor3 = (name == tabName) and Color3.fromRGB(70, 70, 100) or Color3.fromRGB(40, 40, 60)
-        btn.TextColor3 = (name == tabName) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
-    end
-    currentTab = tabName
-end
-
-for name, btn in pairs(tabButtons) do
-    btn.MouseButton1Click:Connect(function()
-        switchTab(name)
-    end)
-end
-switchTab("Aimbot")
-
--- Обновление CanvasSize для прокрутки
-local function updateCanvas()
-    local maxHeight = 0
-    for _, child in pairs(ContentFrame:GetChildren()) do
-        if child:IsA("Frame") and child.Visible then
-            local frame = child
-            local children = frame:GetChildren()
-            local lastY = 0
-            for _, c in pairs(children) do
-                if c:IsA("Frame") then
-                    local pos = c.Position.Y.Offset
-                    if pos + 35 > lastY then lastY = pos + 35 end
-                end
-            end
-            if lastY > maxHeight then maxHeight = lastY end
-        end
-    end
-    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, maxHeight + 10)
-end
--- Просто обновляем при каждом переключении
-local originalSwitch = switchTab
-switchTab = function(tab)
-    originalSwitch(tab)
-    task.wait(0.1)
-    updateCanvas()
-end
--- Изначально
-task.wait(0.1)
-updateCanvas()
-
--- === Основные функции ===
-
--- ESP
+-- === ESP и Chams функции ===
 local espObjects = {}
-local function updateESP()
+local chamsObjects = {}
+
+function updateESP()
     if not espEnabled then return end
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
@@ -277,7 +178,7 @@ local function updateESP()
                 local bill = Instance.new("BillboardGui")
                 bill.Name = "ESP_Billboard"
                 bill.Parent = head
-                bill.Size = UDim2.new(0, 80, 0, 30)
+                bill.Size = UDim2.new(0, 100, 0, 40)
                 bill.Adornee = head
                 bill.AlwaysOnTop = true
 
@@ -293,7 +194,7 @@ local function updateESP()
 
                 local roleLabel = Instance.new("TextLabel")
                 roleLabel.Parent = bill
-                roleLabel.Size = UDim2.new(1, 0, 0.5, 0)
+                roleLabel.Size = UDim2.new(1, 0, 0.4, 0)
                 roleLabel.Position = UDim2.new(0, 0, 0.6, 0)
                 roleLabel.BackgroundTransparency = 1
                 roleLabel.Text = getPlayerRole(player)
@@ -303,7 +204,7 @@ local function updateESP()
 
                 espObjects[player] = bill
             end
-            -- Обновляем цвет в зависимости от роли
+            -- Обновляем цвет имени по роли
             local role = getPlayerRole(player)
             local color = role == "Murderer" and Color3.fromRGB(255, 0, 0) or
                          role == "Sheriff" and Color3.fromRGB(0, 100, 255) or
@@ -314,16 +215,14 @@ local function updateESP()
     end
 end
 
-local function clearESP()
+function clearESP()
     for player, bill in pairs(espObjects) do
         if bill and bill.Parent then bill:Destroy() end
     end
     espObjects = {}
 end
 
--- Chams
-local chamsObjects = {}
-local function updateChams()
+function updateChams()
     if not chamsEnabled then return end
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
@@ -339,7 +238,6 @@ local function updateChams()
                 hl.OutlineTransparency = 0.2
                 chamsObjects[player] = hl
             end
-            -- Обновляем цвет по роли
             local role = getPlayerRole(player)
             local color = role == "Murderer" and Color3.fromRGB(255, 0, 0) or
                          role == "Sheriff" and Color3.fromRGB(0, 100, 255) or
@@ -351,7 +249,7 @@ local function updateChams()
     end
 end
 
-local function clearChams()
+function clearChams()
     for player, hl in pairs(chamsObjects) do
         if hl and hl.Parent then hl:Destroy() end
     end
@@ -360,7 +258,7 @@ end
 
 -- Обработка появления/исчезновения игроков
 Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(char)
+    player.CharacterAdded:Connect(function()
         task.wait(0.5)
         if espEnabled then updateESP() end
         if chamsEnabled then updateChams() end
@@ -371,7 +269,7 @@ Players.PlayerRemoving:Connect(function(player)
     if chamsObjects[player] then chamsObjects[player]:Destroy(); chamsObjects[player] = nil end
 end)
 
--- === Silent Aim + Auto Shoot ===
+-- === Основной цикл (Silent Aim + Auto Shoot + Farm) ===
 RunService.RenderStepped:Connect(function()
     -- Silent Aim
     if silentAim then
@@ -379,8 +277,7 @@ RunService.RenderStepped:Connect(function()
         if murderer and murderer.Character and murderer.Character:FindFirstChild("Head") then
             local head = murderer.Character.Head
             if isVisible(head) then
-                local targetPos = head.Position
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, head.Position)
             end
         end
     end
@@ -391,12 +288,11 @@ RunService.RenderStepped:Connect(function()
         if murderer and murderer.Character and murderer.Character:FindFirstChild("Head") then
             local head = murderer.Character.Head
             if isVisible(head) then
-                -- Проверяем, находится ли цель в центре экрана (примерно)
                 local screenPoint, onScreen = Camera:WorldToScreenPoint(head.Position)
                 if onScreen then
                     local mousePos = UserInputService:GetMouseLocation()
                     local dist = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
-                    if dist < 150 then -- радиус прицела
+                    if dist < 200 then -- радиус прицела
                         if shootRemote then
                             shootRemote:FireServer(head.Position)
                         end
@@ -406,7 +302,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Auto Farm (сбор монет)
+    -- Auto Farm
     if farmEnabled then
         for _, coin in pairs(workspace:GetChildren()) do
             if coin:IsA("Part") and coin.Name:lower():find("coin") then
@@ -418,13 +314,13 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Обновление ESP и Chams каждые несколько секунд (для динамических изменений)
+-- Периодическое обновление ESP и Chams
 task.spawn(function()
     while true do
-        task.wait(1)
+        task.wait(0.5)
         if espEnabled then updateESP() end
         if chamsEnabled then updateChams() end
     end
 end)
 
-print("Spectre X загружен! Используйте GUI для управления.")
+print("Spectre X with Rayfield loaded! Use RightControl to toggle GUI.")
