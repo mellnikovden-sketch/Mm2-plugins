@@ -1,465 +1,166 @@
 --[[
-    ============================================================================
-    MM2 FULL SCRIPT (Server-side)
-    Версия: 2.0
-    Автор: AI Assistant
-    Описание: Полноценный Murder Mystery 2 с автоматическим созданием RemoteEvents,
-              ролями (убийца, шериф, невиновные), очками, таймерами и оружием.
-    ============================================================================
+    Скрипт Spectre для MM2
+    Функции: Silent Aim, ESP, Auto Farm, Auto Shoot
+    Запускайте с осторожностью!
 --]]
 
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
--- ============================================================================
--- 1. АВТОМАТИЧЕСКОЕ СОЗДАНИЕ RemoteEvents (чтобы избежать ошибок)
--- ============================================================================
-local function EnsureRemoteEvents()
-    local remoteFolder = ReplicatedStorage:FindFirstChild("RemoteEvents")
-    if not remoteFolder then
-        remoteFolder = Instance.new("Folder")
-        remoteFolder.Name = "RemoteEvents"
-        remoteFolder.Parent = ReplicatedStorage
-        print("[MM2] Папка RemoteEvents создана.")
-    end
+-- Создаём GUI
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local ToggleSA = Instance.new("TextButton")
+local ToggleESP = Instance.new("TextButton")
+local ToggleFarm = Instance.new("TextButton")
+local ToggleShoot = Instance.new("TextButton")
 
-    local events = {
-        "UpdateRoleClient",
-        "UpdateStatusClient",
-        "MurdererKill",
-        "SheriffShoot",
-        "GunPickup"
-    }
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.Position = UDim2.new(0.8, 0, 0.2, 0)
+Frame.Size = UDim2.new(0, 200, 0, 250)
+Frame.Active = true
+Frame.Draggable = true
 
-    for _, name in ipairs(events) do
-        if not remoteFolder:FindFirstChild(name) then
-            local event = Instance.new("RemoteEvent")
-            event.Name = name
-            event.Parent = remoteFolder
-            print("[MM2] Создан RemoteEvent:", name)
-        end
-    end
-    return remoteFolder
+Title.Parent = Frame
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = "Spectre v1.0"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+
+local function createButton(text, yPos)
+    local btn = Instance.new("TextButton")
+    btn.Parent = Frame
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.Position = UDim2.new(0.1, 0, 0, yPos)
+    btn.Size = UDim2.new(0.8, 0, 0, 30)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextScaled = true
+    return btn
 end
 
-local RemoteEvents = EnsureRemoteEvents()
+local saBtn = createButton("Silent Aim: OFF", 40)
+local espBtn = createButton("ESP: OFF", 80)
+local farmBtn = createButton("Auto Farm: OFF", 120)
+local shootBtn = createButton("Auto Shoot: OFF", 160)
 
--- Получаем ссылки на события
-local UpdateRoleClient = RemoteEvents:FindFirstChild("UpdateRoleClient")
-local UpdateStatusClient = RemoteEvents:FindFirstChild("UpdateStatusClient")
-local MurdererKill = RemoteEvents:FindFirstChild("MurdererKill")
-local SheriffShoot = RemoteEvents:FindFirstChild("SheriffShoot")
-local GunPickup = RemoteEvents:FindFirstChild("GunPickup")
+-- Состояния
+local silentAim = false
+local espEnabled = false
+local farmEnabled = false
+local autoShoot = false
 
-if not (UpdateRoleClient and UpdateStatusClient and MurdererKill and SheriffShoot and GunPickup) then
-    error("[MM2] Не удалось создать все RemoteEvents! Проверьте доступ к ReplicatedStorage.")
-end
+-- === Silent Aim ===
+saBtn.MouseButton1Click:Connect(function()
+    silentAim = not silentAim
+    saBtn.Text = silentAim and "Silent Aim: ON" or "Silent Aim: OFF"
+end)
 
--- ============================================================================
--- 2. КОНФИГУРАЦИЯ (можно менять под свои нужды)
--- ============================================================================
-local CONFIG = {
-    ROUND_DURATION = 180,          -- длительность раунда (сек)
-    LOBBY_TIME = 10,               -- время между раундами (сек)
-    MIN_PLAYERS = 3,               -- минимальное кол-во игроков для старта
-    SHERIFF_AMMO = 6,              -- патронов у шерифа
-    SCORE_WIN = 10,                -- очков за победу
-    SCORE_KILL = 5,                -- очков за убийство (убийце)
-    TAGS = {
-        KNIFE = "Knife",
-        GUN = "Gun",
-        SHERIFF_GUN = "SheriffGun",
-    }
-}
-
--- Возможность загрузить внешний конфиг из ModuleScript
-local ConfigModule = ReplicatedStorage:FindFirstChild("Config")
-if ConfigModule and ConfigModule:IsA("ModuleScript") then
-    local userConfig = require(ConfigModule)
-    for key, value in pairs(userConfig) do
-        CONFIG[key] = value
-    end
-end
-
--- ============================================================================
--- 3. ХРАНИЛИЩА ДАННЫХ И СОСТОЯНИЕ
--- ============================================================================
-local PlayerData = {}          -- данные каждого игрока
-local GameState = {
-    RoundActive = false,
-    RoundTimer = nil,
-    LobbyTimer = nil,
-    Murderer = nil,
-    Sheriff = nil,
-    Innocents = {},
-    GunDropped = false,
-    GunModel = nil,
-}
-
--- ============================================================================
--- 4. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
--- ============================================================================
-local function GetCharacter(player)
-    if not player then return nil end
-    local char = player.Character
-    if not char or not char.Parent then return nil end
-    return char
-end
-
-local function GetAlivePlayers()
-    local alive = {}
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if PlayerData[plr] and PlayerData[plr].Alive then
-            table.insert(alive, plr)
-        end
-    end
-    return alive
-end
-
-local function IsMurderer(player)
-    return GameState.Murderer == player
-end
-
-local function IsSheriff(player)
-    return GameState.Sheriff == player
-end
-
--- ============================================================================
--- 5. МОДУЛЬ УПРАВЛЕНИЯ РОЛЯМИ
--- ============================================================================
-local RoleManager = {}
-
-function RoleManager.AssignRoles()
-    local players = Players:GetPlayers()
-    if #players < CONFIG.MIN_PLAYERS then
-        warn("[MM2] Недостаточно игроков для назначения ролей.")
-        return false
-    end
-
-    -- Перемешиваем
-    for i = #players, 2, -1 do
-        local j = math.random(i)
-        players[i], players[j] = players[j], players[i]
-    end
-
-    -- Очистка старых ролей
-    GameState.Murderer = nil
-    GameState.Sheriff = nil
-    GameState.Innocents = {}
-
-    -- Назначение
-    GameState.Murderer = players[1]
-    GameState.Sheriff = players[2]
-    for i = 3, #players do
-        table.insert(GameState.Innocents, players[i])
-    end
-
-    -- Инициализация данных
-    for _, plr in ipairs(players) do
-        if not PlayerData[plr] then
-            PlayerData[plr] = { Score = 0 }
-        end
-        PlayerData[plr].Alive = true
-        PlayerData[plr].Ammo = 0
-        PlayerData[plr].IsMurderer = false
-        PlayerData[plr].IsSheriff = false
-    end
-
-    if GameState.Murderer then
-        PlayerData[GameState.Murderer].Role = "Murderer"
-        PlayerData[GameState.Murderer].IsMurderer = true
-    end
-    if GameState.Sheriff then
-        PlayerData[GameState.Sheriff].Role = "Sheriff"
-        PlayerData[GameState.Sheriff].IsSheriff = true
-        PlayerData[GameState.Sheriff].Ammo = CONFIG.SHERIFF_AMMO
-    end
-    for _, innocent in ipairs(GameState.Innocents) do
-        PlayerData[innocent].Role = "Innocent"
-    end
-
-    -- Отправка ролей клиентам
-    for _, plr in ipairs(players) do
-        UpdateRoleClient:FireClient(plr, PlayerData[plr].Role)
-        print(string.format("[MM2] %s → %s", plr.Name, PlayerData[plr].Role))
-    end
-
-    return true
-end
-
--- ============================================================================
--- 6. МОДУЛЬ УПРАВЛЕНИЯ РАУНДАМИ
--- ============================================================================
-local RoundManager = {}
-
-function RoundManager.StartRound()
-    if GameState.RoundActive then
-        warn("[MM2] Раунд уже активен.")
-        return
-    end
-
-    if #Players:GetPlayers() < CONFIG.MIN_PLAYERS then
-        UpdateStatusClient:FireAllClients("Ожидание игроков...")
-        return
-    end
-
-    -- Сброс состояния
-    GameState.RoundActive = true
-    GameState.GunDropped = false
-    GameState.GunModel = nil
-    GameState.RoundTimer = tick() + CONFIG.ROUND_DURATION
-
-    -- Назначение ролей
-    local success = RoleManager.AssignRoles()
-    if not success then
-        GameState.RoundActive = false
-        return
-    end
-
-    -- Выдача оружия
-    RoundManager.SpawnWeapons()
-    UpdateStatusClient:FireAllClients("Раунд начался!")
-    print("[MM2] Раунд стартовал, длительность:", CONFIG.ROUND_DURATION, "сек.")
-end
-
-function RoundManager.EndRound(winner)
-    if not GameState.RoundActive then return end
-    GameState.RoundActive = false
-    GameState.RoundTimer = nil
-
-    RoundManager.ClearWeapons()
-
-    -- Начисление очков
-    if winner == "Murderer" and GameState.Murderer then
-        PlayerData[GameState.Murderer].Score = (PlayerData[GameState.Murderer].Score or 0) + CONFIG.SCORE_WIN
-        UpdateStatusClient:FireAllClients("🔪 Убийца победил!")
-        print("[MM2] Убийца", GameState.Murderer.Name, "победил.")
-    elseif winner == "Innocents" then
-        for _, plr in ipairs(GameState.Innocents) do
-            if PlayerData[plr] then
-                PlayerData[plr].Score = (PlayerData[plr].Score or 0) + CONFIG.SCORE_WIN
+RunService.RenderStepped:Connect(function()
+    if silentAim then
+        local target = nil
+        local shortest = math.huge
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local pos, vis = Camera:WorldToScreenPoint(player.Character.HumanoidRootPart.Position)
+                if vis then
+                    local dist = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
+                    if dist < shortest then
+                        shortest = dist
+                        target = player
+                    end
+                end
             end
         end
-        if GameState.Sheriff then
-            PlayerData[GameState.Sheriff].Score = (PlayerData[GameState.Sheriff].Score or 0) + CONFIG.SCORE_WIN
+        if target and target.Character then
+            -- Наводим камеру на цель (эмуляция Silent Aim)
+            local targetPos = target.Character.HumanoidRootPart.Position
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
         end
-        UpdateStatusClient:FireAllClients("👮 Невиновные победили!")
-        print("[MM2] Невиновные победили.")
+    end
+end)
+
+-- === ESP ===
+espBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    espBtn.Text = espEnabled and "ESP: ON" or "ESP: OFF"
+    if espEnabled then
+        -- Создаём билборды для каждого игрока
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                local bill = Instance.new("BillboardGui")
+                bill.Name = "ESP_" .. player.Name
+                bill.Parent = player.Character:WaitForChild("Head")
+                bill.Size = UDim2.new(0, 50, 0, 30)
+                bill.Adornee = player.Character.Head
+                local label = Instance.new("TextLabel")
+                label.Parent = bill
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.Text = player.Name .. "\n" .. (player:FindFirstChild("role") and player.role.Value or "?")
+                label.TextColor3 = Color3.fromRGB(255, 0, 0)
+                label.TextScaled = true
+            end
+        end
     else
-        UpdateStatusClient:FireAllClients("⏰ Время вышло!")
-        print("[MM2] Раунд завершён по таймауту.")
-    end
-
-    -- Запуск лобби
-    GameState.LobbyTimer = tick() + CONFIG.LOBBY_TIME
-    UpdateStatusClient:FireAllClients(string.format("Следующий раунд через %d сек...", CONFIG.LOBBY_TIME))
-    print("[MM2] Раунд завершён.")
-end
-
-function RoundManager.SpawnWeapons()
-    -- Нож убийце
-    if GameState.Murderer then
-        local char = GetCharacter(GameState.Murderer)
-        if char then
-            local knife = Instance.new("Tool")
-            knife.Name = CONFIG.TAGS.KNIFE
-            knife.RequiresHandle = false
-            knife.Parent = char
+        -- Удаляем все ESP
+        for _, v in pairs(Players:GetPlayers()) do
+            if v.Character and v.Character:FindFirstChild("Head") then
+                local esp = v.Character.Head:FindFirstChild("ESP_" .. v.Name)
+                if esp then esp:Destroy() end
+            end
         end
     end
-    -- Пистолет шерифу
-    if GameState.Sheriff then
-        local char = GetCharacter(GameState.Sheriff)
-        if char then
-            local gun = Instance.new("Tool")
-            gun.Name = CONFIG.TAGS.SHERIFF_GUN
-            gun.RequiresHandle = false
-            gun.Parent = char
-        end
-    end
-end
+end)
 
-function RoundManager.ClearWeapons()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        local char = GetCharacter(plr)
-        if char then
-            for _, tool in ipairs(char:GetChildren()) do
-                if tool:IsA("Tool") and (tool.Name == CONFIG.TAGS.KNIFE or tool.Name == CONFIG.TAGS.SHERIFF_GUN or tool.Name == CONFIG.TAGS.GUN) then
-                    tool:Destroy()
+-- === Auto Farm (сбор монет) ===
+farmBtn.MouseButton1Click:Connect(function()
+    farmEnabled = not farmEnabled
+    farmBtn.Text = farmEnabled and "Auto Farm: ON" or "Auto Farm: OFF"
+end)
+
+RunService.RenderStepped:Connect(function()
+    if farmEnabled then
+        for _, v in pairs(workspace:GetChildren()) do
+            if v:IsA("Part") and v.Name == "Coin" and v:FindFirstChild("Handle") then
+                -- Имитация сбора: телепортируем игрока к монете (для демонстрации)
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
                 end
             end
         end
     end
-    if GameState.GunModel then
-        GameState.GunModel:Destroy()
-        GameState.GunModel = nil
-    end
-    GameState.GunDropped = false
-end
-
-function RoundManager.DropGun(player)
-    if GameState.GunDropped then return end
-    local char = GetCharacter(player)
-    if not char then return end
-    local gunModel = Instance.new("Part")
-    gunModel.Name = CONFIG.TAGS.GUN
-    gunModel.Size = Vector3.new(1, 1, 2)
-    gunModel.Position = char.PrimaryPart.Position + Vector3.new(0, 0, 2)
-    gunModel.Anchored = true
-    gunModel.Parent = workspace
-    GameState.GunModel = gunModel
-    GameState.GunDropped = true
-    print("[MM2] Оружие выпало на землю.")
-end
-
--- ============================================================================
--- 7. ОБРАБОТЧИКИ СОБЫТИЙ ОТ КЛИЕНТОВ
--- ============================================================================
-
--- Убийца убивает
-MurdererKill.OnServerEvent:Connect(function(player, targetPlayer)
-    if not GameState.RoundActive then return end
-    if not IsMurderer(player) then return end
-    if not targetPlayer or not PlayerData[targetPlayer] or not PlayerData[targetPlayer].Alive then return end
-
-    PlayerData[targetPlayer].Alive = false
-    PlayerData[player].Score = (PlayerData[player].Score or 0) + CONFIG.SCORE_KILL
-    print(string.format("[MM2] %s убил %s", player.Name, targetPlayer.Name))
-
-    local alive = GetAlivePlayers()
-    if #alive <= 1 then
-        RoundManager.EndRound("Murderer")
-    end
 end)
 
--- Шериф стреляет
-SheriffShoot.OnServerEvent:Connect(function(player, targetPlayer)
-    if not GameState.RoundActive then return end
-    if not IsSheriff(player) then return end
-    if not PlayerData[player] or PlayerData[player].Ammo <= 0 then return end
-
-    PlayerData[player].Ammo = PlayerData[player].Ammo - 1
-
-    if not targetPlayer then
-        print(string.format("[MM2] %s промахнулся.", player.Name))
-        return
-    end
-    if not PlayerData[targetPlayer] or not PlayerData[targetPlayer].Alive then return end
-
-    if IsMurderer(targetPlayer) then
-        PlayerData[targetPlayer].Alive = false
-        print(string.format("[MM2] %s застрелил убийцу %s", player.Name, targetPlayer.Name))
-        RoundManager.EndRound("Innocents")
-    else
-        PlayerData[targetPlayer].Alive = false
-        print(string.format("[MM2] %s застрелил невиновного %s", player.Name, targetPlayer.Name))
-        RoundManager.DropGun(player)
-    end
+-- === Auto Shoot (стрельба по убийце) ===
+shootBtn.MouseButton1Click:Connect(function()
+    autoShoot = not autoShoot
+    shootBtn.Text = autoShoot and "Auto Shoot: ON" or "Auto Shoot: OFF"
 end)
 
--- Поднятие оружия
-GunPickup.OnServerEvent:Connect(function(player)
-    if not GameState.RoundActive then return end
-    if not GameState.GunDropped or not GameState.GunModel then return end
-    if not PlayerData[player] or not PlayerData[player].Alive then return end
-
-    local char = GetCharacter(player)
-    if char then
-        local gun = Instance.new("Tool")
-        gun.Name = CONFIG.TAGS.GUN
-        gun.RequiresHandle = false
-        gun.Parent = char
-        GameState.GunModel:Destroy()
-        GameState.GunModel = nil
-        GameState.GunDropped = false
-        print(string.format("[MM2] %s поднял оружие и стал героем!", player.Name))
-    end
-end)
-
--- ============================================================================
--- 8. ОБРАБОТКА ВХОДА/ВЫХОДА ИГРОКОВ
--- ============================================================================
-Players.PlayerAdded:Connect(function(player)
-    PlayerData[player] = { Score = 0, Alive = true, Role = nil, Ammo = 0, IsMurderer = false, IsSheriff = false }
-    print("[MM2] Игрок добавлен:", player.Name)
-    if not GameState.RoundActive and #Players:GetPlayers() >= CONFIG.MIN_PLAYERS then
-        RoundManager.StartRound()
-    end
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    PlayerData[player] = nil
-    if GameState.RoundActive then
-        if GameState.Murderer == player or GameState.Sheriff == player then
-            RoundManager.EndRound(nil)
-        end
-    end
-    print("[MM2] Игрок удалён:", player.Name)
-end)
-
--- ============================================================================
--- 9. ОСНОВНОЙ ЦИКЛ (Heartbeat)
--- ============================================================================
-RunService.Heartbeat:Connect(function()
-    -- Таймер раунда
-    if GameState.RoundActive and GameState.RoundTimer then
-        local timeLeft = GameState.RoundTimer - tick()
-        if timeLeft <= 0 then
-            RoundManager.EndRound(nil)
-        elseif timeLeft <= 10 then
-            UpdateStatusClient:FireAllClients(string.format("⏳ Осталось %d сек!", math.ceil(timeLeft)))
-        end
-    end
-
-    -- Таймер лобби
-    if not GameState.RoundActive and GameState.LobbyTimer then
-        local timeLeft = GameState.LobbyTimer - tick()
-        if timeLeft <= 0 then
-            GameState.LobbyTimer = nil
-            if #Players:GetPlayers() >= CONFIG.MIN_PLAYERS then
-                RoundManager.StartRound()
-            else
-                UpdateStatusClient:FireAllClients("Ожидание игроков...")
-                GameState.LobbyTimer = tick() + CONFIG.LOBBY_TIME
-            end
-        end
-    end
-
-    -- Проверка жизни убийцы
-    if GameState.RoundActive and GameState.Murderer then
-        if not PlayerData[GameState.Murderer] or not PlayerData[GameState.Murderer].Alive then
-            RoundManager.EndRound("Innocents")
-        end
-    end
-    -- Если шериф умер – оружие выпадает
-    if GameState.RoundActive and GameState.Sheriff then
-        if not PlayerData[GameState.Sheriff] or not PlayerData[GameState.Sheriff].Alive then
-            if not GameState.GunDropped then
-                RoundManager.DropGun(GameState.Sheriff)
+RunService.RenderStepped:Connect(function()
+    if autoShoot then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                -- Проверяем, является ли игрок убийцей (в MM2 есть значение в leaderstats)
+                local role = player:FindFirstChild("role")
+                if role and role.Value == "Murderer" then
+                    -- Имитация выстрела (RemoteEvent обычно называется "Shoot")
+                    local remote = game:GetService("ReplicatedStorage"):FindFirstChild("Shoot")
+                    if remote then
+                        remote:FireServer(player.Character.HumanoidRootPart.Position)
+                    end
+                end
             end
         end
     end
 end)
 
--- ============================================================================
--- 10. ЭКСПОРТ (для вызова из консоли или других скриптов)
--- ============================================================================
-local MM2Core = {
-    StartRound = RoundManager.StartRound,
-    EndRound = RoundManager.EndRound,
-    GetGameState = function() return GameState end,
-    GetPlayerData = function(player) return PlayerData[player] end,
-}
-return MM2Core
-
---[[
-    ============================================================================
-    ИНСТРУКЦИЯ ПО УСТАНОВКЕ:
-    1. Создайте в Roblox Studio новый Script в ServerScriptService.
-    2. Вставьте в него этот код.
-    3. Запустите игру – скрипт сам создаст все RemoteEvents в ReplicatedStorage.
-    4. Для клиентской части (GUI) создайте LocalScript, который будет принимать
-       события UpdateRoleClient и UpdateStatusClient, и отображать информацию.
-    ============================================================================
---]]
+print("Spectre loaded! Используйте GUI для управления.")
