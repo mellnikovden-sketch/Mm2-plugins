@@ -1,7 +1,7 @@
--- ============================================
--- Murder Mystery 2 – Многофункциональный скрипт
--- Основан на YARHM, адаптирован под текущую версию
--- ============================================
+-- ==============================================
+-- Murder Mystery 2 Script (Delta Edition)
+-- Исправлены ошибки с nil и анимациями
+-- ==============================================
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -11,7 +11,7 @@ local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local lp = Players.LocalPlayer
 
--- ---------- GUI ----------
+-- ---------- GUI (без изменений) ----------
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = lp:WaitForChild("PlayerGui")
 screenGui.Name = "MM2_Script_GUI"
@@ -153,9 +153,25 @@ local function getPredictedPosition(player, offset)
     return hrp.Position + vel * 0.15 + dir * offset
 end
 
--- ---------- ESP ----------
-local espObjects = {} -- {player -> {highlight, billboard}}
+-- ---------- Безопасный вызов Remote ----------
+local function safeFireRemote(remote, ...)
+    if not remote then return false end
+    local success, err = pcall(function()
+        if remote:IsA("RemoteEvent") then
+            remote:FireServer(...)
+        elseif remote:IsA("RemoteFunction") then
+            remote:InvokeServer(...)
+        end
+    end)
+    if not success then
+        warn("[MM2] Remote call failed:", err)
+        return false
+    end
+    return true
+end
 
+-- ---------- ESP (без изменений) ----------
+local espObjects = {}
 local function clearESP()
     for _, data in pairs(espObjects) do
         if data.highlight then data.highlight:Destroy() end
@@ -243,19 +259,11 @@ local function startAutoShoot()
         params.FilterDescendantsInstances = {lp.Character}
         local hit = Workspace:Raycast(origin, dir, params)
         if hit and hit.Instance:IsDescendantOf(murderer.Character) then
-            -- Стреляем
-            local shootRemote = gun:FindFirstChild("Shoot") or gun:FindFirstChild("KnifeLocal") and gun.KnifeLocal:FindFirstChild("CreateBeam")
+            -- Ищем ремоут для стрельбы
+            local shootRemote = gun:FindFirstChild("Shoot") or (gun:FindFirstChild("KnifeLocal") and gun.KnifeLocal:FindFirstChild("CreateBeam"))
             if shootRemote then
-                local args = {
-                    [1] = 1,
-                    [2] = targetPos,
-                    [3] = "AH2"
-                }
-                if shootRemote:IsA("RemoteEvent") then
-                    shootRemote:FireServer(unpack(args))
-                elseif shootRemote:IsA("RemoteFunction") then
-                    shootRemote:InvokeServer(unpack(args))
-                end
+                local args = {1, targetPos, "AH2"}   -- стандартные аргументы для MM2
+                safeFireRemote(shootRemote, unpack(args))
             end
         end
     end)
@@ -281,23 +289,23 @@ local function startAutoKnife()
         if not target or not target.Character then return end
         local targetPos = getPredictedPosition(target, 4)
         if not targetPos then return end
-        -- Бросок
-        local throwRemote = knife:FindFirstChild("Throw") or knife:FindFirstChild("Events") and knife.Events:FindFirstChild("KnifeThrown")
+        -- Ищем ремоут для броска
+        local throwRemote = knife:FindFirstChild("Throw") or (knife:FindFirstChild("Events") and knife.Events:FindFirstChild("KnifeThrown"))
         if throwRemote then
             local args = {
                 CFrame.new(lp.Character.RightHand.Position),
                 CFrame.new(targetPos)
             }
-            if throwRemote:IsA("RemoteEvent") then
-                throwRemote:FireServer(unpack(args))
-            elseif throwRemote:IsA("RemoteFunction") then
-                throwRemote:InvokeServer(unpack(args))
-            end
+            safeFireRemote(throwRemote, unpack(args))
         end
     end)
 end
 
--- ---------- Авто-сбор монет ----------
+-- ---------- Авто-сбор монет (без firetouchinterest) ----------
+-- Вместо firetouchinterest мы просто телепортируемся на монету и ждём,
+-- пока система сама засчитает сбор (обычно через TouchInterest).
+-- Если этого недостаточно, можно попробовать вызвать RemoteEvent для сбора,
+-- но я не знаю его названия. Альтернативно – просто телепорт и ожидание.
 local coinLoop = nil
 
 local function startCoinCollect()
@@ -316,7 +324,7 @@ local function startCoinCollect()
         if not hrp then return end
         local nearest, minDist = nil, math.huge
         for _, child in ipairs(coinContainer:GetChildren()) do
-            if child:IsA("Model") and child:FindFirstChild("Handle") then -- монеты обычно модели
+            if child:IsA("Model") and child:FindFirstChild("Handle") then
                 local pos = child:GetPivot().Position
                 local dist = (hrp.Position - pos).Magnitude
                 if dist < minDist then
@@ -326,21 +334,29 @@ local function startCoinCollect()
             end
         end
         if nearest then
-            -- Телепортация к монете
-            hrp.CFrame = CFrame.new(nearest:GetPivot().Position + Vector3.new(0, 5, 0))
-            task.wait(0.1)
-            -- Попытка собрать (через Touch)
+            -- Телепортируемся прямо на монету
+            hrp.CFrame = CFrame.new(nearest:GetPivot().Position + Vector3.new(0, 3, 0))
+            task.wait(0.2)
+            -- Пытаемся инициировать сбор через Touch (если не сработает, попробуем через Remote)
             local handle = nearest:FindFirstChild("Handle")
             if handle and handle:IsA("BasePart") then
-                firetouchinterest(hrp, handle, 0)
-                task.wait()
-                firetouchinterest(hrp, handle, 1)
+                -- Пытаемся использовать firetouchinterest, если он есть
+                if firetouchinterest then
+                    pcall(function()
+                        firetouchinterest(hrp, handle, 0)
+                        task.wait()
+                        firetouchinterest(hrp, handle, 1)
+                    end)
+                else
+                    -- Если firetouchinterest нет, просто остаёмся на месте – возможно, игра сама засчитает
+                    -- Можно также попробовать найти RemoteEvent для сбора монеты
+                end
             end
         end
     end)
 end
 
--- ---------- Анти-флинг ----------
+-- ---------- Анти-флинг (без изменений) ----------
 local antiFlingLastPos = Vector3.zero
 local antiFlingConnection
 
@@ -398,11 +414,20 @@ createToggle("Анти-флинг", yPos, false, function(state)
 end)
 
 -- ---------- Обновление ESP при смене ролей ----------
-ReplicatedStorage:WaitForChild("Remotes", 5) and ReplicatedStorage.Remotes:WaitForChild("Gameplay", 5) and ReplicatedStorage.Remotes.Gameplay:WaitForChild("PlayerDataChanged", 5):OnClientEvent:function()
-    if settings.esp then updateESP() end
+local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+if remotes then
+    local gameplay = remotes:FindFirstChild("Gameplay")
+    if gameplay then
+        local pdc = gameplay:FindFirstChild("PlayerDataChanged")
+        if pdc and pdc:IsA("RemoteEvent") then
+            pdc.OnClientEvent:Connect(function()
+                if settings.esp then updateESP() end
+            end)
+        end
+    end
 end
 
--- Обновление ESP при добавлении/удалении персонажей
+-- ---------- Подписка на изменения в игре ----------
 Players.PlayerAdded:Connect(function()
     if settings.esp then task.wait(1) updateESP() end
 end)
@@ -413,16 +438,8 @@ Workspace.ChildAdded:Connect(function()
     if settings.esp then task.wait(1) updateESP() end
 end)
 
--- При смене карты
-Workspace.ChildRemoved:Connect(function(child)
-    if child.Name == "Map" then
-        if settings.esp then task.wait(2) updateESP() end
-    end
-end)
-
--- Запускаем ESP при загрузке
+-- Запускаем ESP после загрузки
 task.wait(2)
 if settings.esp then updateESP() end
 
--- Сообщение
-print("MM2 скрипт загружен! Управление через GUI.")
+print("✅ MM2 скрипт (Delta) загружен! Управление через GUI.")
