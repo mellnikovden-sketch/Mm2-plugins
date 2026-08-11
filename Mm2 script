@@ -1,49 +1,71 @@
 --[[
     ============================================================================
-    MM2 CORE SCRIPT
-    ============================================================================
-    Описание: Полноценный скрипт для игры Murder Mystery 2.
-    Архитектура: Модульная, событийно-ориентированная.
-    Автор: [Ваше Имя]
-    Версия: 1.0.0
-
-    Инструкция по использованию:
-    1.  Поместите этот скрипт в `ServerScriptService`.
-    2.  Убедитесь, что в `ReplicatedStorage` созданы следующие объекты:
-        - `RemoteEvents`:
-            - `UpdateRoleClient` (OnClientEvent) - для отправки роли игроку.
-            - `UpdateStatusClient` (OnClientEvent) - для обновления статуса раунда.
-            - `MurdererKill` (OnServerEvent) - для обработки убийства от убийцы.
-            - `SheriffShoot` (OnServerEvent) - для обработки выстрела шерифа.
-            - `GunPickup` (OnServerEvent) - для поднятия оружия.
-        - `ModuleScripts` (опционально, для хранения конфигов):
-            - `Config` - со значениями `ROUND_DURATION`, `LOBBY_TIME` и т.д.
-    3.  Настройте папки и теги (см. раздел "Конфигурация").
+    MM2 FULL SCRIPT (Server-side)
+    Версия: 2.0
+    Автор: AI Assistant
+    Описание: Полноценный Murder Mystery 2 с автоматическим созданием RemoteEvents,
+              ролями (убийца, шериф, невиновные), очками, таймерами и оружием.
     ============================================================================
 --]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
 local RunService = game:GetService("RunService")
 
 -- ============================================================================
--- КОНФИГУРАЦИЯ
+-- 1. АВТОМАТИЧЕСКОЕ СОЗДАНИЕ RemoteEvents (чтобы избежать ошибок)
+-- ============================================================================
+local function EnsureRemoteEvents()
+    local remoteFolder = ReplicatedStorage:FindFirstChild("RemoteEvents")
+    if not remoteFolder then
+        remoteFolder = Instance.new("Folder")
+        remoteFolder.Name = "RemoteEvents"
+        remoteFolder.Parent = ReplicatedStorage
+        print("[MM2] Папка RemoteEvents создана.")
+    end
+
+    local events = {
+        "UpdateRoleClient",
+        "UpdateStatusClient",
+        "MurdererKill",
+        "SheriffShoot",
+        "GunPickup"
+    }
+
+    for _, name in ipairs(events) do
+        if not remoteFolder:FindFirstChild(name) then
+            local event = Instance.new("RemoteEvent")
+            event.Name = name
+            event.Parent = remoteFolder
+            print("[MM2] Создан RemoteEvent:", name)
+        end
+    end
+    return remoteFolder
+end
+
+local RemoteEvents = EnsureRemoteEvents()
+
+-- Получаем ссылки на события
+local UpdateRoleClient = RemoteEvents:FindFirstChild("UpdateRoleClient")
+local UpdateStatusClient = RemoteEvents:FindFirstChild("UpdateStatusClient")
+local MurdererKill = RemoteEvents:FindFirstChild("MurdererKill")
+local SheriffShoot = RemoteEvents:FindFirstChild("SheriffShoot")
+local GunPickup = RemoteEvents:FindFirstChild("GunPickup")
+
+if not (UpdateRoleClient and UpdateStatusClient and MurdererKill and SheriffShoot and GunPickup) then
+    error("[MM2] Не удалось создать все RemoteEvents! Проверьте доступ к ReplicatedStorage.")
+end
+
+-- ============================================================================
+-- 2. КОНФИГУРАЦИЯ (можно менять под свои нужды)
 -- ============================================================================
 local CONFIG = {
-    -- Длительность раунда (в секундах)
-    ROUND_DURATION = 180,
-    -- Время в лобби между раундами (в секундах)
-    LOBBY_TIME = 10,
-    -- Минимальное количество игроков для начала раунда
-    MIN_PLAYERS = 3,
-    -- Количество патронов у шерифа
-    SHERIFF_AMMO = 6,
-    -- Очки за победу
-    SCORE_WIN = 10,
-    -- Очки за убийство (для убийцы)
-    SCORE_KILL = 5,
-    -- Теги для идентификации объектов в игре
+    ROUND_DURATION = 180,          -- длительность раунда (сек)
+    LOBBY_TIME = 10,               -- время между раундами (сек)
+    MIN_PLAYERS = 3,               -- минимальное кол-во игроков для старта
+    SHERIFF_AMMO = 6,              -- патронов у шерифа
+    SCORE_WIN = 10,                -- очков за победу
+    SCORE_KILL = 5,                -- очков за убийство (убийце)
     TAGS = {
         KNIFE = "Knife",
         GUN = "Gun",
@@ -51,7 +73,7 @@ local CONFIG = {
     }
 }
 
--- Попытка загрузить конфиг из ModuleScript для гибкости
+-- Возможность загрузить внешний конфиг из ModuleScript
 local ConfigModule = ReplicatedStorage:FindFirstChild("Config")
 if ConfigModule and ConfigModule:IsA("ModuleScript") then
     local userConfig = require(ConfigModule)
@@ -61,28 +83,9 @@ if ConfigModule and ConfigModule:IsA("ModuleScript") then
 end
 
 -- ============================================================================
--- СЕРВИСЫ И ХРАНИЛИЩА
+-- 3. ХРАНИЛИЩА ДАННЫХ И СОСТОЯНИЕ
 -- ============================================================================
-local RemoteEvents = ReplicatedStorage:FindFirstChild("RemoteEvents")
-if not RemoteEvents then
-    error("RemoteEvents не найдены в ReplicatedStorage. Создайте их.")
-end
-
--- Ссылки на RemoteEvents
-local UpdateRoleClient = RemoteEvents:FindFirstChild("UpdateRoleClient")
-local UpdateStatusClient = RemoteEvents:FindFirstChild("UpdateStatusClient")
-local MurdererKill = RemoteEvents:FindFirstChild("MurdererKill")
-local SheriffShoot = RemoteEvents:FindFirstChild("SheriffShoot")
-local GunPickup = RemoteEvents:FindFirstChild("GunPickup")
-
--- Проверка наличия всех RemoteEvents
-if not (UpdateRoleClient and UpdateStatusClient and MurdererKill and SheriffShoot and GunPickup) then
-    error("Один или несколько RemoteEvents отсутствуют в ReplicatedStorage/RemoteEvents.")
-end
-
--- Хранилище данных игроков
-local PlayerData = {}
--- Текущее состояние игры
+local PlayerData = {}          -- данные каждого игрока
 local GameState = {
     RoundActive = false,
     RoundTimer = nil,
@@ -95,85 +98,74 @@ local GameState = {
 }
 
 -- ============================================================================
--- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+-- 4. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 -- ============================================================================
-
--- Функция для безопасного получения символа игрока
-local function GetPlayerCharacter(player)
+local function GetCharacter(player)
     if not player then return nil end
-    local character = player.Character
-    if not character or not character.Parent then return nil end
-    return character
+    local char = player.Character
+    if not char or not char.Parent then return nil end
+    return char
 end
 
--- Функция для получения живых игроков (исключая наблюдателей)
 local function GetAlivePlayers()
     local alive = {}
-    for _, player in ipairs(Players:GetPlayers()) do
-        if PlayerData[player] and PlayerData[player].Alive then
-            table.insert(alive, player)
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if PlayerData[plr] and PlayerData[plr].Alive then
+            table.insert(alive, plr)
         end
     end
     return alive
 end
 
--- Функция для проверки, является ли игрок убийцей
 local function IsMurderer(player)
     return GameState.Murderer == player
 end
 
--- Функция для проверки, является ли игрок шерифом
 local function IsSheriff(player)
     return GameState.Sheriff == player
 end
 
 -- ============================================================================
--- МОДУЛЬ УПРАВЛЕНИЯ РОЛЯМИ
+-- 5. МОДУЛЬ УПРАВЛЕНИЯ РОЛЯМИ
 -- ============================================================================
 local RoleManager = {}
 
--- Назначение ролей всем игрокам
 function RoleManager.AssignRoles()
     local players = Players:GetPlayers()
     if #players < CONFIG.MIN_PLAYERS then
-        warn("Недостаточно игроков для назначения ролей.")
+        warn("[MM2] Недостаточно игроков для назначения ролей.")
         return false
     end
 
-    -- Сброс предыдущих ролей
-    GameState.Murderer = nil
-    GameState.Sheriff = nil
-    GameState.Innocents = {}
-
-    -- Перемешивание списка игроков
+    -- Перемешиваем
     for i = #players, 2, -1 do
         local j = math.random(i)
         players[i], players[j] = players[j], players[i]
     end
 
-    -- Назначение убийцы (первый в списке)
-    GameState.Murderer = players[1]
-    -- Назначение шерифа (второй в списке)
-    GameState.Sheriff = players[2]
+    -- Очистка старых ролей
+    GameState.Murderer = nil
+    GameState.Sheriff = nil
+    GameState.Innocents = {}
 
-    -- Остальные - невиновные
+    -- Назначение
+    GameState.Murderer = players[1]
+    GameState.Sheriff = players[2]
     for i = 3, #players do
         table.insert(GameState.Innocents, players[i])
     end
 
-    -- Инициализация данных игроков
-    for _, player in ipairs(players) do
-        PlayerData[player] = {
-            Role = nil,
-            Alive = true,
-            Score = PlayerData[player] and PlayerData[player].Score or 0,
-            IsSheriff = false,
-            IsMurderer = false,
-            Ammo = 0,
-        }
+    -- Инициализация данных
+    for _, plr in ipairs(players) do
+        if not PlayerData[plr] then
+            PlayerData[plr] = { Score = 0 }
+        end
+        PlayerData[plr].Alive = true
+        PlayerData[plr].Ammo = 0
+        PlayerData[plr].IsMurderer = false
+        PlayerData[plr].IsSheriff = false
     end
 
-    -- Установка ролей в данных
     if GameState.Murderer then
         PlayerData[GameState.Murderer].Role = "Murderer"
         PlayerData[GameState.Murderer].IsMurderer = true
@@ -188,45 +180,35 @@ function RoleManager.AssignRoles()
     end
 
     -- Отправка ролей клиентам
-    for _, player in ipairs(players) do
-        local role = PlayerData[player].Role
-        UpdateRoleClient:FireClient(player, role)
-        print(string.format("Игроку %s назначена роль: %s", player.Name, role))
+    for _, plr in ipairs(players) do
+        UpdateRoleClient:FireClient(plr, PlayerData[plr].Role)
+        print(string.format("[MM2] %s → %s", plr.Name, PlayerData[plr].Role))
     end
 
     return true
 end
 
--- Получение роли игрока
-function RoleManager.GetRole(player)
-    if PlayerData[player] then
-        return PlayerData[player].Role
-    end
-    return nil
-end
-
 -- ============================================================================
--- МОДУЛЬ УПРАВЛЕНИЯ РАУНДАМИ
+-- 6. МОДУЛЬ УПРАВЛЕНИЯ РАУНДАМИ
 -- ============================================================================
 local RoundManager = {}
 
--- Запуск нового раунда
 function RoundManager.StartRound()
     if GameState.RoundActive then
-        warn("Раунд уже активен.")
+        warn("[MM2] Раунд уже активен.")
         return
     end
 
-    local players = Players:GetPlayers()
-    if #players < CONFIG.MIN_PLAYERS then
+    if #Players:GetPlayers() < CONFIG.MIN_PLAYERS then
         UpdateStatusClient:FireAllClients("Ожидание игроков...")
         return
     end
 
-    -- Сброс состояния раунда
+    -- Сброс состояния
     GameState.RoundActive = true
     GameState.GunDropped = false
     GameState.GunModel = nil
+    GameState.RoundTimer = tick() + CONFIG.ROUND_DURATION
 
     -- Назначение ролей
     local success = RoleManager.AssignRoles()
@@ -235,105 +217,80 @@ function RoundManager.StartRound()
         return
     end
 
-    -- Обновление статуса для всех клиентов
-    UpdateStatusClient:FireAllClients("Раунд начался!")
-
-    -- Спавн оружия для убийцы и шерифа
+    -- Выдача оружия
     RoundManager.SpawnWeapons()
-
-    -- Запуск таймера раунда
-    GameState.RoundTimer = tick() + CONFIG.ROUND_DURATION
-
-    print("Раунд начался. Длительность:", CONFIG.ROUND_DURATION, "секунд.")
+    UpdateStatusClient:FireAllClients("Раунд начался!")
+    print("[MM2] Раунд стартовал, длительность:", CONFIG.ROUND_DURATION, "сек.")
 end
 
--- Завершение раунда
 function RoundManager.EndRound(winner)
-    if not GameState.RoundActive then
-        return
-    end
-
+    if not GameState.RoundActive then return end
     GameState.RoundActive = false
-    if GameState.RoundTimer then
-        GameState.RoundTimer = nil
-    end
+    GameState.RoundTimer = nil
 
-    -- Очистка оружия
     RoundManager.ClearWeapons()
 
-    -- Начисление очков победителю
-    if winner then
-        if winner == "Murderer" and GameState.Murderer then
-            PlayerData[GameState.Murderer].Score = (PlayerData[GameState.Murderer].Score or 0) + CONFIG.SCORE_WIN
-            UpdateStatusClient:FireAllClients("Убийца победил!")
-            print("Убийца", GameState.Murderer.Name, "победил!")
-        elseif winner == "Innocents" then
-            for _, player in ipairs(GameState.Innocents) do
-                if PlayerData[player] then
-                    PlayerData[player].Score = (PlayerData[player].Score or 0) + CONFIG.SCORE_WIN
-                end
+    -- Начисление очков
+    if winner == "Murderer" and GameState.Murderer then
+        PlayerData[GameState.Murderer].Score = (PlayerData[GameState.Murderer].Score or 0) + CONFIG.SCORE_WIN
+        UpdateStatusClient:FireAllClients("🔪 Убийца победил!")
+        print("[MM2] Убийца", GameState.Murderer.Name, "победил.")
+    elseif winner == "Innocents" then
+        for _, plr in ipairs(GameState.Innocents) do
+            if PlayerData[plr] then
+                PlayerData[plr].Score = (PlayerData[plr].Score or 0) + CONFIG.SCORE_WIN
             end
-            if GameState.Sheriff then
-                PlayerData[GameState.Sheriff].Score = (PlayerData[GameState.Sheriff].Score or 0) + CONFIG.SCORE_WIN
-            end
-            UpdateStatusClient:FireAllClients("Невиновные победили!")
-            print("Невиновные победили!")
-        else
-            UpdateStatusClient:FireAllClients("Раунд завершен.")
         end
+        if GameState.Sheriff then
+            PlayerData[GameState.Sheriff].Score = (PlayerData[GameState.Sheriff].Score or 0) + CONFIG.SCORE_WIN
+        end
+        UpdateStatusClient:FireAllClients("👮 Невиновные победили!")
+        print("[MM2] Невиновные победили.")
     else
-        UpdateStatusClient:FireAllClients("Время вышло! Ничья?")
+        UpdateStatusClient:FireAllClients("⏰ Время вышло!")
+        print("[MM2] Раунд завершён по таймауту.")
     end
 
-    -- Запуск таймера лобби
+    -- Запуск лобби
     GameState.LobbyTimer = tick() + CONFIG.LOBBY_TIME
-    UpdateStatusClient:FireAllClients(string.format("Следующий раунд через %d секунд...", CONFIG.LOBBY_TIME))
-
-    print("Раунд завершен.")
+    UpdateStatusClient:FireAllClients(string.format("Следующий раунд через %d сек...", CONFIG.LOBBY_TIME))
+    print("[MM2] Раунд завершён.")
 end
 
--- Спавн оружия для игроков
 function RoundManager.SpawnWeapons()
-    -- Убийца получает нож
+    -- Нож убийце
     if GameState.Murderer then
-        local character = GetPlayerCharacter(GameState.Murderer)
-        if character then
-            -- Создание ножа (заглушка, замените на реальную модель)
+        local char = GetCharacter(GameState.Murderer)
+        if char then
             local knife = Instance.new("Tool")
             knife.Name = CONFIG.TAGS.KNIFE
             knife.RequiresHandle = false
-            knife.Parent = character
-            -- Добавьте модель ножа в Handle, если необходимо
-            print("Нож выдан убийце:", GameState.Murderer.Name)
+            knife.Parent = char
         end
     end
-
-    -- Шериф получает пистолет
+    -- Пистолет шерифу
     if GameState.Sheriff then
-        local character = GetPlayerCharacter(GameState.Sheriff)
-        if character then
+        local char = GetCharacter(GameState.Sheriff)
+        if char then
             local gun = Instance.new("Tool")
             gun.Name = CONFIG.TAGS.SHERIFF_GUN
             gun.RequiresHandle = false
-            gun.Parent = character
-            print("Пистолет выдан шерифу:", GameState.Sheriff.Name)
+            gun.Parent = char
         end
     end
 end
 
--- Очистка оружия
 function RoundManager.ClearWeapons()
-    for _, player in ipairs(Players:GetPlayers()) do
-        local character = GetPlayerCharacter(player)
-        if character then
-            for _, tool in ipairs(character:GetChildren()) do
+    for _, plr in ipairs(Players:GetPlayers()) do
+        local char = GetCharacter(plr)
+        if char then
+            for _, tool in ipairs(char:GetChildren()) do
                 if tool:IsA("Tool") and (tool.Name == CONFIG.TAGS.KNIFE or tool.Name == CONFIG.TAGS.SHERIFF_GUN or tool.Name == CONFIG.TAGS.GUN) then
                     tool:Destroy()
                 end
             end
         end
     end
-    -- Удаление выброшенного оружия
     if GameState.GunModel then
         GameState.GunModel:Destroy()
         GameState.GunModel = nil
@@ -341,212 +298,125 @@ function RoundManager.ClearWeapons()
     GameState.GunDropped = false
 end
 
+function RoundManager.DropGun(player)
+    if GameState.GunDropped then return end
+    local char = GetCharacter(player)
+    if not char then return end
+    local gunModel = Instance.new("Part")
+    gunModel.Name = CONFIG.TAGS.GUN
+    gunModel.Size = Vector3.new(1, 1, 2)
+    gunModel.Position = char.PrimaryPart.Position + Vector3.new(0, 0, 2)
+    gunModel.Anchored = true
+    gunModel.Parent = workspace
+    GameState.GunModel = gunModel
+    GameState.GunDropped = true
+    print("[MM2] Оружие выпало на землю.")
+end
+
 -- ============================================================================
--- ОБРАБОТЧИКИ СОБЫТИЙ
+-- 7. ОБРАБОТЧИКИ СОБЫТИЙ ОТ КЛИЕНТОВ
 -- ============================================================================
 
--- Обработка убийства от убийцы
+-- Убийца убивает
 MurdererKill.OnServerEvent:Connect(function(player, targetPlayer)
-    if not GameState.RoundActive then
-        warn("Убийство вне раунда.")
-        return
-    end
+    if not GameState.RoundActive then return end
+    if not IsMurderer(player) then return end
+    if not targetPlayer or not PlayerData[targetPlayer] or not PlayerData[targetPlayer].Alive then return end
 
-    if not IsMurderer(player) then
-        warn("Не убийца пытается убить.")
-        return
-    end
-
-    if not targetPlayer or not PlayerData[targetPlayer] or not PlayerData[targetPlayer].Alive then
-        warn("Неверная цель или цель уже мертва.")
-        return
-    end
-
-    -- Убийство цели
     PlayerData[targetPlayer].Alive = false
-    -- Начисление очков убийце
     PlayerData[player].Score = (PlayerData[player].Score or 0) + CONFIG.SCORE_KILL
+    print(string.format("[MM2] %s убил %s", player.Name, targetPlayer.Name))
 
-    print(string.format("%s убил %s", player.Name, targetPlayer.Name))
-
-    -- Проверка условий победы
-    local alivePlayers = GetAlivePlayers()
-    if #alivePlayers <= 1 then
-        -- Убийца победил (если он остался жив)
+    local alive = GetAlivePlayers()
+    if #alive <= 1 then
         RoundManager.EndRound("Murderer")
     end
 end)
 
--- Обработка выстрела шерифа
+-- Шериф стреляет
 SheriffShoot.OnServerEvent:Connect(function(player, targetPlayer)
-    if not GameState.RoundActive then
-        warn("Выстрел вне раунда.")
-        return
-    end
+    if not GameState.RoundActive then return end
+    if not IsSheriff(player) then return end
+    if not PlayerData[player] or PlayerData[player].Ammo <= 0 then return end
 
-    if not IsSheriff(player) then
-        warn("Не шериф пытается стрелять.")
-        return
-    end
-
-    if not PlayerData[player] or PlayerData[player].Ammo <= 0 then
-        warn("У шерифа нет патронов.")
-        return
-    end
-
-    -- Уменьшение количества патронов
     PlayerData[player].Ammo = PlayerData[player].Ammo - 1
 
     if not targetPlayer then
-        -- Промах
-        print(string.format("%s выстрелил и промахнулся.", player.Name))
+        print(string.format("[MM2] %s промахнулся.", player.Name))
         return
     end
-
-    if not PlayerData[targetPlayer] or not PlayerData[targetPlayer].Alive then
-        warn("Неверная цель или цель уже мертва.")
-        return
-    end
+    if not PlayerData[targetPlayer] or not PlayerData[targetPlayer].Alive then return end
 
     if IsMurderer(targetPlayer) then
-        -- Шериф убил убийцу
         PlayerData[targetPlayer].Alive = false
-        print(string.format("%s застрелил убийцу %s", player.Name, targetPlayer.Name))
+        print(string.format("[MM2] %s застрелил убийцу %s", player.Name, targetPlayer.Name))
         RoundManager.EndRound("Innocents")
     else
-        -- Шериф убил невиновного
         PlayerData[targetPlayer].Alive = false
-        print(string.format("%s застрелил невиновного %s", player.Name, targetPlayer.Name))
-        -- Оружие выпадает
+        print(string.format("[MM2] %s застрелил невиновного %s", player.Name, targetPlayer.Name))
         RoundManager.DropGun(player)
     end
 end)
 
--- Обработка поднятия оружия
+-- Поднятие оружия
 GunPickup.OnServerEvent:Connect(function(player)
-    if not GameState.RoundActive then
-        warn("Поднятие оружия вне раунда.")
-        return
-    end
+    if not GameState.RoundActive then return end
+    if not GameState.GunDropped or not GameState.GunModel then return end
+    if not PlayerData[player] or not PlayerData[player].Alive then return end
 
-    if not GameState.GunDropped or not GameState.GunModel then
-        warn("Оружие не доступно для поднятия.")
-        return
-    end
-
-    if not PlayerData[player] or not PlayerData[player].Alive then
-        warn("Игрок мертв или не в игре.")
-        return
-    end
-
-    -- Игрок становится героем (получает оружие)
-    local character = GetPlayerCharacter(player)
-    if character then
-        -- Создание оружия для героя
+    local char = GetCharacter(player)
+    if char then
         local gun = Instance.new("Tool")
         gun.Name = CONFIG.TAGS.GUN
         gun.RequiresHandle = false
-        gun.Parent = character
-
-        -- Удаление выпавшего оружия
+        gun.Parent = char
         GameState.GunModel:Destroy()
         GameState.GunModel = nil
         GameState.GunDropped = false
-
-        print(string.format("%s поднял оружие и стал героем!", player.Name))
+        print(string.format("[MM2] %s поднял оружие и стал героем!", player.Name))
     end
 end)
 
 -- ============================================================================
--- ДОПОЛНИТЕЛЬНЫЕ МЕХАНИКИ
+-- 8. ОБРАБОТКА ВХОДА/ВЫХОДА ИГРОКОВ
 -- ============================================================================
-
--- Выпадение оружия (при смерти шерифа или невиновного)
-function RoundManager.DropGun(player)
-    if GameState.GunDropped then
-        return
-    end
-
-    local character = GetPlayerCharacter(player)
-    if not character then
-        return
-    end
-
-    -- Создание модели оружия на земле
-    local gunModel = Instance.new("Part")
-    gunModel.Name = CONFIG.TAGS.GUN
-    gunModel.Size = Vector3.new(1, 1, 2)
-    gunModel.Position = character.PrimaryPart.Position + Vector3.new(0, 0, 2)
-    gunModel.Anchored = true
-    gunModel.Parent = workspace
-
-    GameState.GunModel = gunModel
-    GameState.GunDropped = true
-
-    print("Оружие выпало на землю.")
-end
-
--- ============================================================================
--- УПРАВЛЕНИЕ ИГРОКАМИ (ВХОД/ВЫХОД)
--- ============================================================================
-
--- Обработка добавления игрока
 Players.PlayerAdded:Connect(function(player)
-    PlayerData[player] = {
-        Role = nil,
-        Alive = true,
-        Score = 0,
-        IsSheriff = false,
-        IsMurderer = false,
-        Ammo = 0,
-    }
-    print("Игрок добавлен:", player.Name)
-
-    -- Если игра не активна, пробуем запустить раунд
+    PlayerData[player] = { Score = 0, Alive = true, Role = nil, Ammo = 0, IsMurderer = false, IsSheriff = false }
+    print("[MM2] Игрок добавлен:", player.Name)
     if not GameState.RoundActive and #Players:GetPlayers() >= CONFIG.MIN_PLAYERS then
         RoundManager.StartRound()
     end
 end)
 
--- Обработка удаления игрока
 Players.PlayerRemoving:Connect(function(player)
-    if PlayerData[player] then
-        PlayerData[player] = nil
-    end
-
-    -- Если убийца или шериф вышел, завершить раунд
+    PlayerData[player] = nil
     if GameState.RoundActive then
         if GameState.Murderer == player or GameState.Sheriff == player then
             RoundManager.EndRound(nil)
         end
     end
-    print("Игрок удален:", player.Name)
+    print("[MM2] Игрок удалён:", player.Name)
 end)
 
 -- ============================================================================
--- ОСНОВНОЙ ЦИКЛ ИГРЫ (ОБНОВЛЕНИЕ)
+-- 9. ОСНОВНОЙ ЦИКЛ (Heartbeat)
 -- ============================================================================
-
--- Обновление состояния игры каждый кадр
 RunService.Heartbeat:Connect(function()
-    -- Проверка таймера раунда
+    -- Таймер раунда
     if GameState.RoundActive and GameState.RoundTimer then
         local timeLeft = GameState.RoundTimer - tick()
         if timeLeft <= 0 then
-            -- Время вышло
             RoundManager.EndRound(nil)
         elseif timeLeft <= 10 then
-            -- Предупреждение за 10 секунд
-            UpdateStatusClient:FireAllClients(string.format("Осталось %d секунд!", math.ceil(timeLeft)))
+            UpdateStatusClient:FireAllClients(string.format("⏳ Осталось %d сек!", math.ceil(timeLeft)))
         end
     end
 
-    -- Проверка таймера лобби
+    -- Таймер лобби
     if not GameState.RoundActive and GameState.LobbyTimer then
         local timeLeft = GameState.LobbyTimer - tick()
         if timeLeft <= 0 then
             GameState.LobbyTimer = nil
-            -- Запуск нового раунда
             if #Players:GetPlayers() >= CONFIG.MIN_PLAYERS then
                 RoundManager.StartRound()
             else
@@ -556,18 +426,15 @@ RunService.Heartbeat:Connect(function()
         end
     end
 
-    -- Проверка, жив ли убийца (если убийца мертв, а раунд активен)
+    -- Проверка жизни убийцы
     if GameState.RoundActive and GameState.Murderer then
         if not PlayerData[GameState.Murderer] or not PlayerData[GameState.Murderer].Alive then
-            -- Убийца мертв, победа невиновных
             RoundManager.EndRound("Innocents")
         end
     end
-
-    -- Проверка, жив ли шериф (если шериф мертв, а раунд активен)
+    -- Если шериф умер – оружие выпадает
     if GameState.RoundActive and GameState.Sheriff then
         if not PlayerData[GameState.Sheriff] or not PlayerData[GameState.Sheriff].Alive then
-            -- Шериф мертв, оружие выпадает (если еще не выпало)
             if not GameState.GunDropped then
                 RoundManager.DropGun(GameState.Sheriff)
             end
@@ -576,49 +443,23 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- ============================================================================
--- КОМАНДЫ ДЛЯ ТЕСТИРОВАНИЯ (ОПЦИОНАЛЬНО)
+-- 10. ЭКСПОРТ (для вызова из консоли или других скриптов)
 -- ============================================================================
-
--- Пример команды для принудительного запуска раунда (через консоль сервера)
--- game:GetService("ServerScriptService").MM2Core.StartRound()
--- game:GetService("ServerScriptService").MM2Core.EndRound("Murderer")
-
--- Экспорт функций для внешнего использования
 local MM2Core = {
     StartRound = RoundManager.StartRound,
     EndRound = RoundManager.EndRound,
     GetGameState = function() return GameState end,
     GetPlayerData = function(player) return PlayerData[player] end,
 }
-
 return MM2Core
 
 --[[
     ============================================================================
-    ИНСТРУКЦИЯ ПО РАСШИРЕНИЮ
-    ============================================================================
-    1.  **Добавление новых ролей:**
-        - Добавьте новую роль в `RoleManager.AssignRoles()`.
-        - Обновите `PlayerData` для новой роли.
-        - Создайте обработчики событий для способностей новой роли.
-
-    2.  **Добавление новых способностей:**
-        - Создайте новый `RemoteEvent` в `ReplicatedStorage/RemoteEvents`.
-        - Напишите обработчик на сервере.
-        - Вызовите событие с клиента.
-
-    3.  **Изменение конфигурации:**
-        - Отредактируйте таблицу `CONFIG` в начале скрипта.
-        - Или создайте `ModuleScript` в `ReplicatedStorage` с именем `Config`.
-
-    4.  **Добавление новых игровых режимов:**
-        - Создайте новый модуль (например, `GameModes/DoubleMurderer.lua`).
-        - Внедрите его в `RoundManager` для изменения логики назначения ролей и условий победы.
-
-    5.  **Визуальные и звуковые эффекты:**
-        - Используйте `RemoteEvents` для отправки команд на клиент для воспроизведения эффектов.
-
-    6.  **Сохранение данных:**
-        - Используйте `DataStoreService` для сохранения очков и статистики игроков.
+    ИНСТРУКЦИЯ ПО УСТАНОВКЕ:
+    1. Создайте в Roblox Studio новый Script в ServerScriptService.
+    2. Вставьте в него этот код.
+    3. Запустите игру – скрипт сам создаст все RemoteEvents в ReplicatedStorage.
+    4. Для клиентской части (GUI) создайте LocalScript, который будет принимать
+       события UpdateRoleClient и UpdateStatusClient, и отображать информацию.
     ============================================================================
 --]]
