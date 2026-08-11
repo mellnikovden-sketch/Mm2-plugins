@@ -1,387 +1,393 @@
--- MM2 Ultimate Mobile Menu
--- Для открытия: нажмите на круглую кнопку в левом верхнем углу
+-- ============================================
+-- Murder Mystery 2 Hub (Mobile Edition)
+-- Версия 1.0 (адаптировано для телефона)
+-- ============================================
 
-local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local LP = Players.LocalPlayer
 
--- ===== СОЗДАНИЕ ПЛАВАЮЩЕЙ КНОПКИ =====
+-- Цвета
+local COLORS = {
+    BG = Color3.fromRGB(25, 25, 30),
+    ACCENT = Color3.fromRGB(255, 200, 0),
+    TEXT = Color3.fromRGB(255, 255, 255),
+    RED = Color3.fromRGB(255, 50, 50),
+    GREEN = Color3.fromRGB(50, 255, 50),
+    BLUE = Color3.fromRGB(50, 150, 255),
+}
+
+-- Глобальный GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = player.PlayerGui
+screenGui.Name = "MM2HubMobile"
 screenGui.ResetOnSpawn = false
+screenGui.Parent = game:GetService("CoreGui")
 
-local mainButton = Instance.new("ImageButton")
-mainButton.Size = UDim2.new(0, 60, 0, 60)
-mainButton.Position = UDim2.new(0, 10, 0, 50)
-mainButton.BackgroundColor3 = Color3.fromRGB(30, 144, 255)
-mainButton.BackgroundTransparency = 0.3
-mainButton.BorderSizePixel = 0
-mainButton.Image = "rbxassetid://6023427236"
-mainButton.Parent = screenGui
+-- ========================
+-- Плавающая кнопка открытия
+-- ========================
+local floatBtn = Instance.new("ImageButton")
+floatBtn.Size = UDim2.new(0, 60, 0, 60)
+floatBtn.Position = UDim2.new(0.9, -70, 0.85, -30)
+floatBtn.BackgroundColor3 = COLORS.ACCENT
+floatBtn.BackgroundTransparency = 0.1
+floatBtn.Image = "rbxassetid://6031091078" -- иконка меню (можно заменить)
+floatBtn.ImageColor3 = COLORS.TEXT
+floatBtn.Parent = screenGui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(1, 0)
-corner.Parent = mainButton
+local floatCorner = Instance.new("UICorner")
+floatCorner.CornerRadius = UDim.new(0, 30)
+floatCorner.Parent = floatBtn
 
--- Перетаскивание кнопки
-local dragging = false
-local dragStart
-local startPos
+local floatShadow = Instance.new("UIStroke")
+floatShadow.Color = COLORS.TEXT
+floatShadow.Thickness = 2
+floatShadow.Transparency = 0.5
+floatShadow.Parent = floatBtn
 
-mainButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainButton.Position
-    end
-end)
+-- ========================
+-- Основное меню (с прокруткой)
+-- ========================
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 320, 0, 480)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -240)
+mainFrame.BackgroundColor3 = COLORS.BG
+mainFrame.BackgroundTransparency = 0.05
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
 
-mainButton.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-        local delta = input.Position - dragStart
-        mainButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 16)
+mainCorner.Parent = mainFrame
 
-mainButton.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Color = COLORS.ACCENT
+mainStroke.Thickness = 2
+mainStroke.Transparency = 0.4
+mainStroke.Parent = mainFrame
 
--- ===== СОЗДАНИЕ МЕНЮ =====
-local menuOpen = false
-local menuFrame = Instance.new("Frame")
-menuFrame.Size = UDim2.new(0, 350, 0, 500)
-menuFrame.Position = UDim2.new(0.5, -175, 0.5, -250)
-menuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-menuFrame.BackgroundTransparency = 0.1
-menuFrame.BorderSizePixel = 0
-menuFrame.Visible = false
-menuFrame.Parent = screenGui
-
-local menuCorner = Instance.new("UICorner")
-menuCorner.CornerRadius = UDim.new(0, 15)
-menuCorner.Parent = menuFrame
-
--- Заголовок
+-- Заголовок с кнопкой закрытия
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.BackgroundColor3 = Color3.fromRGB(30, 144, 255)
-titleBar.BackgroundTransparency = 0.3
-titleBar.BorderSizePixel = 0
-titleBar.Parent = menuFrame
+titleBar.Size = UDim2.new(1, 0, 0, 50)
+titleBar.BackgroundColor3 = COLORS.ACCENT
+titleBar.BackgroundTransparency = 0.2
+titleBar.Parent = mainFrame
 
 local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 15)
+titleCorner.CornerRadius = UDim.new(0, 16)
 titleCorner.Parent = titleBar
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -60, 1, 0)
-title.Position = UDim2.new(0, 10, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "⚔️ MM2 ULTIMATE"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextSize = 18
-title.Font = Enum.Font.GothamBold
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = titleBar
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -60, 1, 0)
+titleLabel.Position = UDim2.new(0, 15, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "🔪 MM2 Hub"
+titleLabel.TextColor3 = COLORS.TEXT
+titleLabel.TextSize = 24
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = titleBar
 
--- Кнопка закрытия
-local closeBtn = Instance.new("ImageButton")
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -40, 0, 5)
-closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-closeBtn.BorderSizePixel = 0
-closeBtn.Image = "rbxassetid://6031094670"
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 44, 0, 44)
+closeBtn.Position = UDim2.new(1, -52, 0, 3)
+closeBtn.BackgroundTransparency = 1
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = COLORS.TEXT
+closeBtn.TextSize = 28
+closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = titleBar
-
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(1, 0)
-closeCorner.Parent = closeBtn
-
 closeBtn.MouseButton1Click:Connect(function()
-    menuOpen = false
-    menuFrame.Visible = false
+    mainFrame.Visible = false
+end)
+closeBtn.TouchTap:Connect(function()
+    mainFrame.Visible = false
 end)
 
--- Контент меню (скролл)
+-- Скроллинг-контейнер
 local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, -20, 1, -50)
-scrollFrame.Position = UDim2.new(0, 10, 0, 45)
+scrollFrame.Size = UDim2.new(1, -10, 1, -60)
+scrollFrame.Position = UDim2.new(0, 5, 0, 55)
 scrollFrame.BackgroundTransparency = 1
 scrollFrame.BorderSizePixel = 0
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 800)
-scrollFrame.ScrollBarThickness = 5
-scrollFrame.Parent = menuFrame
+scrollFrame.ScrollBarThickness = 6
+scrollFrame.ScrollBarImageColor3 = COLORS.ACCENT
+scrollFrame.ScrollBarImageTransparency = 0.5
+scrollFrame.Parent = mainFrame
 
-local contentLayout = Instance.new("UIListLayout")
-contentLayout.Padding = UDim.new(0, 10)
-contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-contentLayout.Parent = scrollFrame
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0, 10)
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+listLayout.Parent = scrollFrame
 
--- ===== ФУНКЦИИ ДЛЯ СОЗДАНИЯ ЭЛЕМЕНТОВ =====
-local function createSection(title)
-    local section = Instance.new("Frame")
-    section.Size = UDim2.new(1, 0, 0, 40)
-    section.BackgroundTransparency = 1
-    section.Parent = scrollFrame
-    
+-- ========================
+-- Вспомогательные функции создания элементов (увеличенные для пальцев)
+-- ========================
+function createText(text, order)
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Size = UDim2.new(1, 0, 0, 30)
     label.BackgroundTransparency = 1
-    label.Text = title
-    label.TextColor3 = Color3.fromRGB(30, 144, 255)
-    label.TextSize = 16
+    label.Text = text
+    label.TextColor3 = COLORS.TEXT
+    label.TextSize = 18
     label.Font = Enum.Font.GothamBold
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = section
-    
-    return section
+    label.LayoutOrder = order or 0
+    label.Parent = scrollFrame
+    return label
 end
 
-local function createToggle(labelText, desc, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 40)
-    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    frame.BackgroundTransparency = 0.5
-    frame.BorderSizePixel = 0
-    frame.Parent = scrollFrame
-    
+function createButton(text, callback, order)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -10, 0, 44)
+    btn.Position = UDim2.new(0, 5, 0, 0)
+    btn.BackgroundColor3 = COLORS.ACCENT
+    btn.BackgroundTransparency = 0.15
+    btn.Text = text
+    btn.TextColor3 = COLORS.TEXT
+    btn.TextSize = 20
+    btn.Font = Enum.Font.GothamBold
+    btn.LayoutOrder = order or 0
+    btn.Parent = scrollFrame
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = frame
-    
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = btn
+    btn.MouseButton1Click:Connect(callback)
+    btn.TouchTap:Connect(callback)
+    return btn
+end
+
+function createToggle(text, default, callback, order)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, 0, 0, 44)
+    container.BackgroundTransparency = 1
+    container.LayoutOrder = order or 0
+    container.Parent = scrollFrame
+
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, -10, 1, 0)
+    label.Size = UDim2.new(0.65, -10, 1, 0)
     label.Position = UDim2.new(0, 10, 0, 0)
     label.BackgroundTransparency = 1
-    label.Text = labelText
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 14
+    label.Text = text
+    label.TextColor3 = COLORS.TEXT
+    label.TextSize = 18
     label.Font = Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = frame
-    
-    local toggleBtn = Instance.new("ImageButton")
-    toggleBtn.Size = UDim2.new(0, 50, 0, 25)
-    toggleBtn.Position = UDim2.new(1, -60, 0.5, -12.5)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    toggleBtn.BorderSizePixel = 0
-    toggleBtn.Parent = frame
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(1, 0)
-    toggleCorner.Parent = toggleBtn
-    
-    local toggleState = false
-    local indicator = Instance.new("Frame")
-    indicator.Size = UDim2.new(0.4, 0, 0.8, 0)
-    indicator.Position = UDim2.new(0.05, 0, 0.1, 0)
-    indicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    indicator.BorderSizePixel = 0
-    indicator.Parent = toggleBtn
-    
-    local indicatorCorner = Instance.new("UICorner")
-    indicatorCorner.CornerRadius = UDim.new(1, 0)
-    indicatorCorner.Parent = indicator
-    
-    toggleBtn.MouseButton1Click:Connect(function()
-        toggleState = not toggleState
-        if toggleState then
-            toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 200, 80)
-            indicator.Position = UDim2.new(0.55, 0, 0.1, 0)
-        else
-            toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-            indicator.Position = UDim2.new(0.05, 0, 0.1, 0)
-        end
-        callback(toggleState)
-    end)
-    
-    return toggleBtn
+    label.Parent = container
+
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0, 70, 0, 34)
+    toggle.Position = UDim2.new(1, -80, 0.5, -17)
+    toggle.BackgroundColor3 = default and COLORS.ACCENT or COLORS.BG
+    toggle.BackgroundTransparency = 0.3
+    toggle.Text = default and "ON" or "OFF"
+    toggle.TextColor3 = COLORS.TEXT
+    toggle.TextSize = 18
+    toggle.Font = Enum.Font.GothamBold
+    toggle.Parent = container
+    local tcorner = Instance.new("UICorner")
+    tcorner.CornerRadius = UDim.new(0, 8)
+    tcorner.Parent = toggle
+
+    local state = default or false
+    local function toggleAction()
+        state = not state
+        toggle.Text = state and "ON" or "OFF"
+        toggle.BackgroundColor3 = state and COLORS.ACCENT or COLORS.BG
+        callback(state)
+    end
+    toggle.MouseButton1Click:Connect(toggleAction)
+    toggle.TouchTap:Connect(toggleAction)
+    return toggle
 end
 
-local function createSlider(labelText, min, max, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 50)
-    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    frame.BackgroundTransparency = 0.5
-    frame.BorderSizePixel = 0
-    frame.Parent = scrollFrame
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = frame
-    
+function createInput(text, placeholder, callback, order)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, 0, 0, 50)
+    container.BackgroundTransparency = 1
+    container.LayoutOrder = order or 0
+    container.Parent = scrollFrame
+
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, -10, 0.5, 0)
+    label.Size = UDim2.new(0.4, -10, 1, 0)
     label.Position = UDim2.new(0, 10, 0, 0)
     label.BackgroundTransparency = 1
-    label.Text = labelText
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 14
+    label.Text = text
+    label.TextColor3 = COLORS.TEXT
+    label.TextSize = 16
     label.Font = Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = frame
-    
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Size = UDim2.new(0.3, -10, 0.5, 0)
-    valueLabel.Position = UDim2.new(0.7, 0, 0, 0)
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.Text = tostring(default)
-    valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    valueLabel.TextSize = 14
-    valueLabel.Font = Enum.Font.Gotham
-    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
-    valueLabel.Parent = frame
-    
-    local slider = Instance.new("Frame")
-    slider.Size = UDim2.new(0.9, 0, 0.2, 0)
-    slider.Position = UDim2.new(0.05, 0, 0.65, 0)
-    slider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    slider.BorderSizePixel = 0
-    slider.Parent = frame
-    
-    local sliderCorner = Instance.new("UICorner")
-    sliderCorner.CornerRadius = UDim.new(1, 0)
-    sliderCorner.Parent = slider
-    
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(30, 144, 255)
-    fill.BorderSizePixel = 0
-    fill.Parent = slider
-    
-    local fillCorner = Instance.new("UICorner")
-    fillCorner.CornerRadius = UDim.new(1, 0)
-    fillCorner.Parent = fill
-    
-    local dragging = false
-    local function updateSlider(input)
-        local pos = (input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
-        pos = math.clamp(pos, 0, 1)
-        local val = min + (max - min) * pos
-        val = math.round(val)
-        fill.Size = UDim2.new(pos, 0, 1, 0)
-        valueLabel.Text = tostring(val)
-        callback(val)
+    label.Parent = container
+
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0.4, 0, 0.7, 0)
+    box.Position = UDim2.new(0.45, 0, 0.15, 0)
+    box.BackgroundColor3 = COLORS.BG
+    box.BackgroundTransparency = 0.3
+    box.Text = ""
+    box.PlaceholderText = placeholder
+    box.TextColor3 = COLORS.TEXT
+    box.TextSize = 18
+    box.Font = Enum.Font.Gotham
+    box.ClearTextOnFocus = false
+    box.Parent = container
+    local bcorner = Instance.new("UICorner")
+    bcorner.CornerRadius = UDim.new(0, 8)
+    bcorner.Parent = box
+
+    local submitBtn = Instance.new("TextButton")
+    submitBtn.Size = UDim2.new(0, 50, 0, 34)
+    submitBtn.Position = UDim2.new(1, -55, 0.5, -17)
+    submitBtn.BackgroundColor3 = COLORS.ACCENT
+    submitBtn.BackgroundTransparency = 0.2
+    submitBtn.Text = "✔"
+    submitBtn.TextColor3 = COLORS.TEXT
+    submitBtn.TextSize = 22
+    submitBtn.Font = Enum.Font.GothamBold
+    submitBtn.Parent = container
+    local sc = Instance.new("UICorner")
+    sc.CornerRadius = UDim.new(0, 8)
+    sc.Parent = submitBtn
+
+    local function submit()
+        callback(box.Text)
     end
-    
-    slider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            updateSlider(input)
-        end
+    submitBtn.MouseButton1Click:Connect(submit)
+    submitBtn.TouchTap:Connect(submit)
+    box.FocusLost:Connect(function(enter)
+        if enter then callback(box.Text) end
     end)
-    
-    slider.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-            updateSlider(input)
-        end
-    end)
-    
-    slider.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    return fill
+    return box
 end
 
--- ===== ФУНКЦИИ ГЕЙМПЛЕЯ =====
-local aimbotEnabled = false
-local silentAimEnabled = false
-local espEnabled = false
-local wallhackEnabled = false
-local godModeEnabled = false
-local autoKnifeEnabled = false
-local autoMurdererEnabled = false
+-- ========================
+-- Основные функции MM2 (мобильные)
+-- ========================
+local espPlayers = false
+local espTraps = false
+local espGun = false
+local autoShoot = false
+local autoCoins = false
+local shootOffset = 2.8
 
--- Silent Aim
-RunService.Heartbeat:Connect(function()
-    if silentAimEnabled then
-        for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                -- Проверка на убийцу (MM2 логика)
-                if plr:FindFirstChild("Murderer") or plr:FindFirstChild("IsMurderer") then
-                    local target = plr.Character.HumanoidRootPart.Position
-                    -- Наведение прицела
-                    local cam = workspace.CurrentCamera
-                    local direction = (target - cam.CFrame.Position).Unit
-                    cam.CFrame = CFrame.lookAt(cam.CFrame.Position, target)
-                end
-            end
-        end
-    end
-end)
+local highlightGroup = {}
+local trapHighlights = {}
+local gunHighlight = nil
 
--- Aimbot (ищет убийцу)
-local function findMurderer()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            -- Проверка на убийцу
-            if plr:FindFirstChild("Murderer") or plr:FindFirstChild("IsMurderer") then
-                return plr
-            end
+function findMurderer()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP then
+            if p.Character and p.Character:FindFirstChild("Knife") then return p end
+            if p.Backpack:FindFirstChild("Knife") then return p end
         end
     end
     return nil
 end
 
-RunService.Heartbeat:Connect(function()
-    if aimbotEnabled then
-        local murderer = findMurderer()
-        if murderer and murderer.Character and murderer.Character:FindFirstChild("HumanoidRootPart") then
-            local target = murderer.Character.HumanoidRootPart.Position
-            local cam = workspace.CurrentCamera
-            local direction = (target - cam.CFrame.Position).Unit
-            cam.CFrame = CFrame.lookAt(cam.CFrame.Position, target)
+function findSheriff()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP then
+            if p.Character and p.Character:FindFirstChild("Gun") then return p end
+            if p.Backpack:FindFirstChild("Gun") then return p end
         end
     end
-end)
+    return nil
+end
 
--- ESP
-local function updateESP()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local highlight = plr.Character:FindFirstChild("Highlight")
-            if espEnabled then
-                if not highlight then
-                    highlight = Instance.new("Highlight")
-                    highlight.Parent = plr.Character
-                end
-                highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                highlight.FillTransparency = 0.5
-                highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
-                
-                -- Разный цвет для убийцы
-                if plr:FindFirstChild("Murderer") or plr:FindFirstChild("IsMurderer") then
-                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                else
-                    highlight.FillColor = Color3.fromRGB(0, 150, 255)
-                end
-            else
-                if highlight then
-                    highlight:Destroy()
-                end
+function getNearestPlayer()
+    local nearest, minDist = nil, math.huge
+    if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return nil end
+    local pos = LP.Character.HumanoidRootPart.Position
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (pos - p.Character.HumanoidRootPart.Position).Magnitude
+            if dist < minDist then
+                minDist = dist
+                nearest = p
             end
+        end
+    end
+    return nearest
+end
+
+function refreshESP()
+    for _, h in ipairs(highlightGroup) do h:Destroy() end
+    highlightGroup = {}
+    for _, h in ipairs(trapHighlights) do h:Destroy() end
+    trapHighlights = {}
+    if gunHighlight then gunHighlight:Destroy() gunHighlight = nil end
+
+    if espPlayers then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LP and p.Character then
+                local color, outline = COLORS.GREEN, COLORS.GREEN
+                if p == findMurderer() then
+                    color, outline = COLORS.RED, COLORS.RED
+                elseif p == findSheriff() then
+                    color, outline = COLORS.BLUE, COLORS.BLUE
+                end
+                local hl = Instance.new("Highlight")
+                hl.Adornee = p.Character
+                hl.FillColor = color
+                hl.OutlineColor = outline
+                hl.FillTransparency = 0.5
+                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                hl.Parent = screenGui
+                table.insert(highlightGroup, hl)
+            end
+        end
+    end
+
+    if espTraps then
+        for _, trap in ipairs(workspace:GetDescendants()) do
+            if trap.Name == "Trap" and trap:IsA("BasePart") then
+                local hl = Instance.new("Highlight")
+                hl.Adornee = trap
+                hl.FillColor = Color3.fromRGB(255, 100, 0)
+                hl.OutlineColor = Color3.fromRGB(255, 100, 0)
+                hl.FillTransparency = 0.3
+                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                hl.Parent = screenGui
+                table.insert(trapHighlights, hl)
+            end
+        end
+    end
+
+    if espGun then
+        local drop = workspace:FindFirstChild("GunDrop", true)
+        if drop then
+            local hl = Instance.new("Highlight")
+            hl.Adornee = drop
+            hl.FillColor = COLORS.ACCENT
+            hl.OutlineColor = COLORS.ACCENT
+            hl.FillTransparency = 0.2
+            hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            hl.Parent = screenGui
+            gunHighlight = hl
         end
     end
 end
 
-RunService.Heartbeat:Connect(updateESP)
-
--- Wallhack
-RunService.Heartbeat:Connect(function()
-    if wallhackEnabled then
-        for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= player and plr.Character then
-                for _, part in ipairs(plr.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.Transparency = 0.3
+-- Авто-выстрел
+task.spawn(function()
+    while task.wait(0.1) do
+        if autoShoot and findSheriff() == LP then
+            local murderer = findMurderer()
+            if murderer and murderer.Character and murderer.Character:FindFirstChild("HumanoidRootPart") then
+                local root = murderer.Character.HumanoidRootPart
+                local vel = root.AssemblyLinearVelocity
+                local pos = root.Position + vel * 0.2 + murderer.Character.Humanoid.MoveDirection * shootOffset
+                local gun = LP.Character and LP.Character:FindFirstChild("Gun")
+                if gun then
+                    local shootEvent = gun:FindFirstChild("Shoot")
+                    if shootEvent then
+                        shootEvent:FireServer(
+                            CFrame.new(gun.Parent.RightHand.Position),
+                            CFrame.new(pos)
+                        )
                     end
                 end
             end
@@ -389,106 +395,115 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Godmode
-RunService.Heartbeat:Connect(function()
-    if godModeEnabled and player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.Health = 100
-        player.Character.Humanoid.MaxHealth = 100
+-- Авто-сбор монет
+task.spawn(function()
+    while task.wait(0.5) do
+        if not autoCoins then continue end
+        local container = workspace:FindFirstChild("CoinContainer", true)
+        if not container then continue end
+        local coins = container:GetChildren()
+        if #coins == 0 then continue end
+        local nearest, minDist = nil, math.huge
+        if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then continue end
+        local pos = LP.Character.HumanoidRootPart.Position
+        for _, coin in ipairs(coins) do
+            if coin:IsA("BasePart") then
+                local dist = (pos - coin.Position).Magnitude
+                if dist < minDist then
+                    minDist = dist
+                    nearest = coin
+                end
+            end
+        end
+        if nearest then
+            LP.Character.HumanoidRootPart.CFrame = CFrame.new(nearest.Position)
+            task.wait(0.1)
+        end
     end
 end)
 
--- Auto Knife (автобросок в убийцу)
-RunService.Heartbeat:Connect(function()
-    if autoKnifeEnabled then
-        local murderer = findMurderer()
-        if murderer and murderer.Character then
-            local tool = player.Character:FindFirstChildOfClass("Tool")
-            if tool and tool.Name:find("Knife") then
-                tool:Activate()
-                task.wait(0.1)
+-- ========================
+-- Построение мобильного меню
+-- ========================
+local order = 0
+
+createText("🎯 ESP", order); order = order + 1
+createToggle("Подсветка игроков", false, function(s) espPlayers = s refreshESP() end, order); order = order + 1
+createToggle("Ловушки", false, function(s) espTraps = s refreshESP() end, order); order = order + 1
+createToggle("Пистолет", false, function(s) espGun = s refreshESP() end, order); order = order + 1
+
+createText("🔫 Оружие", order); order = order + 1
+createToggle("Авто-выстрел", false, function(s) autoShoot = s end, order); order = order + 1
+createInput("Смещение", "2.8", function(v) shootOffset = tonumber(v) or 2.8 end, order); order = order + 1
+
+createText("💰 Фарм", order); order = order + 1
+createToggle("Авто-сбор монет", false, function(s) autoCoins = s end, order); order = order + 1
+
+createText("🚀 Телепорты", order); order = order + 1
+createButton("К убийце", function()
+    local m = findMurderer()
+    if m and m.Character and m.Character:FindFirstChild("HumanoidRootPart") then
+        LP.Character.HumanoidRootPart.CFrame = m.Character.HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
+    end
+end, order); order = order + 1
+createButton("К шерифу", function()
+    local s = findSheriff()
+    if s and s.Character and s.Character:FindFirstChild("HumanoidRootPart") then
+        LP.Character.HumanoidRootPart.CFrame = s.Character.HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
+    end
+end, order); order = order + 1
+createButton("К пистолету", function()
+    local drop = workspace:FindFirstChild("GunDrop", true)
+    if drop then
+        LP.Character.HumanoidRootPart.CFrame = drop.CFrame * CFrame.new(0, 2, 0)
+    end
+end, order); order = order + 1
+
+createText("⚡ Прочее", order); order = order + 1
+createButton("Показать роли в чат", function()
+    local m = findMurderer()
+    local s = findSheriff()
+    local msg = string.format("🔪 Убийца: %s | 🔫 Шериф: %s", m and m.Name or "нет", s and s.Name or "нет")
+    local chatService = game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemMessages", true)
+    if chatService then chatService:FireServer(msg) end
+    print(msg)
+end, order); order = order + 1
+createButton("Флинг убийцы", function()
+    local m = findMurderer()
+    if m and m.Character then
+        for _, part in ipairs(m.Character:GetChildren()) do
+            if part:IsA("BasePart") then
+                part.AssemblyLinearVelocity = Vector3.new(9999, 9999, 9999)
             end
         end
     end
+end, order); order = order + 1
+
+-- Подгоняем размер меню
+local totalHeight = 50 + order * 50 + 30
+mainFrame.Size = UDim2.new(0, 320, 0, math.min(totalHeight, 500))
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -mainFrame.Size.Y.Offset/2)
+
+-- ========================
+-- Управление открытием/закрытием
+-- ========================
+floatBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
+floatBtn.TouchTap:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
 end)
 
--- Auto Murderer (автоматически находит убийцу)
-RunService.Heartbeat:Connect(function()
-    if autoMurdererEnabled then
-        local murderer = findMurderer()
-        if murderer and murderer.Character and murderer.Character:FindFirstChild("HumanoidRootPart") then
-            player.Character.HumanoidRootPart.CFrame = murderer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 0, 5)
-        end
-    end
-end)
+-- Если нужно, можно добавить автоматическое закрытие при тапе вне меню (опционально)
+-- screenGui.InputBegan:Connect(function(input)
+--     if input.UserInputType == Enum.UserInputType.Touch and mainFrame.Visible then
+--         local pos = input.Position
+--         local absPos = mainFrame.AbsolutePosition
+--         local size = mainFrame.AbsoluteSize
+--         if not (pos.X >= absPos.X and pos.X <= absPos.X + size.X and pos.Y >= absPos.Y and pos.Y <= absPos.Y + size.Y) then
+--             mainFrame.Visible = false
+--         end
+--     end
+-- end)
 
--- ===== СОЗДАНИЕ МЕНЮ =====
--- Заголовки
-createSection("⚔️ БОЕВЫЕ")
-
--- Aimbot
-createToggle("🎯 Aimbot (убийца)", "Наводит на убийцу", function(state)
-    aimbotEnabled = state
-end)
-
--- Silent Aim
-createToggle("🔫 Silent Aim", "Автонаведение", function(state)
-    silentAimEnabled = state
-end)
-
--- Auto Knife
-createToggle("🔪 Auto Knife", "Автобросок в убийцу", function(state)
-    autoKnifeEnabled = state
-end)
-
--- Auto Murderer
-createToggle("👤 Auto Murderer", "Идёт к убийце", function(state)
-    autoMurdererEnabled = state
-end)
-
-createSection("🛡️ ЗАЩИТА")
-
--- Godmode
-createToggle("💚 Godmode", "Неуязвимость", function(state)
-    godModeEnabled = state
-end)
-
--- Speed
-createSlider("🏃 Скорость", 16, 50, 16, function(value)
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = value
-    end
-end)
-
--- Jump
-createSlider("🦘 Прыжок", 50, 150, 50, function(value)
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.JumpPower = value
-    end
-end)
-
-createSection("👁️ ВИЗУАЛ")
-
--- ESP
-createToggle("👤 ESP", "Игроки через стены", function(state)
-    espEnabled = state
-    updateESP()
-end)
-
--- Wallhack
-createToggle("🏚️ Wallhack", "Прозрачные стены", function(state)
-    wallhackEnabled = state
-end)
-
--- ===== ОТКРЫТИЕ МЕНЮ ПО КНОПКЕ =====
-mainButton.MouseButton1Click:Connect(function()
-    menuOpen = not menuOpen
-    menuFrame.Visible = menuOpen
-end)
-
--- ===== ЗАЩИТА ОТ ВЫКЛЮЧЕНИЯ =====
-game.Players.PlayerRemoving:Connect(function()
-    menuFrame:Destroy()
-end)
-
-print("✅ MM2 ULTIMATE MOBILE загружен!")
-print("📌 Нажмите на синюю круглую кнопку в углу")
+print("✅ MM2 Hub Mobile загружен! Нажми на жёлтую кнопку в правом нижнем углу, чтобы открыть меню.")1
