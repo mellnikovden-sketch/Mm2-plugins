@@ -1,609 +1,218 @@
---[[
-    SPECTRE X - MM2 Script (Автономная версия)
-    Без внешних библиотек, с собственным UI
-    Функции: Silent Aim (только убийца) + Wallcheck, ESP (сквозь стены), 
-    Chams, Auto Shoot, Auto Farm
-    Круглая кнопка для открытия/закрытия меню
---]]
+-- MM2 Universal Menu Script
+-- Нажмите [Insert] или [F5] чтобы открыть/закрыть меню
 
--- === ОСНОВНЫЕ СЕРВИСЫ ===
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("Murder Mystery 2 ❄ Universal", "DarkTheme")
 
--- === СОСТОЯНИЯ ===
-local silentAim = false
-local wallcheck = false
-local autoShoot = false
-local espEnabled = false
-local chamsEnabled = false
-local farmEnabled = false
-local menuVisible = true
-local shootDistance = 200
+-- ===== ВКЛАДКА "ИГРОК" =====
+local PlayerTab = Window:NewTab("🎯 Игрок")
+local PlayerSection = PlayerTab:NewSection("Настройки игрока")
 
--- === REMOTE СОБЫТИЯ ===
-local shootRemote = ReplicatedStorage:FindFirstChild("Shoot") or ReplicatedStorage:FindFirstChild("Fire")
-local collectCoinRemote = ReplicatedStorage:FindFirstChild("CollectCoin") or ReplicatedStorage:FindFirstChild("CoinCollected")
+-- Получение игрока
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
 
--- === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
-local function getPlayerRole(player)
-    if player.Character then
-        for _, tool in pairs(player.Character:GetChildren()) do
-            if tool:IsA("Tool") then
-                local name = tool.Name:lower()
-                if name:find("knife") or name:find("dagger") then
-                    return "Murderer"
-                elseif name:find("gun") or name:find("pistol") then
-                    return "Sheriff"
+-- Godmode
+PlayerSection:NewToggle("🛡️ Режим Бога", "Неуязвимость для убийцы", function(state)
+    if state then
+        game:GetService("RunService").Stepped:Connect(function()
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid.Health = 100
+                player.Character.Humanoid.MaxHealth = 100
+            end
+        end)
+    else
+        -- Отключаем
+    end
+end)
+
+-- Speed
+PlayerSection:NewSlider("🏃‍♂️ Скорость", "Изменение скорости", 500, 16, 25, function(s)
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = s
+    end
+end)
+
+-- Jump Power
+PlayerSection:NewSlider("🦘 Сила прыжка", "Изменение высоты прыжка", 500, 50, 100, function(s)
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.JumpPower = s
+    end
+end)
+
+-- Fly
+PlayerSection:NewToggle("✈️ Полёт", "Возможность летать", function(state)
+    if state then
+        local fly = Instance.new("BodyVelocity")
+        fly.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        fly.Velocity = Vector3.new(0, 0, 0)
+        fly.Parent = player.Character.HumanoidRootPart
+        
+        game:GetService("RunService").Heartbeat:Connect(function()
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local move = player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
+                local pos = player.Character.HumanoidRootPart.Position
+                local target = pos + Vector3.new(0, 10, 0)
+                player.Character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+                player.Character.HumanoidRootPart.CFrame = CFrame.new(target)
+            end
+        end)
+    end
+end)
+
+-- ===== ВКЛАДКА "ОРУЖИЕ" =====
+local WeaponTab = Window:NewTab("🔫 Оружие")
+local WeaponSection = WeaponTab:NewSection("Настройки оружия")
+
+-- Получение оружия через инструменты
+WeaponSection:NewToggle("🔪 Бесконечные ножи", "Бесконечный запас ножей", function(state)
+    if state then
+        game:GetService("RunService").Stepped:Connect(function()
+            for _, tool in ipairs(player.Backpack:GetChildren()) do
+                if tool:IsA("Tool") and tool.Name:find("Knife") then
+                    tool:Clone().Parent = player.Backpack
                 end
             end
-        end
-    end
-    return "Innocent"
-end
-
-local function isVisible(targetPart)
-    if not wallcheck then return true end
-    local origin = Camera.CFrame.Position
-    local direction = (targetPart.Position - origin).Unit * 500
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-    local result = workspace:Raycast(origin, direction, raycastParams)
-    if result then
-        local hit = result.Instance
-        if hit and hit:IsDescendantOf(targetPart.Parent) then
-            return true
-        end
-    end
-    return false
-end
-
-local function getMurderer()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            if getPlayerRole(player) == "Murderer" then
-                return player
-            end
-        end
-    end
-    return nil
-end
-
--- === СОЗДАНИЕ GUI ===
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.Name = "SpectreX_GUI"
-
--- === КРУГЛАЯ КНОПКА ===
-local toggleButton = Instance.new("ImageButton")
-toggleButton.Parent = ScreenGui
-toggleButton.Size = UDim2.new(0, 50, 0, 50)
-toggleButton.Position = UDim2.new(0.02, 0, 0.15, 0)
-toggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
-toggleButton.BackgroundTransparency = 0.3
-toggleButton.BorderSizePixel = 0
-toggleButton.Image = "rbxassetid://4483362458"
-toggleButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
-toggleButton.ImageTransparency = 0.2
-toggleButton.ScaleType = Enum.ScaleType.Fit
-
-local corner = Instance.new("UICorner")
-corner.Parent = toggleButton
-corner.CornerRadius = UDim.new(1, 0)
-
-local stroke = Instance.new("UIStroke")
-stroke.Parent = toggleButton
-stroke.Color = Color3.fromRGB(100, 150, 255)
-stroke.Thickness = 2
-stroke.Transparency = 0.4
-
--- Пульсация кнопки
-task.spawn(function()
-    while true do
-        for i = 0.3, 0.7, 0.05 do
-            task.wait(0.05)
-            stroke.Transparency = i
-        end
-        for i = 0.7, 0.3, -0.05 do
-            task.wait(0.05)
-            stroke.Transparency = i
-        end
+        end)
     end
 end)
 
--- === ОСНОВНОЕ МЕНЮ ===
-local MainFrame = Instance.new("Frame")
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.75, 0, 0.15, 0)
-MainFrame.Size = UDim2.new(0, 270, 0, 350)
-MainFrame.ClipsDescendants = true
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Visible = true
-
-local mainCorner = Instance.new("UICorner")
-mainCorner.Parent = MainFrame
-mainCorner.CornerRadius = UDim.new(0, 8)
-
-local mainStroke = Instance.new("UIStroke")
-mainStroke.Parent = MainFrame
-mainStroke.Color = Color3.fromRGB(60, 60, 100)
-mainStroke.Thickness = 1
-
--- Заголовок
-local Title = Instance.new("TextLabel")
-Title.Parent = MainFrame
-Title.BackgroundColor3 = Color3.fromRGB(40, 40, 65)
-Title.Size = UDim2.new(1, 0, 0, 35)
-Title.Position = UDim2.new(0, 0, 0, 0)
-Title.Text = "SPECTRE X v2.0"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextScaled = true
-Title.Font = Enum.Font.GothamBold
-
-local titleCorner = Instance.new("UICorner")
-titleCorner.Parent = Title
-titleCorner.CornerRadius = UDim.new(0, 8)
-
--- Кнопка закрытия
-local closeBtn = Instance.new("TextButton")
-closeBtn.Parent = Title
-closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-closeBtn.Size = UDim2.new(0, 25, 0, 25)
-closeBtn.Position = UDim2.new(0.92, 0, 0.15, 0)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.TextScaled = true
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.BorderSizePixel = 0
-
-local closeCorner = Instance.new("UICorner")
-closeCorner.Parent = closeBtn
-closeCorner.CornerRadius = UDim.new(0, 4)
-
--- === ВКЛАДКИ ===
-local TabBar = Instance.new("Frame")
-TabBar.Parent = MainFrame
-TabBar.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
-TabBar.Position = UDim2.new(0, 0, 0, 35)
-TabBar.Size = UDim2.new(1, 0, 0, 30)
-TabBar.BorderSizePixel = 0
-
-local tabs = {"Aimbot", "Visuals", "Misc"}
-local tabButtons = {}
-local currentTab = "Aimbot"
-
-local function createTabButton(text, xPos)
-    local btn = Instance.new("TextButton")
-    btn.Parent = TabBar
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 65)
-    btn.BorderSizePixel = 0
-    btn.Position = UDim2.new(xPos, 0, 0, 0)
-    btn.Size = UDim2.new(1/3, 0, 1, 0)
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    btn.TextScaled = true
-    btn.Font = Enum.Font.Gotham
-    return btn
-end
-
-for i, tab in ipairs(tabs) do
-    local btn = createTabButton(tab, (i-1)/3)
-    tabButtons[tab] = btn
-end
-
--- Контент
-local ContentFrame = Instance.new("ScrollingFrame")
-ContentFrame.Parent = MainFrame
-ContentFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-ContentFrame.BorderSizePixel = 0
-ContentFrame.Position = UDim2.new(0, 0, 0, 65)
-ContentFrame.Size = UDim2.new(1, 0, 1, -65)
-ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ContentFrame.ScrollBarThickness = 4
-
--- Функция создания переключателя
-local function createToggle(parent, text, yPos, defaultValue, callback)
-    local frame = Instance.new("Frame")
-    frame.Parent = parent
-    frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
-    frame.Position = UDim2.new(0.05, 0, 0, yPos)
-    frame.Size = UDim2.new(0.9, 0, 0, 35)
-    frame.BorderSizePixel = 0
-    
-    local frameCorner = Instance.new("UICorner")
-    frameCorner.Parent = frame
-    frameCorner.CornerRadius = UDim.new(0, 4)
-
-    local label = Instance.new("TextLabel")
-    label.Parent = frame
-    label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0.05, 0, 0, 0)
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextScaled = true
-    label.Font = Enum.Font.Gotham
-
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Parent = frame
-    toggleBtn.BackgroundColor3 = defaultValue and Color3.fromRGB(0, 200, 80) or Color3.fromRGB(80, 80, 80)
-    toggleBtn.Position = UDim2.new(0.8, 0, 0.1, 0)
-    toggleBtn.Size = UDim2.new(0.15, 0, 0.8, 0)
-    toggleBtn.Text = defaultValue and "ON" or "OFF"
-    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.TextScaled = true
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.BorderSizePixel = 0
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.Parent = toggleBtn
-    toggleCorner.CornerRadius = UDim.new(0, 4)
-
-    local state = defaultValue
-    toggleBtn.MouseButton1Click:Connect(function()
-        state = not state
-        toggleBtn.BackgroundColor3 = state and Color3.fromRGB(0, 200, 80) or Color3.fromRGB(80, 80, 80)
-        toggleBtn.Text = state and "ON" or "OFF"
-        callback(state)
-    end)
-    
-    return toggleBtn
-end
-
--- Функция создания слайдера
-local function createSlider(parent, text, yPos, min, max, default, suffix, callback)
-    local frame = Instance.new("Frame")
-    frame.Parent = parent
-    frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
-    frame.Position = UDim2.new(0.05, 0, 0, yPos)
-    frame.Size = UDim2.new(0.9, 0, 0, 50)
-    frame.BorderSizePixel = 0
-    
-    local frameCorner = Instance.new("UICorner")
-    frameCorner.Parent = frame
-    frameCorner.CornerRadius = UDim.new(0, 4)
-
-    local label = Instance.new("TextLabel")
-    label.Parent = frame
-    label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0.05, 0, 0, 0)
-    label.Size = UDim2.new(0.7, 0, 0.5, 0)
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextScaled = true
-    label.Font = Enum.Font.Gotham
-
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Parent = frame
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.Position = UDim2.new(0.7, 0, 0, 0)
-    valueLabel.Size = UDim2.new(0.25, 0, 0.5, 0)
-    valueLabel.Text = tostring(default) .. suffix
-    valueLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
-    valueLabel.TextScaled = true
-    valueLabel.Font = Enum.Font.GothamBold
-
-    local slider = Instance.new("Frame")
-    slider.Parent = frame
-    slider.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-    slider.Position = UDim2.new(0.05, 0, 0.6, 0)
-    slider.Size = UDim2.new(0.9, 0, 0.3, 0)
-    slider.BorderSizePixel = 0
-    
-    local sliderCorner = Instance.new("UICorner")
-    sliderCorner.Parent = slider
-    sliderCorner.CornerRadius = UDim.new(1, 0)
-
-    local fill = Instance.new("Frame")
-    fill.Parent = slider
-    fill.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    fill.BorderSizePixel = 0
-    
-    local fillCorner = Instance.new("UICorner")
-    fillCorner.Parent = fill
-    fillCorner.CornerRadius = UDim.new(1, 0)
-
-    local dragging = false
-    local value = default
-    
-    local function updateSlider(input)
-        local pos = input.Position.X / slider.AbsoluteSize.X
-        pos = math.clamp(pos, 0, 1)
-        value = min + (max - min) * pos
-        value = math.floor(value / 10) * 10
-        fill.Size = UDim2.new((value - min) / (max - min), 0, 1, 0)
-        valueLabel.Text = tostring(value) .. suffix
-        callback(value)
-    end
-
-    slider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            updateSlider(input)
-        end
-    end)
-
-    slider.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            updateSlider(input)
-        end
-    end)
-
-    return slider
-end
-
--- === СОЗДАНИЕ ВКЛАДОК ===
-
--- Вкладка Aimbot
-local aimbotTab = Instance.new("Frame")
-aimbotTab.Parent = ContentFrame
-aimbotTab.BackgroundTransparency = 1
-aimbotTab.Size = UDim2.new(1, 0, 0, 200)
-
-local yPos = 5
-createToggle(aimbotTab, "Silent Aim (только убийца)", yPos, false, function(state) silentAim = state end)
-yPos = yPos + 45
-createToggle(aimbotTab, "Wallcheck (проверка стен)", yPos, false, function(state) wallcheck = state end)
-yPos = yPos + 45
-createToggle(aimbotTab, "Auto Shoot", yPos, false, function(state) autoShoot = state end)
-yPos = yPos + 55
-createSlider(aimbotTab, "Auto Shoot Distance", yPos, 50, 400, 200, "px", function(value) shootDistance = value end)
-
--- Вкладка Visuals
-local visualsTab = Instance.new("Frame")
-visualsTab.Parent = ContentFrame
-visualsTab.BackgroundTransparency = 1
-visualsTab.Size = UDim2.new(1, 0, 0, 100)
-visualsTab.Visible = false
-
-yPos = 5
-createToggle(visualsTab, "ESP (сквозь стены)", yPos, false, function(state) 
-    espEnabled = state
-    if state then updateESP() else clearESP() end
-end)
-yPos = yPos + 45
-createToggle(visualsTab, "Chams (подсветка)", yPos, false, function(state) 
-    chamsEnabled = state
-    if state then updateChams() else clearChams() end
-end)
-
--- Вкладка Misc
-local miscTab = Instance.new("Frame")
-miscTab.Parent = ContentFrame
-miscTab.BackgroundTransparency = 1
-miscTab.Size = UDim2.new(1, 0, 0, 50)
-miscTab.Visible = false
-
-yPos = 5
-createToggle(miscTab, "Auto Farm (монеты)", yPos, false, function(state) farmEnabled = state end)
-
--- Переключение вкладок
-local function switchTab(tabName)
-    for _, child in pairs(ContentFrame:GetChildren()) do
-        if child:IsA("Frame") then
-            child.Visible = (child.Name == tabName)
-        end
-    end
-    for name, btn in pairs(tabButtons) do
-        btn.BackgroundColor3 = (name == tabName) and Color3.fromRGB(70, 70, 120) or Color3.fromRGB(40, 40, 65)
-        btn.TextColor3 = (name == tabName) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
-    end
-    currentTab = tabName
-    -- Обновляем размер Canvas
-    task.wait(0.1)
-    local maxHeight = 0
-    for _, child in pairs(ContentFrame:GetChildren()) do
-        if child:IsA("Frame") and child.Visible then
-            local height = 0
-            for _, c in pairs(child:GetChildren()) do
-                if c:IsA("Frame") then
-                    local pos = c.Position.Y.Offset
-                    if pos + 50 > height then height = pos + 50 end
-                end
-            end
-            if height > maxHeight then maxHeight = height end
-        end
-    end
-    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, maxHeight + 20)
-end
-
-for name, btn in pairs(tabButtons) do
-    btn.MouseButton1Click:Connect(function()
-        switchTab(name)
-    end)
-end
-switchTab("Aimbot")
-
--- === КНОПКИ УПРАВЛЕНИЯ ===
-closeBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-    menuVisible = false
-    toggleButton.ImageTransparency = 0.8
-end)
-
-toggleButton.MouseButton1Click:Connect(function()
-    menuVisible = not menuVisible
-    MainFrame.Visible = menuVisible
-    toggleButton.ImageTransparency = menuVisible and 0.2 or 0.8
-end)
-
--- === ESP И CHAMS ===
-local espObjects = {}
-local chamsObjects = {}
-
-function updateESP()
-    if not espEnabled then return end
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local head = player.Character.Head
-            if not head:FindFirstChild("ESP_Billboard") then
-                local bill = Instance.new("BillboardGui")
-                bill.Name = "ESP_Billboard"
-                bill.Parent = head
-                bill.Size = UDim2.new(0, 120, 0, 50)
-                bill.Adornee = head
-                bill.AlwaysOnTop = true
-                bill.StudsOffset = Vector3.new(0, 2, 0)
-                bill.MaxDistance = 500
-
-                local label = Instance.new("TextLabel")
-                label.Parent = bill
-                label.Size = UDim2.new(1, 0, 0.6, 0)
-                label.BackgroundTransparency = 1
-                label.Text = player.Name
-                label.TextScaled = true
-                label.Font = Enum.Font.GothamBold
-                label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                label.TextStrokeTransparency = 0.3
-
-                local roleLabel = Instance.new("TextLabel")
-                roleLabel.Parent = bill
-                roleLabel.Size = UDim2.new(1, 0, 0.4, 0)
-                roleLabel.Position = UDim2.new(0, 0, 0.6, 0)
-                roleLabel.BackgroundTransparency = 1
-                roleLabel.Text = getPlayerRole(player)
-                roleLabel.TextScaled = true
-                roleLabel.Font = Enum.Font.Gotham
-                roleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-
-                espObjects[player] = bill
-            end
-            local role = getPlayerRole(player)
-            local color = role == "Murderer" and Color3.fromRGB(255, 0, 0) or
-                         role == "Sheriff" and Color3.fromRGB(0, 100, 255) or
-                         Color3.fromRGB(0, 255, 0)
-            local label = espObjects[player]:FindFirstChild("TextLabel")
-            if label then label.TextColor3 = color end
-        end
-    end
-end
-
-function clearESP()
-    for player, bill in pairs(espObjects) do
-        if bill and bill.Parent then bill:Destroy() end
-    end
-    espObjects = {}
-end
-
-function updateChams()
-    if not chamsEnabled then return end
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local char = player.Character
-            if not char:FindFirstChild("ChamsHighlight") then
-                local hl = Instance.new("Highlight")
-                hl.Name = "ChamsHighlight"
-                hl.Parent = char
-                hl.Adornee = char
-                hl.FillColor = Color3.fromRGB(255, 255, 255)
-                hl.FillTransparency = 0.6
-                hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                hl.OutlineTransparency = 0.2
-                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                chamsObjects[player] = hl
-            end
-            local role = getPlayerRole(player)
-            local color = role == "Murderer" and Color3.fromRGB(255, 0, 0) or
-                         role == "Sheriff" and Color3.fromRGB(0, 100, 255) or
-                         Color3.fromRGB(0, 255, 0)
-            local hl = chamsObjects[player]
-            hl.FillColor = color
-            hl.OutlineColor = color
-        end
-    end
-end
-
-function clearChams()
-    for player, hl in pairs(chamsObjects) do
-        if hl and hl.Parent then hl:Destroy() end
-    end
-    chamsObjects = {}
-end
-
--- === ОБРАБОТКА ИГРОКОВ ===
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        task.wait(0.5)
-        if espEnabled then updateESP() end
-        if chamsEnabled then updateChams() end
-    end)
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    if espObjects[player] then espObjects[player]:Destroy(); espObjects[player] = nil end
-    if chamsObjects[player] then chamsObjects[player]:Destroy(); chamsObjects[player] = nil end
-end)
-
--- === ОСНОВНОЙ ЦИКЛ ===
-RunService.RenderStepped:Connect(function()
-    -- Silent Aim
-    if silentAim then
-        local murderer = getMurderer()
-        if murderer and murderer.Character and murderer.Character:FindFirstChild("Head") then
-            local head = murderer.Character.Head
-            if isVisible(head) then
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, head.Position)
-            end
-        end
-    end
-
-    -- Auto Shoot
-    if autoShoot then
-        local murderer = getMurderer()
-        if murderer and murderer.Character and murderer.Character:FindFirstChild("Head") then
-            local head = murderer.Character.Head
-            if isVisible(head) then
-                local screenPoint, onScreen = Camera:WorldToScreenPoint(head.Position)
-                if onScreen then
-                    local mousePos = UserInputService:GetMouseLocation()
-                    local dist = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
-                    if dist < shootDistance then
-                        if shootRemote then
-                            shootRemote:FireServer(head.Position)
-                        end
+-- Автоматический бросок ножа
+WeaponSection:NewToggle("🎯 Авто-бросок", "Автоматически кидать ножи в игроков", function(state)
+    if state then
+        while state do
+            game:GetService("RunService").Heartbeat:Wait()
+            for _, plr in ipairs(game.Players:GetPlayers()) do
+                if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    -- Симуляция броска
+                    local tool = player.Character:FindFirstChildOfClass("Tool")
+                    if tool and tool.Name:find("Knife") then
+                        tool:Activate()
+                        task.wait(0.1)
                     end
                 end
             end
         end
     end
+end)
 
-    -- Auto Farm
-    if farmEnabled then
-        for _, coin in pairs(workspace:GetChildren()) do
-            if coin:IsA("Part") and coin.Name:lower():find("coin") then
-                if collectCoinRemote then
-                    collectCoinRemote:FireServer(coin)
+-- ===== ВКЛАДКА "ВИЗУАЛ" =====
+local VisualTab = Window:NewTab("👁️ Визуал")
+local VisualSection = VisualTab:NewSection("Визуальные настройки")
+
+-- ESP игроков
+VisualSection:NewToggle("👤 ESP игроков", "Показывать игроков через стены", function(state)
+    if state then
+        for _, plr in ipairs(game.Players:GetPlayers()) do
+            if plr ~= player and plr.Character then
+                local highlight = Instance.new("Highlight")
+                highlight.Parent = plr.Character
+                highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                highlight.FillTransparency = 0.5
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            end
+        end
+    else
+        for _, plr in ipairs(game.Players:GetPlayers()) do
+            if plr.Character then
+                for _, v in ipairs(plr.Character:GetChildren()) do
+                    if v:IsA("Highlight") then
+                        v:Destroy()
+                    end
                 end
             end
         end
     end
 end)
 
--- === ПЕРИОДИЧЕСКОЕ ОБНОВЛЕНИЕ ===
-task.spawn(function()
-    while true do
-        task.wait(0.5)
-        if espEnabled then updateESP() end
-        if chamsEnabled then updateChams() end
+-- Частицы
+VisualSection:NewToggle("✨ Частицы за игроком", "След частиц", function(state)
+    if state then
+        local attachment = Instance.new("Attachment")
+        attachment.Parent = player.Character.HumanoidRootPart
+        
+        local particle = Instance.new("ParticleEmitter")
+        particle.Parent = attachment
+        particle.Texture = "rbxassetid://420539122"
+        particle.Rate = 50
+        particle.Lifetime = NumberRange.new(1)
+        particle.SpreadAngle = Vector2.new(360, 360)
+        particle.VelocityInheritance = 0
     end
 end)
 
-print("Spectre X v2.0 (Автономный) загружен!")
-print("Круглая кнопка в левом верхнем углу для открытия/закрытия меню")
+-- ===== ВКЛАДКА "МИР" =====
+local WorldTab = Window:NewTab("🌍 Мир")
+local WorldSection = WorldTab:NewSection("Настройки мира")
+
+-- Noclip
+WorldSection:NewToggle("🚫 Noclip", "Проходить сквозь стены", function(state)
+    if state then
+        game:GetService("RunService").Stepped:Connect(function()
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                player.Character.HumanoidRootPart.CanCollide = false
+            end
+        end)
+    else
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CanCollide = true
+        end
+    end
+end)
+
+-- Удаление тумана
+WorldSection:NewToggle("🌫️ Убрать туман", "Убрать весь туман", function(state)
+    if state then
+        game.Lighting.FogEnd = 100000
+        game.Lighting.FogStart = 0
+    else
+        game.Lighting.FogEnd = 500
+        game.Lighting.FogStart = 0
+    end
+end)
+
+-- Время суток
+WorldSection:NewSlider("🌅 Время суток", "Изменить время (0-24)", 24, 0, 12, function(s)
+    game.Lighting.ClockTime = s
+end)
+
+-- ===== ВКЛАДКА "РАЗНОЕ" =====
+local MiscTab = Window:NewTab("⚙️ Разное")
+local MiscSection = MiscTab:NewSection("Настройки")
+
+-- Телепорт к игроку
+MiscSection:NewButton("📍 Телепорт к игроку", "Выберите игрока из списка", function()
+    local plrs = {}
+    for _, v in ipairs(game.Players:GetPlayers()) do
+        if v ~= player then
+            table.insert(plrs, v.Name)
+        end
+    end
+    local selected = game:GetService("GuiService"):GetGuiObjectAt(Vector2.new(0, 0))
+    -- Упрощенная версия
+    local target = game.Players:FindFirstChild(plrs[1])
+    if target and target.Character then
+        player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+    end
+end)
+
+-- Перезарядка игры
+MiscSection:NewButton("🔄 Перезагрузить игру", "Перезапустить игру", function()
+    game:GetService("TeleportService"):Teleport(game.PlaceId)
+end)
+
+-- ===== УПРАВЛЕНИЕ МЕНЮ =====
+-- Открытие/закрытие по Insert или F5
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.Insert or input.KeyCode == Enum.KeyCode.F5 then
+            Library:Toggle()
+        end
+    end
+end)
+
+-- Защита от выключения
+Library:Toggle()
+
+print("✅ MM2 Universal Menu загружен!")
+print("📌 Нажмите Insert или F5 для открытия/закрытия")
