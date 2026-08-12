@@ -1,110 +1,57 @@
--- ==============================================
--- Murder Mystery 2 Script (Delta Edition)
--- Исправлены ошибки с nil и анимациями
--- ==============================================
+-- MM2 Script: ESP + Shoot Murderer
+-- Основано на модуле YARHM
 
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local lp = Players.LocalPlayer
+local CollectionService = game:GetService("CollectionService")
 
--- ---------- GUI (без изменений) ----------
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = lp:WaitForChild("PlayerGui")
-screenGui.Name = "MM2_Script_GUI"
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 400)
-frame.Position = UDim2.new(0, 10, 0.5, -200)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BackgroundTransparency = 0.1
-frame.BorderSizePixel = 0
-frame.Parent = screenGui
-local corner = Instance.new("UICorner", frame)
-corner.CornerRadius = UDim.new(0, 8)
+-- Кнопка Shoot Murderer
+local shootButton = Instance.new("TextButton")
+shootButton.Size = UDim2.new(0, 150, 0, 40)
+shootButton.Position = UDim2.new(0.5, -75, 0.9, 0)
+shootButton.Text = "Shoot Murderer"
+shootButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+shootButton.TextColor3 = Color3.new(1,1,1)
+shootButton.Font = Enum.Font.SourceSansBold
+shootButton.Parent = screenGui
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 30)
-title.BackgroundTransparency = 1
-title.Text = "MM2 Script"
-title.TextColor3 = Color3.fromRGB(255,255,255)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 18
-title.Parent = frame
+-- Переключатели ESP
+local espPlayersToggle = Instance.new("TextButton")
+espPlayersToggle.Size = UDim2.new(0, 120, 0, 30)
+espPlayersToggle.Position = UDim2.new(0.1, 0, 0.1, 0)
+espPlayersToggle.Text = "ESP Players: ON"
+espPlayersToggle.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+espPlayersToggle.TextColor3 = Color3.new(0,0,0)
+espPlayersToggle.Font = Enum.Font.SourceSans
+espPlayersToggle.Parent = screenGui
 
-local function createButton(text, yPos, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 30)
-    btn.Position = UDim2.new(0.05, 0, 0, yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Text = text
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 14
-    btn.Parent = frame
-    local c = Instance.new("UICorner", btn)
-    c.CornerRadius = UDim.new(0, 4)
-    btn.MouseButton1Click:Connect(callback)
-    return btn
-end
+local espGunToggle = Instance.new("TextButton")
+espGunToggle.Size = UDim2.new(0, 120, 0, 30)
+espGunToggle.Position = UDim2.new(0.1, 0, 0.2, 0)
+espGunToggle.Text = "ESP Gun: ON"
+espGunToggle.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+espGunToggle.TextColor3 = Color3.new(0,0,0)
+espGunToggle.Font = Enum.Font.SourceSans
+espGunToggle.Parent = screenGui
 
-local function createToggle(text, yPos, default, callback)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(0.9, 0, 0, 30)
-    container.Position = UDim2.new(0.05, 0, 0, yPos)
-    container.BackgroundTransparency = 1
-    container.Parent = frame
+local espPlayersEnabled = true
+local espGunEnabled = true
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(255,255,255)
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = container
-
-    local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0.25, 0, 1, 0)
-    toggle.Position = UDim2.new(0.75, 0, 0, 0)
-    toggle.BackgroundColor3 = default and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
-    toggle.Text = default and "ON" or "OFF"
-    toggle.TextColor3 = Color3.fromRGB(255,255,255)
-    toggle.Font = Enum.Font.GothamBold
-    toggle.TextSize = 12
-    toggle.Parent = container
-    local c = Instance.new("UICorner", toggle)
-    c.CornerRadius = UDim.new(0, 4)
-
-    local state = default
-    toggle.MouseButton1Click:Connect(function()
-        state = not state
-        toggle.BackgroundColor3 = state and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
-        toggle.Text = state and "ON" or "OFF"
-        callback(state)
-    end)
-    return toggle, state
-end
-
--- ---------- Настройки ----------
-local settings = {
-    esp = false,
-    autoShoot = false,
-    autoKnife = false,
-    autoCoins = false,
-    antiFling = false,
-}
-
--- ---------- Вспомогательные функции ----------
+-- Функции для определения ролей
 local function findMurderer()
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl ~= lp and pl.Character then
-            if pl.Backpack:FindFirstChild("Knife") or pl.Character:FindFirstChild("Knife") then
-                return pl
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player then
+            if p.Backpack:FindFirstChild("Knife") or (p.Character and p.Character:FindFirstChild("Knife")) then
+                return p
             end
         end
     end
@@ -112,334 +59,186 @@ local function findMurderer()
 end
 
 local function findSheriff()
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl ~= lp and pl.Character then
-            if pl.Backpack:FindFirstChild("Gun") or pl.Character:FindFirstChild("Gun") then
-                return pl
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player then
+            if p.Backpack:FindFirstChild("Gun") or (p.Character and p.Character:FindFirstChild("Gun")) then
+                return p
             end
         end
     end
     return nil
 end
 
-local function findNearestPlayer()
-    local nearest, minDist = nil, math.huge
-    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil end
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl ~= lp and pl.Character then
-            local other = pl.Character:FindFirstChild("HumanoidRootPart")
-            if other then
-                local dist = (hrp.Position - other.Position).Magnitude
-                if dist < minDist then
-                    minDist = dist
-                    nearest = pl
-                end
+-- ESP система
+local espHighlights = {}
+
+local function updatePlayerESP()
+    if not espPlayersEnabled then
+        for _, h in pairs(espHighlights) do
+            h:Destroy()
+        end
+        espHighlights = {}
+        return
+    end
+
+    for p, h in pairs(espHighlights) do
+        if not p.Parent or not p.Character then
+            h:Destroy()
+            espHighlights[p] = nil
+        end
+    end
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player and p.Character then
+            local highlight = espHighlights[p]
+            if not highlight then
+                highlight = Instance.new("Highlight")
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.Adornee = p.Character
+                highlight.Parent = p.Character
+                espHighlights[p] = highlight
+            else
+                highlight.Adornee = p.Character
             end
+
+            if p == findMurderer() then
+                highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+            elseif p == findSheriff() then
+                highlight.FillColor = Color3.fromRGB(0, 100, 255)
+                highlight.OutlineColor = Color3.fromRGB(0, 100, 255)
+            else
+                highlight.FillColor = Color3.fromRGB(0, 255, 0)
+                highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
+            end
+            highlight.Enabled = true
         end
     end
-    return nearest
 end
 
-local function getPredictedPosition(player, offset)
-    offset = offset or 3.5
-    local char = player.Character
-    if not char then return nil end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hrp or not hum then return nil end
-    local vel = hrp.AssemblyLinearVelocity
-    local dir = hum.MoveDirection
-    return hrp.Position + vel * 0.15 + dir * offset
-end
-
--- ---------- Безопасный вызов Remote ----------
-local function safeFireRemote(remote, ...)
-    if not remote then return false end
-    local success, err = pcall(function()
-        if remote:IsA("RemoteEvent") then
-            remote:FireServer(...)
-        elseif remote:IsA("RemoteFunction") then
-            remote:InvokeServer(...)
-        end
-    end)
-    if not success then
-        warn("[MM2] Remote call failed:", err)
-        return false
+-- ESP Gun (Dropped Gun)
+local gunHighlight = nil
+local function updateGunESP()
+    if not espGunEnabled then
+        if gunHighlight then gunHighlight:Destroy() gunHighlight = nil end
+        return
     end
-    return true
-end
 
--- ---------- ESP (без изменений) ----------
-local espObjects = {}
-local function clearESP()
-    for _, data in pairs(espObjects) do
-        if data.highlight then data.highlight:Destroy() end
-        if data.billboard then data.billboard:Destroy() end
-    end
-    espObjects = {}
-end
-
-local function updateESP()
-    clearESP()
-    if not settings.esp then return end
-
-    local murderer = findMurderer()
-    local sheriff = findSheriff()
-
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl == lp then continue end
-        if not pl.Character then continue end
-
-        local highlight = Instance.new("Highlight")
-        highlight.Adornee = pl.Character
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        highlight.FillTransparency = 0.6
-        highlight.OutlineTransparency = 0.2
-
-        local billboard = Instance.new("BillboardGui")
-        billboard.Adornee = pl.Character:FindFirstChild("Head") or pl.Character:FindFirstChild("HumanoidRootPart")
-        billboard.Size = UDim2.new(0, 100, 0, 30)
-        billboard.AlwaysOnTop = true
-        billboard.Parent = screenGui
-
-        local label = Instance.new("TextLabel", billboard)
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.TextScaled = true
-        label.Font = Enum.Font.GothamBold
-        label.TextColor3 = Color3.fromRGB(255,255,255)
-        label.TextStrokeTransparency = 0.3
-
-        if pl == murderer then
-            highlight.FillColor = Color3.fromRGB(255,0,0)
-            highlight.OutlineColor = Color3.fromRGB(255,0,0)
-            label.Text = "🔪 " .. pl.DisplayName
-            label.TextColor3 = Color3.fromRGB(255,0,0)
-        elseif pl == sheriff then
-            highlight.FillColor = Color3.fromRGB(0,150,255)
-            highlight.OutlineColor = Color3.fromRGB(0,150,255)
-            label.Text = "🔫 " .. pl.DisplayName
-            label.TextColor3 = Color3.fromRGB(0,150,255)
+    local map = workspace:FindFirstChild("Map") or workspace:FindFirstChild("Game") or workspace
+    local gunDrop = map:FindFirstChild("GunDrop")
+    if gunDrop then
+        if not gunHighlight then
+            gunHighlight = Instance.new("Highlight")
+            gunHighlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            gunHighlight.FillColor = Color3.fromRGB(255, 255, 0)
+            gunHighlight.OutlineColor = Color3.fromRGB(255, 255, 0)
+            gunHighlight.Parent = gunDrop
         else
-            highlight.FillColor = Color3.fromRGB(0,255,0)
-            highlight.OutlineColor = Color3.fromRGB(0,255,0)
-            label.Text = pl.DisplayName
+            gunHighlight.Adornee = gunDrop
         end
-
-        highlight.Parent = screenGui
-        espObjects[pl] = {highlight = highlight, billboard = billboard}
+        gunHighlight.Enabled = true
+    else
+        if gunHighlight then gunHighlight:Destroy() gunHighlight = nil end
     end
 end
 
--- ---------- Авто-стрельба (шериф) ----------
-local autoShootRunning = false
-local autoShootConnection
+local function refreshESP()
+    updatePlayerESP()
+    updateGunESP()
+end
 
-local function startAutoShoot()
-    if autoShootRunning then return end
-    autoShootRunning = true
-    autoShootConnection = RunService.Heartbeat:Connect(function()
-        if not settings.autoShoot then
-            autoShootRunning = false
-            autoShootConnection:Disconnect()
-            return
-        end
-        if findSheriff() ~= lp then return end
-        local gun = lp.Character and lp.Character:FindFirstChild("Gun")
-        if not gun then return end
-        local murderer = findMurderer()
-        if not murderer or not murderer.Character then return end
-        local targetPos = getPredictedPosition(murderer, 3.5)
-        if not targetPos then return end
-        -- Проверка прямой видимости
-        local origin = lp.Character.HumanoidRootPart.Position
-        local dir = (targetPos - origin).Unit * 200
-        local params = RaycastParams.new()
-        params.FilterDescendantsInstances = {lp.Character}
-        local hit = Workspace:Raycast(origin, dir, params)
-        if hit and hit.Instance:IsDescendantOf(murderer.Character) then
-            -- Ищем ремоут для стрельбы
-            local shootRemote = gun:FindFirstChild("Shoot") or (gun:FindFirstChild("KnifeLocal") and gun.KnifeLocal:FindFirstChild("CreateBeam"))
-            if shootRemote then
-                local args = {1, targetPos, "AH2"}   -- стандартные аргументы для MM2
-                safeFireRemote(shootRemote, unpack(args))
-            end
-        end
+-- События обновления
+Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function()
+        refreshESP()
     end)
-end
-
--- ---------- Автобросок ножа (убийца) ----------
-local autoKnifeRunning = false
-local autoKnifeConnection
-
-local function startAutoKnife()
-    if autoKnifeRunning then return end
-    autoKnifeRunning = true
-    autoKnifeConnection = RunService.Heartbeat:Connect(function()
-        if not settings.autoKnife then
-            autoKnifeRunning = false
-            autoKnifeConnection:Disconnect()
-            return
-        end
-        if findMurderer() ~= lp then return end
-        local knife = lp.Character and lp.Character:FindFirstChild("Knife")
-        if not knife then return end
-        local target = findNearestPlayer()
-        if not target or not target.Character then return end
-        local targetPos = getPredictedPosition(target, 4)
-        if not targetPos then return end
-        -- Ищем ремоут для броска
-        local throwRemote = knife:FindFirstChild("Throw") or (knife:FindFirstChild("Events") and knife.Events:FindFirstChild("KnifeThrown"))
-        if throwRemote then
-            local args = {
-                CFrame.new(lp.Character.RightHand.Position),
-                CFrame.new(targetPos)
-            }
-            safeFireRemote(throwRemote, unpack(args))
-        end
-    end)
-end
-
--- ---------- Авто-сбор монет (без firetouchinterest) ----------
--- Вместо firetouchinterest мы просто телепортируемся на монету и ждём,
--- пока система сама засчитает сбор (обычно через TouchInterest).
--- Если этого недостаточно, можно попробовать вызвать RemoteEvent для сбора,
--- но я не знаю его названия. Альтернативно – просто телепорт и ожидание.
-local coinLoop = nil
-
-local function startCoinCollect()
-    if coinLoop then return end
-    coinLoop = RunService.Heartbeat:Connect(function()
-        if not settings.autoCoins then
-            coinLoop:Disconnect()
-            coinLoop = nil
-            return
-        end
-        local map = Workspace:FindFirstChild("Map") or Workspace:FindFirstChild("Lobby") and Workspace.Lobby:FindFirstChild("Map")
-        if not map then return end
-        local coinContainer = map:FindFirstChild("CoinContainer") or map:FindFirstChild("Coins")
-        if not coinContainer then return end
-        local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-        local nearest, minDist = nil, math.huge
-        for _, child in ipairs(coinContainer:GetChildren()) do
-            if child:IsA("Model") and child:FindFirstChild("Handle") then
-                local pos = child:GetPivot().Position
-                local dist = (hrp.Position - pos).Magnitude
-                if dist < minDist then
-                    minDist = dist
-                    nearest = child
-                end
-            end
-        end
-        if nearest then
-            -- Телепортируемся прямо на монету
-            hrp.CFrame = CFrame.new(nearest:GetPivot().Position + Vector3.new(0, 3, 0))
-            task.wait(0.2)
-            -- Пытаемся инициировать сбор через Touch (если не сработает, попробуем через Remote)
-            local handle = nearest:FindFirstChild("Handle")
-            if handle and handle:IsA("BasePart") then
-                -- Пытаемся использовать firetouchinterest, если он есть
-                if firetouchinterest then
-                    pcall(function()
-                        firetouchinterest(hrp, handle, 0)
-                        task.wait()
-                        firetouchinterest(hrp, handle, 1)
-                    end)
-                else
-                    -- Если firetouchinterest нет, просто остаёмся на месте – возможно, игра сама засчитает
-                    -- Можно также попробовать найти RemoteEvent для сбора монеты
-                end
-            end
-        end
-    end)
-end
-
--- ---------- Анти-флинг (без изменений) ----------
-local antiFlingLastPos = Vector3.zero
-local antiFlingConnection
-
-local function startAntiFling()
-    if antiFlingConnection then return end
-    antiFlingConnection = RunService.Heartbeat:Connect(function()
-        if not settings.antiFling then
-            antiFlingConnection:Disconnect()
-            antiFlingConnection = nil
-            return
-        end
-        local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-        if hrp.AssemblyLinearVelocity.Magnitude > 200 then
-            hrp.AssemblyLinearVelocity = Vector3.zero
-            hrp.AssemblyAngularVelocity = Vector3.zero
-            if antiFlingLastPos ~= Vector3.zero then
-                hrp.CFrame = CFrame.new(antiFlingLastPos)
-            end
-        else
-            antiFlingLastPos = hrp.Position
-        end
-    end)
-end
-
--- ---------- Создание GUI ----------
-local yPos = 40
-createToggle("ESP", yPos, false, function(state)
-    settings.esp = state
-    if state then updateESP() else clearESP() end
-end)
-yPos = yPos + 40
-
-createToggle("Авто-стрельба (шериф)", yPos, false, function(state)
-    settings.autoShoot = state
-    if state then startAutoShoot() end
-end)
-yPos = yPos + 40
-
-createToggle("Автобросок ножа (убийца)", yPos, false, function(state)
-    settings.autoKnife = state
-    if state then startAutoKnife() end
-end)
-yPos = yPos + 40
-
-createToggle("Авто-сбор монет", yPos, false, function(state)
-    settings.autoCoins = state
-    if state then startCoinCollect() end
-end)
-yPos = yPos + 40
-
-createToggle("Анти-флинг", yPos, false, function(state)
-    settings.antiFling = state
-    if state then startAntiFling() end
+    refreshESP()
 end)
 
--- ---------- Обновление ESP при смене ролей ----------
-local remotes = ReplicatedStorage:FindFirstChild("Remotes")
-if remotes then
-    local gameplay = remotes:FindFirstChild("Gameplay")
-    if gameplay then
-        local pdc = gameplay:FindFirstChild("PlayerDataChanged")
-        if pdc and pdc:IsA("RemoteEvent") then
-            pdc.OnClientEvent:Connect(function()
-                if settings.esp then updateESP() end
-            end)
-        end
-    end
-end
-
--- ---------- Подписка на изменения в игре ----------
-Players.PlayerAdded:Connect(function()
-    if settings.esp then task.wait(1) updateESP() end
-end)
 Players.PlayerRemoving:Connect(function()
-    if settings.esp then task.wait(0.5) updateESP() end
-end)
-Workspace.ChildAdded:Connect(function()
-    if settings.esp then task.wait(1) updateESP() end
+    refreshESP()
 end)
 
--- Запускаем ESP после загрузки
-task.wait(2)
-if settings.esp then updateESP() end
+workspace.DescendantAdded:Connect(function(child)
+    if child.Name == "GunDrop" then refreshESP() end
+end)
+workspace.DescendantRemoved:Connect(function(child)
+    if child.Name == "GunDrop" then refreshESP() end
+end)
 
-print("✅ MM2 скрипт (Delta) загружен! Управление через GUI.")
+-- Обновление при смене ролей (если есть событие)
+pcall(function()
+    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gameplay"):WaitForChild("PlayerDataChanged", 5).OnClientEvent:Connect(refreshESP)
+end)
+
+-- Периодическое обновление
+task.spawn(function()
+    while task.wait(0.5) do
+        refreshESP()
+    end
+end)
+
+-- Кнопка Shoot Murderer
+shootButton.MouseButton1Click:Connect(function()
+    local sheriff = findSheriff()
+    if sheriff ~= player then
+        print("You are not the sheriff")
+        return
+    end
+    local murderer = findMurderer()
+    if not murderer then
+        print("No murderer found")
+        return
+    end
+
+    local gun = player.Character and player.Character:FindFirstChild("Gun")
+    if not gun then
+        gun = player.Backpack:FindFirstChild("Gun")
+        if gun then
+            player.Character.Humanoid:EquipTool(gun)
+        else
+            print("You don't have a gun")
+            return
+        end
+    end
+
+    local murdererHRP = murderer.Character and murderer.Character:FindFirstChild("HumanoidRootPart")
+    if not murdererHRP then
+        print("Murderer has no HumanoidRootPart")
+        return
+    end
+
+    -- Попытка стрельбы через стандартное событие Shoot
+    local shootEvent = player.Character:FindFirstChild("Gun") and player.Character.Gun:FindFirstChild("Shoot")
+    if shootEvent then
+        local origin = player.Character.HumanoidRootPart.Position
+        local targetPos = murdererHRP.Position
+        shootEvent:FireServer(CFrame.new(origin), CFrame.new(targetPos))
+    else
+        -- Альтернативный способ (через RemoteFunction)
+        local gunRemote = player.Character:FindFirstChild("Gun") and player.Character.Gun:FindFirstChild("KnifeLocal") and player.Character.Gun.KnifeLocal:FindFirstChild("CreateBeam")
+        if gunRemote then
+            gunRemote:InvokeServer(1, murdererHRP.Position, "AH2")
+        else
+            print("Shoot event not found")
+        end
+    end
+end)
+
+-- Переключатели
+espPlayersToggle.MouseButton1Click:Connect(function()
+    espPlayersEnabled = not espPlayersEnabled
+    espPlayersToggle.Text = "ESP Players: " .. (espPlayersEnabled and "ON" or "OFF")
+    espPlayersToggle.BackgroundColor3 = espPlayersEnabled and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
+    refreshESP()
+end)
+
+espGunToggle.MouseButton1Click:Connect(function()
+    espGunEnabled = not espGunEnabled
+    espGunToggle.Text = "ESP Gun: " .. (espGunEnabled and "ON" or "OFF")
+    espGunToggle.BackgroundColor3 = espGunEnabled and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
+    refreshESP()
+end)
+
+refreshESP()
+print("MM2 Script loaded!")
