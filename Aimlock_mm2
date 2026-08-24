@@ -1,5 +1,5 @@
 -- MM2 Murderer Aim Lock V2.6 + OUTLINE (Sheriff/Murderer/Innocent)
--- Исправлено: правильное определение ролей, подсветка контуром
+-- FIXED: WallCheck работает корректно
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -347,31 +347,26 @@ local MAX_INVISIBLE_TIME = 0.5
 local function FindMurdererWeapon(character)
     if not character then return false end
     
-    -- Список оружия убийцы
     local murdererWeapons = {
         "knife", "blade", "dagger", "saw", "slasher", "axe", 
         "scythe", "peppermint", "cookie", "edge", "batwing", 
         "icewing", "bone", "hallow", "vampire", "cutter", "candy"
     }
     
-    -- Проверяем в руках
     for _, item in ipairs(character:GetChildren()) do
         if item:IsA("Tool") then
             local name = item.Name:lower()
             
-            -- Проверяем по названию
             for _, wName in ipairs(murdererWeapons) do
                 if name:find(wName) or wName:find(name) then
                     return true
                 end
             end
             
-            -- Проверяем по серверным/клиентским частям
             if item:FindFirstChild("KnifeServer") or item:FindFirstChild("KnifeClient") then
                 return true
             end
             
-            -- Проверяем по ToolTip (некоторые игры используют это)
             if item.ToolTip and string.lower(item.ToolTip):find("knife") then
                 return true
             end
@@ -416,7 +411,7 @@ local function GetPlayerRole(plr)
     local humanoid = plr.Character:FindFirstChild("Humanoid")
     if not humanoid or humanoid.Health <= 0 then return "Dead" end
     
-    -- 1. Проверяем атрибуты (самый надёжный способ)
+    -- 1. Проверяем атрибуты
     local murdererAttr = plr:GetAttribute("Murderer")
     local sheriffAttr = plr:GetAttribute("Sheriff")
     local roleAttr = plr:GetAttribute("Role")
@@ -454,20 +449,91 @@ local function GetPlayerRole(plr)
         end
     end
     
-    -- 4. Проверяем имя (некоторые игры используют это)
-    local name = plr.Name:lower()
-    if name:find("murder") or name:find("killer") then
-        return "Murderer"
-    end
-    if name:find("sheriff") or name:find("cop") or name:find("police") then
-        return "Sheriff"
-    end
-    
     return "Innocent"
 end
 
 -- ==============================================
--- OUTLINE СИСТЕМА (ВМЕСТО ESP)
+-- ФУНКЦИЯ ПРОВЕРКИ ВИДИМОСТИ (WALLCHECK)
+-- ==============================================
+function IsPlayerVisible(plr)
+    if not plr or not plr.Character then return false end
+    
+    local targetPart = plr.Character:FindFirstChild(TargetPart)
+    if not targetPart then return false end
+    
+    local CurrentCamera = workspace.CurrentCamera
+    if not CurrentCamera then return false end
+    
+    local raycastParams = RaycastParams.new()
+    local filterList = {}
+    
+    if LocalPlayer.Character then 
+        table.insert(filterList, LocalPlayer.Character) 
+    end
+    
+    raycastParams.FilterDescendantsInstances = filterList
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    
+    local origin = CurrentCamera.CFrame.Position
+    local direction = targetPart.Position - origin
+    local result = workspace:Raycast(origin, direction, raycastParams)
+    
+    if not result then return true end
+    return result.Instance:IsDescendantOf(plr.Character)
+end
+
+-- ==============================================
+-- ПОИСК УБИЙЦЫ С УЧЁТОМ WALLCHECK
+-- ==============================================
+function FindMurderer(preferTarget)
+    -- Сначала проверяем предпочтительную цель
+    if preferTarget and preferTarget.Character then
+        local hum = preferTarget.Character:FindFirstChild("Humanoid")
+        if hum and hum.Health > 0 then
+            if GetPlayerRole(preferTarget) == "Murderer" then
+                -- Если WallCheck включён, проверяем видимость
+                if not WallCheckEnabled or IsPlayerVisible(preferTarget) then
+                    return preferTarget
+                end
+            end
+        end
+    end
+
+    local bestTarget = nil
+    local bestDist = math.huge
+    
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl ~= LocalPlayer and pl.Character then
+            local role = GetPlayerRole(pl)
+            if role == "Murderer" then
+                local hum = pl.Character:FindFirstChild("Humanoid")
+                if hum and hum.Health > 0 then
+                    -- Проверяем WallCheck
+                    if WallCheckEnabled and not IsPlayerVisible(pl) then
+                        continue -- Пропускаем невидимого убийцу
+                    end
+                    
+                    local root = pl.Character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        if myRoot then
+                            local dist = (root.Position - myRoot.Position).Magnitude
+                            if dist < bestDist then
+                                bestDist = dist
+                                bestTarget = pl
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    return bestTarget
+end
+
+-- ==============================================
+-- OUTLINE СИСТЕМА
 -- ==============================================
 local OutlinedPlayers = {}
 local OutlineMaid = Maid.new()
@@ -476,13 +542,13 @@ local LastOutlineUpdate = 0
 
 local function GetOutlineColor(role)
     if role == "Murderer" then
-        return Color3.fromRGB(255, 0, 0)      -- Ярко-красный
+        return Color3.fromRGB(255, 0, 0)
     elseif role == "Sheriff" then
-        return Color3.fromRGB(0, 150, 255)    -- Ярко-синий
+        return Color3.fromRGB(0, 150, 255)
     elseif role == "Innocent" then
-        return Color3.fromRGB(0, 255, 0)      -- Ярко-зелёный
+        return Color3.fromRGB(0, 255, 0)
     else
-        return Color3.fromRGB(255, 255, 255)  -- Белый
+        return Color3.fromRGB(255, 255, 255)
     end
 end
 
@@ -508,17 +574,15 @@ local function ApplyOutline(plr)
     local color = GetOutlineColor(role)
     local emoji = GetRoleEmoji(role)
     
-    -- Создаём Highlight для подсветки контуром
     local highlight = Instance.new("Highlight")
     highlight.Name = "Outline_Highlight"
-    highlight.FillTransparency = 1  -- Прозрачная заливка
-    highlight.OutlineTransparency = 0.2  -- Полупрозрачный контур
+    highlight.FillTransparency = 1
+    highlight.OutlineTransparency = 0.2
     highlight.OutlineColor = color
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     highlight.Adornee = plr.Character
     highlight.Parent = plr.Character
     
-    -- Создаём BillboardGui с именем и ролью
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "Outline_NameTag"
     billboard.Size = UDim2.new(0, 200, 0, 50)
@@ -544,7 +608,6 @@ local function ApplyOutline(plr)
         Role = role
     }
     
-    -- Обновление при смене персонажа
     local charConn
     charConn = plr.CharacterAdded:Connect(function()
         task.wait(0.3)
@@ -573,7 +636,6 @@ local function UpdateOutline()
                 
                 if role and role ~= "Dead" and role ~= "Unknown" then
                     if OutlinedPlayers[plr] then
-                        -- Обновляем цвет если роль изменилась
                         local data = OutlinedPlayers[plr]
                         if data.Role ~= role then
                             local color = GetOutlineColor(role)
@@ -597,7 +659,6 @@ local function UpdateOutline()
     end
 end
 
--- Обновление с ограничением
 local function OutlineUpdateLoop()
     if not OutlineEnabled then return end
     
@@ -608,7 +669,6 @@ local function OutlineUpdateLoop()
     UpdateOutline()
 end
 
--- Подписка на события
 Players.PlayerAdded:Connect(function(plr)
     plr.CharacterAdded:Connect(function()
         task.wait(0.5)
@@ -624,74 +684,6 @@ Players.PlayerRemoving:Connect(function(plr)
 end)
 
 -- ==============================================
--- ФУНКЦИИ ПОИСКА УБИЙЦЫ
--- ==============================================
-function IsVisible(target)
-    if not target or not target.Character then return false end
-    local p = target.Character:FindFirstChild(TargetPart)
-    if not p then return false end
-    
-    local CurrentCamera = workspace.CurrentCamera
-    if not CurrentCamera then return false end
-    
-    local raycastParams = RaycastParams.new()
-    local filterList = {}
-    if LocalPlayer.Character then 
-        table.insert(filterList, LocalPlayer.Character) 
-    end
-    
-    raycastParams.FilterDescendantsInstances = filterList
-    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-    
-    local direction = p.Position - CurrentCamera.CFrame.Position
-    local result = workspace:Raycast(
-        CurrentCamera.CFrame.Position, direction, raycastParams
-    )
-    
-    if not result then return true end
-    return result.Instance:IsDescendantOf(target.Character)
-end
-
-function FindMurderer(preferTarget)
-    if preferTarget and preferTarget.Character then
-        local hum = preferTarget.Character:FindFirstChild("Humanoid")
-        if hum and hum.Health > 0 then
-            -- Проверяем, что это действительно убийца
-            if GetPlayerRole(preferTarget) == "Murderer" then
-                return preferTarget
-            end
-        end
-    end
-
-    local bestTarget = nil
-    local bestDist = math.huge
-    
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl ~= LocalPlayer and pl.Character then
-            local role = GetPlayerRole(pl)
-            if role == "Murderer" then
-                local hum = pl.Character:FindFirstChild("Humanoid")
-                if hum and hum.Health > 0 then
-                    local root = pl.Character:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        if myRoot then
-                            local dist = (root.Position - myRoot.Position).Magnitude
-                            if dist < bestDist then
-                                bestDist = dist
-                                bestTarget = pl
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    
-    return bestTarget
-end
-
--- ==============================================
 -- ОСНОВНОЙ ЦИКЛ AIMLOCK
 -- ==============================================
 local function AimLockLoop(deltaTime)
@@ -704,14 +696,18 @@ local function AimLockLoop(deltaTime)
     if TargetPlayer and TargetPlayer.Character then
         local hum = TargetPlayer.Character:FindFirstChild("Humanoid")
         if hum and hum.Health > 0 then
-            valid = true
+            -- Проверяем, что это всё ещё убийца
+            if GetPlayerRole(TargetPlayer) == "Murderer" then
+                valid = true
+            end
         end
     end
     
+    -- WallCheck для текущей цели
     if WallCheckEnabled and valid then
         local currentTime = os.clock()
         if currentTime - LastWallCheckTime > WALL_CHECK_INTERVAL then
-            IsTargetVisibleCache = IsVisible(TargetPlayer)
+            IsTargetVisibleCache = IsPlayerVisible(TargetPlayer)
             LastWallCheckTime = currentTime
         end
         if not IsTargetVisibleCache then
@@ -911,15 +907,13 @@ RunService:BindToRenderStep(
     AimLockLoop
 )
 
--- Outline обновление с ограничением FPS
 RunService.Heartbeat:Connect(OutlineUpdateLoop)
 
--- Очистка при смене персонажа
+-- Очистка
 LocalPlayer.CharacterAdded:Connect(function()
     TargetPlayer = nil
 end)
 
--- Очистка при выгрузке
 RootMaid:GiveTask(function()
     DeleteButtons()
     RunService:UnbindFromRenderStep("MM2_AimLock_PhaseSync")
@@ -953,7 +947,6 @@ print("  [E] - Toggle Outline")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 CreateConsoleMenu()
 
--- Функции для консоли
 _G.MM2AimMenu = CreateConsoleMenu
 _G.MM2Toggle = ToggleAimLock
 _G.MM2Wall = ToggleWallCheck
