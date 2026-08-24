@@ -1,5 +1,5 @@
--- MM2 Murderer Aim Lock V2.6 + PERMANENT OUTLINE
--- FIXED: Кнопка Outline работает
+-- MM2 Murderer Aim Lock V2.6 + OUTLINE (Sheriff/Murderer/Innocent)
+-- FIXED: Полное автоматическое обновление ESP
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -530,7 +530,7 @@ function FindMurderer(preferTarget)
 end
 
 -- ==============================================
--- ПОСТОЯННЫЙ OUTLINE
+-- OUTLINE СИСТЕМА С АВТООБНОВЛЕНИЕМ
 -- ==============================================
 local OutlinedPlayers = {}
 local OutlineMaid = Maid.new()
@@ -574,6 +574,24 @@ local function IsPlayerInGame(plr)
     if not humanoid then return false end
     if humanoid.Health <= 0 then return false end
     
+    -- Проверяем, есть ли у игрока оружие (в лобби его нет)
+    local hasWeapon = false
+    for _, item in ipairs(plr.Character:GetChildren()) do
+        if item:IsA("Tool") then
+            hasWeapon = true
+            break
+        end
+    end
+    
+    -- Если игрок в лобби (высокая позиция и нет оружия)
+    local root = plr.Character:FindFirstChild("HumanoidRootPart")
+    if root then
+        local yPos = root.Position.Y
+        if yPos > 100 and not hasWeapon then
+            return false
+        end
+    end
+    
     return true
 end
 
@@ -582,6 +600,7 @@ local function ApplyOutline(plr)
     if not OutlineEnabled then return end
     if not plr.Character then return end
     
+    -- Удаляем старый Outline
     RemoveOutline(plr)
     
     local role = GetPlayerRole(plr)
@@ -591,6 +610,7 @@ local function ApplyOutline(plr)
     local isActuallyDead = isDead or not inGame
     local color = GetOutlineColor(role, isActuallyDead)
     
+    -- Создаём Highlight
     local highlight = Instance.new("Highlight")
     highlight.Name = "Outline_Highlight"
     highlight.FillTransparency = 1
@@ -600,6 +620,7 @@ local function ApplyOutline(plr)
     highlight.Adornee = plr.Character
     highlight.Parent = plr.Character
     
+    -- Billboard с именем и ролью (только для живых)
     local billboard = nil
     local nameLabel = nil
     
@@ -648,6 +669,7 @@ local function RemoveOutline(plr)
     end
 end
 
+-- ПОЛНОЕ ОБНОВЛЕНИЕ ВСЕХ OUTLINE
 local function RefreshAllOutlines()
     if not OutlineEnabled then
         for plr, _ in pairs(OutlinedPlayers) do
@@ -658,11 +680,14 @@ local function RefreshAllOutlines()
     
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer then
-            ApplyOutline(plr)
+            if plr.Character then
+                ApplyOutline(plr)
+            end
         end
     end
 end
 
+-- ОБНОВЛЕНИЕ С ОГРАНИЧЕНИЕМ FPS
 local function OutlineUpdateLoop()
     if not OutlineEnabled then return end
     
@@ -689,14 +714,16 @@ local function OutlineUpdateLoop()
     end
 end
 
+-- ОБРАБОТКА СМЕНЫ ПЕРСОНАЖА (РЕСПАВН)
 local function OnCharacterAdded(plr)
     if plr == LocalPlayer then return end
-    task.wait(0.3)
+    task.wait(0.5)
     if OutlineEnabled then
         ApplyOutline(plr)
     end
 end
 
+-- НАСТРОЙКА ИГРОКА
 local function SetupPlayer(plr)
     if plr == LocalPlayer then return end
     
@@ -718,6 +745,7 @@ local function SetupPlayer(plr)
     end
 end
 
+-- ОБРАБОТКА ВСЕХ ИГРОКОВ
 for _, plr in ipairs(Players:GetPlayers()) do
     if plr ~= LocalPlayer then
         SetupPlayer(plr)
@@ -735,6 +763,26 @@ Players.PlayerRemoving:Connect(function(plr)
         PlayerConnections[plr] = nil
     end
 end)
+
+-- ОБРАБОТКА СМЕНЫ РАУНДА (через изменение количества игроков)
+local LastPlayerCount = #Players:GetPlayers()
+local RoundChangeDelay = 0
+
+local function CheckRoundChange()
+    local currentCount = #Players:GetPlayers()
+    if currentCount ~= LastPlayerCount then
+        LastPlayerCount = currentCount
+        RoundChangeDelay = os.clock() + 2
+    end
+    
+    if RoundChangeDelay > 0 and os.clock() > RoundChangeDelay then
+        RoundChangeDelay = 0
+        if OutlineEnabled then
+            print("🔄 Обновление Outline после смены раунда...")
+            RefreshAllOutlines()
+        end
+    end
+end
 
 -- ==============================================
 -- ОСНОВНОЙ ЦИКЛ AIMLOCK
@@ -792,6 +840,9 @@ local function AimLockLoop(deltaTime)
             CurrentCamera.CFrame = CFrame.new(CurrentCamera.CFrame.Position, predictedPos)
         end
     end
+    
+    -- Проверяем смену раунда
+    CheckRoundChange()
 end
 
 -- ==============================================
@@ -799,7 +850,7 @@ end
 -- ==============================================
 local function CreateConsoleMenu()
     print("=" .. string.rep("=", 40))
-    print("  🎯 MM2 AIMLOCK V2.6 | PERMANENT OUTLINE")
+    print("  🎯 MM2 AIMLOCK V2.6 | OUTLINE EDITION")
     print("=" .. string.rep("=", 40))
     print("  [1] Toggle Aim Lock    [Currently: " .. (AimLockEnabled and "ON" or "OFF") .. "]")
     print("  [2] Toggle Wall Check  [Currently: " .. (WallCheckEnabled and "ON" or "OFF") .. "]")
@@ -813,11 +864,11 @@ local function CreateConsoleMenu()
     print("💡 Quick Toggle WallCheck: Press 'G'")
     print("💡 Quick Toggle Outline: Press 'E'")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("🔄 OUTLINE НИКОГДА НЕ ПРОПАДАЕТ:")
-    print("  ✅ После респавна игрока")
-    print("  ✅ После нового раунда")
+    print("🔄 Outline ОБНОВЛЯЕТСЯ АВТОМАТИЧЕСКИ:")
+    print("  ✅ После каждого раунда")
+    print("  ✅ При респавне игрока")
+    print("  ✅ При смене персонажа")
     print("  ✅ Для новых игроков")
-    print("  ❌ Пропадает ТОЛЬКО при выключении")
 end
 
 -- ==============================================
@@ -854,49 +905,28 @@ local function ToggleWallCheck()
     print("🧱 Wall Check: " .. (WallCheckEnabled and "ENABLED" or "DISABLED"))
 end
 
--- ФУНКЦИЯ ДЛЯ КНОПКИ OUTLINE (ГЛАВНОЕ ИСПРАВЛЕНИЕ)
 local function UpdateOutlineButtonState()
     local btn = BindableButtons.Buttons["outline_toggle"]
     if not btn then return end
-    
-    -- Обновляем текст
-    local textLabel = btn:FindFirstChild("@Text")
-    if textLabel then
-        textLabel.Text = OutlineEnabled and "OL:ON" or "OL:OFF"
-    end
-    
-    -- Обновляем цвет
-    local stroke = btn:FindFirstChild("@Stroke")
-    if stroke then
-        if OutlineEnabled then
-            stroke.Color = __ACTIVE_COLOR
-        else
-            stroke.Color = __OUTLINE_COLOR
-        end
-    end
+    BindableButtons.UpdateBButtonText("outline_toggle", OutlineEnabled and "OL:ON" or "OL:OFF")
+    BindableButtons.UpdateBButtonColor("outline_toggle", OutlineEnabled, "outline")
 end
 
 local function ToggleOutline()
     OutlineEnabled = not OutlineEnabled
-    
     if OutlineEnabled then
-        -- Включаем - создаём для всех
         RefreshAllOutlines()
-        print("👁️ Outline: ENABLED (постоянный)")
+        print("👁️ Outline: ENABLED")
     else
-        -- Выключаем - удаляем всё
         for plr, _ in pairs(OutlinedPlayers) do
             RemoveOutline(plr)
         end
         print("👁️ Outline: DISABLED")
     end
-    
-    -- Обновляем состояние кнопки
     UpdateOutlineButtonState()
 end
 
 local function CreateButtons()
-    -- Кнопка Aim
     if not BindableButtons.Buttons["aim_toggle"] then
         BindableButtons.AddBButton("aim_toggle", "Aim:OFF", function()
             ToggleAimLock()
@@ -909,7 +939,6 @@ local function CreateButtons()
         end
     end
     
-    -- Кнопка WallCheck
     if not BindableButtons.Buttons["wall_toggle"] then
         BindableButtons.AddBButton("wall_toggle", "Wall:OFF", function()
             ToggleWallCheck()
@@ -922,7 +951,6 @@ local function CreateButtons()
         end
     end
     
-    -- Кнопка Outline (с правильной функцией)
     if not BindableButtons.Buttons["outline_toggle"] then
         BindableButtons.AddBButton("outline_toggle", "OL:OFF", function()
             ToggleOutline()
@@ -994,8 +1022,10 @@ RunService:BindToRenderStep(
     AimLockLoop
 )
 
+-- Отдельный цикл для обновления Outline
 RunService.Heartbeat:Connect(OutlineUpdateLoop)
 
+-- Очистка
 LocalPlayer.CharacterAdded:Connect(function()
     TargetPlayer = nil
 end)
@@ -1018,7 +1048,7 @@ end)
 -- ==============================================
 -- ВЫВОД МЕНЮ
 -- ==============================================
-print("✅ MM2 Aim Lock V2.6 + PERMANENT OUTLINE Loaded!")
+print("✅ MM2 Aim Lock V2.6 + OUTLINE Loaded!")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("🎯 ТРИ КНОПКИ НА ЭКРАНЕ:")
 print("  🔵 Aim:ON/OFF  -  Вкл/Выкл автонаведение")
@@ -1031,11 +1061,11 @@ print("  🔵 Синий    - Sheriff (шериф)")
 print("  🟢 Зелёный  - Innocent (невиновный)")
 print("  ⚪ Серый    - Мёртвый / В лобби")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("🔄 OUTLINE ПОСТОЯННЫЙ:")
-print("  ✅ НИКОГДА не пропадает сам")
-print("  ✅ После респавна - пересоздаётся")
-print("  ✅ Новые игроки - подсвечиваются")
-print("  ❌ Пропадает ТОЛЬКО при выключении")
+print("🔄 Outline ОБНОВЛЯЕТСЯ АВТОМАТИЧЕСКИ:")
+print("  ✅ После каждого раунда")
+print("  ✅ При респавне игрока")
+print("  ✅ При смене персонажа")
+print("  ✅ Для новых игроков")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("⌨️ ГОРЯЧИЕ КЛАВИШИ:")
 print("  [T] - Toggle Aim Lock")
