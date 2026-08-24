@@ -1,5 +1,5 @@
--- MM2 Murderer Aim Lock V2.6 + OUTLINE (Sheriff/Murderer/Innocent)
--- FIXED: ESP НИКОГДА НЕ ПРОПАДАЕТ (только при выключении)
+-- MM2 Murderer Aim Lock V2.6 + PERMANENT OUTLINE
+-- FIXED: Кнопка Outline работает
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -530,14 +530,13 @@ function FindMurderer(preferTarget)
 end
 
 -- ==============================================
--- ПОСТОЯННЫЙ OUTLINE (НЕ ПРОПАДАЕТ НИКОГДА)
+-- ПОСТОЯННЫЙ OUTLINE
 -- ==============================================
 local OutlinedPlayers = {}
 local OutlineMaid = Maid.new()
 local OutlineUpdateRate = 0.2
 local LastOutlineUpdate = 0
 
--- Отслеживание подключений к CharacterAdded для каждого игрока
 local PlayerConnections = {}
 
 local function GetOutlineColor(role, isDead)
@@ -578,24 +577,20 @@ local function IsPlayerInGame(plr)
     return true
 end
 
--- Главная функция создания Outline
 local function ApplyOutline(plr)
     if not plr or plr == LocalPlayer then return end
     if not OutlineEnabled then return end
     if not plr.Character then return end
     
-    -- Удаляем старый Outline если есть
     RemoveOutline(plr)
     
     local role = GetPlayerRole(plr)
     local isDead = (role == "Dead" or role == nil)
     local inGame = IsPlayerInGame(plr)
     
-    -- Даже мёртвых подсвечиваем серым
-    local color = GetOutlineColor(role, isDead or not inGame)
     local isActuallyDead = isDead or not inGame
+    local color = GetOutlineColor(role, isActuallyDead)
     
-    -- Создаём Highlight
     local highlight = Instance.new("Highlight")
     highlight.Name = "Outline_Highlight"
     highlight.FillTransparency = 1
@@ -605,7 +600,6 @@ local function ApplyOutline(plr)
     highlight.Adornee = plr.Character
     highlight.Parent = plr.Character
     
-    -- Billboard с именем и ролью (только для живых)
     local billboard = nil
     local nameLabel = nil
     
@@ -654,40 +648,21 @@ local function RemoveOutline(plr)
     end
 end
 
--- ПОЛНОЕ ОБНОВЛЕНИЕ (применяется ко всем игрокам)
 local function RefreshAllOutlines()
     if not OutlineEnabled then
-        -- Если выключен - удаляем всё
         for plr, _ in pairs(OutlinedPlayers) do
             RemoveOutline(plr)
         end
         return
     end
     
-    -- Обновляем всех игроков
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer then
-            -- Проверяем, нужно ли обновить
-            local role = GetPlayerRole(plr)
-            local isDead = (role == "Dead" or role == nil)
-            local inGame = IsPlayerInGame(plr)
-            local isActuallyDead = isDead or not inGame
-            
-            if OutlinedPlayers[plr] then
-                local data = OutlinedPlayers[plr]
-                -- Если состояние изменилось - пересоздаём
-                if data.IsDead ~= isActuallyDead or data.Role ~= role then
-                    ApplyOutline(plr)
-                end
-            else
-                -- Если нет Outline - создаём
-                ApplyOutline(plr)
-            end
+            ApplyOutline(plr)
         end
     end
 end
 
--- Обновление с ограничением FPS
 local function OutlineUpdateLoop()
     if not OutlineEnabled then return end
     
@@ -695,14 +670,11 @@ local function OutlineUpdateLoop()
     if now - LastOutlineUpdate < OutlineUpdateRate then return end
     LastOutlineUpdate = now
     
-    -- Проверяем только новых игроков или изменивших состояние
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer then
             if not OutlinedPlayers[plr] and plr.Character then
-                -- Если нет Outline - создаём
                 ApplyOutline(plr)
             elseif OutlinedPlayers[plr] then
-                -- Проверяем, не изменилась ли роль
                 local role = GetPlayerRole(plr)
                 local isDead = (role == "Dead" or role == nil)
                 local inGame = IsPlayerInGame(plr)
@@ -717,30 +689,22 @@ local function OutlineUpdateLoop()
     end
 end
 
--- Обработка смены персонажа (респавн, новый раунд)
 local function OnCharacterAdded(plr)
     if plr == LocalPlayer then return end
-    
-    -- Ждём появления персонажа
     task.wait(0.3)
-    
     if OutlineEnabled then
-        -- Принудительно обновляем Outline для этого игрока
         ApplyOutline(plr)
     end
 end
 
--- Настройка игрока (подписка на события)
 local function SetupPlayer(plr)
     if plr == LocalPlayer then return end
     
-    -- Удаляем старые подключения
     if PlayerConnections[plr] then
         pcall(function() PlayerConnections[plr]:Disconnect() end)
         PlayerConnections[plr] = nil
     end
     
-    -- Подписываемся на CharacterAdded (респавн, новый раунд)
     local conn = plr.CharacterAdded:Connect(function()
         OnCharacterAdded(plr)
     end)
@@ -748,26 +712,22 @@ local function SetupPlayer(plr)
     PlayerConnections[plr] = conn
     OutlineMaid:GiveTask(conn)
     
-    -- Если игрок уже есть - сразу создаём Outline
     if plr.Character and OutlineEnabled then
         task.wait(0.5)
         ApplyOutline(plr)
     end
 end
 
--- Обработка всех существующих игроков
 for _, plr in ipairs(Players:GetPlayers()) do
     if plr ~= LocalPlayer then
         SetupPlayer(plr)
     end
 end
 
--- Обработка новых игроков
 Players.PlayerAdded:Connect(function(plr)
     SetupPlayer(plr)
 end)
 
--- Обработка удаления игроков
 Players.PlayerRemoving:Connect(function(plr)
     RemoveOutline(plr)
     if PlayerConnections[plr] then
@@ -856,7 +816,6 @@ local function CreateConsoleMenu()
     print("🔄 OUTLINE НИКОГДА НЕ ПРОПАДАЕТ:")
     print("  ✅ После респавна игрока")
     print("  ✅ После нового раунда")
-    print("  ✅ При смене персонажа")
     print("  ✅ Для новых игроков")
     print("  ❌ Пропадает ТОЛЬКО при выключении")
 end
@@ -895,15 +854,32 @@ local function ToggleWallCheck()
     print("🧱 Wall Check: " .. (WallCheckEnabled and "ENABLED" or "DISABLED"))
 end
 
+-- ФУНКЦИЯ ДЛЯ КНОПКИ OUTLINE (ГЛАВНОЕ ИСПРАВЛЕНИЕ)
 local function UpdateOutlineButtonState()
     local btn = BindableButtons.Buttons["outline_toggle"]
     if not btn then return end
-    BindableButtons.UpdateBButtonText("outline_toggle", OutlineEnabled and "OL:ON" or "OL:OFF")
-    BindableButtons.UpdateBButtonColor("outline_toggle", OutlineEnabled, "outline")
+    
+    -- Обновляем текст
+    local textLabel = btn:FindFirstChild("@Text")
+    if textLabel then
+        textLabel.Text = OutlineEnabled and "OL:ON" or "OL:OFF"
+    end
+    
+    -- Обновляем цвет
+    local stroke = btn:FindFirstChild("@Stroke")
+    if stroke then
+        if OutlineEnabled then
+            stroke.Color = __ACTIVE_COLOR
+        else
+            stroke.Color = __OUTLINE_COLOR
+        end
+    end
 end
 
 local function ToggleOutline()
-    OutlineEnabled = not OutlineEnabled    if OutlineEnabled then
+    OutlineEnabled = not OutlineEnabled
+    
+    if OutlineEnabled then
         -- Включаем - создаём для всех
         RefreshAllOutlines()
         print("👁️ Outline: ENABLED (постоянный)")
@@ -914,10 +890,13 @@ local function ToggleOutline()
         end
         print("👁️ Outline: DISABLED")
     end
+    
+    -- Обновляем состояние кнопки
     UpdateOutlineButtonState()
 end
 
 local function CreateButtons()
+    -- Кнопка Aim
     if not BindableButtons.Buttons["aim_toggle"] then
         BindableButtons.AddBButton("aim_toggle", "Aim:OFF", function()
             ToggleAimLock()
@@ -930,6 +909,7 @@ local function CreateButtons()
         end
     end
     
+    -- Кнопка WallCheck
     if not BindableButtons.Buttons["wall_toggle"] then
         BindableButtons.AddBButton("wall_toggle", "Wall:OFF", function()
             ToggleWallCheck()
@@ -942,6 +922,7 @@ local function CreateButtons()
         end
     end
     
+    -- Кнопка Outline (с правильной функцией)
     if not BindableButtons.Buttons["outline_toggle"] then
         BindableButtons.AddBButton("outline_toggle", "OL:OFF", function()
             ToggleOutline()
@@ -1015,7 +996,6 @@ RunService:BindToRenderStep(
 
 RunService.Heartbeat:Connect(OutlineUpdateLoop)
 
--- Очистка
 LocalPlayer.CharacterAdded:Connect(function()
     TargetPlayer = nil
 end)
