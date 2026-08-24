@@ -1,5 +1,5 @@
--- MM2 Murderer Aim Lock V2.6 + ESP (Sheriff/Murderer/Innocent)
--- FIXED: Исправлен ESP, оптимизирован FPS
+-- MM2 Murderer Aim Lock V2.6 + OUTLINE (Sheriff/Murderer/Innocent)
+-- Исправлено: правильное определение ролей, подсветка контуром
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -121,7 +121,7 @@ local __WALL_COLOR = ColorSequence.new({
     ColorSequenceKeypoint.new(1,   __PCLR(0.2, 0.5, 0.8))
 })
 
-local __ESP_COLOR = ColorSequence.new({
+local __OUTLINE_COLOR = ColorSequence.new({
     ColorSequenceKeypoint.new(0,   __PCLR(1.0, 0.0, 0.0)),
     ColorSequenceKeypoint.new(0.6, __PCLR(0.8, 0.0, 0.2)),
     ColorSequenceKeypoint.new(1,   __PCLR(0.6, 0.0, 0.3))
@@ -250,8 +250,8 @@ function BindableButtons.AddBButton(id, text, clickFunc, isGold, colorType)
     Stroke.Name = "@Stroke"
     if colorType == "wall" then
         Stroke.Color = __WALL_COLOR
-    elseif colorType == "esp" then
-        Stroke.Color = __ESP_COLOR
+    elseif colorType == "outline" then
+        Stroke.Color = __OUTLINE_COLOR
     else
         Stroke.Color = __NORMAL_COLOR
     end
@@ -312,8 +312,8 @@ function BindableButtons.UpdateBButtonColor(id, isActive, colorType)
         else
             if colorType == "wall" then
                 stroke.Color = __WALL_COLOR
-            elseif colorType == "esp" then
-                stroke.Color = __ESP_COLOR
+            elseif colorType == "outline" then
+                stroke.Color = __OUTLINE_COLOR
             else
                 stroke.Color = __NORMAL_COLOR
             end
@@ -328,7 +328,7 @@ local AimLockEnabled = false
 local TargetPart = "HumanoidRootPart"
 local TargetPlayer = nil
 local WallCheckEnabled = false
-local ESPEnabled = false
+local OutlineEnabled = false
 local ShowBindableButton = true
 local bindButtonSize = 0.10
 local PredictionLevel = 0.2
@@ -341,281 +341,290 @@ local WALL_CHECK_INTERVAL = 0.15
 local InvisibleTimer = 0
 local MAX_INVISIBLE_TIME = 0.5
 
-local MurdererWeapons = {
-    "knife", "blade", "dagger", "saw", "slasher", "axe", 
-    "scythe", "peppermint", "cookie", "edge", "batwing", 
-    "icewing", "bone", "hallow", "vampire", "cutter"
-}
-
-local SheriffWeapons = {
-    "gun", "pistol", "revolver", "shooter", "blaster"
-}
-
 -- ==============================================
 -- ОПРЕДЕЛЕНИЕ РОЛЕЙ (УЛУЧШЕННОЕ)
 -- ==============================================
-local function HasWeapon(plr, weaponList)
-    if not plr or not plr.Character then return false end
+local function FindMurdererWeapon(character)
+    if not character then return false end
+    
+    -- Список оружия убийцы
+    local murdererWeapons = {
+        "knife", "blade", "dagger", "saw", "slasher", "axe", 
+        "scythe", "peppermint", "cookie", "edge", "batwing", 
+        "icewing", "bone", "hallow", "vampire", "cutter", "candy"
+    }
     
     -- Проверяем в руках
-    for _, item in ipairs(plr.Character:GetChildren()) do
+    for _, item in ipairs(character:GetChildren()) do
         if item:IsA("Tool") then
             local name = item.Name:lower()
-            for _, wName in ipairs(weaponList) do
-                if name:find(wName) then
+            
+            -- Проверяем по названию
+            for _, wName in ipairs(murdererWeapons) do
+                if name:find(wName) or wName:find(name) then
                     return true
                 end
             end
-            -- Проверяем серверные/клиентские части
-            if item:FindFirstChild("KnifeServer") or item:FindFirstChild("KnifeClient") or
-               item:FindFirstChild("GunServer") or item:FindFirstChild("GunClient") then
+            
+            -- Проверяем по серверным/клиентским частям
+            if item:FindFirstChild("KnifeServer") or item:FindFirstChild("KnifeClient") then
+                return true
+            end
+            
+            -- Проверяем по ToolTip (некоторые игры используют это)
+            if item.ToolTip and string.lower(item.ToolTip):find("knife") then
                 return true
             end
         end
     end
-    
-    -- Проверяем в рюкзаке
-    local backpack = plr:FindFirstChild("Backpack")
-    if backpack then
-        for _, item in ipairs(backpack:GetChildren()) do
-            if item:IsA("Tool") then
-                local name = item.Name:lower()
-                for _, wName in ipairs(weaponList) do
-                    if name:find(wName) then
-                        return true
-                    end
-                end
-                if item:FindFirstChild("KnifeServer") or item:FindFirstChild("KnifeClient") or
-                   item:FindFirstChild("GunServer") or item:FindFirstChild("GunClient") then
-                    return true
-                end
-            end
-        end
-    end
-    
     return false
 end
 
-local function IsMurderer(plr)
-    return HasWeapon(plr, MurdererWeapons)
-end
-
-local function IsSheriff(plr)
-    return HasWeapon(plr, SheriffWeapons)
+local function FindSheriffWeapon(character)
+    if not character then return false end
+    
+    local sheriffWeapons = {
+        "gun", "pistol", "revolver", "shooter", "blaster", "glock"
+    }
+    
+    for _, item in ipairs(character:GetChildren()) do
+        if item:IsA("Tool") then
+            local name = item.Name:lower()
+            
+            for _, wName in ipairs(sheriffWeapons) do
+                if name:find(wName) or wName:find(name) then
+                    return true
+                end
+            end
+            
+            if item:FindFirstChild("GunServer") or item:FindFirstChild("GunClient") then
+                return true
+            end
+            
+            if item.ToolTip and string.lower(item.ToolTip):find("gun") then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 local function GetPlayerRole(plr)
-    if plr == LocalPlayer then return nil end
+    if not plr or plr == LocalPlayer then return nil end
     if not plr.Character then return "Unknown" end
     
     local humanoid = plr.Character:FindFirstChild("Humanoid")
     if not humanoid or humanoid.Health <= 0 then return "Dead" end
     
-    -- Проверяем атрибуты (некоторые игры используют их)
-    if plr:GetAttribute("Murderer") == true or plr:GetAttribute("isMurderer") == true then
+    -- 1. Проверяем атрибуты (самый надёжный способ)
+    local murdererAttr = plr:GetAttribute("Murderer")
+    local sheriffAttr = plr:GetAttribute("Sheriff")
+    local roleAttr = plr:GetAttribute("Role")
+    
+    if murdererAttr == true or murdererAttr == "True" then
         return "Murderer"
     end
-    if plr:GetAttribute("Sheriff") == true or plr:GetAttribute("isSheriff") == true then
+    if sheriffAttr == true or sheriffAttr == "True" then
+        return "Sheriff"
+    end
+    if roleAttr == "Murderer" or roleAttr == "Murder" or roleAttr == "Killer" then
+        return "Murderer"
+    end
+    if roleAttr == "Sheriff" or roleAttr == "Cop" then
         return "Sheriff"
     end
     
-    -- Проверяем оружие
-    if IsSheriff(plr) then
+    -- 2. Проверяем оружие в руках
+    if FindMurdererWeapon(plr.Character) then
+        return "Murderer"
+    end
+    
+    if FindSheriffWeapon(plr.Character) then
         return "Sheriff"
     end
-    if IsMurderer(plr) then
+    
+    -- 3. Проверяем рюкзак
+    local backpack = plr:FindFirstChild("Backpack")
+    if backpack then
+        if FindMurdererWeapon(backpack) then
+            return "Murderer"
+        end
+        if FindSheriffWeapon(backpack) then
+            return "Sheriff"
+        end
+    end
+    
+    -- 4. Проверяем имя (некоторые игры используют это)
+    local name = plr.Name:lower()
+    if name:find("murder") or name:find("killer") then
         return "Murderer"
+    end
+    if name:find("sheriff") or name:find("cop") or name:find("police") then
+        return "Sheriff"
     end
     
     return "Innocent"
 end
 
 -- ==============================================
--- ESP СИСТЕМА (ОПТИМИЗИРОВАННАЯ)
+-- OUTLINE СИСТЕМА (ВМЕСТО ESP)
 -- ==============================================
-local ESPObjects = {}
-local ESPMaid = Maid.new()
-local ESPUpdateConnection = nil
-local ESPUpdateRate = 0.1
-local LastESPUpdate = 0
+local OutlinedPlayers = {}
+local OutlineMaid = Maid.new()
+local OutlineUpdateRate = 0.15
+local LastOutlineUpdate = 0
 
-local function GetRoleColor(role)
+local function GetOutlineColor(role)
     if role == "Murderer" then
-        return Color3.fromRGB(255, 0, 0)
+        return Color3.fromRGB(255, 0, 0)      -- Ярко-красный
     elseif role == "Sheriff" then
-        return Color3.fromRGB(50, 150, 255)
+        return Color3.fromRGB(0, 150, 255)    -- Ярко-синий
     elseif role == "Innocent" then
-        return Color3.fromRGB(50, 255, 50)
+        return Color3.fromRGB(0, 255, 0)      -- Ярко-зелёный
     else
-        return Color3.fromRGB(255, 255, 255)
+        return Color3.fromRGB(255, 255, 255)  -- Белый
     end
 end
 
-local function GetRoleTextColor(role)
+local function GetRoleEmoji(role)
     if role == "Murderer" then
-        return Color3.fromRGB(255, 50, 50)
+        return "🔪"
     elseif role == "Sheriff" then
-        return Color3.fromRGB(50, 150, 255)
+        return "🔫"
     elseif role == "Innocent" then
-        return Color3.fromRGB(50, 255, 50)
+        return "👤"
     else
-        return Color3.fromRGB(200, 200, 200)
+        return "❓"
     end
 end
 
-local function CreateESP(plr)
+local function ApplyOutline(plr)
     if not plr or plr == LocalPlayer then return end
-    if ESPObjects[plr] then return end
+    if OutlinedPlayers[plr] then return end
     
     local role = GetPlayerRole(plr)
-    if not role or role == "Dead" then return end
+    if not role or role == "Dead" or role == "Unknown" then return end
     
-    local color = GetRoleColor(role)
-    local textColor = GetRoleTextColor(role)
+    local color = GetOutlineColor(role)
+    local emoji = GetRoleEmoji(role)
     
-    local espGroup = Instance.new("Folder")
-    espGroup.Name = "ESP_" .. plr.Name
-    espGroup.Parent = plr.Character or plr
-    ESPObjects[plr] = espGroup
+    -- Создаём Highlight для подсветки контуром
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "Outline_Highlight"
+    highlight.FillTransparency = 1  -- Прозрачная заливка
+    highlight.OutlineTransparency = 0.2  -- Полупрозрачный контур
+    highlight.OutlineColor = color
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Adornee = plr.Character
+    highlight.Parent = plr.Character
     
-    -- Рамка вокруг персонажа (BoxHandleAdornment)
-    local box = Instance.new("BoxHandleAdornment")
-    box.Name = "Box"
-    box.Size = Vector3.new(3, 5.5, 2)
-    box.Color3 = color
-    box.Transparency = 0.4
-    box.ZIndex = 0
-    box.AlwaysOnTop = true
-    box.Parent = espGroup
-    
-    -- Обновляем привязку к RootPart
-    local function updateBox()
-        if plr and plr.Character then
-            local root = plr.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                box.Adornee = root
-            end
-        end
-    end
-    updateBox()
-    
-    -- Имя игрока с ролью (BillboardGui)
-    local nameTag = Instance.new("BillboardGui")
-    nameTag.Name = "NameTag"
-    nameTag.Size = UDim2.new(0, 200, 0, 50)
-    nameTag.Adornee = plr.Character and plr.Character:FindFirstChild("Head")
-    nameTag.Parent = espGroup
-    nameTag.AlwaysOnTop = true
+    -- Создаём BillboardGui с именем и ролью
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "Outline_NameTag"
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.Adornee = plr.Character and plr.Character:FindFirstChild("Head")
+    billboard.Parent = plr.Character
+    billboard.AlwaysOnTop = true
     
     local nameLabel = Instance.new("TextLabel")
     nameLabel.Size = UDim2.new(1, 0, 1, 0)
     nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = plr.Name .. "\n" .. role
-    nameLabel.TextColor3 = textColor
-    nameLabel.TextSize = 13
+    nameLabel.Text = emoji .. " " .. plr.Name .. " [" .. role .. "]"
+    nameLabel.TextColor3 = color
+    nameLabel.TextSize = 14
     nameLabel.Font = Enum.Font.Jura
     nameLabel.TextStrokeTransparency = 0.2
     nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    nameLabel.Parent = nameTag
+    nameLabel.Parent = billboard
     
-    -- Обновляем привязку к Head
-    local function updateTag()
-        if plr and plr.Character then
-            local head = plr.Character:FindFirstChild("Head")
-            if head then
-                nameTag.Adornee = head
-            end
-        end
-    end
-    updateTag()
+    OutlinedPlayers[plr] = {
+        Highlight = highlight,
+        Billboard = billboard,
+        Label = nameLabel,
+        Role = role
+    }
     
-    -- Подписка на изменения персонажа
+    -- Обновление при смене персонажа
     local charConn
     charConn = plr.CharacterAdded:Connect(function()
         task.wait(0.3)
-        RemoveESP(plr)
-        if ESPEnabled then
-            CreateESP(plr)
+        RemoveOutline(plr)
+        if OutlineEnabled then
+            ApplyOutline(plr)
         end
     end)
-    ESPMaid:GiveTask(charConn)
+    OutlineMaid:GiveTask(charConn)
 end
 
-local function RemoveESP(plr)
-    if ESPObjects[plr] then
-        ESPObjects[plr]:Destroy()
-        ESPObjects[plr] = nil
+local function RemoveOutline(plr)
+    if OutlinedPlayers[plr] then
+        local data = OutlinedPlayers[plr]
+        if data.Highlight then data.Highlight:Destroy() end
+        if data.Billboard then data.Billboard:Destroy() end
+        OutlinedPlayers[plr] = nil
     end
 end
 
-local function UpdateESP()
-    if ESPEnabled then
+local function UpdateOutline()
+    if OutlineEnabled then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= LocalPlayer and plr.Character then
                 local role = GetPlayerRole(plr)
-                if role and role ~= "Dead" then
-                    -- Проверяем, нужно ли обновить ESP
-                    if ESPObjects[plr] then
-                        -- Обновляем цвет при смене роли
-                        local espGroup = ESPObjects[plr]
-                        local box = espGroup:FindFirstChild("Box")
-                        local nameTag = espGroup:FindFirstChild("NameTag")
-                        
-                        if box then
-                            box.Color3 = GetRoleColor(role)
-                        end
-                        
-                        if nameTag then
-                            local label = nameTag:FindFirstChildWhichIsA("TextLabel")
-                            if label then
-                                label.Text = plr.Name .. "\n" .. role
-                                label.TextColor3 = GetRoleTextColor(role)
-                            end
+                
+                if role and role ~= "Dead" and role ~= "Unknown" then
+                    if OutlinedPlayers[plr] then
+                        -- Обновляем цвет если роль изменилась
+                        local data = OutlinedPlayers[plr]
+                        if data.Role ~= role then
+                            local color = GetOutlineColor(role)
+                            data.Highlight.OutlineColor = color
+                            data.Label.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
+                            data.Label.TextColor3 = color
+                            data.Role = role
                         end
                     else
-                        CreateESP(plr)
+                        ApplyOutline(plr)
                     end
                 else
-                    RemoveESP(plr)
+                    RemoveOutline(plr)
                 end
             end
         end
     else
-        for plr, esp in pairs(ESPObjects) do
-            esp:Destroy()
-            ESPObjects[plr] = nil
+        for plr, _ in pairs(OutlinedPlayers) do
+            RemoveOutline(plr)
         end
     end
 end
 
--- Обновление ESP с ограничением по FPS
-local function ESPUpdateLoop()
-    if not ESPEnabled then return end
+-- Обновление с ограничением
+local function OutlineUpdateLoop()
+    if not OutlineEnabled then return end
     
     local now = os.clock()
-    if now - LastESPUpdate < ESPUpdateRate then return end
-    LastESPUpdate = now
+    if now - LastOutlineUpdate < OutlineUpdateRate then return end
+    LastOutlineUpdate = now
     
-    UpdateESP()
+    UpdateOutline()
 end
 
--- Подписка на события игроков
+-- Подписка на события
 Players.PlayerAdded:Connect(function(plr)
     plr.CharacterAdded:Connect(function()
-        task.wait(0.3)
-        if ESPEnabled then
-            RemoveESP(plr)
-            CreateESP(plr)
+        task.wait(0.5)
+        if OutlineEnabled then
+            RemoveOutline(plr)
+            ApplyOutline(plr)
         end
     end)
 end)
 
 Players.PlayerRemoving:Connect(function(plr)
-    RemoveESP(plr)
+    RemoveOutline(plr)
 end)
 
 -- ==============================================
--- ФУНКЦИИ ПОИСКА
+-- ФУНКЦИИ ПОИСКА УБИЙЦЫ
 -- ==============================================
 function IsVisible(target)
     if not target or not target.Character then return false end
@@ -643,52 +652,43 @@ function IsVisible(target)
     return result.Instance:IsDescendantOf(target.Character)
 end
 
-function CheckForKnife(container)
-    if not container then return false end
-    for _, item in ipairs(container:GetChildren()) do
-        if item:IsA("Tool") then
-            local name = item.Name:lower()
-            local isServer = item:FindFirstChild("KnifeServer")
-            local isClient = item:FindFirstChild("KnifeClient")
-            
-            if name == "knife" or isServer or isClient then
-                return true
-            end
-            
-            for _, weaponName in ipairs(MurdererWeapons) do
-                if name:find(weaponName) then
-                    return true
-                end
-            end
-        end
-    end
-    return false
-end
-
 function FindMurderer(preferTarget)
     if preferTarget and preferTarget.Character then
         local hum = preferTarget.Character:FindFirstChild("Humanoid")
         if hum and hum.Health > 0 then
-            return preferTarget
+            -- Проверяем, что это действительно убийца
+            if GetPlayerRole(preferTarget) == "Murderer" then
+                return preferTarget
+            end
         end
     end
 
+    local bestTarget = nil
+    local bestDist = math.huge
+    
     for _, pl in ipairs(Players:GetPlayers()) do
         if pl ~= LocalPlayer and pl.Character then
-            local hum = pl.Character:FindFirstChild("Humanoid")
-            if hum and hum.Health > 0 then
-                local inChar = CheckForKnife(pl.Character)
-                local inPack = CheckForKnife(pl:FindFirstChild("Backpack"))
-                
-                if inChar or inPack then
-                    if not WallCheckEnabled or IsVisible(pl) then
-                        return pl
+            local role = GetPlayerRole(pl)
+            if role == "Murderer" then
+                local hum = pl.Character:FindFirstChild("Humanoid")
+                if hum and hum.Health > 0 then
+                    local root = pl.Character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        if myRoot then
+                            local dist = (root.Position - myRoot.Position).Magnitude
+                            if dist < bestDist then
+                                bestDist = dist
+                                bestTarget = pl
+                            end
+                        end
                     end
                 end
             end
         end
     end
-    return nil
+    
+    return bestTarget
 end
 
 -- ==============================================
@@ -748,23 +748,23 @@ local function AimLockLoop(deltaTime)
 end
 
 -- ==============================================
--- GUI МЕНЮ (КОНСОЛЬНОЕ)
+-- GUI МЕНЮ
 -- ==============================================
 local function CreateConsoleMenu()
     print("=" .. string.rep("=", 40))
-    print("  🎯 MM2 AIMLOCK V2.6 | ESP EDITION")
+    print("  🎯 MM2 AIMLOCK V2.6 | OUTLINE EDITION")
     print("=" .. string.rep("=", 40))
-    print("  [1] Toggle Aim Lock   [Currently: " .. (AimLockEnabled and "ON" or "OFF") .. "]")
-    print("  [2] Toggle Wall Check [Currently: " .. (WallCheckEnabled and "ON" or "OFF") .. "]")
-    print("  [3] Toggle ESP        [Currently: " .. (ESPEnabled and "ON" or "OFF") .. "]")
-    print("  [4] Target Part       [Currently: " .. TargetPart .. "]")
-    print("  [5] Prediction Level  [Currently: " .. PredictionLevel .. "]")
+    print("  [1] Toggle Aim Lock    [Currently: " .. (AimLockEnabled and "ON" or "OFF") .. "]")
+    print("  [2] Toggle Wall Check  [Currently: " .. (WallCheckEnabled and "ON" or "OFF") .. "]")
+    print("  [3] Toggle Outline     [Currently: " .. (OutlineEnabled and "ON" or "OFF") .. "]")
+    print("  [4] Target Part        [Currently: " .. TargetPart .. "]")
+    print("  [5] Prediction Level   [Currently: " .. PredictionLevel .. "]")
     print("  [6] Print Status")
     print("  [7] Exit Menu")
     print("=" .. string.rep("=", 40))
     print("💡 Quick Toggle Aim: Press 'T'")
     print("💡 Quick Toggle WallCheck: Press 'G'")
-    print("💡 Quick Toggle ESP: Press 'E'")
+    print("💡 Quick Toggle Outline: Press 'E'")
 end
 
 -- ==============================================
@@ -801,18 +801,18 @@ local function ToggleWallCheck()
     print("🧱 Wall Check: " .. (WallCheckEnabled and "ENABLED" or "DISABLED"))
 end
 
-local function UpdateESPButtonState()
-    local btn = BindableButtons.Buttons["esp_toggle"]
+local function UpdateOutlineButtonState()
+    local btn = BindableButtons.Buttons["outline_toggle"]
     if not btn then return end
-    BindableButtons.UpdateBButtonText("esp_toggle", ESPEnabled and "ESP:ON" or "ESP:OFF")
-    BindableButtons.UpdateBButtonColor("esp_toggle", ESPEnabled, "esp")
+    BindableButtons.UpdateBButtonText("outline_toggle", OutlineEnabled and "OL:ON" or "OL:OFF")
+    BindableButtons.UpdateBButtonColor("outline_toggle", OutlineEnabled, "outline")
 end
 
-local function ToggleESP()
-    ESPEnabled = not ESPEnabled
-    UpdateESP()
-    UpdateESPButtonState()
-    print("👁️ ESP: " .. (ESPEnabled and "ENABLED" or "DISABLED"))
+local function ToggleOutline()
+    OutlineEnabled = not OutlineEnabled
+    UpdateOutline()
+    UpdateOutlineButtonState()
+    print("👁️ Outline: " .. (OutlineEnabled and "ENABLED" or "DISABLED"))
 end
 
 local function CreateButtons()
@@ -840,12 +840,12 @@ local function CreateButtons()
         end
     end
     
-    if not BindableButtons.Buttons["esp_toggle"] then
-        BindableButtons.AddBButton("esp_toggle", "ESP:OFF", function()
-            ToggleESP()
-        end, false, "esp")
+    if not BindableButtons.Buttons["outline_toggle"] then
+        BindableButtons.AddBButton("outline_toggle", "OL:OFF", function()
+            ToggleOutline()
+        end, false, "outline")
         
-        local btn = BindableButtons.Buttons["esp_toggle"]
+        local btn = BindableButtons.Buttons["outline_toggle"]
         if btn then
             local screen = Workspace.CurrentCamera.ViewportSize
             btn.Size = __UD2(bindButtonSize * (screen.Y / screen.X), 0, bindButtonSize, 0)
@@ -854,17 +854,17 @@ local function CreateButtons()
     
     UpdateAimButtonState()
     UpdateWallButtonState()
-    UpdateESPButtonState()
+    UpdateOutlineButtonState()
 end
 
 local function DeleteButtons()
     BindableButtons.DeleteBButton("aim_toggle")
     BindableButtons.DeleteBButton("wall_toggle")
-    BindableButtons.DeleteBButton("esp_toggle")
+    BindableButtons.DeleteBButton("outline_toggle")
 end
 
 local function ToggleButtonsVisibility()
-    for _, id in ipairs({"aim_toggle", "wall_toggle", "esp_toggle"}) do
+    for _, id in ipairs({"aim_toggle", "wall_toggle", "outline_toggle"}) do
         local btn = BindableButtons.Buttons[id]
         if btn then
             btn.Visible = ShowBindableButton
@@ -888,7 +888,7 @@ local function SetupKeybinds()
         end
         
         if input.KeyCode == Enum.KeyCode.E then
-            ToggleESP()
+            ToggleOutline()
         end
     end)
     
@@ -911,8 +911,8 @@ RunService:BindToRenderStep(
     AimLockLoop
 )
 
--- ESP обновление с ограничением FPS (Heartbeat вместо RenderStepped)
-RunService.Heartbeat:Connect(ESPUpdateLoop)
+-- Outline обновление с ограничением FPS
+RunService.Heartbeat:Connect(OutlineUpdateLoop)
 
 -- Очистка при смене персонажа
 LocalPlayer.CharacterAdded:Connect(function()
@@ -924,24 +924,24 @@ RootMaid:GiveTask(function()
     DeleteButtons()
     RunService:UnbindFromRenderStep("MM2_AimLock_PhaseSync")
     if MainGUI then MainGUI:Destroy() end
-    ESPMaid:Destroy()
-    for _, esp in pairs(ESPObjects) do
-        esp:Destroy()
+    OutlineMaid:Destroy()
+    for plr, _ in pairs(OutlinedPlayers) do
+        RemoveOutline(plr)
     end
-    ESPObjects = {}
+    OutlinedPlayers = {}
 end)
 
 -- ==============================================
--- ВЫВОД МЕНЮ В КОНСОЛЬ
+-- ВЫВОД МЕНЮ
 -- ==============================================
-print("✅ MM2 Aim Lock V2.6 + ESP Loaded!")
+print("✅ MM2 Aim Lock V2.6 + OUTLINE Loaded!")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("🎯 ТРИ КНОПКИ НА ЭКРАНЕ:")
 print("  🔵 Aim:ON/OFF  -  Вкл/Выкл автонаведение")
 print("  🔵 Wall:ON/OFF -  Вкл/Выкл проверку видимости")
-print("  🔴 ESP:ON/OFF  -  Вкл/Выкл ESP")
+print("  🔴 OL:ON/OFF   -  Вкл/Выкл Outline подсветку")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("🎨 ЦВЕТА ESP:")
+print("🎨 ЦВЕТА OUTLINE:")
 print("  🔴 Красный  - Murderer (убийца)")
 print("  🔵 Синий    - Sheriff (шериф)")
 print("  🟢 Зелёный  - Innocent (невиновный)")
@@ -949,7 +949,7 @@ print("━━━━━━━━━━━━━━━━━━━━━━━━�
 print("⌨️ ГОРЯЧИЕ КЛАВИШИ:")
 print("  [T] - Toggle Aim Lock")
 print("  [G] - Toggle Wall Check")
-print("  [E] - Toggle ESP")
+print("  [E] - Toggle Outline")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 CreateConsoleMenu()
 
@@ -957,9 +957,9 @@ CreateConsoleMenu()
 _G.MM2AimMenu = CreateConsoleMenu
 _G.MM2Toggle = ToggleAimLock
 _G.MM2Wall = ToggleWallCheck
-_G.MM2ESP = ToggleESP
+_G.MM2Outline = ToggleOutline
 
 print("🔧 Type 'MM2AimMenu()' to show menu")
 print("🔧 Type 'MM2Toggle()' to toggle aim")
 print("🔧 Type 'MM2Wall()' to toggle wallcheck")
-print("🔧 Type 'MM2ESP()' to toggle ESP")
+print("🔧 Type 'MM2Outline()' to toggle outline")
