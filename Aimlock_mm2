@@ -1,5 +1,5 @@
 -- MM2 Murderer Aim Lock V2.6 + OUTLINE (Sheriff/Murderer/Innocent)
--- FIXED: Полное автоматическое обновление ESP
+-- FIXED: Автообновление после раунда
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -406,7 +406,7 @@ end
 
 local function GetPlayerRole(plr)
     if not plr or plr == LocalPlayer then return nil end
-    if not plr.Character then return "Dead" end
+    if not plr.Character then return "Unknown" end
     
     local humanoid = plr.Character:FindFirstChild("Humanoid")
     if not humanoid or humanoid.Health <= 0 then return "Dead" end
@@ -534,9 +534,10 @@ end
 -- ==============================================
 local OutlinedPlayers = {}
 local OutlineMaid = Maid.new()
-local OutlineUpdateRate = 0.2
+local OutlineUpdateRate = 0.15
 local LastOutlineUpdate = 0
 
+-- Отслеживание подключений к CharacterAdded для каждого игрока
 local PlayerConnections = {}
 
 local function GetOutlineColor(role, isDead)
@@ -574,85 +575,65 @@ local function IsPlayerInGame(plr)
     if not humanoid then return false end
     if humanoid.Health <= 0 then return false end
     
-    -- Проверяем, есть ли у игрока оружие (в лобби его нет)
-    local hasWeapon = false
-    for _, item in ipairs(plr.Character:GetChildren()) do
-        if item:IsA("Tool") then
-            hasWeapon = true
-            break
-        end
-    end
-    
-    -- Если игрок в лобби (высокая позиция и нет оружия)
-    local root = plr.Character:FindFirstChild("HumanoidRootPart")
-    if root then
-        local yPos = root.Position.Y
-        if yPos > 100 and not hasWeapon then
-            return false
-        end
-    end
-    
     return true
 end
 
 local function ApplyOutline(plr)
     if not plr or plr == LocalPlayer then return end
-    if not OutlineEnabled then return end
+    if OutlinedPlayers[plr] then return end
     if not plr.Character then return end
     
-    -- Удаляем старый Outline
-    RemoveOutline(plr)
-    
     local role = GetPlayerRole(plr)
-    local isDead = (role == "Dead" or role == nil)
+    local isDead = (role == "Dead" or role == "Unknown" or role == nil)
     local inGame = IsPlayerInGame(plr)
     
-    local isActuallyDead = isDead or not inGame
-    local color = GetOutlineColor(role, isActuallyDead)
+    -- Если игрок мёртв или не в игре - не показываем Outline
+    if isDead or not inGame then
+        return
+    end
+    
+    local color = GetOutlineColor(role, false)
     
     -- Создаём Highlight
     local highlight = Instance.new("Highlight")
     highlight.Name = "Outline_Highlight"
     highlight.FillTransparency = 1
-    highlight.OutlineTransparency = isActuallyDead and 0.5 or 0.2
+    highlight.OutlineTransparency = 0.2
     highlight.OutlineColor = color
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     highlight.Adornee = plr.Character
     highlight.Parent = plr.Character
     
-    -- Billboard с именем и ролью (только для живых)
+    -- Billboard с именем и ролью
+    local head = plr.Character:FindFirstChild("Head")
     local billboard = nil
     local nameLabel = nil
     
-    if not isActuallyDead then
-        local head = plr.Character:FindFirstChild("Head")
-        if head then
-            billboard = Instance.new("BillboardGui")
-            billboard.Name = "Outline_NameTag"
-            billboard.Size = UDim2.new(0, 200, 0, 50)
-            billboard.Adornee = head
-            billboard.Parent = plr.Character
-            billboard.AlwaysOnTop = true
-            
-            nameLabel = Instance.new("TextLabel")
-            nameLabel.Size = UDim2.new(1, 0, 1, 0)
-            nameLabel.BackgroundTransparency = 1
-            nameLabel.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
-            nameLabel.TextColor3 = color
-            nameLabel.TextSize = 14
-            nameLabel.Font = Enum.Font.Jura
-            nameLabel.TextStrokeTransparency = 0.2
-            nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-            nameLabel.Parent = billboard
-        end
+    if head then
+        billboard = Instance.new("BillboardGui")
+        billboard.Name = "Outline_NameTag"
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.Adornee = head
+        billboard.Parent = plr.Character
+        billboard.AlwaysOnTop = true
+        
+        nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
+        nameLabel.TextColor3 = color
+        nameLabel.TextSize = 14
+        nameLabel.Font = Enum.Font.Jura
+        nameLabel.TextStrokeTransparency = 0.2
+        nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        nameLabel.Parent = billboard
     end
     
     OutlinedPlayers[plr] = {
         Highlight = highlight,
         Billboard = billboard,
         Label = nameLabel,
-        Role = role,
-        IsDead = isActuallyDead
+        Role = role
     }
 end
 
@@ -669,25 +650,70 @@ local function RemoveOutline(plr)
     end
 end
 
--- ПОЛНОЕ ОБНОВЛЕНИЕ ВСЕХ OUTLINE
-local function RefreshAllOutlines()
-    if not OutlineEnabled then
-        for plr, _ in pairs(OutlinedPlayers) do
-            RemoveOutline(plr)
-        end
-        return
+-- Функция полного обновления Outline (для нового раунда)
+local function FullRefreshOutline()
+    -- Удаляем все старые Outline
+    for plr, _ in pairs(OutlinedPlayers) do
+        RemoveOutline(plr)
     end
     
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            if plr.Character then
-                ApplyOutline(plr)
+    -- Создаём заново для всех живых игроков
+    if OutlineEnabled then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character then
+                local role = GetPlayerRole(plr)
+                if role and role ~= "Dead" and role ~= "Unknown" then
+                    if IsPlayerInGame(plr) then
+                        ApplyOutline(plr)
+                    end
+                end
             end
         end
     end
 end
 
--- ОБНОВЛЕНИЕ С ОГРАНИЧЕНИЕМ FPS
+local function UpdateOutline()
+    if OutlineEnabled then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character then
+                local role = GetPlayerRole(plr)
+                local isDead = (role == "Dead" or role == "Unknown" or role == nil)
+                local inGame = IsPlayerInGame(plr)
+                
+                if isDead or not inGame then
+                    -- Игрок мёртв или не в игре - удаляем Outline
+                    if OutlinedPlayers[plr] then
+                        RemoveOutline(plr)
+                    end
+                else
+                    -- Игрок жив - обновляем или создаём Outline
+                    if OutlinedPlayers[plr] then
+                        local data = OutlinedPlayers[plr]
+                        if data.Role ~= role then
+                            local color = GetOutlineColor(role, false)
+                            if data.Highlight then
+                                data.Highlight.OutlineColor = color
+                            end
+                            if data.Label then
+                                data.Label.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
+                                data.Label.TextColor3 = color
+                            end
+                            data.Role = role
+                        end
+                    else
+                        ApplyOutline(plr)
+                    end
+                end
+            end
+        end
+    else
+        -- Если Outline выключен - удаляем всё
+        for plr, _ in pairs(OutlinedPlayers) do
+            RemoveOutline(plr)
+        end
+    end
+end
+
 local function OutlineUpdateLoop()
     if not OutlineEnabled then return end
     
@@ -695,94 +721,90 @@ local function OutlineUpdateLoop()
     if now - LastOutlineUpdate < OutlineUpdateRate then return end
     LastOutlineUpdate = now
     
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            if not OutlinedPlayers[plr] and plr.Character then
-                ApplyOutline(plr)
-            elseif OutlinedPlayers[plr] then
-                local role = GetPlayerRole(plr)
-                local isDead = (role == "Dead" or role == nil)
-                local inGame = IsPlayerInGame(plr)
-                local isActuallyDead = isDead or not inGame
-                local data = OutlinedPlayers[plr]
-                
-                if data.IsDead ~= isActuallyDead or data.Role ~= role then
+    UpdateOutline()
+end
+
+-- Обработка добавления нового игрока
+local function SetupPlayer(plr)
+    if plr == LocalPlayer then return end
+    
+    -- Удаляем старые подключения
+    if PlayerConnections[plr] then
+        PlayerConnections[plr]:Disconnect()
+        PlayerConnections[plr] = nil
+    end
+    
+    -- Подписываемся на CharacterAdded (новый раунд/респавн)
+    local conn = plr.CharacterAdded:Connect(function()
+        -- Ждём появления персонажа
+        task.wait(0.5)
+        
+        if OutlineEnabled then
+            -- Удаляем старый Outline
+            RemoveOutline(plr)
+            -- Создаём новый
+            local role = GetPlayerRole(plr)
+            if role and role ~= "Dead" and role ~= "Unknown" then
+                if IsPlayerInGame(plr) then
                     ApplyOutline(plr)
                 end
             end
         end
-    end
-end
-
--- ОБРАБОТКА СМЕНЫ ПЕРСОНАЖА (РЕСПАВН)
-local function OnCharacterAdded(plr)
-    if plr == LocalPlayer then return end
-    task.wait(0.5)
-    if OutlineEnabled then
-        ApplyOutline(plr)
-    end
-end
-
--- НАСТРОЙКА ИГРОКА
-local function SetupPlayer(plr)
-    if plr == LocalPlayer then return end
-    
-    if PlayerConnections[plr] then
-        pcall(function() PlayerConnections[plr]:Disconnect() end)
-        PlayerConnections[plr] = nil
-    end
-    
-    local conn = plr.CharacterAdded:Connect(function()
-        OnCharacterAdded(plr)
     end)
     
     PlayerConnections[plr] = conn
     OutlineMaid:GiveTask(conn)
-    
-    if plr.Character and OutlineEnabled then
-        task.wait(0.5)
-        ApplyOutline(plr)
-    end
 end
 
--- ОБРАБОТКА ВСЕХ ИГРОКОВ
+-- Обработка существующих игроков
 for _, plr in ipairs(Players:GetPlayers()) do
     if plr ~= LocalPlayer then
         SetupPlayer(plr)
     end
 end
 
+-- Обработка новых игроков
 Players.PlayerAdded:Connect(function(plr)
     SetupPlayer(plr)
 end)
 
+-- Обработка удаления игроков
 Players.PlayerRemoving:Connect(function(plr)
     RemoveOutline(plr)
     if PlayerConnections[plr] then
-        pcall(function() PlayerConnections[plr]:Disconnect() end)
+        PlayerConnections[plr]:Disconnect()
         PlayerConnections[plr] = nil
     end
 end)
 
--- ОБРАБОТКА СМЕНЫ РАУНДА (через изменение количества игроков)
-local LastPlayerCount = #Players:GetPlayers()
-local RoundChangeDelay = 0
-
-local function CheckRoundChange()
-    local currentCount = #Players:GetPlayers()
-    if currentCount ~= LastPlayerCount then
-        LastPlayerCount = currentCount
-        RoundChangeDelay = os.clock() + 2
-    end
+-- Обработка смены карты/раунда (через изменение игроков)
+local function OnRoundChange()
+    -- Небольшая задержка после смены раунда
+    task.wait(1)
     
-    if RoundChangeDelay > 0 and os.clock() > RoundChangeDelay then
-        RoundChangeDelay = 0
-        if OutlineEnabled then
-            print("🔄 Обновление Outline после смены раунда...")
-            RefreshAllOutlines()
-        end
+    if OutlineEnabled then
+        print("🔄 Обновление Outline после раунда...")
+        FullRefreshOutline()
     end
 end
+
+-- Отслеживаем смену раунда через изменение количества игроков в игре
+local LastPlayerCount = #Players:GetPlayers()
+Players.PlayerAdded:Connect(function()
+    task.wait(0.5)
+    if #Players:GetPlayers() ~= LastPlayerCount then
+        LastPlayerCount = #Players:GetPlayers()
+        OnRoundChange()
+    end
+end)
+
+Players.PlayerRemoving:Connect(function()
+    task.wait(0.5)
+    if #Players:GetPlayers() ~= LastPlayerCount then
+        LastPlayerCount = #Players:GetPlayers()
+        OnRoundChange()
+    end
+end)
 
 -- ==============================================
 -- ОСНОВНОЙ ЦИКЛ AIMLOCK
@@ -840,9 +862,6 @@ local function AimLockLoop(deltaTime)
             CurrentCamera.CFrame = CFrame.new(CurrentCamera.CFrame.Position, predictedPos)
         end
     end
-    
-    -- Проверяем смену раунда
-    CheckRoundChange()
 end
 
 -- ==============================================
@@ -863,12 +882,7 @@ local function CreateConsoleMenu()
     print("💡 Quick Toggle Aim: Press 'T'")
     print("💡 Quick Toggle WallCheck: Press 'G'")
     print("💡 Quick Toggle Outline: Press 'E'")
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("🔄 Outline ОБНОВЛЯЕТСЯ АВТОМАТИЧЕСКИ:")
-    print("  ✅ После каждого раунда")
-    print("  ✅ При респавне игрока")
-    print("  ✅ При смене персонажа")
-    print("  ✅ Для новых игроков")
+    print("🔄 Outline автоматически обновляется после каждого раунда")
 end
 
 -- ==============================================
@@ -915,15 +929,14 @@ end
 local function ToggleOutline()
     OutlineEnabled = not OutlineEnabled
     if OutlineEnabled then
-        RefreshAllOutlines()
-        print("👁️ Outline: ENABLED")
+        FullRefreshOutline()
     else
         for plr, _ in pairs(OutlinedPlayers) do
             RemoveOutline(plr)
         end
-        print("👁️ Outline: DISABLED")
     end
     UpdateOutlineButtonState()
+    print("👁️ Outline: " .. (OutlineEnabled and "ENABLED" or "DISABLED"))
 end
 
 local function CreateButtons()
@@ -1022,7 +1035,6 @@ RunService:BindToRenderStep(
     AimLockLoop
 )
 
--- Отдельный цикл для обновления Outline
 RunService.Heartbeat:Connect(OutlineUpdateLoop)
 
 -- Очистка
@@ -1059,13 +1071,11 @@ print("🎨 ЦВЕТА OUTLINE:")
 print("  🔴 Красный  - Murderer (убийца)")
 print("  🔵 Синий    - Sheriff (шериф)")
 print("  🟢 Зелёный  - Innocent (невиновный)")
-print("  ⚪ Серый    - Мёртвый / В лобби")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("🔄 Outline ОБНОВЛЯЕТСЯ АВТОМАТИЧЕСКИ:")
 print("  ✅ После каждого раунда")
-print("  ✅ При респавне игрока")
+print("  ✅ При респавне игроков")
 print("  ✅ При смене персонажа")
-print("  ✅ Для новых игроков")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("⌨️ ГОРЯЧИЕ КЛАВИШИ:")
 print("  [T] - Toggle Aim Lock")
