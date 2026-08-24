@@ -1,6 +1,5 @@
 -- MM2 Murderer Aim Lock V2.6 + ESP (Sheriff/Murderer/Innocent)
--- STANDALONE VERSION (без odh_shared_plugins)
--- ДВЕ КНОПКИ: AimLock + WallCheck + ESP
+-- FIXED: Исправлен ESP, оптимизирован FPS
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -30,7 +29,7 @@ end
 local MainGUI = CreateMainGUI()
 
 -- ==============================================
--- MAID (для очистки)
+-- MAID
 -- ==============================================
 local Maid = {}
 Maid.__index = Maid
@@ -70,7 +69,7 @@ function Maid:Destroy() self:DoCleaning() end
 local RootMaid = Maid.new()
 
 -- ==============================================
--- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ КНОПОК
+-- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 -- ==============================================
 local function getfserv(s)
     local ok, svc = pcall(function() return game:GetService(s) end)
@@ -92,7 +91,7 @@ local __PCLR = Color3.new
 local __RGB  = Color3.fromRGB
 
 -- ==============================================
--- BINDABLE BUTTONS (ДВЕ КНОПКИ)
+-- BINDABLE BUTTONS
 -- ==============================================
 local BindableButtons = {Buttons = {}, Maids = {}, Count = 0}
 
@@ -323,7 +322,7 @@ function BindableButtons.UpdateBButtonColor(id, isActive, colorType)
 end
 
 -- ==============================================
--- НАСТРОЙКИ AIMLOCK
+-- НАСТРОЙКИ
 -- ==============================================
 local AimLockEnabled = false
 local TargetPart = "HumanoidRootPart"
@@ -348,99 +347,162 @@ local MurdererWeapons = {
     "icewing", "bone", "hallow", "vampire", "cutter"
 }
 
+local SheriffWeapons = {
+    "gun", "pistol", "revolver", "shooter", "blaster"
+}
+
 -- ==============================================
--- ОПРЕДЕЛЕНИЕ РОЛЕЙ
+-- ОПРЕДЕЛЕНИЕ РОЛЕЙ (УЛУЧШЕННОЕ)
 -- ==============================================
-local function HasWeapon(plr)
+local function HasWeapon(plr, weaponList)
     if not plr or not plr.Character then return false end
+    
+    -- Проверяем в руках
     for _, item in ipairs(plr.Character:GetChildren()) do
         if item:IsA("Tool") then
             local name = item.Name:lower()
-            if name:find("knife") or name:find("blade") or name:find("dagger") or 
-               name:find("saw") or name:find("slasher") or name:find("axe") or
-               name:find("scythe") or name:find("peppermint") or name:find("cookie") or
-               name:find("edge") or name:find("batwing") or name:find("icewing") or
-               name:find("bone") or name:find("hallow") or name:find("vampire") or
-               name:find("cutter") then
-                return true
+            for _, wName in ipairs(weaponList) do
+                if name:find(wName) then
+                    return true
+                end
             end
-            if item:FindFirstChild("KnifeServer") or item:FindFirstChild("KnifeClient") then
+            -- Проверяем серверные/клиентские части
+            if item:FindFirstChild("KnifeServer") or item:FindFirstChild("KnifeClient") or
+               item:FindFirstChild("GunServer") or item:FindFirstChild("GunClient") then
                 return true
             end
         end
     end
+    
+    -- Проверяем в рюкзаке
+    local backpack = plr:FindFirstChild("Backpack")
+    if backpack then
+        for _, item in ipairs(backpack:GetChildren()) do
+            if item:IsA("Tool") then
+                local name = item.Name:lower()
+                for _, wName in ipairs(weaponList) do
+                    if name:find(wName) then
+                        return true
+                    end
+                end
+                if item:FindFirstChild("KnifeServer") or item:FindFirstChild("KnifeClient") or
+                   item:FindFirstChild("GunServer") or item:FindFirstChild("GunClient") then
+                    return true
+                end
+            end
+        end
+    end
+    
     return false
 end
 
+local function IsMurderer(plr)
+    return HasWeapon(plr, MurdererWeapons)
+end
+
 local function IsSheriff(plr)
-    if not plr or not plr.Character then return false end
-    for _, item in ipairs(plr.Character:GetChildren()) do
-        if item:IsA("Tool") then
-            local name = item.Name:lower()
-            if name:find("gun") or name:find("pistol") or name:find("revolver") or
-               name:find("shooter") or name:find("blaster") then
-                return true
-            end
-            if item:FindFirstChild("GunServer") or item:FindFirstChild("GunClient") then
-                return true
-            end
-        end
-    end
-    return false
+    return HasWeapon(plr, SheriffWeapons)
 end
 
 local function GetPlayerRole(plr)
     if plr == LocalPlayer then return nil end
-    if IsSheriff(plr) then return "Sheriff" end
-    if HasWeapon(plr) then return "Murderer" end
+    if not plr.Character then return "Unknown" end
+    
+    local humanoid = plr.Character:FindFirstChild("Humanoid")
+    if not humanoid or humanoid.Health <= 0 then return "Dead" end
+    
+    -- Проверяем атрибуты (некоторые игры используют их)
+    if plr:GetAttribute("Murderer") == true or plr:GetAttribute("isMurderer") == true then
+        return "Murderer"
+    end
+    if plr:GetAttribute("Sheriff") == true or plr:GetAttribute("isSheriff") == true then
+        return "Sheriff"
+    end
+    
+    -- Проверяем оружие
+    if IsSheriff(plr) then
+        return "Sheriff"
+    end
+    if IsMurderer(plr) then
+        return "Murderer"
+    end
+    
     return "Innocent"
 end
 
 -- ==============================================
--- ESP СИСТЕМА
+-- ESP СИСТЕМА (ОПТИМИЗИРОВАННАЯ)
 -- ==============================================
 local ESPObjects = {}
 local ESPMaid = Maid.new()
+local ESPUpdateConnection = nil
+local ESPUpdateRate = 0.1
+local LastESPUpdate = 0
+
+local function GetRoleColor(role)
+    if role == "Murderer" then
+        return Color3.fromRGB(255, 0, 0)
+    elseif role == "Sheriff" then
+        return Color3.fromRGB(50, 150, 255)
+    elseif role == "Innocent" then
+        return Color3.fromRGB(50, 255, 50)
+    else
+        return Color3.fromRGB(255, 255, 255)
+    end
+end
+
+local function GetRoleTextColor(role)
+    if role == "Murderer" then
+        return Color3.fromRGB(255, 50, 50)
+    elseif role == "Sheriff" then
+        return Color3.fromRGB(50, 150, 255)
+    elseif role == "Innocent" then
+        return Color3.fromRGB(50, 255, 50)
+    else
+        return Color3.fromRGB(200, 200, 200)
+    end
+end
 
 local function CreateESP(plr)
     if not plr or plr == LocalPlayer then return end
     if ESPObjects[plr] then return end
     
     local role = GetPlayerRole(plr)
-    if not role then return end
+    if not role or role == "Dead" then return end
     
-    -- Цвета для ролей
-    local colors = {
-        Murderer = Color3.fromRGB(255, 0, 0),
-        Sheriff = Color3.fromRGB(0, 150, 255),
-        Innocent = Color3.fromRGB(0, 255, 0)
-    }
-    
-    local color = colors[role] or Color3.fromRGB(255, 255, 255)
-    local nameColor = role == "Murderer" and Color3.fromRGB(255, 50, 50) or 
-                      role == "Sheriff" and Color3.fromRGB(50, 150, 255) or 
-                      Color3.fromRGB(50, 255, 50)
+    local color = GetRoleColor(role)
+    local textColor = GetRoleTextColor(role)
     
     local espGroup = Instance.new("Folder")
     espGroup.Name = "ESP_" .. plr.Name
     espGroup.Parent = plr.Character or plr
     ESPObjects[plr] = espGroup
     
-    -- Чем-бокс (рамка вокруг персонажа)
+    -- Рамка вокруг персонажа (BoxHandleAdornment)
     local box = Instance.new("BoxHandleAdornment")
     box.Name = "Box"
     box.Size = Vector3.new(3, 5.5, 2)
     box.Color3 = color
-    box.Transparency = 0.5
+    box.Transparency = 0.4
     box.ZIndex = 0
     box.AlwaysOnTop = true
-    box.Adornee = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
     box.Parent = espGroup
     
-    -- Имя игрока
+    -- Обновляем привязку к RootPart
+    local function updateBox()
+        if plr and plr.Character then
+            local root = plr.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                box.Adornee = root
+            end
+        end
+    end
+    updateBox()
+    
+    -- Имя игрока с ролью (BillboardGui)
     local nameTag = Instance.new("BillboardGui")
     nameTag.Name = "NameTag"
-    nameTag.Size = UDim2.new(0, 200, 0, 40)
+    nameTag.Size = UDim2.new(0, 200, 0, 50)
     nameTag.Adornee = plr.Character and plr.Character:FindFirstChild("Head")
     nameTag.Parent = espGroup
     nameTag.AlwaysOnTop = true
@@ -449,60 +511,34 @@ local function CreateESP(plr)
     nameLabel.Size = UDim2.new(1, 0, 1, 0)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Text = plr.Name .. "\n" .. role
-    nameLabel.TextColor3 = nameColor
-    nameLabel.TextSize = 14
+    nameLabel.TextColor3 = textColor
+    nameLabel.TextSize = 13
     nameLabel.Font = Enum.Font.Jura
-    nameLabel.TextStrokeTransparency = 0.3
+    nameLabel.TextStrokeTransparency = 0.2
     nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     nameLabel.Parent = nameTag
     
-    -- Линия до игрока (для удобства)
-    local line = Instance.new("LineHandleAdornment")
-    line.Name = "Line"
-    line.Color3 = color
-    line.Transparency = 0.3
-    line.Thickness = 1
-    line.AlwaysOnTop = true
-    line.ZIndex = 0
-    line.Parent = espGroup
-    
-    -- Обновление позиций
-    ESPMaid:GiveTask(RunService.RenderStepped:Connect(function()
-        if not plr or not plr.Character then return end
-        local root = plr.Character:FindFirstChild("HumanoidRootPart")
-        local head = plr.Character:FindFirstChild("Head")
-        local playerPos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        
-        if root then
-            box.Adornee = root
-            if playerPos then
-                line.From = playerPos.Position
-                line.To = root.Position
-                line.Adornee = nil
-                line.Parent = espGroup
+    -- Обновляем привязку к Head
+    local function updateTag()
+        if plr and plr.Character then
+            local head = plr.Character:FindFirstChild("Head")
+            if head then
+                nameTag.Adornee = head
             end
         end
-        
-        if head then
-            nameTag.Adornee = head
-        end
-    end))
+    end
+    updateTag()
     
-    -- Обновление роли при изменении
-    local roleConn
-    roleConn = plr.CharacterAdded:Connect(function()
-        if roleConn then roleConn:Disconnect() end
-        -- Обновляем ESP при смене персонажа
-        task.wait(0.5)
-        if ESPObjects[plr] then
-            ESPObjects[plr]:Destroy()
-            ESPObjects[plr] = nil
-        end
+    -- Подписка на изменения персонажа
+    local charConn
+    charConn = plr.CharacterAdded:Connect(function()
+        task.wait(0.3)
+        RemoveESP(plr)
         if ESPEnabled then
             CreateESP(plr)
         end
     end)
-    ESPMaid:GiveTask(roleConn)
+    ESPMaid:GiveTask(charConn)
 end
 
 local function RemoveESP(plr)
@@ -516,7 +552,32 @@ local function UpdateESP()
     if ESPEnabled then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= LocalPlayer and plr.Character then
-                CreateESP(plr)
+                local role = GetPlayerRole(plr)
+                if role and role ~= "Dead" then
+                    -- Проверяем, нужно ли обновить ESP
+                    if ESPObjects[plr] then
+                        -- Обновляем цвет при смене роли
+                        local espGroup = ESPObjects[plr]
+                        local box = espGroup:FindFirstChild("Box")
+                        local nameTag = espGroup:FindFirstChild("NameTag")
+                        
+                        if box then
+                            box.Color3 = GetRoleColor(role)
+                        end
+                        
+                        if nameTag then
+                            local label = nameTag:FindFirstChildWhichIsA("TextLabel")
+                            if label then
+                                label.Text = plr.Name .. "\n" .. role
+                                label.TextColor3 = GetRoleTextColor(role)
+                            end
+                        end
+                    else
+                        CreateESP(plr)
+                    end
+                else
+                    RemoveESP(plr)
+                end
             end
         end
     else
@@ -527,11 +588,23 @@ local function UpdateESP()
     end
 end
 
--- Обновление ESP при добавлении/удалении игроков
+-- Обновление ESP с ограничением по FPS
+local function ESPUpdateLoop()
+    if not ESPEnabled then return end
+    
+    local now = os.clock()
+    if now - LastESPUpdate < ESPUpdateRate then return end
+    LastESPUpdate = now
+    
+    UpdateESP()
+end
+
+-- Подписка на события игроков
 Players.PlayerAdded:Connect(function(plr)
     plr.CharacterAdded:Connect(function()
-        task.wait(0.5)
+        task.wait(0.3)
         if ESPEnabled then
+            RemoveESP(plr)
             CreateESP(plr)
         end
     end)
@@ -542,7 +615,7 @@ Players.PlayerRemoving:Connect(function(plr)
 end)
 
 -- ==============================================
--- ФУНКЦИИ ПОИСКА И ВИДИМОСТИ
+-- ФУНКЦИИ ПОИСКА
 -- ==============================================
 function IsVisible(target)
     if not target or not target.Character then return false end
@@ -697,7 +770,6 @@ end
 -- ==============================================
 -- СОЗДАНИЕ КНОПОК
 -- ==============================================
--- Кнопка AimLock
 local function UpdateAimButtonState()
     local btn = BindableButtons.Buttons["aim_toggle"]
     if not btn then return end
@@ -716,7 +788,6 @@ local function ToggleAimLock()
     print("⚡ Aim Lock: " .. (AimLockEnabled and "ENABLED" or "DISABLED"))
 end
 
--- Кнопка WallCheck
 local function UpdateWallButtonState()
     local btn = BindableButtons.Buttons["wall_toggle"]
     if not btn then return end
@@ -730,7 +801,6 @@ local function ToggleWallCheck()
     print("🧱 Wall Check: " .. (WallCheckEnabled and "ENABLED" or "DISABLED"))
 end
 
--- Кнопка ESP
 local function UpdateESPButtonState()
     local btn = BindableButtons.Buttons["esp_toggle"]
     if not btn then return end
@@ -746,7 +816,6 @@ local function ToggleESP()
 end
 
 local function CreateButtons()
-    -- Кнопка AimLock
     if not BindableButtons.Buttons["aim_toggle"] then
         BindableButtons.AddBButton("aim_toggle", "Aim:OFF", function()
             ToggleAimLock()
@@ -759,7 +828,6 @@ local function CreateButtons()
         end
     end
     
-    -- Кнопка WallCheck
     if not BindableButtons.Buttons["wall_toggle"] then
         BindableButtons.AddBButton("wall_toggle", "Wall:OFF", function()
             ToggleWallCheck()
@@ -772,7 +840,6 @@ local function CreateButtons()
         end
     end
     
-    -- Кнопка ESP
     if not BindableButtons.Buttons["esp_toggle"] then
         BindableButtons.AddBButton("esp_toggle", "ESP:OFF", function()
             ToggleESP()
@@ -843,6 +910,9 @@ RunService:BindToRenderStep(
     Enum.RenderPriority.Camera.Value + 1, 
     AimLockLoop
 )
+
+-- ESP обновление с ограничением FPS (Heartbeat вместо RenderStepped)
+RunService.Heartbeat:Connect(ESPUpdateLoop)
 
 -- Очистка при смене персонажа
 LocalPlayer.CharacterAdded:Connect(function()
