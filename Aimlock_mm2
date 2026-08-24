@@ -1,5 +1,5 @@
 -- MM2 Murderer Aim Lock V2.6 (ABSOLUTE HARD LOCK) + PREMIUM GUI
--- STANDALONE VERSION WITH OMEGA-STYLE INTERFACE
+-- FIXED: Гарантированное отображение GUI
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -7,7 +7,6 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 
 -- ==============================================
@@ -51,7 +50,7 @@ function Maid:Destroy() self:DoCleaning() end
 local RootMaid = Maid.new()
 
 -- ==============================================
--- ЦВЕТОВЫЕ ПРЕСЕТЫ (КАК В OMEGA)
+-- ЦВЕТОВЫЕ ПРЕСЕТЫ
 -- ==============================================
 local COLOR_PRESETS = {
     OBSIDIAN = {
@@ -63,6 +62,7 @@ local COLOR_PRESETS = {
         accent = Color3.fromRGB(150, 110, 255),
         statusActive = Color3.fromRGB(120, 200, 255),
         statusLocked = Color3.fromRGB(255, 200, 100),
+        statusPaused = Color3.fromRGB(255, 100, 100),
         gradient = {
             {0, Color3.fromRGB(60, 40, 120)},
             {0.3, Color3.fromRGB(120, 80, 200)},
@@ -80,6 +80,7 @@ local COLOR_PRESETS = {
         accent = Color3.fromRGB(255, 215, 0),
         statusActive = Color3.fromRGB(100, 255, 100),
         statusLocked = Color3.fromRGB(255, 200, 50),
+        statusPaused = Color3.fromRGB(255, 100, 100),
         gradient = {
             {0, Color3.fromRGB(200, 150, 20)},
             {0.3, Color3.fromRGB(255, 215, 0)},
@@ -97,6 +98,7 @@ local COLOR_PRESETS = {
         accent = Color3.fromRGB(200, 100, 255),
         statusActive = Color3.fromRGB(100, 255, 200),
         statusLocked = Color3.fromRGB(255, 200, 100),
+        statusPaused = Color3.fromRGB(255, 100, 100),
         gradient = {
             {0, Color3.fromRGB(150, 20, 200)},
             {0.3, Color3.fromRGB(200, 50, 255)},
@@ -114,6 +116,7 @@ local COLOR_PRESETS = {
         accent = Color3.fromRGB(0, 220, 255),
         statusActive = Color3.fromRGB(100, 255, 200),
         statusLocked = Color3.fromRGB(255, 200, 100),
+        statusPaused = Color3.fromRGB(255, 100, 100),
         gradient = {
             {0, Color3.fromRGB(0, 100, 200)},
             {0.3, Color3.fromRGB(0, 200, 255)},
@@ -131,6 +134,7 @@ local COLOR_PRESETS = {
         accent = Color3.fromRGB(255, 80, 80),
         statusActive = Color3.fromRGB(100, 255, 100),
         statusLocked = Color3.fromRGB(255, 200, 100),
+        statusPaused = Color3.fromRGB(255, 100, 100),
         gradient = {
             {0, Color3.fromRGB(200, 20, 20)},
             {0.3, Color3.fromRGB(255, 50, 50)},
@@ -148,46 +152,13 @@ local COLOR_PRESETS = {
         accent = Color3.fromRGB(80, 255, 120),
         statusActive = Color3.fromRGB(100, 255, 100),
         statusLocked = Color3.fromRGB(255, 200, 100),
+        statusPaused = Color3.fromRGB(255, 100, 100),
         gradient = {
             {0, Color3.fromRGB(20, 200, 60)},
             {0.3, Color3.fromRGB(50, 255, 100)},
             {0.6, Color3.fromRGB(20, 200, 60)},
             {0.8, Color3.fromRGB(10, 150, 40)},
             {1, Color3.fromRGB(20, 200, 60)}
-        }
-    },
-    OCEAN = {
-        name = "🌊 Ocean",
-        bg = Color3.fromRGB(5, 10, 25),
-        bgTitle = Color3.fromRGB(10, 20, 40),
-        border = Color3.fromRGB(50, 150, 255),
-        text = Color3.fromRGB(170, 190, 220),
-        accent = Color3.fromRGB(80, 180, 255),
-        statusActive = Color3.fromRGB(100, 255, 200),
-        statusLocked = Color3.fromRGB(255, 200, 100),
-        gradient = {
-            {0, Color3.fromRGB(20, 80, 200)},
-            {0.3, Color3.fromRGB(50, 150, 255)},
-            {0.6, Color3.fromRGB(20, 80, 200)},
-            {0.8, Color3.fromRGB(10, 50, 150)},
-            {1, Color3.fromRGB(20, 80, 200)}
-        }
-    },
-    SUNSET = {
-        name = "🌅 Sunset",
-        bg = Color3.fromRGB(25, 10, 15),
-        bgTitle = Color3.fromRGB(40, 15, 25),
-        border = Color3.fromRGB(255, 150, 50),
-        text = Color3.fromRGB(220, 180, 170),
-        accent = Color3.fromRGB(255, 180, 80),
-        statusActive = Color3.fromRGB(100, 255, 150),
-        statusLocked = Color3.fromRGB(255, 200, 100),
-        gradient = {
-            {0, Color3.fromRGB(200, 80, 20)},
-            {0.3, Color3.fromRGB(255, 150, 50)},
-            {0.6, Color3.fromRGB(200, 80, 20)},
-            {0.8, Color3.fromRGB(150, 50, 10)},
-            {1, Color3.fromRGB(200, 80, 20)}
         }
     },
     ICE = {
@@ -199,6 +170,7 @@ local COLOR_PRESETS = {
         accent = Color3.fromRGB(200, 230, 255),
         statusActive = Color3.fromRGB(150, 255, 220),
         statusLocked = Color3.fromRGB(255, 220, 150),
+        statusPaused = Color3.fromRGB(255, 100, 100),
         gradient = {
             {0, Color3.fromRGB(80, 180, 220)},
             {0.3, Color3.fromRGB(150, 220, 255)},
@@ -216,29 +188,13 @@ local COLOR_PRESETS = {
         accent = Color3.fromRGB(157, 0, 255),
         statusActive = Color3.fromRGB(157, 0, 255),
         statusLocked = Color3.fromRGB(255, 200, 100),
+        statusPaused = Color3.fromRGB(255, 100, 100),
         gradient = {
             {0, Color3.fromRGB(157, 0, 255)},
             {0.3, Color3.fromRGB(120, 0, 200)},
             {0.6, Color3.fromRGB(80, 0, 150)},
             {0.8, Color3.fromRGB(46, 10, 78)},
             {1, Color3.fromRGB(157, 0, 255)}
-        }
-    },
-    COSMIC_RED = {
-        name = "❤️ Cosmic Red",
-        bg = Color3.fromRGB(5, 5, 5),
-        bgTitle = Color3.fromRGB(26, 0, 10),
-        border = Color3.fromRGB(255, 0, 60),
-        text = Color3.fromRGB(230, 180, 180),
-        accent = Color3.fromRGB(255, 0, 60),
-        statusActive = Color3.fromRGB(255, 100, 150),
-        statusLocked = Color3.fromRGB(255, 200, 100),
-        gradient = {
-            {0, Color3.fromRGB(255, 0, 60)},
-            {0.3, Color3.fromRGB(200, 0, 50)},
-            {0.6, Color3.fromRGB(128, 0, 32)},
-            {0.8, Color3.fromRGB(26, 0, 10)},
-            {1, Color3.fromRGB(255, 0, 60)}
         }
     },
     MIDNIGHT = {
@@ -250,6 +206,7 @@ local COLOR_PRESETS = {
         accent = Color3.fromRGB(80, 150, 255),
         statusActive = Color3.fromRGB(100, 200, 255),
         statusLocked = Color3.fromRGB(255, 200, 100),
+        statusPaused = Color3.fromRGB(255, 100, 100),
         gradient = {
             {0, Color3.fromRGB(80, 150, 255)},
             {0.3, Color3.fromRGB(50, 100, 200)},
@@ -270,7 +227,6 @@ local TargetPart = "HumanoidRootPart"
 local TargetPlayer = nil
 local WallCheckEnabled = false
 local PredictionLevel = 0.2
-local ShowGUI = true
 local LastSearchTime = 0
 local LastWallCheckTime = 0
 local IsTargetVisibleCache = false
@@ -418,32 +374,71 @@ local function AimLockLoop(deltaTime)
 end
 
 -- ==============================================
--- 🔥 PREMIUM GUI (В СТИЛЕ OMEGA)
+-- 🔥 PREMIUM GUI (ГАРАНТИРОВАННОЕ ОТОБРАЖЕНИЕ)
 -- ==============================================
 local function CreateAimGUI()
-    if _G.AimGui then _G.AimGui:Destroy() end
+    -- Удаляем старый GUI
+    if _G.AimGui then 
+        _G.AimGui:Destroy() 
+        _G.AimGui = nil
+    end
     
     local colors = COLOR_PRESETS[CurrentColor] or COLOR_PRESETS.OBSIDIAN
     
+    -- Пробуем разные родители для GUI
+    local parent = CoreGui
+    
+    -- Проверяем доступность CoreGui
+    local success, result = pcall(function()
+        return game:GetService("CoreGui")
+    end)
+    if success and result then
+        parent = result
+    end
+    
+    -- Если CoreGui недоступен, пробуем PlayerGui
+    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+    if playerGui then
+        parent = playerGui
+    end
+    
+    -- Создаём ScreenGui с высоким ZIndex
     local gui = Instance.new("ScreenGui")
     gui.Name = "AimLockGUI"
-    gui.Parent = CoreGui
     gui.ResetOnSpawn = false
     gui.IgnoreGuiInset = true
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    -- Пытаемся установить родителя
+    local success2, err = pcall(function()
+        gui.Parent = parent
+    end)
+    
+    if not success2 then
+        -- Если не получилось, пробуем CoreGui через gethui
+        local hui = gethui and gethui()
+        if hui then
+            gui.Parent = hui
+        else
+            -- Последняя попытка - PlayerGui
+            gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+        end
+    end
+    
     _G.AimGui = gui
     
     -- Main Frame
     local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 180, 0, 150)
-    mainFrame.Position = UDim2.new(0.78, 0, 0.30, 0)
+    mainFrame.Size = UDim2.new(0, 200, 0, 160)
+    mainFrame.Position = UDim2.new(0.75, 0, 0.25, 0) -- Сдвигаем влево, чтобы не перекрывать список игроков
     mainFrame.BackgroundColor3 = colors.bg
-    mainFrame.BackgroundTransparency = 0.90
+    mainFrame.BackgroundTransparency = 0.85
     mainFrame.BorderSizePixel = 0
     mainFrame.ClipsDescendants = true
     mainFrame.Parent = gui
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 5)
+    corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = mainFrame
     
     local stroke = Instance.new("UIStroke")
@@ -462,21 +457,14 @@ local function CreateAimGUI()
     
     -- Title Bar
     local titleFrame = Instance.new("Frame")
-    titleFrame.Size = UDim2.new(1, 0, 0, 25)
+    titleFrame.Size = UDim2.new(1, 0, 0, 28)
     titleFrame.BackgroundTransparency = 0.3
     titleFrame.BackgroundColor3 = colors.bgTitle
     titleFrame.BorderSizePixel = 0
     titleFrame.Parent = mainFrame
     
-    local titleGrad = Instance.new("UIGradient")
-    titleGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, colors.bgTitle),
-        ColorSequenceKeypoint.new(1, colors.bg)
-    })
-    titleGrad.Parent = titleFrame
-    
     local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 5)
+    titleCorner.CornerRadius = UDim.new(0, 8)
     titleCorner.Parent = titleFrame
     
     -- Logo
@@ -486,7 +474,7 @@ local function CreateAimGUI()
     logo.BackgroundTransparency = 1
     logo.Text = "🎯 AIMLOCK"
     logo.TextColor3 = colors.accent
-    logo.TextSize = 12
+    logo.TextSize = 13
     logo.Font = Enum.Font.Jura
     logo.TextXAlignment = Enum.TextXAlignment.Left
     logo.Parent = titleFrame
@@ -498,24 +486,24 @@ local function CreateAimGUI()
     toggleBtn.BackgroundTransparency = 1
     toggleBtn.Text = "▲"
     toggleBtn.TextColor3 = colors.accent
-    toggleBtn.TextSize = 11
+    toggleBtn.TextSize = 12
     toggleBtn.Font = Enum.Font.Jura
     toggleBtn.Parent = titleFrame
     
     -- Content
     local content = Instance.new("Frame")
-    content.Size = UDim2.new(1, 0, 1, -25)
-    content.Position = UDim2.new(0, 0, 0, 25)
+    content.Size = UDim2.new(1, 0, 1, -28)
+    content.Position = UDim2.new(0, 0, 0, 28)
     content.BackgroundTransparency = 1
     content.Parent = mainFrame
     
     -- Info Labels
     local infoLabels = {}
     local infoData = {
-        {text = "🎯 Target: None", pos = 3, color = colors.text},
-        {text = "📶 Ping: 0ms", pos = 20, color = colors.text},
-        {text = "⚙️ Mode: Hard Lock", pos = 37, color = colors.text},
-        {text = "● INACTIVE", pos = 54, color = colors.statusPaused}
+        {text = "🎯 Target: None", pos = 5, color = colors.text},
+        {text = "📶 Ping: 0ms", pos = 22, color = colors.text},
+        {text = "⚙️ Mode: Hard Lock", pos = 39, color = colors.text},
+        {text = "● INACTIVE", pos = 56, color = colors.statusPaused}
     }
     
     for _, data in ipairs(infoData) do
@@ -532,17 +520,24 @@ local function CreateAimGUI()
         table.insert(infoLabels, label)
     end
     
+    -- Buttons Frame
+    local btnFrame = Instance.new("Frame")
+    btnFrame.Size = UDim2.new(1, 0, 0, 25)
+    btnFrame.Position = UDim2.new(0, 0, 0, 75)
+    btnFrame.BackgroundTransparency = 1
+    btnFrame.Parent = content
+    
     -- Toggle Aim Button
     local aimButton = Instance.new("TextButton")
-    aimButton.Size = UDim2.new(0.45, 0, 0, 20)
-    aimButton.Position = UDim2.new(0.025, 0, 0, 72)
+    aimButton.Size = UDim2.new(0.46, 0, 1, 0)
+    aimButton.Position = UDim2.new(0.02, 0, 0, 0)
     aimButton.BackgroundColor3 = colors.accent
     aimButton.BackgroundTransparency = 0.3
     aimButton.Text = "▶ ENABLE"
     aimButton.TextColor3 = colors.text
     aimButton.TextSize = 10
     aimButton.Font = Enum.Font.Jura
-    aimButton.Parent = content
+    aimButton.Parent = btnFrame
     
     local aimCorner = Instance.new("UICorner")
     aimCorner.CornerRadius = UDim.new(0, 3)
@@ -550,15 +545,15 @@ local function CreateAimGUI()
     
     -- Settings Button
     local settingsButton = Instance.new("TextButton")
-    settingsButton.Size = UDim2.new(0.45, 0, 0, 20)
-    settingsButton.Position = UDim2.new(0.525, 0, 0, 72)
+    settingsButton.Size = UDim2.new(0.46, 0, 1, 0)
+    settingsButton.Position = UDim2.new(0.52, 0, 0, 0)
     settingsButton.BackgroundColor3 = colors.border
     settingsButton.BackgroundTransparency = 0.3
     settingsButton.Text = "⚙ SETTINGS"
     settingsButton.TextColor3 = colors.text
     settingsButton.TextSize = 10
     settingsButton.Font = Enum.Font.Jura
-    settingsButton.Parent = content
+    settingsButton.Parent = btnFrame
     
     local settingsCorner = Instance.new("UICorner")
     settingsCorner.CornerRadius = UDim.new(0, 3)
@@ -572,7 +567,19 @@ local function CreateAimGUI()
     statusStrip.BorderSizePixel = 0
     statusStrip.Parent = mainFrame
     
-    -- V syncing gradient
+    -- Bottom info
+    local bottomLabel = Instance.new("TextLabel")
+    bottomLabel.Size = UDim2.new(1, 0, 0, 14)
+    bottomLabel.Position = UDim2.new(0, 0, 0, 102)
+    bottomLabel.BackgroundTransparency = 1
+    bottomLabel.Text = "⚡ Press 'T' to toggle"
+    bottomLabel.TextColor3 = colors.text
+    bottomLabel.TextSize = 8
+    bottomLabel.Font = Enum.Font.Jura
+    bottomLabel.TextTransparency = 0.5
+    bottomLabel.Parent = content
+    
+    -- Вращение градиента
     local rotationConnection
     rotationConnection = RunService.RenderStepped:Connect(function()
         if strokeGradient and strokeGradient.Parent then
@@ -593,11 +600,11 @@ local function CreateAimGUI()
         
         local tween = TweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad), 
             isCollapsed and {
-                Size = UDim2.new(0, 70, 0, 25),
+                Size = UDim2.new(0, 70, 0, 28),
                 BackgroundTransparency = 0.95
             } or {
-                Size = UDim2.new(0, 180, 0, 150),
-                BackgroundTransparency = 0.90
+                Size = UDim2.new(0, 200, 0, 160),
+                BackgroundTransparency = 0.85
             }
         )
         tween:Play()
@@ -607,7 +614,7 @@ local function CreateAimGUI()
         end)
     end)
     
-    -- Dragging
+    -- Перетаскивание
     local dragging = false
     local dragStart = nil
     local startPos = nil
@@ -638,13 +645,13 @@ local function CreateAimGUI()
         end
     end)
     
-    -- Button Functions
+    -- Обновление состояния кнопки
     local function UpdateAimButton()
         if AimLockEnabled then
             aimButton.Text = "■ DISABLE"
             aimButton.BackgroundColor3 = colors.statusPaused
             statusStrip.BackgroundColor3 = colors.statusActive
-            infoLabels[1].Text = "🎯 Target: " .. (TargetPlayer and TargetPlayer.Name or "None")
+            infoLabels[1].Text = "🎯 Target: " .. (TargetPlayer and TargetPlayer.Name or "Searching...")
             infoLabels[4].Text = "● ACTIVE"
             infoLabels[4].TextColor3 = colors.statusActive
         else
@@ -667,12 +674,11 @@ local function CreateAimGUI()
         UpdateAimButton()
     end)
     
-    -- Settings window (simple popup)
+    -- Настройки
     settingsButton.MouseButton1Click:Connect(function()
-        -- Create settings popup
         local settingsFrame = Instance.new("Frame")
-        settingsFrame.Size = UDim2.new(0, 200, 0, 180)
-        settingsFrame.Position = UDim2.new(0.5, -100, 0.5, -90)
+        settingsFrame.Size = UDim2.new(0, 220, 0, 190)
+        settingsFrame.Position = UDim2.new(0.5, -110, 0.5, -95)
         settingsFrame.BackgroundColor3 = colors.bg
         settingsFrame.BackgroundTransparency = 0.05
         settingsFrame.BorderSizePixel = 0
@@ -720,7 +726,7 @@ local function CreateAimGUI()
         
         for _, opt in ipairs(options) do
             local label = Instance.new("TextLabel")
-            label.Size = UDim2.new(0.6, 0, 0, 16)
+            label.Size = UDim2.new(0.55, 0, 0, 16)
             label.Position = UDim2.new(0.05, 0, 0, opt.pos)
             label.BackgroundTransparency = 1
             label.Text = opt.text
@@ -800,7 +806,7 @@ local function CreateAimGUI()
                 btn.MouseButton1Click:Connect(function()
                     TargetPart = opt.value
                     for _, child in ipairs(settingsFrame:GetChildren()) do
-                        if child:IsA("TextButton") and child.Text == "✔" or child.Text == "○" then
+                        if child:IsA("TextButton") and (child.Text == "✔" or child.Text == "○") then
                             child.Text = child == btn and "✔" or "○"
                         end
                     end
@@ -810,7 +816,7 @@ local function CreateAimGUI()
         
         -- Color selector
         local colorLabel = Instance.new("TextLabel")
-        colorLabel.Size = UDim2.new(0.6, 0, 0, 16)
+        colorLabel.Size = UDim2.new(0.55, 0, 0, 16)
         colorLabel.Position = UDim2.new(0.05, 0, 0, 103)
         colorLabel.BackgroundTransparency = 1
         colorLabel.Text = "🎨 Color"
@@ -846,13 +852,11 @@ local function CreateAimGUI()
             local newColor = colorKeys[colorIndex]
             CurrentColor = newColor
             colorBtn.Text = COLOR_PRESETS[newColor].name
-            -- Recreate GUI
             if _G.AimGui then _G.AimGui:Destroy() end
             CreateAimGUI()
             settingsFrame:Destroy()
         end)
         
-        -- Close button at bottom
         local closeBottom = Instance.new("TextButton")
         closeBottom.Size = UDim2.new(0.8, 0, 0, 20)
         closeBottom.Position = UDim2.new(0.1, 0, 0, 125)
@@ -873,25 +877,32 @@ local function CreateAimGUI()
         end)
     end)
     
-    -- Update function for info
+    -- Обновление GUI
     local function UpdateGUIInfo()
         if not _G.AimGui then return end
         if AimLockEnabled then
-            infoLabels[2].Text = "📶 Ping: " .. math.floor(LocalPlayer:GetNetworkPing() * 1000) .. "ms"
-            infoLabels[1].Text = "🎯 Target: " .. (TargetPlayer and TargetPlayer.Name or "Searching...")
+            local ping = math.floor(LocalPlayer:GetNetworkPing() * 1000)
+            infoLabels[2].Text = "📶 Ping: " .. ping .. "ms"
+            if TargetPlayer then
+                infoLabels[1].Text = "🎯 Target: " .. TargetPlayer.Name
+            else
+                infoLabels[1].Text = "🎯 Target: Searching..."
+            end
         end
     end
     
     _G.UpdateAimGUI = UpdateGUIInfo
-    
     UpdateAimButton()
     
+    print("✅ AimLock GUI создан!")
     return gui
 end
 
 -- ==============================================
--- ЗАПУСК GUI
+-- ЗАПУСК GUI С ЗАДЕРЖКОЙ
 -- ==============================================
+-- Ждём, пока загрузится игра
+task.wait(0.5)
 CreateAimGUI()
 
 -- ==============================================
@@ -907,6 +918,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
             TargetPlayer = nil 
         end
         if _G.UpdateAimGUI then _G.UpdateAimGUI() end
+        print("AimLock: " .. (AimLockEnabled and "ON" or "OFF"))
     end
 end)
 
@@ -940,5 +952,5 @@ print("🎯 AIMLOCK V2.6 HARD LOCK")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("🔥 PREMIUM GUI (OMEGA STYLE)")
 print("📌 Press 'T' to toggle")
-print("🎯 Hard Lock + Prediction")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")2
+print("📌 GUI расположен в правой части экрана")
+print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
