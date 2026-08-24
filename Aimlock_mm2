@@ -1,5 +1,5 @@
 -- MM2 Murderer Aim Lock V2.6 + OUTLINE (Sheriff/Murderer/Innocent)
--- FIXED: WallCheck работает корректно
+-- УМНЫЙ OUTLINE: мёртвые/в лобби = серый без надписи
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -342,7 +342,45 @@ local InvisibleTimer = 0
 local MAX_INVISIBLE_TIME = 0.5
 
 -- ==============================================
--- ОПРЕДЕЛЕНИЕ РОЛЕЙ (УЛУЧШЕННОЕ)
+-- ОПРЕДЕЛЕНИЕ СОСТОЯНИЯ ИГРОКА (ЖИВ/МЁРТВ/В ЛОББИ)
+-- ==============================================
+local function IsPlayerInGame(plr)
+    if not plr then return false end
+    if not plr.Character then return false end
+    
+    -- Проверяем, есть ли у игрока Humanoid
+    local humanoid = plr.Character:FindFirstChild("Humanoid")
+    if not humanoid then return false end
+    
+    -- Проверяем здоровье
+    if humanoid.Health <= 0 then return false end
+    
+    -- Проверяем, находится ли игрок в лобби (по позиции)
+    local root = plr.Character:FindFirstChild("HumanoidRootPart")
+    if root then
+        local yPos = root.Position.Y
+        -- Если игрок ниже определённой высоты (мёртв/в лобби)
+        if yPos < -50 then return false end
+        
+        -- Проверяем, есть ли у игрока оружие (в лобби его нет)
+        local hasWeapon = false
+        for _, item in ipairs(plr.Character:GetChildren()) do
+            if item:IsA("Tool") then
+                hasWeapon = true
+                break
+            end
+        end
+        -- Если нет оружия и игрок в лобби (по позиции)
+        if not hasWeapon and yPos > 100 then
+            return false
+        end
+    end
+    
+    return true
+end
+
+-- ==============================================
+-- ОПРЕДЕЛЕНИЕ РОЛЕЙ
 -- ==============================================
 local function FindMurdererWeapon(character)
     if not character then return false end
@@ -406,10 +444,15 @@ end
 
 local function GetPlayerRole(plr)
     if not plr or plr == LocalPlayer then return nil end
-    if not plr.Character then return "Unknown" end
+    if not plr.Character then return "Dead" end
+    
+    -- Проверяем, жив ли игрок и в игре ли он
+    if not IsPlayerInGame(plr) then
+        return "Dead"
+    end
     
     local humanoid = plr.Character:FindFirstChild("Humanoid")
-    if not humanoid or humanoid.Health <= 0 then return "Dead" end
+    if not humanoid or humanoid.Health <= 0 then return "Dead"
     
     -- 1. Проверяем атрибуты
     local murdererAttr = plr:GetAttribute("Murderer")
@@ -483,15 +526,13 @@ function IsPlayerVisible(plr)
 end
 
 -- ==============================================
--- ПОИСК УБИЙЦЫ С УЧЁТОМ WALLCHECK
+-- ПОИСК УБИЙЦЫ
 -- ==============================================
 function FindMurderer(preferTarget)
-    -- Сначала проверяем предпочтительную цель
     if preferTarget and preferTarget.Character then
         local hum = preferTarget.Character:FindFirstChild("Humanoid")
         if hum and hum.Health > 0 then
             if GetPlayerRole(preferTarget) == "Murderer" then
-                -- Если WallCheck включён, проверяем видимость
                 if not WallCheckEnabled or IsPlayerVisible(preferTarget) then
                     return preferTarget
                 end
@@ -508,9 +549,8 @@ function FindMurderer(preferTarget)
             if role == "Murderer" then
                 local hum = pl.Character:FindFirstChild("Humanoid")
                 if hum and hum.Health > 0 then
-                    -- Проверяем WallCheck
                     if WallCheckEnabled and not IsPlayerVisible(pl) then
-                        continue -- Пропускаем невидимого убийцу
+                        continue
                     end
                     
                     local root = pl.Character:FindFirstChild("HumanoidRootPart")
@@ -533,14 +573,18 @@ function FindMurderer(preferTarget)
 end
 
 -- ==============================================
--- OUTLINE СИСТЕМА
+-- УМНЫЙ OUTLINE
 -- ==============================================
 local OutlinedPlayers = {}
 local OutlineMaid = Maid.new()
-local OutlineUpdateRate = 0.15
+local OutlineUpdateRate = 0.2
 local LastOutlineUpdate = 0
 
-local function GetOutlineColor(role)
+local function GetOutlineColor(role, isDead)
+    if isDead then
+        return Color3.fromRGB(128, 128, 128) -- Серый для мёртвых/в лобби
+    end
+    
     if role == "Murderer" then
         return Color3.fromRGB(255, 0, 0)
     elseif role == "Sheriff" then
@@ -569,48 +613,55 @@ local function ApplyOutline(plr)
     if OutlinedPlayers[plr] then return end
     
     local role = GetPlayerRole(plr)
-    if not role or role == "Dead" or role == "Unknown" then return end
+    local isDead = (role == "Dead" or role == nil)
+    local color = GetOutlineColor(role, isDead)
     
-    local color = GetOutlineColor(role)
-    local emoji = GetRoleEmoji(role)
-    
+    -- Создаём Highlight
     local highlight = Instance.new("Highlight")
     highlight.Name = "Outline_Highlight"
     highlight.FillTransparency = 1
-    highlight.OutlineTransparency = 0.2
+    highlight.OutlineTransparency = isDead and 0.5 or 0.2
     highlight.OutlineColor = color
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     highlight.Adornee = plr.Character
     highlight.Parent = plr.Character
     
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "Outline_NameTag"
-    billboard.Size = UDim2.new(0, 200, 0, 50)
-    billboard.Adornee = plr.Character and plr.Character:FindFirstChild("Head")
-    billboard.Parent = plr.Character
-    billboard.AlwaysOnTop = true
+    -- Создаём BillboardGui ТОЛЬКО для живых игроков
+    local billboard = nil
+    local nameLabel = nil
     
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, 0, 1, 0)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = emoji .. " " .. plr.Name .. " [" .. role .. "]"
-    nameLabel.TextColor3 = color
-    nameLabel.TextSize = 14
-    nameLabel.Font = Enum.Font.Jura
-    nameLabel.TextStrokeTransparency = 0.2
-    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    nameLabel.Parent = billboard
+    if not isDead then
+        billboard = Instance.new("BillboardGui")
+        billboard.Name = "Outline_NameTag"
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.Adornee = plr.Character and plr.Character:FindFirstChild("Head")
+        billboard.Parent = plr.Character
+        billboard.AlwaysOnTop = true
+        
+        nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
+        nameLabel.TextColor3 = color
+        nameLabel.TextSize = 14
+        nameLabel.Font = Enum.Font.Jura
+        nameLabel.TextStrokeTransparency = 0.2
+        nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        nameLabel.Parent = billboard
+    end
     
     OutlinedPlayers[plr] = {
         Highlight = highlight,
         Billboard = billboard,
         Label = nameLabel,
-        Role = role
+        Role = role,
+        IsDead = isDead
     }
     
+    -- Обновление при смене персонажа
     local charConn
     charConn = plr.CharacterAdded:Connect(function()
-        task.wait(0.3)
+        task.wait(0.5)
         RemoveOutline(plr)
         if OutlineEnabled then
             ApplyOutline(plr)
@@ -633,22 +684,55 @@ local function UpdateOutline()
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= LocalPlayer and plr.Character then
                 local role = GetPlayerRole(plr)
+                local isDead = (role == "Dead" or role == nil)
+                local color = GetOutlineColor(role, isDead)
                 
-                if role and role ~= "Dead" and role ~= "Unknown" then
-                    if OutlinedPlayers[plr] then
-                        local data = OutlinedPlayers[plr]
-                        if data.Role ~= role then
-                            local color = GetOutlineColor(role)
-                            data.Highlight.OutlineColor = color
+                if OutlinedPlayers[plr] then
+                    local data = OutlinedPlayers[plr]
+                    
+                    -- Обновляем цвет если изменилось состояние
+                    if data.Role ~= role or data.IsDead ~= isDead then
+                        data.Highlight.OutlineColor = color
+                        data.Highlight.OutlineTransparency = isDead and 0.5 or 0.2
+                        
+                        -- Если игрок умер или в лобби - убираем надпись
+                        if isDead and data.Billboard then
+                            data.Billboard:Destroy()
+                            data.Billboard = nil
+                            data.Label = nil
+                        elseif not isDead and not data.Billboard then
+                            -- Если ожил - создаём надпись
+                            local billboard = Instance.new("BillboardGui")
+                            billboard.Name = "Outline_NameTag"
+                            billboard.Size = UDim2.new(0, 200, 0, 50)
+                            billboard.Adornee = plr.Character and plr.Character:FindFirstChild("Head")
+                            billboard.Parent = plr.Character
+                            billboard.AlwaysOnTop = true
+                            
+                            local nameLabel = Instance.new("TextLabel")
+                            nameLabel.Size = UDim2.new(1, 0, 1, 0)
+                            nameLabel.BackgroundTransparency = 1
+                            nameLabel.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
+                            nameLabel.TextColor3 = color
+                            nameLabel.TextSize = 14
+                            nameLabel.Font = Enum.Font.Jura
+                            nameLabel.TextStrokeTransparency = 0.2
+                            nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                            nameLabel.Parent = billboard
+                            
+                            data.Billboard = billboard
+                            data.Label = nameLabel
+                        elseif not isDead and data.Billboard and data.Label then
+                            -- Обновляем текст если роль изменилась
                             data.Label.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
                             data.Label.TextColor3 = color
-                            data.Role = role
                         end
-                    else
-                        ApplyOutline(plr)
+                        
+                        data.Role = role
+                        data.IsDead = isDead
                     end
                 else
-                    RemoveOutline(plr)
+                    ApplyOutline(plr)
                 end
             end
         end
@@ -696,14 +780,12 @@ local function AimLockLoop(deltaTime)
     if TargetPlayer and TargetPlayer.Character then
         local hum = TargetPlayer.Character:FindFirstChild("Humanoid")
         if hum and hum.Health > 0 then
-            -- Проверяем, что это всё ещё убийца
             if GetPlayerRole(TargetPlayer) == "Murderer" then
                 valid = true
             end
         end
     end
     
-    -- WallCheck для текущей цели
     if WallCheckEnabled and valid then
         local currentTime = os.clock()
         if currentTime - LastWallCheckTime > WALL_CHECK_INTERVAL then
@@ -898,9 +980,6 @@ CreateButtons()
 ToggleButtonsVisibility()
 SetupKeybinds()
 
--- ==============================================
--- ПРИВЯЗКА AIMLOCK К RENDERSTEP
--- ==============================================
 RunService:BindToRenderStep(
     "MM2_AimLock_PhaseSync", 
     Enum.RenderPriority.Camera.Value + 1, 
@@ -909,7 +988,6 @@ RunService:BindToRenderStep(
 
 RunService.Heartbeat:Connect(OutlineUpdateLoop)
 
--- Очистка
 LocalPlayer.CharacterAdded:Connect(function()
     TargetPlayer = nil
 end)
@@ -928,17 +1006,18 @@ end)
 -- ==============================================
 -- ВЫВОД МЕНЮ
 -- ==============================================
-print("✅ MM2 Aim Lock V2.6 + OUTLINE Loaded!")
+print("✅ MM2 Aim Lock V2.6 + SMART OUTLINE Loaded!")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("🎯 ТРИ КНОПКИ НА ЭКРАНЕ:")
 print("  🔵 Aim:ON/OFF  -  Вкл/Выкл автонаведение")
 print("  🔵 Wall:ON/OFF -  Вкл/Выкл проверку видимости")
 print("  🔴 OL:ON/OFF   -  Вкл/Выкл Outline подсветку")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("🎨 ЦВЕТА OUTLINE:")
-print("  🔴 Красный  - Murderer (убийца)")
-print("  🔵 Синий    - Sheriff (шериф)")
-print("  🟢 Зелёный  - Innocent (невиновный)")
+print("🎨 УМНЫЙ OUTLINE:")
+print("  🔴 Красный  - Murderer (живой)")
+print("  🔵 Синий    - Sheriff (живой)")
+print("  🟢 Зелёный  - Innocent (живой)")
+print("  ⚪ Серый    - Мёртвый / В лобби (без надписи)")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("⌨️ ГОРЯЧИЕ КЛАВИШИ:")
 print("  [T] - Toggle Aim Lock")
