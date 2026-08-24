@@ -1,5 +1,5 @@
--- MM2 Murderer Aim Lock V2.6 + OUTLINE (Sheriff/Murderer/Innocent)
--- УМНЫЙ OUTLINE: мёртвые/в лобби = серый без надписи
+-- MM2 Murderer Aim Lock V2.6 + SMART OUTLINE
+-- FIXED: исправлены ошибки с nil значениями
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -8,6 +8,17 @@ local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
+
+-- ==============================================
+-- ПРОВЕРКА НА НАЛИЧИЕ КАМЕРЫ
+-- ==============================================
+local function GetCamera()
+    local cam = Workspace.CurrentCamera
+    if not cam then
+        cam = workspace:FindFirstChild("Camera")
+    end
+    return cam
+end
 
 -- ==============================================
 -- СОЗДАНИЕ ГЛАВНОГО GUI
@@ -139,7 +150,10 @@ local function Bind_GetStorage()
     local parent = gethui and gethui()
     if not parent or typeof(parent) ~= "Instance" then parent = CoreGui end
     if not parent or typeof(parent) ~= "Instance" then
-        parent = __PLRS.LocalPlayer:WaitForChild("PlayerGui", 5)
+        parent = __PLRS.LocalPlayer:FindFirstChild("PlayerGui")
+        if not parent then
+            parent = __PLRS.LocalPlayer:WaitForChild("PlayerGui", 5)
+        end
     end
     if typeof(parent) ~= "Instance" then
         parent = __PLRS.LocalPlayer:WaitForChild("PlayerGui")
@@ -209,8 +223,10 @@ function BindableButtons.AddBButton(id, text, clickFunc, isGold, colorType)
     if BindableButtons.Buttons[id] then return end
     
     local buttonMaid = Maid.new()
-    local camera = workspace.CurrentCamera
-    local screen = camera.ViewportSize
+    
+    -- Получаем камеру с защитой
+    local camera = GetCamera()
+    local screen = camera and camera.ViewportSize or Vector2.new(1920, 1080)
     local buttonSizeY = 0.10
     local widthScale = buttonSizeY * (screen.Y / screen.X)
     local xPos = 0.06 + ((BindableButtons.Count % 8) * (widthScale + 0.008))
@@ -342,27 +358,21 @@ local InvisibleTimer = 0
 local MAX_INVISIBLE_TIME = 0.5
 
 -- ==============================================
--- ОПРЕДЕЛЕНИЕ СОСТОЯНИЯ ИГРОКА (ЖИВ/МЁРТВ/В ЛОББИ)
+-- ОПРЕДЕЛЕНИЕ СОСТОЯНИЯ ИГРОКА
 -- ==============================================
 local function IsPlayerInGame(plr)
     if not plr then return false end
     if not plr.Character then return false end
     
-    -- Проверяем, есть ли у игрока Humanoid
     local humanoid = plr.Character:FindFirstChild("Humanoid")
     if not humanoid then return false end
-    
-    -- Проверяем здоровье
     if humanoid.Health <= 0 then return false end
     
-    -- Проверяем, находится ли игрок в лобби (по позиции)
     local root = plr.Character:FindFirstChild("HumanoidRootPart")
     if root then
         local yPos = root.Position.Y
-        -- Если игрок ниже определённой высоты (мёртв/в лобби)
         if yPos < -50 then return false end
         
-        -- Проверяем, есть ли у игрока оружие (в лобби его нет)
         local hasWeapon = false
         for _, item in ipairs(plr.Character:GetChildren()) do
             if item:IsA("Tool") then
@@ -370,7 +380,6 @@ local function IsPlayerInGame(plr)
                 break
             end
         end
-        -- Если нет оружия и игрок в лобби (по позиции)
         if not hasWeapon and yPos > 100 then
             return false
         end
@@ -446,7 +455,6 @@ local function GetPlayerRole(plr)
     if not plr or plr == LocalPlayer then return nil end
     if not plr.Character then return "Dead" end
     
-    -- Проверяем, жив ли игрок и в игре ли он
     if not IsPlayerInGame(plr) then
         return "Dead"
     end
@@ -454,7 +462,6 @@ local function GetPlayerRole(plr)
     local humanoid = plr.Character:FindFirstChild("Humanoid")
     if not humanoid or humanoid.Health <= 0 then return "Dead"
     
-    -- 1. Проверяем атрибуты
     local murdererAttr = plr:GetAttribute("Murderer")
     local sheriffAttr = plr:GetAttribute("Sheriff")
     local roleAttr = plr:GetAttribute("Role")
@@ -472,7 +479,6 @@ local function GetPlayerRole(plr)
         return "Sheriff"
     end
     
-    -- 2. Проверяем оружие в руках
     if FindMurdererWeapon(plr.Character) then
         return "Murderer"
     end
@@ -481,7 +487,6 @@ local function GetPlayerRole(plr)
         return "Sheriff"
     end
     
-    -- 3. Проверяем рюкзак
     local backpack = plr:FindFirstChild("Backpack")
     if backpack then
         if FindMurdererWeapon(backpack) then
@@ -496,7 +501,7 @@ local function GetPlayerRole(plr)
 end
 
 -- ==============================================
--- ФУНКЦИЯ ПРОВЕРКИ ВИДИМОСТИ (WALLCHECK)
+-- ФУНКЦИЯ ПРОВЕРКИ ВИДИМОСТИ
 -- ==============================================
 function IsPlayerVisible(plr)
     if not plr or not plr.Character then return false end
@@ -504,7 +509,7 @@ function IsPlayerVisible(plr)
     local targetPart = plr.Character:FindFirstChild(TargetPart)
     if not targetPart then return false end
     
-    local CurrentCamera = workspace.CurrentCamera
+    local CurrentCamera = GetCamera()
     if not CurrentCamera then return false end
     
     local raycastParams = RaycastParams.new()
@@ -550,7 +555,8 @@ function FindMurderer(preferTarget)
                 local hum = pl.Character:FindFirstChild("Humanoid")
                 if hum and hum.Health > 0 then
                     if WallCheckEnabled and not IsPlayerVisible(pl) then
-                        continue
+                        -- continue не работает в Lua, используем goto
+                        goto continue
                     end
                     
                     local root = pl.Character:FindFirstChild("HumanoidRootPart")
@@ -566,6 +572,7 @@ function FindMurderer(preferTarget)
                     end
                 end
             end
+            ::continue::
         end
     end
     
@@ -582,7 +589,7 @@ local LastOutlineUpdate = 0
 
 local function GetOutlineColor(role, isDead)
     if isDead then
-        return Color3.fromRGB(128, 128, 128) -- Серый для мёртвых/в лобби
+        return Color3.fromRGB(128, 128, 128)
     end
     
     if role == "Murderer" then
@@ -611,12 +618,12 @@ end
 local function ApplyOutline(plr)
     if not plr or plr == LocalPlayer then return end
     if OutlinedPlayers[plr] then return end
+    if not plr.Character then return end
     
     local role = GetPlayerRole(plr)
     local isDead = (role == "Dead" or role == nil)
     local color = GetOutlineColor(role, isDead)
     
-    -- Создаём Highlight
     local highlight = Instance.new("Highlight")
     highlight.Name = "Outline_Highlight"
     highlight.FillTransparency = 1
@@ -626,28 +633,30 @@ local function ApplyOutline(plr)
     highlight.Adornee = plr.Character
     highlight.Parent = plr.Character
     
-    -- Создаём BillboardGui ТОЛЬКО для живых игроков
     local billboard = nil
     local nameLabel = nil
     
     if not isDead then
-        billboard = Instance.new("BillboardGui")
-        billboard.Name = "Outline_NameTag"
-        billboard.Size = UDim2.new(0, 200, 0, 50)
-        billboard.Adornee = plr.Character and plr.Character:FindFirstChild("Head")
-        billboard.Parent = plr.Character
-        billboard.AlwaysOnTop = true
-        
-        nameLabel = Instance.new("TextLabel")
-        nameLabel.Size = UDim2.new(1, 0, 1, 0)
-        nameLabel.BackgroundTransparency = 1
-        nameLabel.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
-        nameLabel.TextColor3 = color
-        nameLabel.TextSize = 14
-        nameLabel.Font = Enum.Font.Jura
-        nameLabel.TextStrokeTransparency = 0.2
-        nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-        nameLabel.Parent = billboard
+        local head = plr.Character:FindFirstChild("Head")
+        if head then
+            billboard = Instance.new("BillboardGui")
+            billboard.Name = "Outline_NameTag"
+            billboard.Size = UDim2.new(0, 200, 0, 50)
+            billboard.Adornee = head
+            billboard.Parent = plr.Character
+            billboard.AlwaysOnTop = true
+            
+            nameLabel = Instance.new("TextLabel")
+            nameLabel.Size = UDim2.new(1, 0, 1, 0)
+            nameLabel.BackgroundTransparency = 1
+            nameLabel.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
+            nameLabel.TextColor3 = color
+            nameLabel.TextSize = 14
+            nameLabel.Font = Enum.Font.Jura
+            nameLabel.TextStrokeTransparency = 0.2
+            nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+            nameLabel.Parent = billboard
+        end
     end
     
     OutlinedPlayers[plr] = {
@@ -658,7 +667,6 @@ local function ApplyOutline(plr)
         IsDead = isDead
     }
     
-    -- Обновление при смене персонажа
     local charConn
     charConn = plr.CharacterAdded:Connect(function()
         task.wait(0.5)
@@ -690,40 +698,39 @@ local function UpdateOutline()
                 if OutlinedPlayers[plr] then
                     local data = OutlinedPlayers[plr]
                     
-                    -- Обновляем цвет если изменилось состояние
                     if data.Role ~= role or data.IsDead ~= isDead then
                         data.Highlight.OutlineColor = color
                         data.Highlight.OutlineTransparency = isDead and 0.5 or 0.2
                         
-                        -- Если игрок умер или в лобби - убираем надпись
                         if isDead and data.Billboard then
                             data.Billboard:Destroy()
                             data.Billboard = nil
                             data.Label = nil
                         elseif not isDead and not data.Billboard then
-                            -- Если ожил - создаём надпись
-                            local billboard = Instance.new("BillboardGui")
-                            billboard.Name = "Outline_NameTag"
-                            billboard.Size = UDim2.new(0, 200, 0, 50)
-                            billboard.Adornee = plr.Character and plr.Character:FindFirstChild("Head")
-                            billboard.Parent = plr.Character
-                            billboard.AlwaysOnTop = true
-                            
-                            local nameLabel = Instance.new("TextLabel")
-                            nameLabel.Size = UDim2.new(1, 0, 1, 0)
-                            nameLabel.BackgroundTransparency = 1
-                            nameLabel.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
-                            nameLabel.TextColor3 = color
-                            nameLabel.TextSize = 14
-                            nameLabel.Font = Enum.Font.Jura
-                            nameLabel.TextStrokeTransparency = 0.2
-                            nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-                            nameLabel.Parent = billboard
-                            
-                            data.Billboard = billboard
-                            data.Label = nameLabel
+                            local head = plr.Character:FindFirstChild("Head")
+                            if head then
+                                local billboard = Instance.new("BillboardGui")
+                                billboard.Name = "Outline_NameTag"
+                                billboard.Size = UDim2.new(0, 200, 0, 50)
+                                billboard.Adornee = head
+                                billboard.Parent = plr.Character
+                                billboard.AlwaysOnTop = true
+                                
+                                local nameLabel = Instance.new("TextLabel")
+                                nameLabel.Size = UDim2.new(1, 0, 1, 0)
+                                nameLabel.BackgroundTransparency = 1
+                                nameLabel.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
+                                nameLabel.TextColor3 = color
+                                nameLabel.TextSize = 14
+                                nameLabel.Font = Enum.Font.Jura
+                                nameLabel.TextStrokeTransparency = 0.2
+                                nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                                nameLabel.Parent = billboard
+                                
+                                data.Billboard = billboard
+                                data.Label = nameLabel
+                            end
                         elseif not isDead and data.Billboard and data.Label then
-                            -- Обновляем текст если роль изменилась
                             data.Label.Text = GetRoleEmoji(role) .. " " .. plr.Name .. " [" .. role .. "]"
                             data.Label.TextColor3 = color
                         end
@@ -773,7 +780,7 @@ end)
 local function AimLockLoop(deltaTime)
     if not AimLockEnabled then return end
     
-    local CurrentCamera = workspace.CurrentCamera 
+    local CurrentCamera = GetCamera()
     if not CurrentCamera then return end
 
     local valid = false
@@ -898,38 +905,19 @@ local function CreateButtons()
         BindableButtons.AddBButton("aim_toggle", "Aim:OFF", function()
             ToggleAimLock()
         end, false, "aim")
-        
-        local btn = BindableButtons.Buttons["aim_toggle"]
-        if btn then
-            local screen = Workspace.CurrentCamera.ViewportSize
-            btn.Size = __UD2(bindButtonSize * (screen.Y / screen.X), 0, bindButtonSize, 0)
-        end
     end
     
     if not BindableButtons.Buttons["wall_toggle"] then
         BindableButtons.AddBButton("wall_toggle", "Wall:OFF", function()
             ToggleWallCheck()
         end, false, "wall")
-        
-        local btn = BindableButtons.Buttons["wall_toggle"]
-        if btn then
-            local screen = Workspace.CurrentCamera.ViewportSize
-            btn.Size = __UD2(bindButtonSize * (screen.Y / screen.X), 0, bindButtonSize, 0)
-        end
     end
     
     if not BindableButtons.Buttons["outline_toggle"] then
         BindableButtons.AddBButton("outline_toggle", "OL:OFF", function()
             ToggleOutline()
         end, false, "outline")
-        
-        local btn = BindableButtons.Buttons["outline_toggle"]
-        if btn then
-            local screen = Workspace.CurrentCamera.ViewportSize
-            btn.Size = __UD2(bindButtonSize * (screen.Y / screen.X), 0, bindButtonSize, 0)
-        end
-    end
-    
+    end    
     UpdateAimButtonState()
     UpdateWallButtonState()
     UpdateOutlineButtonState()
@@ -974,8 +962,10 @@ local function SetupKeybinds()
 end
 
 -- ==============================================
--- ЗАПУСК
+-- ЗАПУСК С ЗАДЕРЖКОЙ (чтобы всё загрузилось)
 -- ==============================================
+task.wait(1)
+
 CreateButtons()
 ToggleButtonsVisibility()
 SetupKeybinds()
