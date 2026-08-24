@@ -1,5 +1,5 @@
--- MM2 Murderer Aim Lock V2.6 (ABSOLUTE HARD LOCK) + PREMIUM GUI
--- FIXED: Гарантированное отображение GUI
+-- MM2 Murderer Aim Lock V2.6 (ABSOLUTE HARD LOCK) + OVERDRIVE-STYLE GUI
+-- Полноценное меню с вкладками + круглая кнопка
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,7 +10,7 @@ local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
 -- ==============================================
--- MAID (для очистки)
+-- MAID
 -- ==============================================
 local Maid = {}
 Maid.__index = Maid
@@ -53,168 +53,15 @@ local RootMaid = Maid.new()
 -- ЦВЕТОВЫЕ ПРЕСЕТЫ
 -- ==============================================
 local COLOR_PRESETS = {
-    OBSIDIAN = {
-        name = "🪨 Obsidian",
-        bg = Color3.fromRGB(15, 12, 20),
-        bgTitle = Color3.fromRGB(25, 20, 35),
-        border = Color3.fromRGB(100, 80, 180),
-        text = Color3.fromRGB(180, 170, 200),
-        accent = Color3.fromRGB(150, 110, 255),
-        statusActive = Color3.fromRGB(120, 200, 255),
-        statusLocked = Color3.fromRGB(255, 200, 100),
-        statusPaused = Color3.fromRGB(255, 100, 100),
-        gradient = {
-            {0, Color3.fromRGB(60, 40, 120)},
-            {0.3, Color3.fromRGB(120, 80, 200)},
-            {0.6, Color3.fromRGB(80, 60, 160)},
-            {0.8, Color3.fromRGB(40, 30, 100)},
-            {1, Color3.fromRGB(60, 40, 120)}
-        }
-    },
-    GOLD = {
-        name = "✨ Gold",
-        bg = Color3.fromRGB(20, 15, 5),
-        bgTitle = Color3.fromRGB(35, 25, 10),
-        border = Color3.fromRGB(255, 200, 50),
-        text = Color3.fromRGB(220, 200, 150),
-        accent = Color3.fromRGB(255, 215, 0),
-        statusActive = Color3.fromRGB(100, 255, 100),
-        statusLocked = Color3.fromRGB(255, 200, 50),
-        statusPaused = Color3.fromRGB(255, 100, 100),
-        gradient = {
-            {0, Color3.fromRGB(200, 150, 20)},
-            {0.3, Color3.fromRGB(255, 215, 0)},
-            {0.6, Color3.fromRGB(200, 150, 20)},
-            {0.8, Color3.fromRGB(150, 100, 10)},
-            {1, Color3.fromRGB(200, 150, 20)}
-        }
-    },
-    NEON = {
-        name = "💜 Neon",
-        bg = Color3.fromRGB(10, 5, 20),
-        bgTitle = Color3.fromRGB(20, 10, 35),
-        border = Color3.fromRGB(180, 50, 255),
-        text = Color3.fromRGB(200, 170, 220),
-        accent = Color3.fromRGB(200, 100, 255),
-        statusActive = Color3.fromRGB(100, 255, 200),
-        statusLocked = Color3.fromRGB(255, 200, 100),
-        statusPaused = Color3.fromRGB(255, 100, 100),
-        gradient = {
-            {0, Color3.fromRGB(150, 20, 200)},
-            {0.3, Color3.fromRGB(200, 50, 255)},
-            {0.6, Color3.fromRGB(150, 20, 200)},
-            {0.8, Color3.fromRGB(100, 10, 150)},
-            {1, Color3.fromRGB(150, 20, 200)}
-        }
-    },
-    CYBER = {
-        name = "💠 Cyber",
-        bg = Color3.fromRGB(5, 10, 20),
-        bgTitle = Color3.fromRGB(10, 20, 35),
-        border = Color3.fromRGB(0, 200, 255),
-        text = Color3.fromRGB(150, 200, 220),
-        accent = Color3.fromRGB(0, 220, 255),
-        statusActive = Color3.fromRGB(100, 255, 200),
-        statusLocked = Color3.fromRGB(255, 200, 100),
-        statusPaused = Color3.fromRGB(255, 100, 100),
-        gradient = {
-            {0, Color3.fromRGB(0, 100, 200)},
-            {0.3, Color3.fromRGB(0, 200, 255)},
-            {0.6, Color3.fromRGB(0, 100, 200)},
-            {0.8, Color3.fromRGB(0, 50, 150)},
-            {1, Color3.fromRGB(0, 100, 200)}
-        }
-    },
-    CRIMSON = {
-        name = "❤️ Crimson",
-        bg = Color3.fromRGB(20, 5, 5),
-        bgTitle = Color3.fromRGB(35, 10, 10),
-        border = Color3.fromRGB(255, 50, 50),
-        text = Color3.fromRGB(220, 170, 170),
-        accent = Color3.fromRGB(255, 80, 80),
-        statusActive = Color3.fromRGB(100, 255, 100),
-        statusLocked = Color3.fromRGB(255, 200, 100),
-        statusPaused = Color3.fromRGB(255, 100, 100),
-        gradient = {
-            {0, Color3.fromRGB(200, 20, 20)},
-            {0.3, Color3.fromRGB(255, 50, 50)},
-            {0.6, Color3.fromRGB(200, 20, 20)},
-            {0.8, Color3.fromRGB(150, 10, 10)},
-            {1, Color3.fromRGB(200, 20, 20)}
-        }
-    },
-    EMERALD = {
-        name = "💚 Emerald",
-        bg = Color3.fromRGB(5, 20, 5),
-        bgTitle = Color3.fromRGB(10, 35, 10),
-        border = Color3.fromRGB(50, 255, 100),
-        text = Color3.fromRGB(170, 220, 180),
-        accent = Color3.fromRGB(80, 255, 120),
-        statusActive = Color3.fromRGB(100, 255, 100),
-        statusLocked = Color3.fromRGB(255, 200, 100),
-        statusPaused = Color3.fromRGB(255, 100, 100),
-        gradient = {
-            {0, Color3.fromRGB(20, 200, 60)},
-            {0.3, Color3.fromRGB(50, 255, 100)},
-            {0.6, Color3.fromRGB(20, 200, 60)},
-            {0.8, Color3.fromRGB(10, 150, 40)},
-            {1, Color3.fromRGB(20, 200, 60)}
-        }
-    },
-    ICE = {
-        name = "❄️ Ice",
-        bg = Color3.fromRGB(10, 15, 25),
-        bgTitle = Color3.fromRGB(15, 25, 40),
-        border = Color3.fromRGB(150, 220, 255),
-        text = Color3.fromRGB(180, 210, 230),
-        accent = Color3.fromRGB(200, 230, 255),
-        statusActive = Color3.fromRGB(150, 255, 220),
-        statusLocked = Color3.fromRGB(255, 220, 150),
-        statusPaused = Color3.fromRGB(255, 100, 100),
-        gradient = {
-            {0, Color3.fromRGB(80, 180, 220)},
-            {0.3, Color3.fromRGB(150, 220, 255)},
-            {0.6, Color3.fromRGB(80, 180, 220)},
-            {0.8, Color3.fromRGB(40, 120, 180)},
-            {1, Color3.fromRGB(80, 180, 220)}
-        }
-    },
-    NEON_PURPLE = {
-        name = "💜 Electric Purple",
-        bg = Color3.fromRGB(11, 0, 20),
-        bgTitle = Color3.fromRGB(46, 10, 78),
-        border = Color3.fromRGB(157, 0, 255),
-        text = Color3.fromRGB(200, 170, 230),
-        accent = Color3.fromRGB(157, 0, 255),
-        statusActive = Color3.fromRGB(157, 0, 255),
-        statusLocked = Color3.fromRGB(255, 200, 100),
-        statusPaused = Color3.fromRGB(255, 100, 100),
-        gradient = {
-            {0, Color3.fromRGB(157, 0, 255)},
-            {0.3, Color3.fromRGB(120, 0, 200)},
-            {0.6, Color3.fromRGB(80, 0, 150)},
-            {0.8, Color3.fromRGB(46, 10, 78)},
-            {1, Color3.fromRGB(157, 0, 255)}
-        }
-    },
-    MIDNIGHT = {
-        name = "🌙 Midnight Blue",
-        bg = Color3.fromRGB(0, 0, 5),
-        bgTitle = Color3.fromRGB(0, 10, 30),
-        border = Color3.fromRGB(50, 100, 200),
-        text = Color3.fromRGB(170, 190, 220),
-        accent = Color3.fromRGB(80, 150, 255),
-        statusActive = Color3.fromRGB(100, 200, 255),
-        statusLocked = Color3.fromRGB(255, 200, 100),
-        statusPaused = Color3.fromRGB(255, 100, 100),
-        gradient = {
-            {0, Color3.fromRGB(80, 150, 255)},
-            {0.3, Color3.fromRGB(50, 100, 200)},
-            {0.6, Color3.fromRGB(20, 50, 120)},
-            {0.8, Color3.fromRGB(0, 10, 30)},
-            {1, Color3.fromRGB(80, 150, 255)}
-        }
-    }
+    OBSIDIAN = { name = "🪨 Obsidian", bg = Color3.fromRGB(15,12,20), bgTitle = Color3.fromRGB(25,20,35), border = Color3.fromRGB(100,80,180), text = Color3.fromRGB(180,170,200), accent = Color3.fromRGB(150,110,255), statusActive = Color3.fromRGB(120,200,255), statusPaused = Color3.fromRGB(255,100,100) },
+    GOLD = { name = "✨ Gold", bg = Color3.fromRGB(20,15,5), bgTitle = Color3.fromRGB(35,25,10), border = Color3.fromRGB(255,200,50), text = Color3.fromRGB(220,200,150), accent = Color3.fromRGB(255,215,0), statusActive = Color3.fromRGB(100,255,100), statusPaused = Color3.fromRGB(255,100,100) },
+    NEON = { name = "💜 Neon", bg = Color3.fromRGB(10,5,20), bgTitle = Color3.fromRGB(20,10,35), border = Color3.fromRGB(180,50,255), text = Color3.fromRGB(200,170,220), accent = Color3.fromRGB(200,100,255), statusActive = Color3.fromRGB(100,255,200), statusPaused = Color3.fromRGB(255,100,100) },
+    CYBER = { name = "💠 Cyber", bg = Color3.fromRGB(5,10,20), bgTitle = Color3.fromRGB(10,20,35), border = Color3.fromRGB(0,200,255), text = Color3.fromRGB(150,200,220), accent = Color3.fromRGB(0,220,255), statusActive = Color3.fromRGB(100,255,200), statusPaused = Color3.fromRGB(255,100,100) },
+    CRIMSON = { name = "❤️ Crimson", bg = Color3.fromRGB(20,5,5), bgTitle = Color3.fromRGB(35,10,10), border = Color3.fromRGB(255,50,50), text = Color3.fromRGB(220,170,170), accent = Color3.fromRGB(255,80,80), statusActive = Color3.fromRGB(100,255,100), statusPaused = Color3.fromRGB(255,100,100) },
+    EMERALD = { name = "💚 Emerald", bg = Color3.fromRGB(5,20,5), bgTitle = Color3.fromRGB(10,35,10), border = Color3.fromRGB(50,255,100), text = Color3.fromRGB(170,220,180), accent = Color3.fromRGB(80,255,120), statusActive = Color3.fromRGB(100,255,100), statusPaused = Color3.fromRGB(255,100,100) },
+    ICE = { name = "❄️ Ice", bg = Color3.fromRGB(10,15,25), bgTitle = Color3.fromRGB(15,25,40), border = Color3.fromRGB(150,220,255), text = Color3.fromRGB(180,210,230), accent = Color3.fromRGB(200,230,255), statusActive = Color3.fromRGB(150,255,220), statusPaused = Color3.fromRGB(255,100,100) },
+    NEON_PURPLE = { name = "💜 Electric Purple", bg = Color3.fromRGB(11,0,20), bgTitle = Color3.fromRGB(46,10,78), border = Color3.fromRGB(157,0,255), text = Color3.fromRGB(200,170,230), accent = Color3.fromRGB(157,0,255), statusActive = Color3.fromRGB(157,0,255), statusPaused = Color3.fromRGB(255,100,100) },
+    MIDNIGHT = { name = "🌙 Midnight Blue", bg = Color3.fromRGB(0,0,5), bgTitle = Color3.fromRGB(0,10,30), border = Color3.fromRGB(50,100,200), text = Color3.fromRGB(170,190,220), accent = Color3.fromRGB(80,150,255), statusActive = Color3.fromRGB(100,200,255), statusPaused = Color3.fromRGB(255,100,100) }
 }
 
 local CurrentColor = "OBSIDIAN"
@@ -241,30 +88,21 @@ local MurdererWeapons = {
 }
 
 -- ==============================================
--- ФУНКЦИИ ПОИСКА И ВИДИМОСТИ
+-- ФУНКЦИИ ПОИСКА
 -- ==============================================
 function IsVisible(target)
     if not target or not target.Character then return false end
     local p = target.Character:FindFirstChild(TargetPart)
     if not p then return false end
-    
     local CurrentCamera = workspace.CurrentCamera
     if not CurrentCamera then return false end
-    
     local raycastParams = RaycastParams.new()
     local filterList = {}
-    if LocalPlayer.Character then 
-        table.insert(filterList, LocalPlayer.Character) 
-    end
-    
+    if LocalPlayer.Character then table.insert(filterList, LocalPlayer.Character) end
     raycastParams.FilterDescendantsInstances = filterList
     raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-    
     local direction = p.Position - CurrentCamera.CFrame.Position
-    local result = workspace:Raycast(
-        CurrentCamera.CFrame.Position, direction, raycastParams
-    )
-    
+    local result = workspace:Raycast(CurrentCamera.CFrame.Position, direction, raycastParams)
     if not result then return true end
     return result.Instance:IsDescendantOf(target.Character)
 end
@@ -276,15 +114,9 @@ function CheckForKnife(container)
             local name = item.Name:lower()
             local isServer = item:FindFirstChild("KnifeServer")
             local isClient = item:FindFirstChild("KnifeClient")
-            
-            if name == "knife" or isServer or isClient then
-                return true
-            end
-            
+            if name == "knife" or isServer or isClient then return true end
             for _, weaponName in ipairs(MurdererWeapons) do
-                if name:find(weaponName) then
-                    return true
-                end
+                if name:find(weaponName) then return true end
             end
         end
     end
@@ -294,18 +126,14 @@ end
 function FindMurderer(preferTarget)
     if preferTarget and preferTarget.Character then
         local hum = preferTarget.Character:FindFirstChild("Humanoid")
-        if hum and hum.Health > 0 then
-            return preferTarget
-        end
+        if hum and hum.Health > 0 then return preferTarget end
     end
-
     for _, pl in ipairs(Players:GetPlayers()) do
         if pl ~= LocalPlayer and pl.Character then
             local hum = pl.Character:FindFirstChild("Humanoid")
             if hum and hum.Health > 0 then
                 local inChar = CheckForKnife(pl.Character)
                 local inPack = CheckForKnife(pl:FindFirstChild("Backpack"))
-                
                 if inChar or inPack then
                     if not WallCheckEnabled or IsVisible(pl) then
                         return pl
@@ -322,18 +150,13 @@ end
 -- ==============================================
 local function AimLockLoop(deltaTime)
     if not AimLockEnabled then return end
-    
     local CurrentCamera = workspace.CurrentCamera 
     if not CurrentCamera then return end
-
     local valid = false
     if TargetPlayer and TargetPlayer.Character then
         local hum = TargetPlayer.Character:FindFirstChild("Humanoid")
-        if hum and hum.Health > 0 then
-            valid = true
-        end
+        if hum and hum.Health > 0 then valid = true end
     end
-    
     if WallCheckEnabled and valid then
         local currentTime = os.clock()
         if currentTime - LastWallCheckTime > WALL_CHECK_INTERVAL then
@@ -342,16 +165,13 @@ local function AimLockLoop(deltaTime)
         end
         if not IsTargetVisibleCache then
             InvisibleTimer = InvisibleTimer + deltaTime
-            if InvisibleTimer > MAX_INVISIBLE_TIME then
-                valid = false
-            end
+            if InvisibleTimer > MAX_INVISIBLE_TIME then valid = false end
         else
             InvisibleTimer = 0
         end
     else
         InvisibleTimer = 0
     end
-    
     if not valid then 
         local currentTime = os.clock()
         if currentTime - LastSearchTime > 0.1 then
@@ -359,259 +179,93 @@ local function AimLockLoop(deltaTime)
             LastSearchTime = currentTime
         end
     end
-    
     if TargetPlayer and TargetPlayer.Character then
         local targetNode = TargetPlayer.Character:FindFirstChild(TargetPart)
-        
         if targetNode then
             local vel = targetNode.AssemblyLinearVelocity or Vector3.new()
             local predVector = Vector3.new(vel.X, vel.Y * 0.3, vel.Z)
             local predictedPos = targetNode.Position + (predVector * PredictionLevel)
-            
             CurrentCamera.CFrame = CFrame.new(CurrentCamera.CFrame.Position, predictedPos)
         end
     end
 end
 
 -- ==============================================
--- 🔥 PREMIUM GUI (ГАРАНТИРОВАННОЕ ОТОБРАЖЕНИЕ)
+-- КРУГЛАЯ КНОПКА (БЫЛА В ПЕРВОЙ ВЕРСИИ)
 -- ==============================================
-local function CreateAimGUI()
-    -- Удаляем старый GUI
-    if _G.AimGui then 
-        _G.AimGui:Destroy() 
-        _G.AimGui = nil
+local RoundButton = nil
+local ButtonMaid = Maid.new()
+
+local function CreateRoundButton()
+    if RoundButton then 
+        RoundButton:Destroy() 
+        RoundButton = nil
     end
     
     local colors = COLOR_PRESETS[CurrentColor] or COLOR_PRESETS.OBSIDIAN
     
-    -- Пробуем разные родители для GUI
     local parent = CoreGui
-    
-    -- Проверяем доступность CoreGui
-    local success, result = pcall(function()
-        return game:GetService("CoreGui")
-    end)
-    if success and result then
-        parent = result
-    end
-    
-    -- Если CoreGui недоступен, пробуем PlayerGui
     local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    if playerGui then
-        parent = playerGui
-    end
+    if playerGui then parent = playerGui end
     
-    -- Создаём ScreenGui с высоким ZIndex
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "AimLockGUI"
-    gui.ResetOnSpawn = false
-    gui.IgnoreGuiInset = true
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    local button = Instance.new("ImageButton")
+    button.Name = "AimLockRoundButton"
+    button.Size = UDim2.new(0, 55, 0, 55)
+    button.Position = UDim2.new(0.02, 0, 0.85, 0)
+    button.BackgroundTransparency = 1
+    button.Image = "rbxassetid://86221076925479"
+    button.Parent = parent
+    button.ZIndex = 10
+    button.AutoButtonColor = false
     
-    -- Пытаемся установить родителя
-    local success2, err = pcall(function()
-        gui.Parent = parent
-    end)
-    
-    if not success2 then
-        -- Если не получилось, пробуем CoreGui через gethui
-        local hui = gethui and gethui()
-        if hui then
-            gui.Parent = hui
-        else
-            -- Последняя попытка - PlayerGui
-            gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-        end
-    end
-    
-    _G.AimGui = gui
-    
-    -- Main Frame
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 200, 0, 160)
-    mainFrame.Position = UDim2.new(0.75, 0, 0.25, 0) -- Сдвигаем влево, чтобы не перекрывать список игроков
-    mainFrame.BackgroundColor3 = colors.bg
-    mainFrame.BackgroundTransparency = 0.85
-    mainFrame.BorderSizePixel = 0
-    mainFrame.ClipsDescendants = true
-    mainFrame.Parent = gui
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = mainFrame
-    
+    -- Обводка
     local stroke = Instance.new("UIStroke")
     stroke.Color = colors.border
-    stroke.Thickness = 1.5
+    stroke.Thickness = 2
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Parent = mainFrame
+    stroke.Parent = button
     
-    local strokeGradient = Instance.new("UIGradient")
-    local gradSeq = {}
-    for _, point in ipairs(colors.gradient) do
-        table.insert(gradSeq, ColorSequenceKeypoint.new(point[1], point[2]))
-    end
-    strokeGradient.Color = ColorSequence.new(gradSeq)
-    strokeGradient.Parent = stroke
+    local strokeGrad = Instance.new("UIGradient")
+    strokeGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, colors.accent),
+        ColorSequenceKeypoint.new(0.5, colors.border),
+        ColorSequenceKeypoint.new(1, colors.accent)
+    })
+    strokeGrad.Rotation = 0
+    strokeGrad.Parent = stroke
     
-    -- Title Bar
-    local titleFrame = Instance.new("Frame")
-    titleFrame.Size = UDim2.new(1, 0, 0, 28)
-    titleFrame.BackgroundTransparency = 0.3
-    titleFrame.BackgroundColor3 = colors.bgTitle
-    titleFrame.BorderSizePixel = 0
-    titleFrame.Parent = mainFrame
+    -- Текст внутри
+    local text = Instance.new("TextLabel")
+    text.Size = UDim2.new(1, 0, 1, 0)
+    text.BackgroundTransparency = 1
+    text.Text = AimLockEnabled and "ON" or "OFF"
+    text.TextColor3 = colors.text
+    text.TextSize = 14
+    text.Font = Enum.Font.Jura
+    text.TextWrapped = true
+    text.Parent = button
     
-    local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 8)
-    titleCorner.Parent = titleFrame
-    
-    -- Logo
-    local logo = Instance.new("TextLabel")
-    logo.Size = UDim2.new(0.7, 0, 1, 0)
-    logo.Position = UDim2.new(0.05, 0, 0, 0)
-    logo.BackgroundTransparency = 1
-    logo.Text = "🎯 AIMLOCK"
-    logo.TextColor3 = colors.accent
-    logo.TextSize = 13
-    logo.Font = Enum.Font.Jura
-    logo.TextXAlignment = Enum.TextXAlignment.Left
-    logo.Parent = titleFrame
-    
-    -- Toggle Button (collapse)
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(0.2, 0, 1, 0)
-    toggleBtn.Position = UDim2.new(0.8, 0, 0, 0)
-    toggleBtn.BackgroundTransparency = 1
-    toggleBtn.Text = "▲"
-    toggleBtn.TextColor3 = colors.accent
-    toggleBtn.TextSize = 12
-    toggleBtn.Font = Enum.Font.Jura
-    toggleBtn.Parent = titleFrame
-    
-    -- Content
-    local content = Instance.new("Frame")
-    content.Size = UDim2.new(1, 0, 1, -28)
-    content.Position = UDim2.new(0, 0, 0, 28)
-    content.BackgroundTransparency = 1
-    content.Parent = mainFrame
-    
-    -- Info Labels
-    local infoLabels = {}
-    local infoData = {
-        {text = "🎯 Target: None", pos = 5, color = colors.text},
-        {text = "📶 Ping: 0ms", pos = 22, color = colors.text},
-        {text = "⚙️ Mode: Hard Lock", pos = 39, color = colors.text},
-        {text = "● INACTIVE", pos = 56, color = colors.statusPaused}
-    }
-    
-    for _, data in ipairs(infoData) do
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(0.95, 0, 0, 16)
-        label.Position = UDim2.new(0.025, 0, 0, data.pos)
-        label.BackgroundTransparency = 1
-        label.Text = data.text
-        label.TextColor3 = data.color
-        label.TextSize = 10
-        label.Font = Enum.Font.Jura
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = content
-        table.insert(infoLabels, label)
-    end
-    
-    -- Buttons Frame
-    local btnFrame = Instance.new("Frame")
-    btnFrame.Size = UDim2.new(1, 0, 0, 25)
-    btnFrame.Position = UDim2.new(0, 0, 0, 75)
-    btnFrame.BackgroundTransparency = 1
-    btnFrame.Parent = content
-    
-    -- Toggle Aim Button
-    local aimButton = Instance.new("TextButton")
-    aimButton.Size = UDim2.new(0.46, 0, 1, 0)
-    aimButton.Position = UDim2.new(0.02, 0, 0, 0)
-    aimButton.BackgroundColor3 = colors.accent
-    aimButton.BackgroundTransparency = 0.3
-    aimButton.Text = "▶ ENABLE"
-    aimButton.TextColor3 = colors.text
-    aimButton.TextSize = 10
-    aimButton.Font = Enum.Font.Jura
-    aimButton.Parent = btnFrame
-    
-    local aimCorner = Instance.new("UICorner")
-    aimCorner.CornerRadius = UDim.new(0, 3)
-    aimCorner.Parent = aimButton
-    
-    -- Settings Button
-    local settingsButton = Instance.new("TextButton")
-    settingsButton.Size = UDim2.new(0.46, 0, 1, 0)
-    settingsButton.Position = UDim2.new(0.52, 0, 0, 0)
-    settingsButton.BackgroundColor3 = colors.border
-    settingsButton.BackgroundTransparency = 0.3
-    settingsButton.Text = "⚙ SETTINGS"
-    settingsButton.TextColor3 = colors.text
-    settingsButton.TextSize = 10
-    settingsButton.Font = Enum.Font.Jura
-    settingsButton.Parent = btnFrame
-    
-    local settingsCorner = Instance.new("UICorner")
-    settingsCorner.CornerRadius = UDim.new(0, 3)
-    settingsCorner.Parent = settingsButton
-    
-    -- Status Strip
-    local statusStrip = Instance.new("Frame")
-    statusStrip.Size = UDim2.new(1, 0, 0, 2)
-    statusStrip.Position = UDim2.new(0, 0, 0, 0)
-    statusStrip.BackgroundColor3 = colors.statusPaused
-    statusStrip.BorderSizePixel = 0
-    statusStrip.Parent = mainFrame
-    
-    -- Bottom info
-    local bottomLabel = Instance.new("TextLabel")
-    bottomLabel.Size = UDim2.new(1, 0, 0, 14)
-    bottomLabel.Position = UDim2.new(0, 0, 0, 102)
-    bottomLabel.BackgroundTransparency = 1
-    bottomLabel.Text = "⚡ Press 'T' to toggle"
-    bottomLabel.TextColor3 = colors.text
-    bottomLabel.TextSize = 8
-    bottomLabel.Font = Enum.Font.Jura
-    bottomLabel.TextTransparency = 0.5
-    bottomLabel.Parent = content
-    
-    -- Вращение градиента
-    local rotationConnection
-    rotationConnection = RunService.RenderStepped:Connect(function()
-        if strokeGradient and strokeGradient.Parent then
-            strokeGradient.Rotation = (strokeGradient.Rotation + 0.3) % 360
-        else
-            if rotationConnection then
-                rotationConnection:Disconnect()
-                rotationConnection = nil
-            end
+    -- Анимация вращения
+    local rotConn = RunService.RenderStepped:Connect(function()
+        if strokeGrad and strokeGrad.Parent then
+            strokeGrad.Rotation = (strokeGrad.Rotation + 0.5) % 360
         end
     end)
+    ButtonMaid:GiveTask(rotConn)
     
-    local isCollapsed = false
-    
-    toggleBtn.MouseButton1Click:Connect(function()
-        isCollapsed = not isCollapsed
-        toggleBtn.Text = isCollapsed and "▼" or "▲"
-        
-        local tween = TweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad), 
-            isCollapsed and {
-                Size = UDim2.new(0, 70, 0, 28),
-                BackgroundTransparency = 0.95
-            } or {
-                Size = UDim2.new(0, 200, 0, 160),
-                BackgroundTransparency = 0.85
-            }
-        )
-        tween:Play()
-        
-        tween.Completed:Connect(function()
-            content.Visible = not isCollapsed
-        end)
+    -- Клик
+    button.MouseButton1Click:Connect(function()
+        AimLockEnabled = not AimLockEnabled
+        if AimLockEnabled then 
+            TargetPlayer = FindMurderer(nil) 
+            text.Text = "ON"
+            stroke.Color = colors.statusActive
+        else 
+            TargetPlayer = nil 
+            text.Text = "OFF"
+            stroke.Color = colors.border
+        end
+        if _G.UpdateAimUI then _G.UpdateAimUI() end
     end)
     
     -- Перетаскивание
@@ -619,12 +273,11 @@ local function CreateAimGUI()
     local dragStart = nil
     local startPos = nil
     
-    titleFrame.InputBegan:Connect(function(input)
+    button.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
-            startPos = mainFrame.Position
-            
+            startPos = button.Position
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -633,292 +286,557 @@ local function CreateAimGUI()
         end
     end)
     
-    titleFrame.InputChanged:Connect(function(input)
+    button.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
             local delta = input.Position - dragStart
-            mainFrame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
+            local parentSize = button.Parent.AbsoluteSize
+            button.Position = UDim2.new(
+                startPos.X.Scale + (delta.X / parentSize.X),
+                0,
+                startPos.Y.Scale + (delta.Y / parentSize.Y),
+                0
             )
         end
     end)
     
-    -- Обновление состояния кнопки
-    local function UpdateAimButton()
-        if AimLockEnabled then
-            aimButton.Text = "■ DISABLE"
-            aimButton.BackgroundColor3 = colors.statusPaused
-            statusStrip.BackgroundColor3 = colors.statusActive
-            infoLabels[1].Text = "🎯 Target: " .. (TargetPlayer and TargetPlayer.Name or "Searching...")
-            infoLabels[4].Text = "● ACTIVE"
-            infoLabels[4].TextColor3 = colors.statusActive
-        else
-            aimButton.Text = "▶ ENABLE"
-            aimButton.BackgroundColor3 = colors.accent
-            statusStrip.BackgroundColor3 = colors.statusPaused
-            infoLabels[1].Text = "🎯 Target: None"
-            infoLabels[4].Text = "● INACTIVE"
-            infoLabels[4].TextColor3 = colors.statusPaused
-        end
-    end
+    RoundButton = button
+    ButtonMaid:GiveTask(button)
     
-    aimButton.MouseButton1Click:Connect(function()
-        AimLockEnabled = not AimLockEnabled
-        if AimLockEnabled then 
-            TargetPlayer = FindMurderer(nil) 
-        else 
-            TargetPlayer = nil 
-        end
-        UpdateAimButton()
-    end)
-    
-    -- Настройки
-    settingsButton.MouseButton1Click:Connect(function()
-        local settingsFrame = Instance.new("Frame")
-        settingsFrame.Size = UDim2.new(0, 220, 0, 190)
-        settingsFrame.Position = UDim2.new(0.5, -110, 0.5, -95)
-        settingsFrame.BackgroundColor3 = colors.bg
-        settingsFrame.BackgroundTransparency = 0.05
-        settingsFrame.BorderSizePixel = 0
-        settingsFrame.ClipsDescendants = true
-        settingsFrame.Parent = gui
-        
-        local setCorner = Instance.new("UICorner")
-        setCorner.CornerRadius = UDim.new(0, 8)
-        setCorner.Parent = settingsFrame
-        
-        local setStroke = Instance.new("UIStroke")
-        setStroke.Color = colors.border
-        setStroke.Thickness = 1.5
-        setStroke.Parent = settingsFrame
-        
-        local setTitle = Instance.new("TextLabel")
-        setTitle.Size = UDim2.new(1, 0, 0, 30)
-        setTitle.BackgroundColor3 = colors.bgTitle
-        setTitle.BackgroundTransparency = 0.3
-        setTitle.Text = "⚙ SETTINGS"
-        setTitle.TextColor3 = colors.accent
-        setTitle.TextSize = 13
-        setTitle.Font = Enum.Font.Jura
-        setTitle.Parent = settingsFrame
-        
-        local closeBtn = Instance.new("TextButton")
-        closeBtn.Size = UDim2.new(0, 25, 0, 25)
-        closeBtn.Position = UDim2.new(1, -28, 0, 2)
-        closeBtn.BackgroundTransparency = 1
-        closeBtn.Text = "✕"
-        closeBtn.TextColor3 = colors.text
-        closeBtn.TextSize = 14
-        closeBtn.Font = Enum.Font.Jura
-        closeBtn.Parent = settingsFrame
-        closeBtn.MouseButton1Click:Connect(function()
-            settingsFrame:Destroy()
-        end)
-        
-        local options = {
-            {text = "🎯 Head", pos = 35, value = "Head"},
-            {text = "🎯 Torso", pos = 52, value = "HumanoidRootPart"},
-            {text = "🧱 WallCheck", pos = 69, value = "wallcheck"},
-            {text = "⚡ Prediction", pos = 86, value = "prediction"}
-        }
-        
-        for _, opt in ipairs(options) do
-            local label = Instance.new("TextLabel")
-            label.Size = UDim2.new(0.55, 0, 0, 16)
-            label.Position = UDim2.new(0.05, 0, 0, opt.pos)
-            label.BackgroundTransparency = 1
-            label.Text = opt.text
-            label.TextColor3 = colors.text
-            label.TextSize = 10
-            label.Font = Enum.Font.Jura
-            label.TextXAlignment = Enum.TextXAlignment.Left
-            label.Parent = settingsFrame
-            
-            if opt.value == "wallcheck" then
-                local btn = Instance.new("TextButton")
-                btn.Size = UDim2.new(0.25, 0, 0, 16)
-                btn.Position = UDim2.new(0.7, 0, 0, opt.pos)
-                btn.BackgroundColor3 = WallCheckEnabled and colors.statusActive or colors.statusPaused
-                btn.BackgroundTransparency = 0.3
-                btn.Text = WallCheckEnabled and "ON" or "OFF"
-                btn.TextColor3 = colors.text
-                btn.TextSize = 9
-                btn.Font = Enum.Font.Jura
-                btn.Parent = settingsFrame
-                
-                local btnCorner = Instance.new("UICorner")
-                btnCorner.CornerRadius = UDim.new(0, 2)
-                btnCorner.Parent = btn
-                
-                btn.MouseButton1Click:Connect(function()
-                    WallCheckEnabled = not WallCheckEnabled
-                    btn.Text = WallCheckEnabled and "ON" or "OFF"
-                    btn.BackgroundColor3 = WallCheckEnabled and colors.statusActive or colors.statusPaused
-                end)
-            elseif opt.value == "prediction" then
-                local levels = {"Low", "Medium", "High", "Off"}
-                local currentIdx = 3
-                if PredictionLevel == 0.08 then currentIdx = 1
-                elseif PredictionLevel == 0.145 then currentIdx = 2
-                elseif PredictionLevel == 0 then currentIdx = 4 end
-                
-                local btn = Instance.new("TextButton")
-                btn.Size = UDim2.new(0.25, 0, 0, 16)
-                btn.Position = UDim2.new(0.7, 0, 0, opt.pos)
-                btn.BackgroundColor3 = colors.accent
-                btn.BackgroundTransparency = 0.3
-                btn.Text = levels[currentIdx]
-                btn.TextColor3 = colors.text
-                btn.TextSize = 9
-                btn.Font = Enum.Font.Jura
-                btn.Parent = settingsFrame
-                
-                local btnCorner = Instance.new("UICorner")
-                btnCorner.CornerRadius = UDim.new(0, 2)
-                btnCorner.Parent = btn
-                
-                btn.MouseButton1Click:Connect(function()
-                    currentIdx = currentIdx % 4 + 1
-                    btn.Text = levels[currentIdx]
-                    if currentIdx == 1 then PredictionLevel = 0.08
-                    elseif currentIdx == 2 then PredictionLevel = 0.145
-                    elseif currentIdx == 3 then PredictionLevel = 0.2
-                    else PredictionLevel = 0 end
-                end)
-            else
-                local btn = Instance.new("TextButton")
-                btn.Size = UDim2.new(0.25, 0, 0, 16)
-                btn.Position = UDim2.new(0.7, 0, 0, opt.pos)
-                btn.BackgroundColor3 = colors.accent
-                btn.BackgroundTransparency = 0.3
-                btn.Text = TargetPart == opt.value and "✔" or "○"
-                btn.TextColor3 = colors.text
-                btn.TextSize = 12
-                btn.Font = Enum.Font.Jura
-                btn.Parent = settingsFrame
-                
-                local btnCorner = Instance.new("UICorner")
-                btnCorner.CornerRadius = UDim.new(0, 2)
-                btnCorner.Parent = btn
-                
-                btn.MouseButton1Click:Connect(function()
-                    TargetPart = opt.value
-                    for _, child in ipairs(settingsFrame:GetChildren()) do
-                        if child:IsA("TextButton") and (child.Text == "✔" or child.Text == "○") then
-                            child.Text = child == btn and "✔" or "○"
-                        end
-                    end
-                end)
-            end
-        end
-        
-        -- Color selector
-        local colorLabel = Instance.new("TextLabel")
-        colorLabel.Size = UDim2.new(0.55, 0, 0, 16)
-        colorLabel.Position = UDim2.new(0.05, 0, 0, 103)
-        colorLabel.BackgroundTransparency = 1
-        colorLabel.Text = "🎨 Color"
-        colorLabel.TextColor3 = colors.text
-        colorLabel.TextSize = 10
-        colorLabel.Font = Enum.Font.Jura
-        colorLabel.TextXAlignment = Enum.TextXAlignment.Left
-        colorLabel.Parent = settingsFrame
-        
-        local colorBtn = Instance.new("TextButton")
-        colorBtn.Size = UDim2.new(0.25, 0, 0, 16)
-        colorBtn.Position = UDim2.new(0.7, 0, 0, 103)
-        colorBtn.BackgroundColor3 = colors.accent
-        colorBtn.BackgroundTransparency = 0.3
-        colorBtn.Text = COLOR_PRESETS[CurrentColor].name
-        colorBtn.TextColor3 = colors.text
-        colorBtn.TextSize = 8
-        colorBtn.Font = Enum.Font.Jura
-        colorBtn.Parent = settingsFrame
-        
-        local colorCorner = Instance.new("UICorner")
-        colorCorner.CornerRadius = UDim.new(0, 2)
-        colorCorner.Parent = colorBtn
-        
-        local colorIndex = 0
-        local colorKeys = {}
-        for key, _ in pairs(COLOR_PRESETS) do
-            table.insert(colorKeys, key)
-        end
-        
-        colorBtn.MouseButton1Click:Connect(function()
-            colorIndex = (colorIndex % #colorKeys) + 1
-            local newColor = colorKeys[colorIndex]
-            CurrentColor = newColor
-            colorBtn.Text = COLOR_PRESETS[newColor].name
-            if _G.AimGui then _G.AimGui:Destroy() end
-            CreateAimGUI()
-            settingsFrame:Destroy()
-        end)
-        
-        local closeBottom = Instance.new("TextButton")
-        closeBottom.Size = UDim2.new(0.8, 0, 0, 20)
-        closeBottom.Position = UDim2.new(0.1, 0, 0, 125)
-        closeBottom.BackgroundColor3 = colors.border
-        closeBottom.BackgroundTransparency = 0.3
-        closeBottom.Text = "CLOSE"
-        closeBottom.TextColor3 = colors.text
-        closeBottom.TextSize = 10
-        closeBottom.Font = Enum.Font.Jura
-        closeBottom.Parent = settingsFrame
-        
-        local closeCorner = Instance.new("UICorner")
-        closeCorner.CornerRadius = UDim.new(0, 3)
-        closeCorner.Parent = closeBottom
-        
-        closeBottom.MouseButton1Click:Connect(function()
-            settingsFrame:Destroy()
-        end)
-    end)
-    
-    -- Обновление GUI
-    local function UpdateGUIInfo()
-        if not _G.AimGui then return end
-        if AimLockEnabled then
-            local ping = math.floor(LocalPlayer:GetNetworkPing() * 1000)
-            infoLabels[2].Text = "📶 Ping: " .. ping .. "ms"
-            if TargetPlayer then
-                infoLabels[1].Text = "🎯 Target: " .. TargetPlayer.Name
-            else
-                infoLabels[1].Text = "🎯 Target: Searching..."
-            end
-        end
-    end
-    
-    _G.UpdateAimGUI = UpdateGUIInfo
-    UpdateAimButton()
-    
-    print("✅ AimLock GUI создан!")
-    return gui
+    return button
 end
 
 -- ==============================================
--- ЗАПУСК GUI С ЗАДЕРЖКОЙ
+-- OVERDRIVE-СТИЛЬ GUI (ПОЛНОЕ МЕНЮ)
 -- ==============================================
--- Ждём, пока загрузится игра
-task.wait(0.5)
-CreateAimGUI()
+local MainMenu = nil
+local MenuOpen = false
+
+local function CreateOverdriveMenu()
+    if MainMenu then 
+        MainMenu:Destroy() 
+        MainMenu = nil
+    end
+    
+    local colors = COLOR_PRESETS[CurrentColor] or COLOR_PRESETS.OBSIDIAN
+    
+    local parent = CoreGui
+    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+    if playerGui then parent = playerGui end
+    
+    -- MAIN FRAME
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 380, 0, 450)
+    frame.Position = UDim2.new(0.5, -190, 0.5, -225)
+    frame.BackgroundColor3 = colors.bg
+    frame.BackgroundTransparency = 0.05
+    frame.BorderSizePixel = 0
+    frame.ClipsDescendants = true
+    frame.Visible = false
+    frame.Parent = parent
+    frame.ZIndex = 20
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = frame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = colors.border
+    stroke.Thickness = 2
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = frame
+    
+    -- TITLE BAR
+    local titleBar = Instance.new("Frame")
+    titleBar.Size = UDim2.new(1, 0, 0, 45)
+    titleBar.BackgroundColor3 = colors.bgTitle
+    titleBar.BackgroundTransparency = 0.3
+    titleBar.BorderSizePixel = 0
+    titleBar.Parent = frame
+    
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.Parent = titleBar
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(0.7, 0, 1, 0)
+    title.Position = UDim2.new(0.05, 0, 0, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "🎯 AIMLOCK PRO"
+    title.TextColor3 = colors.accent
+    title.TextSize = 18
+    title.Font = Enum.Font.Jura
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = titleBar
+    
+    -- Close Button
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 30, 0, 30)
+    closeBtn.Position = UDim2.new(1, -35, 0, 7)
+    closeBtn.BackgroundTransparency = 1
+    closeBtn.Text = "✕"
+    closeBtn.TextColor3 = colors.text
+    closeBtn.TextSize = 16
+    closeBtn.Font = Enum.Font.Jura
+    closeBtn.Parent = titleBar
+    closeBtn.MouseButton1Click:Connect(function()
+        MenuOpen = false
+        frame.Visible = false
+        if _G.UpdateAimUI then _G.UpdateAimUI() end
+    end)
+    
+    -- TABS
+    local tabFrame = Instance.new("Frame")
+    tabFrame.Size = UDim2.new(1, 0, 0, 40)
+    tabFrame.Position = UDim2.new(0, 0, 0, 45)
+    tabFrame.BackgroundTransparency = 1
+    tabFrame.Parent = frame
+    
+    local tabs = {"⚡ Main", "🎯 Target", "🎨 Colors", "📊 Stats"}
+    local tabButtons = {}
+    local currentTab = 1
+    local contentFrames = {}
+    
+    for i, tabName in ipairs(tabs) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0.25, 0, 1, 0)
+        btn.Position = UDim2.new((i-1) * 0.25, 0, 0, 0)
+        btn.BackgroundTransparency = 1
+        btn.Text = tabName
+        btn.TextColor3 = i == 1 and colors.accent or colors.text
+        btn.TextSize = 11
+        btn.Font = Enum.Font.Jura
+        btn.Parent = tabFrame
+        tabButtons[i] = btn
+        
+        -- Underline
+        local line = Instance.new("Frame")
+        line.Size = UDim2.new(0.6, 0, 0, 2)
+        line.Position = UDim2.new(0.2, 0, 1, 0)
+        line.BackgroundColor3 = i == 1 and colors.accent or colors.bg
+        line.BorderSizePixel = 0
+        line.Parent = btn
+        
+        btn.MouseButton1Click:Connect(function()
+            currentTab = i
+            for j, b in ipairs(tabButtons) do
+                b.TextColor3 = (j == i) and colors.accent or colors.text
+                local l = b:FindFirstChildWhichIsA("Frame")
+                if l then l.BackgroundColor3 = (j == i) and colors.accent or colors.bg end
+            end
+            for j, cf in ipairs(contentFrames) do
+                cf.Visible = (j == i)
+            end
+        end)
+    end
+    
+    -- CONTENT AREA
+    local contentArea = Instance.new("Frame")
+    contentArea.Size = UDim2.new(1, -20, 1, -105)
+    contentArea.Position = UDim2.new(0.025, 0, 0, 85)
+    contentArea.BackgroundTransparency = 1
+    contentArea.Parent = frame
+    contentArea.ClipsDescendants = true
+    
+    -- ===== TAB 1: MAIN =====
+    local tab1 = Instance.new("Frame")
+    tab1.Size = UDim2.new(1, 0, 1, 0)
+    tab1.BackgroundTransparency = 1
+    tab1.Parent = contentArea
+    table.insert(contentFrames, tab1)
+    
+    -- Toggle Row
+    local toggleRow = Instance.new("Frame")
+    toggleRow.Size = UDim2.new(1, 0, 0, 40)
+    toggleRow.BackgroundTransparency = 1
+    toggleRow.Parent = tab1
+    
+    local toggleLabel = Instance.new("TextLabel")
+    toggleLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    toggleLabel.Position = UDim2.new(0, 0, 0, 0)
+    toggleLabel.BackgroundTransparency = 1
+    toggleLabel.Text = "🔘 Aim Lock"
+    toggleLabel.TextColor3 = colors.text
+    toggleLabel.TextSize = 13
+    toggleLabel.Font = Enum.Font.Jura
+    toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    toggleLabel.Parent = toggleRow
+    
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0.25, 0, 0.7, 0)
+    toggleBtn.Position = UDim2.new(0.75, 0, 0.15, 0)
+    toggleBtn.BackgroundColor3 = AimLockEnabled and colors.statusActive or colors.statusPaused
+    toggleBtn.BackgroundTransparency = 0.3
+    toggleBtn.Text = AimLockEnabled and "ON" or "OFF"
+    toggleBtn.TextColor3 = colors.text
+    toggleBtn.TextSize = 12
+    toggleBtn.Font = Enum.Font.Jura
+    toggleBtn.Parent = toggleRow
+    
+    local togCorner = Instance.new("UICorner")
+    togCorner.CornerRadius = UDim.new(0, 4)
+    togCorner.Parent = toggleBtn
+    
+    toggleBtn.MouseButton1Click:Connect(function()
+        AimLockEnabled = not AimLockEnabled
+        if AimLockEnabled then TargetPlayer = FindMurderer(nil) else TargetPlayer = nil end
+        toggleBtn.Text = AimLockEnabled and "ON" or "OFF"
+        toggleBtn.BackgroundColor3 = AimLockEnabled and colors.statusActive or colors.statusPaused
+        if RoundButton then
+            local txt = RoundButton:FindFirstChildWhichIsA("TextLabel")
+            if txt then txt.Text = AimLockEnabled and "ON" or "OFF" end
+            local st = RoundButton:FindFirstChildWhichIsA("UIStroke")
+            if st then st.Color = AimLockEnabled and colors.statusActive or colors.border end
+        end
+        if _G.UpdateAimUI then _G.UpdateAimUI() end
+    end)
+    
+    -- WallCheck Row
+    local wcRow = Instance.new("Frame")
+    wcRow.Size = UDim2.new(1, 0, 0, 35)
+    wcRow.Position = UDim2.new(0, 0, 0, 45)
+    wcRow.BackgroundTransparency = 1
+    wcRow.Parent = tab1
+    
+    local wcLabel = Instance.new("TextLabel")
+    wcLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    wcLabel.BackgroundTransparency = 1
+    wcLabel.Text = "🧱 Wall Check"
+    wcLabel.TextColor3 = colors.text
+    wcLabel.TextSize = 13
+    wcLabel.Font = Enum.Font.Jura
+    wcLabel.TextXAlignment = Enum.TextXAlignment.Left
+    wcLabel.Parent = wcRow
+    
+    local wcBtn = Instance.new("TextButton")
+    wcBtn.Size = UDim2.new(0.25, 0, 0.7, 0)
+    wcBtn.Position = UDim2.new(0.75, 0, 0.15, 0)
+    wcBtn.BackgroundColor3 = WallCheckEnabled and colors.statusActive or colors.statusPaused
+    wcBtn.BackgroundTransparency = 0.3
+    wcBtn.Text = WallCheckEnabled and "ON" or "OFF"
+    wcBtn.TextColor3 = colors.text
+    wcBtn.TextSize = 12
+    wcBtn.Font = Enum.Font.Jura
+    wcBtn.Parent = wcRow
+    
+    local wcCorner = Instance.new("UICorner")
+    wcCorner.CornerRadius = UDim.new(0, 4)
+    wcCorner.Parent = wcBtn
+    
+    wcBtn.MouseButton1Click:Connect(function()
+        WallCheckEnabled = not WallCheckEnabled
+        wcBtn.Text = WallCheckEnabled and "ON" or "OFF"
+        wcBtn.BackgroundColor3 = WallCheckEnabled and colors.statusActive or colors.statusPaused
+    end)
+    
+    -- Hotkey Info
+    local hotkeyLabel = Instance.new("TextLabel")
+    hotkeyLabel.Size = UDim2.new(1, 0, 0, 30)
+    hotkeyLabel.Position = UDim2.new(0, 0, 0, 90)
+    hotkeyLabel.BackgroundTransparency = 1
+    hotkeyLabel.Text = "⌨️ Press 'T' to toggle Aim Lock"
+    hotkeyLabel.TextColor3 = colors.text
+    hotkeyLabel.TextSize = 11
+    hotkeyLabel.Font = Enum.Font.Jura
+    hotkeyLabel.TextTransparency = 0.5
+    hotkeyLabel.Parent = tab1
+    
+    -- ===== TAB 2: TARGET =====
+    local tab2 = Instance.new("Frame")
+    tab2.Size = UDim2.new(1, 0, 1, 0)
+    tab2.BackgroundTransparency = 1
+    tab2.Visible = false
+    tab2.Parent = contentArea
+    table.insert(contentFrames, tab2)
+    
+    local targetOptions = {"Head", "Torso"}
+    local targetY = 10
+    for _, opt in ipairs(targetOptions) do
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 35)
+        row.Position = UDim2.new(0, 0, 0, targetY)
+        row.BackgroundTransparency = 1
+        row.Parent = tab2
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.5, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = "🎯 " .. opt
+        label.TextColor3 = colors.text
+        label.TextSize = 13
+        label.Font = Enum.Font.Jura
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = row
+        
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0.25, 0, 0.7, 0)
+        btn.Position = UDim2.new(0.75, 0, 0.15, 0)
+        local partName = opt == "Head" and "Head" or "HumanoidRootPart"
+        btn.BackgroundColor3 = TargetPart == partName and colors.statusActive or colors.bgTitle
+        btn.BackgroundTransparency = 0.3
+        btn.Text = TargetPart == partName and "✔" or "○"
+        btn.TextColor3 = colors.text
+        btn.TextSize = 14
+        btn.Font = Enum.Font.Jura
+        btn.Parent = row
+        
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 4)
+        btnCorner.Parent = btn
+        
+        btn.MouseButton1Click:Connect(function()
+            TargetPart = partName
+            for _, child in ipairs(tab2:GetDescendants()) do
+                if child:IsA("TextButton") then
+                    child.Text = (child == btn) and "✔" or "○"
+                    child.BackgroundColor3 = (child == btn) and colors.statusActive or colors.bgTitle
+                end
+            end
+        end)
+        
+        targetY = targetY + 40
+    end
+    
+    -- Prediction
+    local predRow = Instance.new("Frame")
+    predRow.Size = UDim2.new(1, 0, 0, 35)
+    predRow.Position = UDim2.new(0, 0, 0, targetY + 10)
+    predRow.BackgroundTransparency = 1
+    predRow.Parent = tab2
+    
+    local predLabel = Instance.new("TextLabel")
+    predLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    predLabel.BackgroundTransparency = 1
+    predLabel.Text = "⚡ Prediction"
+    predLabel.TextColor3 = colors.text
+    predLabel.TextSize = 13
+    predLabel.Font = Enum.Font.Jura
+    predLabel.TextXAlignment = Enum.TextXAlignment.Left
+    predLabel.Parent = predRow
+    
+    local levels = {"Low", "Medium", "High", "Off"}
+    local predIdx = 3
+    if PredictionLevel == 0.08 then predIdx = 1
+    elseif PredictionLevel == 0.145 then predIdx = 2
+    elseif PredictionLevel == 0 then predIdx = 4 end
+    
+    local predBtn = Instance.new("TextButton")
+    predBtn.Size = UDim2.new(0.25, 0, 0.7, 0)
+    predBtn.Position = UDim2.new(0.75, 0, 0.15, 0)
+    predBtn.BackgroundColor3 = colors.accent
+    predBtn.BackgroundTransparency = 0.3
+    predBtn.Text = levels[predIdx]
+    predBtn.TextColor3 = colors.text
+    predBtn.TextSize = 12
+    predBtn.Font = Enum.Font.Jura
+    predBtn.Parent = predRow
+    
+    local predCorner = Instance.new("UICorner")
+    predCorner.CornerRadius = UDim.new(0, 4)
+    predCorner.Parent = predBtn
+    
+    predBtn.MouseButton1Click:Connect(function()
+        predIdx = predIdx % 4 + 1
+        predBtn.Text = levels[predIdx]
+        if predIdx == 1 then PredictionLevel = 0.08
+        elseif predIdx == 2 then PredictionLevel = 0.145
+        elseif predIdx == 3 then PredictionLevel = 0.2
+        else PredictionLevel = 0 end
+    end)
+    
+    -- ===== TAB 3: COLORS =====
+    local tab3 = Instance.new("Frame")
+    tab3.Size = UDim2.new(1, 0, 1, 0)
+    tab3.BackgroundTransparency = 1
+    tab3.Visible = false
+    tab3.Parent = contentArea
+    table.insert(contentFrames, tab3)
+    
+    local colorY = 10
+    local colorKeys = {}
+    for key, _ in pairs(COLOR_PRESETS) do
+        table.insert(colorKeys, key)
+    end
+    
+    for i, key in ipairs(colorKeys) do
+        local preset = COLOR_PRESETS[key]
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 30)
+        row.Position = UDim2.new(0, 0, 0, colorY)
+        row.BackgroundTransparency = 1
+        row.Parent = tab3
+        
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0.9, 0, 1, 0)
+        btn.Position = UDim2.new(0.05, 0, 0, 0)
+        btn.BackgroundColor3 = preset.bg
+        btn.BackgroundTransparency = 0.3
+        btn.Text = preset.name
+        btn.TextColor3 = preset.text
+        btn.TextSize = 11
+        btn.Font = Enum.Font.Jura
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.Parent = row
+        
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 4)
+        btnCorner.Parent = btn
+        
+        -- Color preview dot
+        local dot = Instance.new("Frame")
+        dot.Size = UDim2.new(0, 12, 0, 12)
+        dot.Position = UDim2.new(0.9, 0, 0.5, -6)
+        dot.BackgroundColor3 = preset.border
+        dot.BorderSizePixel = 0
+        dot.Parent = btn
+        
+        local dotCorner = Instance.new("UICorner")
+        dotCorner.CornerRadius = UDim.new(1, 0)
+        dotCorner.Parent = dot
+        
+        -- Checkmark for current
+        if CurrentColor == key then
+            local check = Instance.new("TextLabel")
+            check.Size = UDim2.new(0, 20, 1, 0)
+            check.Position = UDim2.new(0.8, 0, 0, 0)
+            check.BackgroundTransparency = 1
+            check.Text = "✔"
+            check.TextColor3 = preset.accent
+            check.TextSize = 14
+            check.Font = Enum.Font.Jura
+            check.Parent = btn
+        end
+        
+        btn.MouseButton1Click:Connect(function()
+            CurrentColor = key
+            if MainMenu then MainMenu:Destroy() end
+            if RoundButton then RoundButton:Destroy() end
+            CreateRoundButton()
+            CreateOverdriveMenu()
+            MenuOpen = true
+            if MainMenu then MainMenu.Visible = true end
+        end)
+        
+        colorY = colorY + 35
+    end
+    
+    -- ===== TAB 4: STATS =====
+    local tab4 = Instance.new("Frame")
+    tab4.Size = UDim2.new(1, 0, 1, 0)
+    tab4.BackgroundTransparency = 1
+    tab4.Visible = false
+    tab4.Parent = contentArea
+    table.insert(contentFrames, tab4)
+    
+    local statsData = {
+        {"🎯 Status", AimLockEnabled and "Active" or "Inactive"},
+        {"🎯 Target", TargetPlayer and TargetPlayer.Name or "None"},
+        {"📶 Ping", math.floor(LocalPlayer:GetNetworkPing() * 1000) .. "ms"},
+        {"🧱 WallCheck", WallCheckEnabled and "ON" or "OFF"},
+        {"⚡ Prediction", tostring(PredictionLevel)},
+        {"🎨 Color", COLOR_PRESETS[CurrentColor].name}
+    }
+    
+    local statY = 10
+    for _, data in ipairs(statsData) do
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 30)
+        row.Position = UDim2.new(0, 0, 0, statY)
+        row.BackgroundTransparency = 1
+        row.Parent = tab4
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.4, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = data[1]
+        label.TextColor3 = colors.text
+        label.TextSize = 12
+        label.Font = Enum.Font.Jura
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = row
+        
+        local value = Instance.new("TextLabel")
+        value.Size = UDim2.new(0.4, 0, 1, 0)
+        value.Position = UDim2.new(0.5, 0, 0, 0)
+        value.BackgroundTransparency = 1
+        value.Text = data[2]
+        value.TextColor3 = colors.accent
+        value.TextSize = 12
+        value.Font = Enum.Font.Jura
+        value.TextXAlignment = Enum.TextXAlignment.Right
+        value.Parent = row
+        
+        statY = statY + 35
+    end
+    
+    -- Bottom bar
+    local bottomBar = Instance.new("Frame")
+    bottomBar.Size = UDim2.new(1, 0, 0, 35)
+    bottomBar.Position = UDim2.new(0, 0, 1, -35)
+    bottomBar.BackgroundColor3 = colors.bgTitle
+    bottomBar.BackgroundTransparency = 0.3
+    bottomBar.BorderSizePixel = 0
+    bottomBar.Parent = frame
+    
+    local versionLabel = Instance.new("TextLabel")
+    versionLabel.Size = UDim2.new(1, 0, 1, 0)
+    versionLabel.BackgroundTransparency = 1
+    versionLabel.Text = "AIMLOCK PRO v2.6 | Hard Lock"
+    versionLabel.TextColor3 = colors.text
+    versionLabel.TextSize = 10
+    versionLabel.Font = Enum.Font.Jura
+    versionLabel.TextTransparency = 0.5
+    versionLabel.Parent = bottomBar
+    
+    MainMenu = frame
+    return frame
+end
 
 -- ==============================================
--- КЛАВИША T ДЛЯ ТОГГЛА
+-- ФУНКЦИЯ ОТКРЫТИЯ МЕНЮ (ЧЕРЕЗ КНОПКУ)
 -- ==============================================
+local function ToggleMenu()
+    if not MainMenu then
+        CreateOverdriveMenu()
+        if MainMenu then
+            MenuOpen = true
+            MainMenu.Visible = true
+        end
+    else
+        MenuOpen = not MenuOpen
+        MainMenu.Visible = MenuOpen
+    end
+end
+
+-- ==============================================
+-- ЗАПУСК ВСЕГО
+-- ==============================================
+-- Создаём круглую кнопку
+CreateRoundButton()
+
+-- Создаём меню (скрытое)
+CreateOverdriveMenu()
+if MainMenu then MainMenu.Visible = false end
+
+-- Клик по круглой кнопке открывает меню
+if RoundButton then
+    RoundButton.MouseButton1Click:Connect(function()
+        ToggleMenu()
+    end)
+end
+
+-- Горячая клавиша T для тоггла
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.T then
         AimLockEnabled = not AimLockEnabled
-        if AimLockEnabled then 
-            TargetPlayer = FindMurderer(nil) 
-        else 
-            TargetPlayer = nil 
+        if AimLockEnabled then TargetPlayer = FindMurderer(nil) else TargetPlayer = nil end
+        if RoundButton then
+            local txt = RoundButton:FindFirstChildWhichIsA("TextLabel")
+            if txt then txt.Text = AimLockEnabled and "ON" or "OFF" end
+            local st = RoundButton:FindFirstChildWhichIsA("UIStroke")
+            if st then st.Color = AimLockEnabled and colors.statusActive or colors.border end
         end
-        if _G.UpdateAimGUI then _G.UpdateAimGUI() end
-        print("AimLock: " .. (AimLockEnabled and "ON" or "OFF"))
+        if _G.UpdateAimUI then _G.UpdateAimUI() end
     end
 end)
 
@@ -931,26 +849,58 @@ RunService:BindToRenderStep(
     AimLockLoop
 )
 
--- Обновление GUI в цикле
-RunService.Heartbeat:Connect(function()
-    if _G.UpdateAimGUI then _G.UpdateAimGUI() end
-end)
+-- Обновление статистики
+local function UpdateStats()
+    if MainMenu and MainMenu.Visible then
+        -- Обновляем статистику на вкладке Stats
+        local tab4 = MainMenu:FindFirstChildWhichIsA("Frame"):FindFirstChildWhichIsA("Frame")
+        if tab4 then
+            local frames = {}
+            for _, child in ipairs(tab4:GetChildren()) do
+                if child:IsA("Frame") then
+                    table.insert(frames, child)
+                end
+            end
+            if #frames >= 6 then
+                local vals = {}
+                for _, f in ipairs(frames) do
+                    for _, c in ipairs(f:GetChildren()) do
+                        if c:IsA("TextLabel") and c.TextXAlignment == Enum.TextXAlignment.Right then
+                            table.insert(vals, c)
+                        end
+                    end
+                end
+                if #vals >= 6 then
+                    vals[1].Text = AimLockEnabled and "Active" or "Inactive"
+                    vals[2].Text = TargetPlayer and TargetPlayer.Name or "None"
+                    vals[3].Text = math.floor(LocalPlayer:GetNetworkPing() * 1000) .. "ms"
+                    vals[4].Text = WallCheckEnabled and "ON" or "OFF"
+                    vals[5].Text = tostring(PredictionLevel)
+                    vals[6].Text = COLOR_PRESETS[CurrentColor].name
+                end
+            end
+        end
+    end
+end
 
--- Очистка при смене персонажа
+RunService.Heartbeat:Connect(UpdateStats)
+
+-- Очистка
 LocalPlayer.CharacterAdded:Connect(function()
     TargetPlayer = nil
 end)
 
--- Очистка при выгрузке
 RootMaid:GiveTask(function()
     RunService:UnbindFromRenderStep("MM2_AimLock_PhaseSync")
-    if _G.AimGui then _G.AimGui:Destroy() end
+    if MainMenu then MainMenu:Destroy() end
+    if RoundButton then RoundButton:Destroy() end
 end)
 
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("🎯 AIMLOCK V2.6 HARD LOCK")
+print("🎯 AIMLOCK PRO v2.6")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("🔥 PREMIUM GUI (OMEGA STYLE)")
-print("📌 Press 'T' to toggle")
-print("📌 GUI расположен в правой части экрана")
+print("🔥 Overdrive-Style Menu")
+print("🟢 Круглая кнопка в левом нижнем углу")
+print("📌 Клик по кнопке → открыть меню")
+print("📌 Клавиша 'T' → быстрый тоггл")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
