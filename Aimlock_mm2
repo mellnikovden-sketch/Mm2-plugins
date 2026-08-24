@@ -1,5 +1,5 @@
--- MM2 Murderer Aim Lock V2.6 (ABSOLUTE HARD LOCK)
--- Круглая кнопка для вкл/выкл + отдельное меню настроек
+-- MM2 Murderer Aim Lock V2.6 (ABSOLUTE HARD LOCK) + BIND BUTTON
+-- STANDALONE VERSION (без odh_shared_plugins)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,7 +10,26 @@ local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
 -- ==============================================
--- MAID
+-- СОЗДАНИЕ ГЛАВНОГО GUI
+-- ==============================================
+local function CreateMainGUI()
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "MM2_AimLock_GUI"
+    gui.ResetOnSpawn = false
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    local parent = CoreGui
+    pcall(function()
+        parent = gethui and gethui() or CoreGui
+    end)
+    gui.Parent = parent
+    return gui
+end
+
+local MainGUI = CreateMainGUI()
+
+-- ==============================================
+-- MAID (для очистки)
 -- ==============================================
 local Maid = {}
 Maid.__index = Maid
@@ -50,22 +69,228 @@ function Maid:Destroy() self:DoCleaning() end
 local RootMaid = Maid.new()
 
 -- ==============================================
--- ЦВЕТОВЫЕ ПРЕСЕТЫ
+-- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ КНОПОК
 -- ==============================================
-local COLOR_PRESETS = {
-    OBSIDIAN = { name = "🪨 Obsidian", bg = Color3.fromRGB(15,12,20), bgTitle = Color3.fromRGB(25,20,35), border = Color3.fromRGB(100,80,180), text = Color3.fromRGB(180,170,200), accent = Color3.fromRGB(150,110,255), statusActive = Color3.fromRGB(120,200,255), statusPaused = Color3.fromRGB(255,100,100) },
-    GOLD = { name = "✨ Gold", bg = Color3.fromRGB(20,15,5), bgTitle = Color3.fromRGB(35,25,10), border = Color3.fromRGB(255,200,50), text = Color3.fromRGB(220,200,150), accent = Color3.fromRGB(255,215,0), statusActive = Color3.fromRGB(100,255,100), statusPaused = Color3.fromRGB(255,100,100) },
-    NEON = { name = "💜 Neon", bg = Color3.fromRGB(10,5,20), bgTitle = Color3.fromRGB(20,10,35), border = Color3.fromRGB(180,50,255), text = Color3.fromRGB(200,170,220), accent = Color3.fromRGB(200,100,255), statusActive = Color3.fromRGB(100,255,200), statusPaused = Color3.fromRGB(255,100,100) },
-    CYBER = { name = "💠 Cyber", bg = Color3.fromRGB(5,10,20), bgTitle = Color3.fromRGB(10,20,35), border = Color3.fromRGB(0,200,255), text = Color3.fromRGB(150,200,220), accent = Color3.fromRGB(0,220,255), statusActive = Color3.fromRGB(100,255,200), statusPaused = Color3.fromRGB(255,100,100) },
-    CRIMSON = { name = "❤️ Crimson", bg = Color3.fromRGB(20,5,5), bgTitle = Color3.fromRGB(35,10,10), border = Color3.fromRGB(255,50,50), text = Color3.fromRGB(220,170,170), accent = Color3.fromRGB(255,80,80), statusActive = Color3.fromRGB(100,255,100), statusPaused = Color3.fromRGB(255,100,100) },
-    EMERALD = { name = "💚 Emerald", bg = Color3.fromRGB(5,20,5), bgTitle = Color3.fromRGB(10,35,10), border = Color3.fromRGB(50,255,100), text = Color3.fromRGB(170,220,180), accent = Color3.fromRGB(80,255,120), statusActive = Color3.fromRGB(100,255,100), statusPaused = Color3.fromRGB(255,100,100) },
-    ICE = { name = "❄️ Ice", bg = Color3.fromRGB(10,15,25), bgTitle = Color3.fromRGB(15,25,40), border = Color3.fromRGB(150,220,255), text = Color3.fromRGB(180,210,230), accent = Color3.fromRGB(200,230,255), statusActive = Color3.fromRGB(150,255,220), statusPaused = Color3.fromRGB(255,100,100) },
-    NEON_PURPLE = { name = "💜 Electric Purple", bg = Color3.fromRGB(11,0,20), bgTitle = Color3.fromRGB(46,10,78), border = Color3.fromRGB(157,0,255), text = Color3.fromRGB(200,170,230), accent = Color3.fromRGB(157,0,255), statusActive = Color3.fromRGB(157,0,255), statusPaused = Color3.fromRGB(255,100,100) },
-    MIDNIGHT = { name = "🌙 Midnight Blue", bg = Color3.fromRGB(0,0,5), bgTitle = Color3.fromRGB(0,10,30), border = Color3.fromRGB(50,100,200), text = Color3.fromRGB(170,190,220), accent = Color3.fromRGB(80,150,255), statusActive = Color3.fromRGB(100,200,255), statusPaused = Color3.fromRGB(255,100,100) },
-    SUNSET = { name = "🌅 Sunset", bg = Color3.fromRGB(25,10,15), bgTitle = Color3.fromRGB(40,15,25), border = Color3.fromRGB(255,150,50), text = Color3.fromRGB(220,180,170), accent = Color3.fromRGB(255,180,80), statusActive = Color3.fromRGB(100,255,150), statusPaused = Color3.fromRGB(255,100,100) }
+local function getfserv(s)
+    local ok, svc = pcall(function() return game:GetService(s) end)
+    if ok and svc then return svc end
+    ok, svc = pcall(function() return game:FindService(s) end)
+    if ok and svc then return svc end
+    return game[s]
+end
+
+local __RS   = getfserv("RunService")
+local __UIS  = getfserv("UserInputService")
+local __PLRS = getfserv("Players")
+local __TS   = getfserv("TweenService")
+
+local __UD2 = UDim2.new
+local __UD  = UDim.new
+local __V2  = Vector2.new
+local __PCLR = Color3.new
+local __RGB  = Color3.fromRGB
+
+-- ==============================================
+-- BINDABLE BUTTONS
+-- ==============================================
+local BindableButtons = {Buttons = {}, Maids = {}, Count = 0}
+
+local __SHAPES = {
+    [0] = "rbxassetid://86221076925479",
+    [1] = "rbxassetid://96242665417546",
+    [2] = "rbxassetid://97129189935336",
+    [3] = "rbxassetid://76165862027868",
+    [4] = "rbxassetid://125868092127496"
 }
 
-local CurrentColor = "OBSIDIAN"
+local __NORMAL_COLOR = ColorSequence.new({
+    ColorSequenceKeypoint.new(0,   __PCLR(0.133333, 0.827451, 0.494118)),
+    ColorSequenceKeypoint.new(0.6, __PCLR(0.231373, 0.509804, 0.498039)),
+    ColorSequenceKeypoint.new(1,   __PCLR(0.501961, 0.501961, 0.501961))
+})
+
+local __ACTIVE_COLOR = ColorSequence.new({
+    ColorSequenceKeypoint.new(0,   __PCLR(0.0, 0.8, 0.4)),
+    ColorSequenceKeypoint.new(0.6, __PCLR(0.0, 0.5, 0.3)),
+    ColorSequenceKeypoint.new(1,   __PCLR(0.2, 0.8, 0.6))
+})
+
+local muteButtonSounds = false
+
+local function bind_safecallback(callback)
+    if not callback then return end
+    local ok, err = xpcall(callback, function(e) return debug.traceback(e) end)
+    if not ok then warn("[BIND ERROR] " .. tostring(err)) end
+end
+
+local function Bind_GetStorage()
+    local parent = gethui and gethui()
+    if not parent or typeof(parent) ~= "Instance" then parent = CoreGui end
+    if not parent or typeof(parent) ~= "Instance" then
+        parent = __PLRS.LocalPlayer:WaitForChild("PlayerGui", 5)
+    end
+    if typeof(parent) ~= "Instance" then
+        parent = __PLRS.LocalPlayer:WaitForChild("PlayerGui")
+    end
+
+    local sg = parent:FindFirstChild("@bindstorage")
+    if not sg then
+        sg = Instance.new("ScreenGui")
+        sg.Name = "@bindstorage"
+        sg.ResetOnSpawn = false
+        sg.IgnoreGuiInset = true
+        pcall(function() sg.ScreenInsets = Enum.ScreenInsets.None end)
+        sg.Parent = parent
+    end
+    return sg
+end
+
+local function Bind_MakeDraggable(gui, maid, ripple, sound, clickFunc)
+    local dragging, dragInput, dragStart, startPos
+    local hasMoved = false
+    
+    maid:GiveTask(gui.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging, dragStart, startPos = true, input.Position, gui.Position
+            hasMoved = false
+            sound:Play()
+            local absPos = gui.AbsolutePosition
+            ripple.Position = __UD2(0, input.Position.X - absPos.X, 0, input.Position.Y - absPos.Y)
+            ripple.Size = __UD2(0, 0, 0, 0)
+            ripple.BackgroundTransparency = 0.5
+            ripple.Visible = true
+            __TS:Create(ripple, TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+                Size = __UD2(0, 45, 0, 45),
+                BackgroundTransparency = 1
+            }):Play()
+
+            local rel
+            rel = __UIS.InputEnded:Connect(function(endInput)
+                if endInput.UserInputType == input.UserInputType then
+                    dragging = false
+                    if not hasMoved then
+                        bind_safecallback(clickFunc)
+                    end
+                    rel:Disconnect()
+                end
+            end)
+        end
+    end))
+    
+    maid:GiveTask(gui.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end))
+    
+    maid:GiveTask(__UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            if delta.Magnitude > 7 then hasMoved = true end
+            local screen = gui.Parent.AbsoluteSize
+            gui.Position = __UD2(startPos.X.Scale + (delta.X / screen.X), 0, startPos.Y.Scale + (delta.Y / screen.Y), 0)
+        end
+    end))
+end
+
+function BindableButtons.AddBButton(id, text, clickFunc, isGold)
+    if BindableButtons.Buttons[id] then return end
+    
+    local buttonMaid = Maid.new()
+    local camera = workspace.CurrentCamera
+    local screen = camera.ViewportSize
+    local buttonSizeY = 0.11
+    local widthScale = buttonSizeY * (screen.Y / screen.X)
+    local xPos = 0.1 + ((BindableButtons.Count % 8) * (widthScale + 0.005))
+    local yPos = 0.9 - (math.floor(BindableButtons.Count / 8) * (buttonSizeY + 0.015))
+
+    local ImageButton = Instance.new("ImageButton")
+    ImageButton.Name = id
+    ImageButton.Size = __UD2(widthScale, 0, buttonSizeY, 0)
+    ImageButton.Position = __UD2(xPos, 0, yPos, 0)
+    ImageButton.AnchorPoint = __V2(0.5, 0.5)
+    ImageButton.Image = __SHAPES[0]
+    ImageButton.BackgroundTransparency = 1
+    ImageButton.BorderSizePixel = 0
+    ImageButton.ClipsDescendants = false
+    ImageButton.AutoButtonColor = false
+    ImageButton.Parent = Bind_GetStorage()
+    buttonMaid:GiveTask(ImageButton)
+
+    local TextLabel = Instance.new("TextLabel", ImageButton)
+    TextLabel.Name = "@Text"
+    TextLabel.Size = __UD2(0.8, 0, 0.8, 0)
+    TextLabel.Position = __UD2(0.5, 0, 0.5, 0)
+    TextLabel.AnchorPoint = __V2(0.5, 0.5)
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Font = Enum.Font.Jura
+    TextLabel.Text = text
+    TextLabel.TextColor3 = __PCLR(1, 1, 1)
+    TextLabel.TextSize = 10
+    TextLabel.TextWrapped = true
+    TextLabel.ZIndex = 3
+
+    local Aspect = Instance.new("UIAspectRatioConstraint", ImageButton)
+    Aspect.AspectRatio = 1
+    Aspect.AspectType = Enum.AspectType.ScaleWithParentSize
+
+    local Stroke = Instance.new("UIGradient", ImageButton)
+    Stroke.Name = "@Stroke"
+    Stroke.Color = __NORMAL_COLOR
+
+    local ripple = Instance.new("Frame")
+    ripple.Name = "@ripple"
+    ripple.BackgroundColor3 = __RGB(0, 155, 255)
+    ripple.BackgroundTransparency = 0.5
+    ripple.Size = __UD2(0, 0, 0, 0)
+    ripple.AnchorPoint = __V2(0.5, 0.5)
+    ripple.Visible = false
+    ripple.ZIndex = 2
+    ripple.Parent = ImageButton
+    Instance.new("UICorner", ripple).CornerRadius = __UD(1, 0)
+
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://3868133279"
+    sound.Volume = muteButtonSounds and 0 or 0.5
+    sound.Parent = ImageButton
+
+    Bind_MakeDraggable(ImageButton, buttonMaid, ripple, sound, clickFunc)
+    buttonMaid:GiveTask(__RS.RenderStepped:Connect(function()
+        Stroke.Rotation = (Stroke.Rotation + 1) % 360
+    end))
+
+    BindableButtons.Buttons[id] = ImageButton
+    BindableButtons.Maids[id] = buttonMaid
+    BindableButtons.Count = BindableButtons.Count + 1
+    return ImageButton
+end
+
+function BindableButtons.DeleteBButton(id)
+    if BindableButtons.Maids[id] then
+        BindableButtons.Maids[id]:Destroy()
+        BindableButtons.Maids[id] = nil
+        BindableButtons.Buttons[id] = nil
+    end
+end
+
+function BindableButtons.UpdateBButtonText(id, text, isWaiting, isGold)
+    local btn = BindableButtons.Buttons[id]
+    if not btn then return end
+    
+    local textLabel = btn:FindFirstChild("@Text")
+    if textLabel then
+        textLabel.Text = text
+    end
+    
+    local stroke = btn:FindFirstChild("@Stroke")
+    if stroke then
+        if isWaiting then
+            stroke.Color = __WAIT_COLOR
+        else
+            stroke.Color = __ACTIVE_COLOR
+        end
+    end
+end
 
 -- ==============================================
 -- НАСТРОЙКИ AIMLOCK
@@ -74,11 +299,15 @@ local AimLockEnabled = false
 local TargetPart = "HumanoidRootPart"
 local TargetPlayer = nil
 local WallCheckEnabled = false
+local ShowBindableButton = true
+local bindButtonSize = 0.11
 local PredictionLevel = 0.2
+
 local LastSearchTime = 0
 local LastWallCheckTime = 0
 local IsTargetVisibleCache = false
-local WALL_CHECK_INTERVAL = 0.15
+local WALL_CHECK_INTERVAL = 0.15 
+
 local InvisibleTimer = 0
 local MAX_INVISIBLE_TIME = 0.5
 
@@ -89,21 +318,30 @@ local MurdererWeapons = {
 }
 
 -- ==============================================
--- ФУНКЦИИ ПОИСКА
+-- ФУНКЦИИ ПОИСКА И ВИДИМОСТИ
 -- ==============================================
 function IsVisible(target)
     if not target or not target.Character then return false end
     local p = target.Character:FindFirstChild(TargetPart)
     if not p then return false end
+    
     local CurrentCamera = workspace.CurrentCamera
     if not CurrentCamera then return false end
+    
     local raycastParams = RaycastParams.new()
     local filterList = {}
-    if LocalPlayer.Character then table.insert(filterList, LocalPlayer.Character) end
+    if LocalPlayer.Character then 
+        table.insert(filterList, LocalPlayer.Character) 
+    end
+    
     raycastParams.FilterDescendantsInstances = filterList
     raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    
     local direction = p.Position - CurrentCamera.CFrame.Position
-    local result = workspace:Raycast(CurrentCamera.CFrame.Position, direction, raycastParams)
+    local result = workspace:Raycast(
+        CurrentCamera.CFrame.Position, direction, raycastParams
+    )
+    
     if not result then return true end
     return result.Instance:IsDescendantOf(target.Character)
 end
@@ -115,9 +353,15 @@ function CheckForKnife(container)
             local name = item.Name:lower()
             local isServer = item:FindFirstChild("KnifeServer")
             local isClient = item:FindFirstChild("KnifeClient")
-            if name == "knife" or isServer or isClient then return true end
+            
+            if name == "knife" or isServer or isClient then
+                return true
+            end
+            
             for _, weaponName in ipairs(MurdererWeapons) do
-                if name:find(weaponName) then return true end
+                if name:find(weaponName) then
+                    return true
+                end
             end
         end
     end
@@ -127,14 +371,18 @@ end
 function FindMurderer(preferTarget)
     if preferTarget and preferTarget.Character then
         local hum = preferTarget.Character:FindFirstChild("Humanoid")
-        if hum and hum.Health > 0 then return preferTarget end
+        if hum and hum.Health > 0 then
+            return preferTarget
+        end
     end
+
     for _, pl in ipairs(Players:GetPlayers()) do
         if pl ~= LocalPlayer and pl.Character then
             local hum = pl.Character:FindFirstChild("Humanoid")
             if hum and hum.Health > 0 then
                 local inChar = CheckForKnife(pl.Character)
                 local inPack = CheckForKnife(pl:FindFirstChild("Backpack"))
+                
                 if inChar or inPack then
                     if not WallCheckEnabled or IsVisible(pl) then
                         return pl
@@ -151,13 +399,18 @@ end
 -- ==============================================
 local function AimLockLoop(deltaTime)
     if not AimLockEnabled then return end
+    
     local CurrentCamera = workspace.CurrentCamera 
     if not CurrentCamera then return end
+
     local valid = false
     if TargetPlayer and TargetPlayer.Character then
         local hum = TargetPlayer.Character:FindFirstChild("Humanoid")
-        if hum and hum.Health > 0 then valid = true end
+        if hum and hum.Health > 0 then
+            valid = true
+        end
     end
+    
     if WallCheckEnabled and valid then
         local currentTime = os.clock()
         if currentTime - LastWallCheckTime > WALL_CHECK_INTERVAL then
@@ -166,13 +419,16 @@ local function AimLockLoop(deltaTime)
         end
         if not IsTargetVisibleCache then
             InvisibleTimer = InvisibleTimer + deltaTime
-            if InvisibleTimer > MAX_INVISIBLE_TIME then valid = false end
+            if InvisibleTimer > MAX_INVISIBLE_TIME then
+                valid = false
+            end
         else
             InvisibleTimer = 0
         end
     else
         InvisibleTimer = 0
     end
+    
     if not valid then 
         local currentTime = os.clock()
         if currentTime - LastSearchTime > 0.1 then
@@ -180,640 +436,118 @@ local function AimLockLoop(deltaTime)
             LastSearchTime = currentTime
         end
     end
+    
     if TargetPlayer and TargetPlayer.Character then
         local targetNode = TargetPlayer.Character:FindFirstChild(TargetPart)
+        
         if targetNode then
             local vel = targetNode.AssemblyLinearVelocity or Vector3.new()
             local predVector = Vector3.new(vel.X, vel.Y * 0.3, vel.Z)
             local predictedPos = targetNode.Position + (predVector * PredictionLevel)
+            
             CurrentCamera.CFrame = CFrame.new(CurrentCamera.CFrame.Position, predictedPos)
         end
     end
 end
 
 -- ==============================================
--- 🔵 КРУГЛАЯ КНОПКА (ВКЛ/ВЫКЛ AIMLOCK)
+-- GUI МЕНЮ (КОНСОЛЬНОЕ)
 -- ==============================================
-local RoundButton = nil
-local ButtonMaid = Maid.new()
-
-local function CreateRoundButton()
-    if RoundButton then 
-        RoundButton:Destroy() 
-        RoundButton = nil
-    end
-    
-    local colors = COLOR_PRESETS[CurrentColor] or COLOR_PRESETS.OBSIDIAN
-    
-    local parent = CoreGui
-    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    if playerGui then parent = playerGui end
-    
-    local button = Instance.new("ImageButton")
-    button.Name = "AimLockRoundButton"
-    button.Size = UDim2.new(0, 60, 0, 60)
-    button.Position = UDim2.new(0.02, 0, 0.82, 0)
-    button.BackgroundTransparency = 1
-    button.Image = "rbxassetid://86221076925479"
-    button.Parent = parent
-    button.ZIndex = 10
-    button.AutoButtonColor = false
-    
-    -- Обводка
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = AimLockEnabled and colors.statusActive or colors.border
-    stroke.Thickness = 2.5
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Parent = button
-    
-    local strokeGrad = Instance.new("UIGradient")
-    strokeGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, colors.accent),
-        ColorSequenceKeypoint.new(0.5, colors.border),
-        ColorSequenceKeypoint.new(1, colors.accent)
-    })
-    strokeGrad.Rotation = 0
-    strokeGrad.Parent = stroke
-    
-    -- Текст внутри (ON/OFF)
-    local text = Instance.new("TextLabel")
-    text.Size = UDim2.new(1, 0, 1, 0)
-    text.BackgroundTransparency = 1
-    text.Text = AimLockEnabled and "ON" or "OFF"
-    text.TextColor3 = colors.text
-    text.TextSize = 16
-    text.Font = Enum.Font.Jura
-    text.TextWrapped = true
-    text.Parent = button
-    
-    -- Анимация вращения
-    local rotConn = RunService.RenderStepped:Connect(function()
-        if strokeGrad and strokeGrad.Parent then
-            strokeGrad.Rotation = (strokeGrad.Rotation + 0.5) % 360
-        end
-    end)
-    ButtonMaid:GiveTask(rotConn)
-    
-    -- Клик - переключение AimLock
-    button.MouseButton1Click:Connect(function()
-        AimLockEnabled = not AimLockEnabled
-        if AimLockEnabled then 
-            TargetPlayer = FindMurderer(nil) 
-            text.Text = "ON"
-            stroke.Color = colors.statusActive
-        else 
-            TargetPlayer = nil 
-            text.Text = "OFF"
-            stroke.Color = colors.border
-        end
-        if _G.UpdateAimUI then _G.UpdateAimUI() end
-    end)
-    
-    -- Перетаскивание
-    local dragging = false
-    local dragStart = nil
-    local startPos = nil
-    
-    button.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = button.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-    
-    button.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
-            local delta = input.Position - dragStart
-            local parentSize = button.Parent.AbsoluteSize
-            button.Position = UDim2.new(
-                startPos.X.Scale + (delta.X / parentSize.X),
-                0,
-                startPos.Y.Scale + (delta.Y / parentSize.Y),
-                0
-            )
-        end
-    end)
-    
-    RoundButton = button
-    ButtonMaid:GiveTask(button)
-    
-    return button
+local function CreateConsoleMenu()
+    print("=" .. string.rep("=", 40))
+    print("  🎯 MM2 AIMLOCK V2.6 | STANDALONE")
+    print("=" .. string.rep("=", 40))
+    print("  [1] Toggle Aim Lock  [Currently: " .. (AimLockEnabled and "ON" or "OFF") .. "]")
+    print("  [2] Toggle Wall Check [Currently: " .. (WallCheckEnabled and "ON" or "OFF") .. "]")
+    print("  [3] Toggle Button     [Currently: " .. (ShowBindableButton and "Visible" or "Hidden") .. "]")
+    print("  [4] Target Part       [Currently: " .. TargetPart .. "]")
+    print("  [5] Prediction Level  [Currently: " .. PredictionLevel .. "]")
+    print("  [6] Button Size       [Currently: " .. math.floor(bindButtonSize * 100) .. "%]")
+    print("  [7] Print Status")
+    print("  [8] Exit Menu")
+    print("=" .. string.rep("=", 40))
+    print("💡 Quick Toggle: Press 'T'")
 end
 
 -- ==============================================
--- ⚙️ МЕНЮ НАСТРОЕК (ОТДЕЛЬНОЕ ОТ КНОПКИ)
+-- СОЗДАНИЕ КНОПКИ (BIND)
 -- ==============================================
-local SettingsMenu = nil
-local MenuOpen = false
-
--- Кнопка открытия меню (маленькая шестерёнка)
-local MenuButton = nil
-
-local function CreateMenuButton()
-    if MenuButton then 
-        MenuButton:Destroy() 
-        MenuButton = nil
+local function UpdateAimButtonState()
+    local btn = BindableButtons.Buttons["aim_toggle"]
+    if not btn then return end
+    local textLabel = btn:FindFirstChild("@Text")
+    if textLabel then
+        textLabel.Text = AimLockEnabled and "ON" or "OFF"
     end
-    
-    local colors = COLOR_PRESETS[CurrentColor] or COLOR_PRESETS.OBSIDIAN
-    
-    local parent = CoreGui
-    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    if playerGui then parent = playerGui end
-    
-    local btn = Instance.new("TextButton")
-    btn.Name = "MenuButton"
-    btn.Size = UDim2.new(0, 30, 0, 30)
-    btn.Position = UDim2.new(0.02, 0, 0.92, 0)
-    btn.BackgroundColor3 = colors.bgTitle
-    btn.BackgroundTransparency = 0.3
-    btn.Text = "⚙"
-    btn.TextColor3 = colors.text
-    btn.TextSize = 16
-    btn.Font = Enum.Font.Jura
-    btn.Parent = parent
-    btn.ZIndex = 10
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1, 0)
-    corner.Parent = btn
-    
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = colors.border
-    stroke.Thickness = 1
-    stroke.Parent = btn
-    
-    btn.MouseButton1Click:Connect(function()
-        ToggleSettingsMenu()
-    end)
-    
-    MenuButton = btn
-    return btn
+    local stroke = btn:FindFirstChild("@Stroke")
+    if stroke then
+        if AimLockEnabled then
+            stroke.Color = __ACTIVE_COLOR
+        else
+            stroke.Color = __NORMAL_COLOR
+        end
+    end
 end
 
--- ==============================================
--- ПОЛНОЕ МЕНЮ НАСТРОЕК
--- ==============================================
-local function CreateSettingsMenu()
-    if SettingsMenu then 
-        SettingsMenu:Destroy() 
-        SettingsMenu = nil
+local function ToggleAimLock()
+    AimLockEnabled = not AimLockEnabled
+    if AimLockEnabled then 
+        TargetPlayer = FindMurderer(nil) 
+    else 
+        TargetPlayer = nil 
     end
-    
-    local colors = COLOR_PRESETS[CurrentColor] or COLOR_PRESETS.OBSIDIAN
-    
-    local parent = CoreGui
-    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    if playerGui then parent = playerGui end
-    
-    -- MAIN FRAME
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 350, 0, 420)
-    frame.Position = UDim2.new(0.5, -175, 0.5, -210)
-    frame.BackgroundColor3 = colors.bg
-    frame.BackgroundTransparency = 0.05
-    frame.BorderSizePixel = 0
-    frame.ClipsDescendants = true
-    frame.Visible = false
-    frame.Parent = parent
-    frame.ZIndex = 20
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
-    corner.Parent = frame
-    
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = colors.border
-    stroke.Thickness = 2
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Parent = frame
-    
-    -- TITLE BAR
-    local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, 0, 0, 45)
-    titleBar.BackgroundColor3 = colors.bgTitle
-    titleBar.BackgroundTransparency = 0.3
-    titleBar.BorderSizePixel = 0
-    titleBar.Parent = frame
-    
-    local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 12)
-    titleCorner.Parent = titleBar
-    
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(0.7, 0, 1, 0)
-    title.Position = UDim2.new(0.05, 0, 0, 0)
-    title.BackgroundTransparency = 1
-    title.Text = "⚙️ AIMLOCK SETTINGS"
-    title.TextColor3 = colors.accent
-    title.TextSize = 16
-    title.Font = Enum.Font.Jura
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = titleBar
-    
-    -- Close Button
-    local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.new(0, 30, 0, 30)
-    closeBtn.Position = UDim2.new(1, -35, 0, 7)
-    closeBtn.BackgroundTransparency = 1
-    closeBtn.Text = "✕"
-    closeBtn.TextColor3 = colors.text
-    closeBtn.TextSize = 16
-    closeBtn.Font = Enum.Font.Jura
-    closeBtn.Parent = titleBar
-    closeBtn.MouseButton1Click:Connect(function()
-        MenuOpen = false
-        frame.Visible = false
-    end)
-    
-    -- TABS
-    local tabFrame = Instance.new("Frame")
-    tabFrame.Size = UDim2.new(1, 0, 0, 38)
-    tabFrame.Position = UDim2.new(0, 0, 0, 45)
-    tabFrame.BackgroundTransparency = 1
-    tabFrame.Parent = frame
-    
-    local tabs = {"🎯 Main", "⚡ Target", "🎨 Colors"}
-    local tabButtons = {}
-    local currentTab = 1
-    local contentFrames = {}
-    
-    for i, tabName in ipairs(tabs) do
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0.34, 0, 1, 0)
-        btn.Position = UDim2.new((i-1) * 0.33, 0, 0, 0)
-        btn.BackgroundTransparency = 1
-        btn.Text = tabName
-        btn.TextColor3 = i == 1 and colors.accent or colors.text
-        btn.TextSize = 11
-        btn.Font = Enum.Font.Jura
-        btn.Parent = tabFrame
-        tabButtons[i] = btn
-        
-        local line = Instance.new("Frame")
-        line.Size = UDim2.new(0.6, 0, 0, 2)
-        line.Position = UDim2.new(0.2, 0, 1, 0)
-        line.BackgroundColor3 = i == 1 and colors.accent or colors.bg
-        line.BorderSizePixel = 0
-        line.Parent = btn
-        
-        btn.MouseButton1Click:Connect(function()
-            currentTab = i
-            for j, b in ipairs(tabButtons) do
-                b.TextColor3 = (j == i) and colors.accent or colors.text
-                local l = b:FindFirstChildWhichIsA("Frame")
-                if l then l.BackgroundColor3 = (j == i) and colors.accent or colors.bg end
-            end
-            for j, cf in ipairs(contentFrames) do
-                cf.Visible = (j == i)
-            end
-        end)
-    end
-    
-    -- CONTENT AREA
-    local contentArea = Instance.new("Frame")
-    contentArea.Size = UDim2.new(1, -20, 1, -105)
-    contentArea.Position = UDim2.new(0.025, 0, 0, 83)
-    contentArea.BackgroundTransparency = 1
-    contentArea.Parent = frame
-    contentArea.ClipsDescendants = true
-    
-    -- ===== TAB 1: MAIN =====
-    local tab1 = Instance.new("Frame")
-    tab1.Size = UDim2.new(1, 0, 1, 0)
-    tab1.BackgroundTransparency = 1
-    tab1.Parent = contentArea
-    table.insert(contentFrames, tab1)
-    
-    -- Status
-    local statusRow = Instance.new("Frame")
-    statusRow.Size = UDim2.new(1, 0, 0, 35)
-    statusRow.BackgroundTransparency = 1
-    statusRow.Parent = tab1
-    
-    local statusLabel = Instance.new("TextLabel")
-    statusLabel.Size = UDim2.new(0.5, 0, 1, 0)
-    statusLabel.BackgroundTransparency = 1
-    statusLabel.Text = "📊 Status"
-    statusLabel.TextColor3 = colors.text
-    statusLabel.TextSize = 13
-    statusLabel.Font = Enum.Font.Jura
-    statusLabel.TextXAlignment = Enum.TextXAlignment.Left
-    statusLabel.Parent = statusRow
-    
-    local statusValue = Instance.new("TextLabel")
-    statusValue.Size = UDim2.new(0.4, 0, 1, 0)
-    statusValue.Position = UDim2.new(0.6, 0, 0, 0)
-    statusValue.BackgroundTransparency = 1
-    statusValue.Text = AimLockEnabled and "🟢 ACTIVE" or "🔴 INACTIVE"
-    statusValue.TextColor3 = AimLockEnabled and colors.statusActive or colors.statusPaused
-    statusValue.TextSize = 13
-    statusValue.Font = Enum.Font.Jura
-    statusValue.TextXAlignment = Enum.TextXAlignment.Right
-    statusValue.Parent = statusRow
-    
-    -- WallCheck
-    local wcRow = Instance.new("Frame")
-    wcRow.Size = UDim2.new(1, 0, 0, 35)
-    wcRow.Position = UDim2.new(0, 0, 0, 40)
-    wcRow.BackgroundTransparency = 1
-    wcRow.Parent = tab1
-    
-    local wcLabel = Instance.new("TextLabel")
-    wcLabel.Size = UDim2.new(0.5, 0, 1, 0)
-    wcLabel.BackgroundTransparency = 1
-    wcLabel.Text = "🧱 Wall Check"
-    wcLabel.TextColor3 = colors.text
-    wcLabel.TextSize = 13
-    wcLabel.Font = Enum.Font.Jura
-    wcLabel.TextXAlignment = Enum.TextXAlignment.Left
-    wcLabel.Parent = wcRow
-    
-    local wcBtn = Instance.new("TextButton")
-    wcBtn.Size = UDim2.new(0.3, 0, 0.7, 0)
-    wcBtn.Position = UDim2.new(0.7, 0, 0.15, 0)
-    wcBtn.BackgroundColor3 = WallCheckEnabled and colors.statusActive or colors.statusPaused
-    wcBtn.BackgroundTransparency = 0.3
-    wcBtn.Text = WallCheckEnabled and "ON" or "OFF"
-    wcBtn.TextColor3 = colors.text
-    wcBtn.TextSize = 12
-    wcBtn.Font = Enum.Font.Jura
-    wcBtn.Parent = wcRow
-    
-    local wcCorner = Instance.new("UICorner")
-    wcCorner.CornerRadius = UDim.new(0, 4)
-    wcCorner.Parent = wcBtn
-    
-    wcBtn.MouseButton1Click:Connect(function()
-        WallCheckEnabled = not WallCheckEnabled
-        wcBtn.Text = WallCheckEnabled and "ON" or "OFF"
-        wcBtn.BackgroundColor3 = WallCheckEnabled and colors.statusActive or colors.statusPaused
-    end)
-    
-    -- Hotkey Info
-    local hotkeyLabel = Instance.new("TextLabel")
-    hotkeyLabel.Size = UDim2.new(1, 0, 0, 30)
-    hotkeyLabel.Position = UDim2.new(0, 0, 0, 85)
-    hotkeyLabel.BackgroundTransparency = 1
-    hotkeyLabel.Text = "⌨️ Press 'T' to toggle Aim Lock"
-    hotkeyLabel.TextColor3 = colors.text
-    hotkeyLabel.TextSize = 11
-    hotkeyLabel.Font = Enum.Font.Jura
-    hotkeyLabel.TextTransparency = 0.5
-    hotkeyLabel.Parent = tab1
-    
-    -- Current target info
-    local targetInfo = Instance.new("TextLabel")
-    targetInfo.Size = UDim2.new(1, 0, 0, 25)
-    targetInfo.Position = UDim2.new(0, 0, 0, 120)
-    targetInfo.BackgroundTransparency = 1
-    targetInfo.Text = "🎯 Target: " .. (TargetPlayer and TargetPlayer.Name or "None")
-    targetInfo.TextColor3 = colors.text
-    targetInfo.TextSize = 11
-    targetInfo.Font = Enum.Font.Jura
-    targetInfo.TextTransparency = 0.4
-    targetInfo.Parent = tab1
-    
-    -- ===== TAB 2: TARGET =====
-    local tab2 = Instance.new("Frame")
-    tab2.Size = UDim2.new(1, 0, 1, 0)
-    tab2.BackgroundTransparency = 1
-    tab2.Visible = false
-    tab2.Parent = contentArea
-    table.insert(contentFrames, tab2)
-    
-    local targetOptions = {"Head", "Torso"}
-    local targetY = 10
-    for _, opt in ipairs(targetOptions) do
-        local row = Instance.new("Frame")
-        row.Size = UDim2.new(1, 0, 0, 35)
-        row.Position = UDim2.new(0, 0, 0, targetY)
-        row.BackgroundTransparency = 1
-        row.Parent = tab2
-        
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(0.5, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.Text = "🎯 " .. opt
-        label.TextColor3 = colors.text
-        label.TextSize = 13
-        label.Font = Enum.Font.Jura
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = row
-        
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0.25, 0, 0.7, 0)
-        btn.Position = UDim2.new(0.75, 0, 0.15, 0)
-        local partName = opt == "Head" and "Head" or "HumanoidRootPart"
-        btn.BackgroundColor3 = TargetPart == partName and colors.statusActive or colors.bgTitle
-        btn.BackgroundTransparency = 0.3
-        btn.Text = TargetPart == partName and "✔" or "○"
-        btn.TextColor3 = colors.text
-        btn.TextSize = 14
-        btn.Font = Enum.Font.Jura
-        btn.Parent = row
-        
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 4)
-        btnCorner.Parent = btn
-        
-        btn.MouseButton1Click:Connect(function()
-            TargetPart = partName
-            for _, child in ipairs(tab2:GetDescendants()) do
-                if child:IsA("TextButton") then
-                    child.Text = (child == btn) and "✔" or "○"
-                    child.BackgroundColor3 = (child == btn) and colors.statusActive or colors.bgTitle
-                end
-            end
-        end)
-        
-        targetY = targetY + 40
-    end
-    
-    -- Prediction
-    local predRow = Instance.new("Frame")
-    predRow.Size = UDim2.new(1, 0, 0, 35)
-    predRow.Position = UDim2.new(0, 0, 0, targetY + 10)
-    predRow.BackgroundTransparency = 1
-    predRow.Parent = tab2
-    
-    local predLabel = Instance.new("TextLabel")
-    predLabel.Size = UDim2.new(0.5, 0, 1, 0)
-    predLabel.BackgroundTransparency = 1
-    predLabel.Text = "⚡ Prediction"
-    predLabel.TextColor3 = colors.text
-    predLabel.TextSize = 13
-    predLabel.Font = Enum.Font.Jura
-    predLabel.TextXAlignment = Enum.TextXAlignment.Left
-    predLabel.Parent = predRow
-    
-    local levels = {"Low", "Medium", "High", "Off"}
-    local predIdx = 3
-    if PredictionLevel == 0.08 then predIdx = 1
-    elseif PredictionLevel == 0.145 then predIdx = 2
-    elseif PredictionLevel == 0 then predIdx = 4 end
-    
-    local predBtn = Instance.new("TextButton")
-    predBtn.Size = UDim2.new(0.3, 0, 0.7, 0)
-    predBtn.Position = UDim2.new(0.7, 0, 0.15, 0)
-    predBtn.BackgroundColor3 = colors.accent
-    predBtn.BackgroundTransparency = 0.3
-    predBtn.Text = levels[predIdx]
-    predBtn.TextColor3 = colors.text
-    predBtn.TextSize = 12
-    predBtn.Font = Enum.Font.Jura
-    predBtn.Parent = predRow
-    
-    local predCorner = Instance.new("UICorner")
-    predCorner.CornerRadius = UDim.new(0, 4)
-    predCorner.Parent = predBtn
-    
-    predBtn.MouseButton1Click:Connect(function()
-        predIdx = predIdx % 4 + 1
-        predBtn.Text = levels[predIdx]
-        if predIdx == 1 then PredictionLevel = 0.08
-        elseif predIdx == 2 then PredictionLevel = 0.145
-        elseif predIdx == 3 then PredictionLevel = 0.2
-        else PredictionLevel = 0 end
-    end)
-    
-    -- ===== TAB 3: COLORS =====
-    local tab3 = Instance.new("Frame")
-    tab3.Size = UDim2.new(1, 0, 1, 0)
-    tab3.BackgroundTransparency = 1
-    tab3.Visible = false
-    tab3.Parent = contentArea
-    table.insert(contentFrames, tab3)
-    
-    local colorY = 10
-    local colorKeys = {}
-    for key, _ in pairs(COLOR_PRESETS) do
-        table.insert(colorKeys, key)
-    end
-    
-    for i, key in ipairs(colorKeys) do
-        local preset = COLOR_PRESETS[key]
-        local row = Instance.new("Frame")
-        row.Size = UDim2.new(1, 0, 0, 30)
-        row.Position = UDim2.new(0, 0, 0, colorY)
-        row.BackgroundTransparency = 1
-        row.Parent = tab3
-        
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0.9, 0, 1, 0)
-        btn.Position = UDim2.new(0.05, 0, 0, 0)
-        btn.BackgroundColor3 = preset.bg
-        btn.BackgroundTransparency = 0.3
-        btn.Text = preset.name
-        btn.TextColor3 = preset.text
-        btn.TextSize = 11
-        btn.Font = Enum.Font.Jura
-        btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.Parent = row
-        
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 4)
-        btnCorner.Parent = btn
-        
-        -- Color preview dot
-        local dot = Instance.new("Frame")
-        dot.Size = UDim2.new(0, 12, 0, 12)
-        dot.Position = UDim2.new(0.9, 0, 0.5, -6)
-        dot.BackgroundColor3 = preset.border
-        dot.BorderSizePixel = 0
-        dot.Parent = btn
-        
-        local dotCorner = Instance.new("UICorner")
-        dotCorner.CornerRadius = UDim.new(1, 0)
-        dotCorner.Parent = dot
-        
-        -- Checkmark for current
-        if CurrentColor == key then
-            local check = Instance.new("TextLabel")
-            check.Size = UDim2.new(0, 20, 1, 0)
-            check.Position = UDim2.new(0.8, 0, 0, 0)
-            check.BackgroundTransparency = 1
-            check.Text = "✔"
-            check.TextColor3 = preset.accent
-            check.TextSize = 14
-            check.Font = Enum.Font.Jura
-            check.Parent = btn
-        end
-        
-        btn.MouseButton1Click:Connect(function()
-            CurrentColor = key
-            -- Пересоздаём всё с новым цветом
-            if RoundButton then RoundButton:Destroy() end
-            if MenuButton then MenuButton:Destroy() end
-            if SettingsMenu then SettingsMenu:Destroy() end
-            CreateRoundButton()
-            CreateMenuButton()
-            CreateSettingsMenu()
-            if MenuOpen then
-                SettingsMenu.Visible = true
-            end
-        end)
-        
-        colorY = colorY + 35
-    end
-    
-    SettingsMenu = frame
-    return frame
+    UpdateAimButtonState()
+    print("⚡ Aim Lock: " .. (AimLockEnabled and "ENABLED" or "DISABLED"))
 end
 
--- ==============================================
--- ФУНКЦИИ ОТКРЫТИЯ/ЗАКРЫТИЯ МЕНЮ
--- ==============================================
-local function ToggleSettingsMenu()
-    if not SettingsMenu then
-        CreateSettingsMenu()
-        if SettingsMenu then
-            MenuOpen = true
-            SettingsMenu.Visible = true
-        end
-    else
-        MenuOpen = not MenuOpen
-        SettingsMenu.Visible = MenuOpen
+local function CreateBindButton()
+    if BindableButtons.Buttons["aim_toggle"] then return end
+    
+    BindableButtons.AddBButton("aim_toggle", "Aim", function()
+        ToggleAimLock()
+    end, false)
+    
+    local btn = BindableButtons.Buttons["aim_toggle"]
+    if btn then
+        local screen = Workspace.CurrentCamera.ViewportSize
+        btn.Size = __UD2(bindButtonSize * (screen.Y / screen.X), 0, bindButtonSize, 0)
+    end
+    
+    UpdateAimButtonState()
+end
+
+local function DeleteBindButton()
+    BindableButtons.DeleteBButton("aim_toggle")
+end
+
+local function ToggleBindableVisibility()
+    local btn = BindableButtons.Buttons["aim_toggle"]
+    if btn then
+        btn.Visible = ShowBindableButton
     end
 end
 
 -- ==============================================
--- ЗАПУСК ВСЕГО
+-- УПРАВЛЕНИЕ ГОРЯЧИМИ КЛАВИШАМИ
 -- ==============================================
--- Круглая кнопка для вкл/выкл
-CreateRoundButton()
-
--- Кнопка для открытия меню настроек (шестерёнка)
-CreateMenuButton()
-
--- Меню настроек (скрытое)
-CreateSettingsMenu()
-if SettingsMenu then SettingsMenu.Visible = false end
-
--- Горячая клавиша T для тоггла AimLock
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.T then
-        AimLockEnabled = not AimLockEnabled
-        if AimLockEnabled then TargetPlayer = FindMurderer(nil) else TargetPlayer = nil end
-        if RoundButton then
-            local txt = RoundButton:FindFirstChildWhichIsA("TextLabel")
-            if txt then txt.Text = AimLockEnabled and "ON" or "OFF" end
-            local st = RoundButton:FindFirstChildWhichIsA("UIStroke")
-            if st then 
-                local colors = COLOR_PRESETS[CurrentColor]
-                st.Color = AimLockEnabled and colors.statusActive or colors.border
-            end
+local function SetupKeybinds()
+    local inputBeganConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        
+        if input.KeyCode == Enum.KeyCode.T then
+            ToggleAimLock()
         end
-        if _G.UpdateAimUI then _G.UpdateAimUI() end
-    end
-end)
+    end)
+    
+    RootMaid:GiveTask(inputBeganConnection)
+end
+
+-- ==============================================
+-- ЗАПУСК
+-- ==============================================
+CreateBindButton()
+ToggleBindableVisibility()
+SetupKeybinds()
 
 -- ==============================================
 -- ПРИВЯЗКА AIMLOCK К RENDERSTEP
@@ -824,50 +558,26 @@ RunService:BindToRenderStep(
     AimLockLoop
 )
 
--- Обновление UI
-local function UpdateUI()
-    if SettingsMenu and SettingsMenu.Visible then
-        -- Обновляем статус в меню
-        local tab1 = SettingsMenu:FindFirstChildWhichIsA("Frame"):FindFirstChildWhichIsA("Frame")
-        if tab1 then
-            for _, child in ipairs(tab1:GetChildren()) do
-                if child:IsA("Frame") then
-                    for _, c in ipairs(child:GetChildren()) do
-                        if c:IsA("TextLabel") and c.TextXAlignment == Enum.TextXAlignment.Right then
-                            if c.Text == "🟢 ACTIVE" or c.Text == "🔴 INACTIVE" then
-                                c.Text = AimLockEnabled and "🟢 ACTIVE" or "🔴 INACTIVE"
-                                local colors = COLOR_PRESETS[CurrentColor]
-                                c.TextColor3 = AimLockEnabled and colors.statusActive or colors.statusPaused
-                            end
-                        end
-                        if c:IsA("TextLabel") and string.find(c.Text or "", "Target:") then
-                            c.Text = "🎯 Target: " .. (TargetPlayer and TargetPlayer.Name or "None")
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-RunService.Heartbeat:Connect(UpdateUI)
-
--- Очистка
+-- Очистка при смене персонажа
 LocalPlayer.CharacterAdded:Connect(function()
     TargetPlayer = nil
 end)
 
+-- Очистка при выгрузке
 RootMaid:GiveTask(function()
+    DeleteBindButton()
     RunService:UnbindFromRenderStep("MM2_AimLock_PhaseSync")
-    if SettingsMenu then SettingsMenu:Destroy() end
-    if RoundButton then RoundButton:Destroy() end
-    if MenuButton then MenuButton:Destroy() end
+    if MainGUI then MainGUI:Destroy() end
 end)
 
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("🎯 AIMLOCK PRO v2.6")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("🔵 Круглая кнопка → ON/OFF AimLock")
-print("⚙️ Шестерёнка → открыть меню настроек")
-print("📌 Клавиша 'T' → быстрый тоггл")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+-- ==============================================
+-- ВЫВОД МЕНЮ В КОНСОЛЬ
+-- ==============================================
+print("✅ MM2 Aim Lock V2.6 (Standalone) Loaded!")
+CreateConsoleMenu()
+
+-- Функция для вызова меню из консоли
+_G.MM2AimMenu = CreateConsoleMenu
+_G.MM2Toggle = ToggleAimLock
+
+print("🔧 Type 'MM2AimMenu()' to show menu, 'MM2Toggle()' to toggle aim")
