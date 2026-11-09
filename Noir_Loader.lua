@@ -1,4 +1,4 @@
-Noir Loader 2026-11-09 | repo: mellnikovden-sketch/Mm2-plugins + duplicate-launch guard
+-- Noir Loader 2026-11-09 | repo: mellnikovden-sketch/Mm2-plugins + duplicate-launch guard
 local _b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 local function b64decode(data)
   data = data:gsub('[^'.._b..'=]', '')
