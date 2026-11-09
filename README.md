@@ -7,7 +7,7 @@
 
 | Файл | Что это |
 |---|---|
-| `Noir_Loader.lua` | Лоадер (2026-11-06) — качает файлы с репо `mellnikovden0-ai/Omniverse` |
+| `Noir_Loader.lua` | Лоадер (2026-11-06) — качает файлы с репо `mellnikovden-sketch/Mm2-plugins` |
 | `Noir_Part1.lua` | MM2, часть 1 — ядро + **NovaUI-дизайн меню** (бирюзовые рамки, пружинные анимации, векторные иконки, редактор вида элементов) |
 | `Noir_Part2.lua` | MM2, часть 2 — функции (Visuals / movement / меню через `__noirCore`) |
 | `Noir_Part3.lua` | MM2, часть 3 — **Weapon Skinchanger нового поколения (полный движок, оффлайн-порт)** |
@@ -372,6 +372,16 @@
     - ВАЖНО: лоадер качает скрипт с GitHub — если на экране старый вид, замените файлы в репозитории (Noir_Part1.lua, Noir_Combined.lua) и перезапустите скрипт.
     - Проверено: баланс блоков, регистровый пик MM2 не вырос (<= 209), тихая консоль, round-trip NRX2 для Part1 и Combined OK.
 
+35. **Лоадер: переезд на новый репозиторий (старый аккаунт снесён).**
+    - Все 5 raw-ссылок лоадера теперь указывают на
+    `mellnikovden-sketch/Mm2-plugins` (ветка main, файлы в корне,
+    имена файлов прежние). Обе версии лоадера обновлены
+    (NRX2-версия пересобрана round-trip, заголовок 2026-11-09).
+    - Все 5 ссылок проверены curl'ом — HTTP 200.
+    - ВАЖНО: в новый репозиторий нужно залить СВЕЖИЕ файлы сборки
+    v5 (Noir_Part1.lua, Noir_Combined.lua, Noir_Loader.lua и
+    остальные из пакета), иначе лоадер скачает старую версию.
+
 ## Группировка функций (аккуратное расположение, без свалки)
 
 **MM2** — каждая секция помечена префиксом категории:
@@ -406,7 +416,7 @@ Home, Parry, Main, Visuals, World, Misc, Settings), а не одной куче�
 
 ## Как запускать
 
-**Рабочий репозиторий (2026-11-06): https://github.com/mellnikovden0-ai/Omniverse**
+**Рабочий репозиторий (с 2026-11-09): https://github.com/mellnikovden-sketch/Mm2-plugins**
 
 Старые репо `mellnikovden968-web/Gga` и `mellnikovden968-web/CFG_PM2` больше
 НЕ используются — аккаунт `mellnikovden968-web` скрыт от мира, raw-ссылки с него
@@ -414,13 +424,13 @@ Home, Parry, Main, Visuals, World, Misc, Settings), а не одной куче�
 
 **MM2 (по частям — основной способ):**
 1. Залейте `Noir_Part1.lua`, `Noir_Part2.lua`, `Noir_Part3.lua` в репозиторий GitHub
-   `mellnikovden0-ai/Omniverse`, ветка `main`, имена файлов менять нельзя:
+   `mellnikovden-sketch/Mm2-plugins`, ветка `main`, имена файлов менять нельзя:
    `Noir_Part1.lua`, `Noir_Part2.lua`, `Noir_Part3.lua`.
 2. Запустите `Noir_Loader.lua` через executor.
 
 **Blade Ball / Muscle Legends:**
 1. Залейте `NovaUI_Builds/Noir_BladeBall.lua` и `NovaUI_Builds/Noir_MuscleLegends.lua`
-   в репозиторий `mellnikovden0-ai/Omniverse`, ветка `main`, под именами
+   в репозиторий `mellnikovden-sketch/Mm2-plugins`, ветка `main`, под именами
    `Noir_BladeBall.lua` и `Noir_MuscleLegends.lua`.
 2. Лоадер сам определит игру и загрузит нужный файл.
 
@@ -428,7 +438,7 @@ Home, Parry, Main, Visuals, World, Misc, Settings), а не одной куче�
 
 ## Проверка целостности (обновлено 2026-11-06)
 
-- Лоадер 2026-11-06: URL переведены на репо `mellnikovden0-ai/Omniverse`, все 5
+- Лоадер 2026-11-06: URL переведены на репо `mellnikovden-sketch/Mm2-plugins`, все 5
   raw-ссылок проверены curl'ом — HTTP 200; NRX2 round-trip OK
 - Все 4 NRX2-файла: base64 round-trip OK, размер кода совпадает байт в байт
 - Синтаксис объединённых Part1+2+3 проверен парсером (Luau) — OK
