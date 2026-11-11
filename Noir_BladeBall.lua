@@ -366,7 +366,62 @@ task.spawn(function()
         Notify("HOTHX", "Anti-cheat Bypassed", 3)  
     end  
 end)  
+
+-- NOIR improvement: ремоуты, добавленные ПОСЛЕ инжекта (апдейты игры, респавн
+-- ремоутов), тоже хукаются — раньше они ускользали от захвата аргументов.
+pcall(function()
+    replicated_storage.DescendantAdded:Connect(function(obj)
+        if obj:IsA('RemoteEvent') or obj:IsA('RemoteFunction') then
+            task.defer(_hook, obj)
+        end
+    end)
+end)
+
+-- NOIR improvement: если захваченный ремоут умер (обновление игры/респавн),
+-- переводим захват обратно в исходное состояние и перехукываем всё заново.
+task.spawn(function()
+    while task.wait(2) do
+        local dead = false
+        pcall(function()
+            if _capturedRemote and (not _capturedRemote.Parent) then dead = true end
+        end)
+        if dead then
+            _capturedRemote, _capturedArgs, _captured = nil, nil, nil
+            _reverted = {}
+            _original = {}
+            Notify("HOTHX", "Re-arming anti-cheat capture...", 3)
+            for _, r in pairs(replicated_storage:GetDescendants()) do
+                if r:IsA('RemoteEvent') or r:IsA('RemoteFunction') then
+                    _hook(r)
+                end
+            end
+        end
+    end
+end)  
   
+-- NOIR improvement: резолвер VirtualInputManager (кэшируется), чтобы честный
+-- Keypress-режим работал и на ПК, и на мобильных экзекуторах с тачем
+local _vimService = nil
+local function resolveVim()
+    if _vimService ~= nil then return _vimService or nil end
+    local ok, s = pcall(function() return game:GetService("VirtualInputManager") end)
+    _vimService = (ok and s) or false
+    return _vimService or nil
+end
+
+-- NOIR improvement: код клавиши парри для keypress-режима (строка или Enum)
+local function resolveParryKey()
+    local k = getgenv().AutoParryKey
+    if type(k) == "number" then return k end
+    if typeof and typeof(k) == "EnumItem" then return k.Value end
+    if type(k) == "string" and k ~= "" then
+        local ok, item = pcall(function() return Enum.KeyCode[k] end)
+        if ok and item then return item.Value end
+        return 20 -- Enum.KeyCode.F
+    end
+    return 20 -- Enum.KeyCode.F (дефолт Blade Ball)
+end
+
 local function fireParryRemote(curveCF)  
     if not _capturedRemote or not _capturedArgs then  
         return false  
@@ -645,6 +700,38 @@ end
   
 function System.parry.keypress()  
     if System.__properties.__parries > 10000 or not LocalPlayer.Character then return end  
+    -- NOIR improvement: честное нажатие клавиши парри (как реальный игрок) —
+    -- keypress/keyrelease API экзекутора -> VirtualInputManager -> фолбэк remote.
+    -- Прежняя версия просто слала remote, т.е. «Keypress» был копией Remote-режима.
+    local keyVal = resolveParryKey()
+    local sentKey = false
+    pcall(function()
+        if type(keypress) == "function" and type(keyrelease) == "function" then
+            keypress(keyVal)
+            task.wait(0.04)
+            keyrelease(keyVal)
+            sentKey = true
+        end
+    end)
+    if not sentKey then
+        local vim = resolveVim()
+        if vim then
+            local okKey = pcall(function()
+                local item = Enum.KeyCode.F
+                pcall(function() item = Enum.KeyCode:GetEnumItem(keyVal) or Enum.KeyCode.F end)
+                vim:SendKeyEvent(true, item, false, game)
+                task.wait(0.04)
+                vim:SendKeyEvent(false, item, false, game)
+            end)
+            sentKey = okKey
+        end
+    end
+    if sentKey then
+        System.__properties.__parries=System.__properties.__parries+1  
+        task.delay(0.5,function() if System.__properties.__parries > 0 then System.__properties.__parries=System.__properties.__parries-1 end end)
+        return true
+    end
+    -- фолбэк: remote-пакет с кривой (как раньше)
     if not fireParryRemote(System.curve.get_cframe()) then return false end
     if System.__properties.__parries > 10000 then return false end  
     System.__properties.__parries=System.__properties.__parries+1  
@@ -1132,9 +1219,27 @@ function System.autoparry.start()
             -- NOIR fix: возврат к оригиналу clamp(ms/100,5,40) — вариант ms/10
             -- паррил на 5-35 стадов раньше и сервер не засчитывал парри
             local ping_threshold=math.clamp(ping/10,5,40); local speed=velocity.Magnitude
-            local capped_speed_diff=math.min(math.max(speed-9.5,0),650)  
+            -- NOIR improvement: считаем компоненту скорости мяча К НАМ (dot) и своё
+            -- движение. Мяч под углом/отлетавший больше не паррится по полной скорости,
+            -- а при движении навстречу окно чуть расширяется — как в известных
+            -- time-to-impact реализациях (velocity dot + closing speed).
+            local ball_root_dir=(LocalPlayer.Character.PrimaryPart.Position-ball.Position)
+            local towards=speed>0 and velocity:Dot(ball_root_dir.Unit) or 0
+            if towards<=1 then continue end -- летит мимо/от нас: дистанция не показатель
+            local ownToward=0
+            do
+                local okOV,ov=pcall(function() return LocalPlayer.Character.PrimaryPart.AssemblyLinearVelocity end)
+                if okOV and ov and ov.Magnitude>0.01 then
+                    ownToward=ov:Dot(ball_root_dir.Unit)
+                    if ownToward~=ownToward then ownToward=0 end -- NaN-guard
+                    ownToward=math.clamp(ownToward,-120,120)
+                end
+            end
+            local closing=math.clamp(towards+ownToward,1,speed*2)
+            local eff_speed=closing
+            local capped_speed_diff=math.min(math.max(eff_speed-9.5,0),650)  
             local speed_divisor=(2.4+capped_speed_diff*0.002)*System.__properties.__divisor_multiplier  
-            local parry_accuracy=ping_threshold+math.max(speed/speed_divisor,9.5)  
+            local parry_accuracy=ping_threshold+math.max(eff_speed/speed_divisor,9.5)  
             local curved=System.detection.is_curved(ball, autoparryPingMs/1000)
             if curved then continue end  
             -- NOIR perf: SingularityCape раз в 0.5с, не каждый кадр
@@ -1187,11 +1292,28 @@ function System.autoparry.start()
             end  
             if ball_target==LocalPlayer.Name and distance <= parry_accuracy then
                 local sent
-                if genvFlags.AutoParryMode=="Keypress" then sent = System.parry.keypress()
+                local mode=genvFlags.AutoParryMode
+                if mode=="Keypress" then sent = System.parry.keypress()
+                elseif mode=="Predict" then
+                    -- NOIR improvement: режим по времени до удара (time-to-impact):
+                    -- окно динамическое (быстрый мяч → больше форы), пинг вычитается
+                    -- (сервер видит наш парри позже на пол-RTT)
+                    local tti=distance/math.max(closing,0.001)
+                    local lead=autoparryPingMs/2000
+                    local window
+                    if eff_speed>60 then window=0.20
+                    else window=math.clamp(0.04+eff_speed*0.0015,0.04,0.12) end
+                    if tti>0 and (tti-lead)<=window then
+                        sent = System.parry.execute_action()
+                    end
                 else sent = System.parry.execute_action() end
                 -- NOIR fix: окно ретрая = время полёта мяча на 30 стадов (clamp 0.08..0.5):
                 -- медленный мяч ждёт прежние 0.5с, быстрый (300+ studs/s) ретраит через ~0.1с
-                if sent then state.readyAt = os.clock() + math.clamp(30 / math.max(speed, 30), 0.08, 0.5) end
+                if sent then
+                    -- NOIR improvement: лёгкий джиттер окна (±8%) — меньше роботности
+                    local jitter=0.92+math.random()*0.16
+                    state.readyAt = os.clock() + math.clamp(30 / math.max(speed, 30), 0.08, 0.5) * jitter
+                end
             end
         end  
         if training_ball then  
@@ -1212,15 +1334,32 @@ function System.autoparry.start()
                     local ping=autoparryPingMs/10
                     -- NOIR fix: как в основном цикле — оригинальный порог ms/100
                     local ping_threshold=math.clamp(ping/10,5,40)
-                    local capped_speed_diff=math.min(math.max(speed-9.5,0),650)  
+                    -- NOIR improvement: toward-компонента, как в основном цикле
+                    local t_dir=(LocalPlayer.Character.PrimaryPart.Position-training_ball.Position)
+                    local towards=speed>0 and velocity:Dot(t_dir.Unit) or 0
+                    local eff_speed=math.clamp(towards,1,speed)
+                    local capped_speed_diff=math.min(math.max(eff_speed-9.5,0),650)  
                     local speed_divisor=(2.4+capped_speed_diff*0.002)*System.__properties.__divisor_multiplier  
-                    local parry_accuracy=ping_threshold+math.max(speed/speed_divisor,9.5)  
-                    if ball_target==LocalPlayer.Name and distance <= parry_accuracy then  
+                    local parry_accuracy=ping_threshold+math.max(eff_speed/speed_divisor,9.5)  
+                    if ball_target==LocalPlayer.Name and distance <= parry_accuracy and towards>1 then  
                         local sent
-                        if genvFlags.AutoParryMode=="Keypress" then sent = System.parry.keypress()
+                        local mode=genvFlags.AutoParryMode
+                        if mode=="Keypress" then sent = System.parry.keypress()
+                        elseif mode=="Predict" then
+                            local tti=distance/math.max(eff_speed,0.001)
+                            local lead=autoparryPingMs/2000
+                            local window
+                            if eff_speed>60 then window=0.20
+                            else window=math.clamp(0.04+eff_speed*0.0015,0.04,0.12) end
+                            if tti>0 and (tti-lead)<=window then
+                                sent = System.parry.execute_action()
+                            end
                         else sent = System.parry.execute_action() end
-                        -- NOIR fix: адаптивное окно ретрая, как в основном цикле
-                        if sent then state.readyAt = os.clock() + math.clamp(30 / math.max(speed, 30), 0.08, 0.5) end
+                        -- NOIR fix: адаптивное окно ретрая, как в основном цикле (с джиттером)
+                        if sent then
+                            local jitter=0.92+math.random()*0.16
+                            state.readyAt = os.clock() + math.clamp(30 / math.max(speed, 30), 0.08, 0.5) * jitter
+                        end
                     end  
                 end  
             end  
@@ -12641,7 +12780,7 @@ do
         startStop(System.autoparry, on)
         Notify(on and "Auto Parry enabled" or "Auto Parry disabled")
     end)
-    sMain:AddDropdown("Parry Mode", { "Remote", "Keypress" }, function(v) genv.AutoParryMode = v end)
+    sMain:AddDropdown("Parry Mode", { "Remote", "Keypress", "Predict" }, function(v) genv.AutoParryMode = v end)
     local accuracyCtl = sMain:AddSlider("Accuracy", 1, 100, 50, function(v)
         setProp("__accuracy", tonumber(v) or 50)
         -- NOIR fix: в оригинале вызывался несуществующий Update_Divisor (nil) —
@@ -12677,6 +12816,12 @@ do
         end
     end)
     sMain:AddToggle("Auto Ability", function(on) genv.AutoAbility = on end)
+    -- NOIR improvement: был мёртвый флаг — движок читал BallVelocityAbove800,
+    -- но в меню его нельзя было включить. Теперь это рабочий тумблер:
+    -- пропускает мячи 800+ (анти-чит на сверхбыстрых мячах), autoparry ждёт.
+    sMain:AddToggle("Skip 800+ Speed", function(on) genv.BallVelocityAbove800 = on end)
+    -- NOIR improvement: клавиша парри для Keypress-режима (реальное нажатие)
+    sMain:AddKeybind("Parry Key", "F", function(v) genv.AutoParryKey = tostring(v) end)
     sMain:AddLabel("High ping 200-390ms: включи Random Accuracy или ставь Accuracy 5-15; движок подстроен под пинг до 400мс.")
 
     local sDet = tab:AddSection("DETECTION", "special ball events")
@@ -12701,6 +12846,11 @@ do
         setProp("__manual_spam_enabled", on)
         startStop(System.manual_spam, on)
         Notify(on and "Manual Spam enabled" or "Manual Spam disabled")
+    end)
+    -- NOIR improvement: анимация спама была жёстко зашита true без переключателя
+    sSpam:AddToggle("Spam Animation Fix", function(on)
+        genv.AutoSpamAnimationFix = on
+        genv.ManualSpamAnimationFix = on
     end)
     sSpam:AddParagraph("Triggerbot", "Автоматически жмёт блок в тот момент, когда мяч уже нацелен и летит в тебя — реакция срабатывает по триггеру, без постоянного авто-парри. Полезен как «подстраховка» рядом с Auto Parry.")
     sSpam:AddLabel("Manual Spam/Auto Spam: жмут блок серией — выбери режим Remote/Keypress ниже.")
