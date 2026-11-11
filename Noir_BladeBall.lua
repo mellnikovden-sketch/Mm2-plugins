@@ -1,16 +1,22 @@
 --[[
-	Noir Blade Ball • v1.4.0 (NOIR build)
-	Ядро autoparry переведено на проверенную модель Oxyo Hub (open source,
-	bobloscript/scripts) — эмпирически выверенная формула того же семейства:
-	 - дистанция считается по будущим позициям мяча и игрока (пол-RTT вперёд)
-	 - пинг-порог ping/10 + High Ping Compensation x1.5 при пинге >150мс
-	 - диапазон множителя Accuracy 0.7..1.05 (как в Oxyo), дефолт 100
-	 - факторы скорости мяча и близости противника (speedFactor/distFactor)
-	 - один парри на подлёт мяча + реарм 1с (меньше впустую сожжённых свингов)
-	 - кривые мячи больше НЕ пропускаются (главная причина пропусков)
-	 - Random Accuracy = ±15% джиттер каждой попытки, слайдер не подменяется
-	 - Keypress = клик-симуляция (mouse1click/VIM), работает на мобильных
-	 - средний пинг из 3 замеров (меньше дёрганья дистанции)
+	Noir Blade Ball • v1.4 (NOIR build)
+	v1.4 (auto parry):
+	 - Пинг теперь реально учитывается: упреждение = Accuracy-время + RTT*0.75 + кадр
+	   (раньше +5 стадов максимум, при пинге 220-330мс парри приходил впритык/поздно)
+	 - Мяч с кривой больше не пропускается до ~14 стадов: парри сдвигается поздно, но вовремя
+	 - Фикс знака в closing speed (бег от мяча раньше расширял окно, на мяч — сужал)
+	 - Один расчёт для всех режимов и тренировочного мяча; Predict = +1 кадр упреждения
+	 - Keypress не стреляет дублями (task.wait внутри кадра); пинг сглажен EMA
+	 - Random Accuracy = +-12 вокруг слайдера на каждый парри, слайдер не перезаписывается
+	 - Подсказка, если parry remote не пойман; getgenv().NoirParryDebug=true печатает каждый парри
+	 - Тюнинг на лету: getgenv().NoirParryCfg (NET_FACTOR, CURVE_LEAD, RAND_RANGE, FRAME_FACTOR)
+	Fixes v1.3.3:
+	 - Random Accuracy: раньше при пинге >= 90мс всегда ставило Accuracy = 4
+	   (слайдер 'залипал'); теперь случайное значение из диапазона под пинг
+	 - Skip 800+ Speed: раньше тумблер отключал ВЕСЬ autoparry; теперь
+	   пропускает только мячи быстрее 800 стадов/с
+	 - Fix краша 'invalid argument #3 to clamp' (спам консоли на тренировке)
+	 - Predict: окно учитывает FPS устройства (не проскакивает при FPS 7-15)
 ]]
 
 
@@ -257,20 +263,39 @@ local System = {
     }  
 }  
   
--- NOIR v1.4 (модель Oxyo): диапазон множителя 0.7..1.05 (0.35), как в
--- оригинале Oxyo Hub: 0.7 + ((v-1)/99)*0.35. Прежний диапазон 0.9 при
--- Accuracy ~100 прижимал дистанцию парри вдвое сильнее — мячи не добивались.
-local function update_divisor()
-    System.__properties.__divisor_multiplier = 0.7 + (System.__properties.__accuracy - 1) * (0.35/99)
-end
-update_divisor()
+local function update_divisor()  
+    System.__properties.__divisor_multiplier = 0.7 + (System.__properties.__accuracy - 1) * (0.9/99)  
+end  
+-- NOIR fix: стартовый множитель был 1.1 при __accuracy=50, а update_divisor даёт
+-- ~1.145 — рассинхрон. Считаем честно один раз при старте.
+update_divisor()  
   
--- NOIR v1.4 Random Accuracy: прежняя "подстройка под пинг" УДАЛЕНА — она
--- подменяла слайдер значением 4-18 при пинге >90мс, а в новом движке это
--- означает парри за 150+ стадов до мяча (слишком рано, свинг впустую).
--- Теперь Random Accuracy — честный ±15% джиттер дистанции каждой попытки
--- (см. основной цикл), а подстройка под пинг структурная: дистанция по
--- будущим позициям + порог ping/10 + High Ping Compensation (как в Oxyo).
+-- NOIR v1.4: настройки парри (можно крутить на лету: getgenv().NoirParryCfg.NET_FACTOR = 0.9)
+System.cfg = {
+    NET_FACTOR   = 0.75, -- какая доля RTT добавляется к упреждению (пакет доходит до сервера ~RTT позже, чем мы видим мяч)
+    MIN_DIST     = 9.5,  -- минимальная серверная дистанция парри (стадов), как в оригинале
+    CURVE_LEAD   = 0.14, -- серверное упреждение (сек) для мяча с кривой: парри максимально поздно, но не слишком
+    FRAME_FACTOR = 1.0,  -- сколько кадров добавлять к упреждению (на FPS 25-30 кадр = 33-40мс)
+    RAND_RANGE   = 12,   -- Random Accuracy: +-пунктов вокруг слайдера, перебрасывается на каждый парри
+    MAX_RTT      = 0.7,  -- потолок пинга в расчётах (сек)
+}
+pcall(function() getgenv().NoirParryCfg = System.cfg end)
+
+-- NOIR v1.4 fix Random Accuracy: раньше тумблер каждую секунду ПЕРЕЗАПИСЫВАЛ слайдер
+-- значением из корзин по пингу (3-6 / 4-10 / 6-18 / 20-60 / 70-100) — скачки на границах,
+-- слайдер игрока терялся, а сам пинг почти не учитывался в дистанции парри.
+-- Теперь пинг учитывается ВСЕГДА (отдельно, по времени), а Random Accuracy = небольшой
+-- случайный разброс вокруг ТВОЕГО слайдера, новый бросок на каждый парри / новую цель мяча.
+function System.effective_accuracy()
+    local base = tonumber(System.__properties.__accuracy) or 50
+    if not System.__properties.__randomized_accuracy_enabled then return base end
+    local r = tonumber(System.cfg.RAND_RANGE) or 12
+    return math.clamp(base + (math.random() * 2 - 1) * r, 1, 100)
+end
+
+-- оставлено для UI-тумблера (он дёргает эту функцию); слайдер больше не трогаем
+local function update_randomized_accuracy()
+end
   
 local replicated_storage = cloneref(game:GetService('ReplicatedStorage'))  
 local workspace = cloneref(game:GetService('Workspace'))  
@@ -426,6 +451,12 @@ end
 
 local function fireParryRemote(curveCF)  
     if not _capturedRemote or not _capturedArgs then  
+        -- NOIR v1.4: раньше молча возвращал false — автопарри "не работал" без объяснений
+        local nowC = os.clock()
+        if nowC - (System.__noCaptureHintAt or 0) > 10 then
+            System.__noCaptureHintAt = nowC
+            pcall(function() Notify("Auto Parry", "parry remote не пойман: нажми парри вручную (F) один раз или возьми режим Keypress", 4) end)
+        end
         return false  
     end  
   
@@ -702,37 +733,33 @@ end
   
 function System.parry.keypress()  
     if System.__properties.__parries > 10000 or not LocalPlayer.Character then return end  
-    -- NOIR v1.4 (как SimulateParry в Oxyo): на мобильных mouse1click(), на ПК
-    -- клик VIM в (0,0) — в Blade Ball весь экран это хитбокс парри. Прежний
-    -- вариант с клавишей F на тач-устройствах не работал вообще: клавиатуры нет.
-    local sentClick = false
+    -- NOIR improvement: честное нажатие клавиши парри (как реальный игрок) —
+    -- keypress/keyrelease API экзекутора -> VirtualInputManager -> фолбэк remote.
+    -- Прежняя версия просто слала remote, т.е. «Keypress» был копией Remote-режима.
+    local keyVal = resolveParryKey()
+    local sentKey = false
     pcall(function()
-        if type(mouse1click) == "function" then mouse1click() sentClick = true end
+        if type(keypress) == "function" and type(keyrelease) == "function" then
+            keypress(keyVal)
+            task.wait(0.04)
+            keyrelease(keyVal)
+            sentKey = true
+        end
     end)
-    if not sentClick then
+    if not sentKey then
         local vim = resolveVim()
         if vim then
-            local okClick = pcall(function()
-                vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                task.wait()
-                vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+            local okKey = pcall(function()
+                local item = Enum.KeyCode.F
+                pcall(function() item = Enum.KeyCode:GetEnumItem(keyVal) or Enum.KeyCode.F end)
+                vim:SendKeyEvent(true, item, false, game)
+                task.wait(0.04)
+                vim:SendKeyEvent(false, item, false, game)
             end)
-            sentClick = okClick
+            sentKey = okKey
         end
     end
-    if not sentClick then
-        -- фолбэк: честное нажатие клавиши (ПК-экзекуторы)
-        pcall(function()
-            if type(keypress) == "function" and type(keyrelease) == "function" then
-                local keyVal = resolveParryKey()
-                keypress(keyVal)
-                task.wait(0.04)
-                keyrelease(keyVal)
-                sentClick = true
-            end
-        end)
-    end
-    if sentClick then
+    if sentKey then
         System.__properties.__parries=System.__properties.__parries+1  
         task.delay(0.5,function() if System.__properties.__parries > 0 then System.__properties.__parries=System.__properties.__parries-1 end end)
         return true
@@ -1133,9 +1160,8 @@ end
 System.autoparry = {states = setmetatable({}, {__mode = "k"})}
 -- NOIR perf: пинг читаем раз в 0.2с (кэш), а не на каждый мяч каждый кадр
 local autoparryPingMs, autoparryPingAt = 0, 0
--- NOIR v1.4: среднее из 3 последних замеров пинга (как GetAveragePing в Oxyo) —
--- одиночные скачки пинга больше не дёргают дистанцию парри
-local autoparryPingBuf = {}
+-- NOIR: длительность кадра — Predict-окно подстраивается под FPS устройства
+local autoparryFrameDt, autoparryFrameAt = 1 / 60, 0
 -- NOIR perf: кэши редких сканов для горячего цикла авто-парри
 local autoparryGenv, autoparryGenvAt = nil, 0
 local trainingScanAt, trainingBallCache = 0, nil
@@ -1146,13 +1172,73 @@ function System.autoparry.state(ball)
     local state = System.autoparry.states[ball]
     local target = ball:GetAttribute("target")
     if not state then
-        state = {target = target, readyAt = 0}
+        state = {target = target, readyAt = 0, acc = System.effective_accuracy()}
         System.autoparry.states[ball] = state
     elseif state.target ~= target then
         state.target, state.readyAt = target, 0
+        state.acc = System.effective_accuracy() -- Random Accuracy: новый бросок на новую цель
     end
     return state
-end  
+end
+
+-- NOIR v1.4: ОДНА формула решения для боевых и тренировочных мячей.
+-- Модель: серверу пакет приходит ~RTT позже, чем мы видим мяч на экране, поэтому
+--   дистанция_парри = max(closing / divisor(Accuracy), MIN_DIST) + closing * (RTT*NET_FACTOR + кадр)
+-- Accuracy (слайдер) по-прежнему = серверное упреждение (меньше = раньше), пинг считается отдельно.
+-- Возвращает: inRange, closing, distance, fireDist, tti
+function System.autoparry.evaluate(root, ballPos, velocity, state, curved, rtt, frameDt)
+    local cfg = System.cfg
+    local speed = velocity.Magnitude
+    local toRoot = root.Position - ballPos
+    local distance = toRoot.Magnitude
+    if speed < 1 or distance < 0.001 then return false end
+    local dir = toRoot / distance                       -- от мяча к нам
+    local towards = velocity:Dot(dir)                   -- скорость мяча К нам
+    if towards <= 1 then return false end               -- летит мимо/от нас
+    local ownAway = 0
+    local okOV, ov = pcall(function() return root.AssemblyLinearVelocity end)
+    if okOV and ov and ov.Magnitude > 0.01 then
+        ownAway = ov:Dot(dir)                           -- наша скорость ОТ мяча (dir смотрит от мяча к нам)
+        if ownAway ~= ownAway then ownAway = 0 end      -- NaN-guard
+        ownAway = math.clamp(ownAway, -120, 120)
+    end
+    -- NOIR fix: знак. Скорость сближения = towards - ownAway. Раньше было "+" — бег ОТ мяча
+    -- увеличивал closing (парри раньше), бег НА мяч уменьшал (парри позже): наоборот.
+    local closing = math.clamp(towards - ownAway, 1, speed * 2)
+    local acc = state and state.acc or tonumber(System.__properties.__accuracy) or 50
+    local mult = 0.7 + (acc - 1) * (0.9 / 99)
+    local capped = math.min(math.max(closing - 9.5, 0), 650)
+    local divisor = (2.4 + capped * 0.002) * mult
+    local srvLead = 1 / divisor                          -- сек до удара, когда парри должен ДОЙТИ до сервера
+    -- кривая: раньше мяч просто пропускался до ~14 стадов (на 100+ мс пинга это уже поздно).
+    -- Теперь парри просто сдвигается максимально поздно, но с учётом пинга.
+    if curved then srvLead = math.min(srvLead, cfg.CURVE_LEAD) end
+    local netLead = rtt * cfg.NET_FACTOR + frameDt * cfg.FRAME_FACTOR
+    local fireDist = math.max(closing * srvLead, cfg.MIN_DIST) + closing * netLead
+    return distance <= fireDist, closing, distance, fireDist, distance / closing
+end
+
+-- NOIR v1.4: отправка парри + ретрай. Предблокировка readyAt нужна для Keypress:
+-- keypress() делает task.wait(0.04), и без неё соседние кадры стреляли повторно.
+function System.autoparry.fire(state, mode, speed, flags, closing, distance, fireDist, tti, rtt, curved)
+    local usedAcc = state.acc or 0
+    state.readyAt = os.clock() + 0.08
+    local sent
+    if mode == "Keypress" then sent = System.parry.keypress()
+    else sent = System.parry.execute_action() end
+    if sent then
+        state.acc = System.effective_accuracy()          -- Random Accuracy: новый бросок на каждый парри
+        local jitter = 0.92 + math.random() * 0.16
+        state.readyAt = os.clock() + math.clamp(30 / math.max(speed, 30), 0.08, 0.5) * jitter
+        if flags and flags.NoirParryDebug then
+            pcall(function()
+                print(string.format("[NoirParry] %s spd=%.0f close=%.0f dist=%.1f fire<=%.1f tti=%.2fs rtt=%.0fms acc=%.0f%s",
+                    tostring(mode or "Remote"), speed, closing, distance, fireDist, tti, rtt * 1000, usedAcc, curved and " curved" or ""))
+            end)
+        end
+    end
+    return sent
+end
 function System.autoparry.start()  
     if System.__properties.__connections.__autoparry then  
         System.__properties.__connections.__autoparry:Disconnect()  
@@ -1168,14 +1254,9 @@ function System.autoparry.start()
         if os.clock() - autoparryPingAt > 0.2 then
             autoparryPingAt = os.clock()
             local okP, pP = pcall(function() return Stats.Network.ServerStatsItem['Data Ping']:GetValue() end)
-            if okP and pP then
-                -- NOIR v1.4: среднее из 3 последних замеров (как GetAveragePing
-                -- в Oxyo) — одиночные скачки пинга больше не дёргают дистанцию
-                autoparryPingBuf[#autoparryPingBuf+1] = pP
-                if #autoparryPingBuf > 3 then table.remove(autoparryPingBuf, 1) end
-                local sum = 0
-                for _, pv in ipairs(autoparryPingBuf) do sum = sum + pv end
-                autoparryPingMs = sum / #autoparryPingBuf
+            if okP and type(pP) == "number" and pP == pP then
+                -- NOIR v1.4: сглаживание (EMA) — сырой пинг прыгает 220<->330 и дёргал дистанцию парри
+                autoparryPingMs = (autoparryPingMs <= 0) and pP or (autoparryPingMs * 0.7 + pP * 0.3)
             end
         end
         -- NOIR perf: getgenv() и TrainingBalls — по кэшу (0.2с/0.3с), не каждый кадр
@@ -1188,6 +1269,10 @@ function System.autoparry.start()
         -- NOIR fix Skip 800+: раньше тумблер "Skip 800+ Speed" делал return здесь —
         -- то есть выключал ВЕСЬ autoparry целиком, пока включён. Теперь флаг
         -- проверяется ПО КАЖДОМУ мячу ниже: пропускаются только мячи быстрее 800.
+        -- NOIR: длительность кадра для Predict-окна (на FPS 7-15 кадр 70-140мс)
+        local frameClock=os.clock()
+        autoparryFrameDt=math.clamp(frameClock-autoparryFrameAt,1/240,0.25)
+        autoparryFrameAt=frameClock
         local balls=System.ball.get_all()
         if os.clock() - trainingScanAt > 0.3 then
             trainingScanAt = os.clock()
@@ -1232,51 +1317,12 @@ function System.autoparry.start()
                 if (tick()-System.__properties.__tornado_time) <
                    (tonumber(tornadoRefCache:GetAttribute('TornadoTime')) or 1)+0.314159 then continue end
             end
+            local rootPart=LocalPlayer.Character.PrimaryPart
             local velocity=zoomies.VectorVelocity
             local speed=velocity.Magnitude
-            -- NOIR fix Skip 800+: мяч быстрее 800 стадов/с (Rapture/спидхак) —
-            -- пропускаем ТОЛЬКО его, остальной autoparry продолжает работать
+            -- NOIR fix Skip 800+: пропускаем ТОЛЬКО мячи быстрее 800 стадов/с
             if genvFlags.BallVelocityAbove800 and speed>800 then continue end
-            -- NOIR v1.4 (модель Oxyo Hub): дистанция по БУДУЩИМ позициям мяча и
-            -- игрока через пол-RTT — то, что сервер увидит, когда придёт наш парри.
-            -- Прежняя дистанция "здесь и сейчас" при пинге 200-300мс врала на 30-50 стадов.
-            local myRoot=LocalPlayer.Character.PrimaryPart
-            local halfRtt=autoparryPingMs/2000
-            local futureBall=ball.Position+velocity*halfRtt
-            local okPV,pv=pcall(function() return myRoot.AssemblyLinearVelocity end)
-            local futureMe=myRoot.Position+(okPV and pv or Vector3.zero)*halfRtt
-            local distance=(futureMe-futureBall).Magnitude
-            -- мяч фактически летит ОТ нас (кривая/отскок ушли в сторону) — не паррить
-            if speed>1 and distance>0.001 then
-                local pdot=(futureMe-futureBall).Unit:Dot(velocity.Unit)
-                if pdot<-0.3 then continue end
-            end
-            -- NOIR v1.4: пинг-порог = ping/10 (как в Oxyo); при пинге >150 и включённой
-            -- High Ping Compensation — x1.5. Прежний clamp(ms/100,5,40) давал 5 стадов
-            -- компенсации даже при пинге 300мс — этого физически мало.
-            local adjustedPing=autoparryPingMs/10
-            if genvFlags.HighPingCompensation and autoparryPingMs>150 then adjustedPing=adjustedPing*1.5 end
-            -- NOIR v1.4: кап разницы скорости 820 (как в Oxyo), был 650
-            local capped_speed_diff=math.min(math.max(speed-9.5,0),820)
-            local speed_divisor=(2.4+capped_speed_diff*0.002)*System.__properties.__divisor_multiplier
-            -- NOIR v1.4 Random Accuracy: ±15% джиттер множителя на каждую попытку
-            if System.__properties.__randomized_accuracy_enabled then
-                speed_divisor=speed_divisor*(0.85+math.random()*0.30)
-            end
-            -- факторы Oxyo: скорость мяча и близость ближайшего противника
-            local dOpp=50
-            do
-                local ce=System.player.get_closest()
-                if ce and ce.PrimaryPart then dOpp=LocalPlayer:DistanceFromCharacter(ce.PrimaryPart.Position) end
-            end
-            local speedFactor=0.8+math.min(speed/2000,1)
-            local distFactor=1+(30-math.min(dOpp,30))/30*0.8
-            local parry_accuracy=adjustedPing+math.max((speed/speed_divisor)*speedFactor*distFactor,9.5)
-            -- NOIR v1.4: КРИВЫЕ МЯЧИ БОЛЬШЕ НЕ СКИПАЮТСЯ (в Oxyo их паррят тоже).
-            -- Прежнее "if curved then continue" гарантированно пропускало кривые мячи —
-            -- главная причина "пропускает мячи".
             -- NOIR perf: SingularityCape раз в 0.5с, не каждый кадр
-            local rootPart=LocalPlayer.Character.PrimaryPart
             if os.clock() >= (capeScanAt or 0) then
                 capeScanAt = os.clock() + 0.5
                 capeRefCache = rootPart:FindFirstChild('SingularityCape')
@@ -1286,7 +1332,13 @@ function System.autoparry.start()
             if System.__config.__detections.__deathslash and System.__properties.__deathslash_active then continue end  
             if System.__config.__detections.__timehole and System.__properties.__timehole_active then continue end  
             if System.__config.__detections.__slashesoffury and System.__properties.__slashesoffury_active then continue end  
-            if ball_target==LocalPlayer.Name and distance <= parry_accuracy then  
+            -- NOIR v1.4: решение по времени (пинг + кадр + Accuracy), см. System.autoparry.evaluate
+            local rtt=math.clamp(autoparryPingMs/1000,0,System.cfg.MAX_RTT)
+            local mode=genvFlags.AutoParryMode
+            local frameDt=autoparryFrameDt*(mode=="Predict" and 2 or 1) -- Predict = ещё +1 кадр упреждения
+            local curved=System.detection.is_curved(ball, rtt)
+            local inRange,closing,distance,fireDist,tti=System.autoparry.evaluate(rootPart, ball.Position, velocity, state, curved, rtt, frameDt)
+            if not inRange then continue end
                 if genvFlags.AutoAbility then
                     -- NOIR perf: Hotbar/Ability кэшируются на 0.5с
                     if os.clock() >= (abilityScanAt or 0) then
@@ -1322,61 +1374,31 @@ function System.autoparry.start()
                         end  
                     end  
                 end  
-            end  
-            -- NOIR v1.4: Predict добавляет 50мс форы к дистанции (скорость*0.05)
-            local fire_distance=parry_accuracy
-            if genvFlags.AutoParryMode=="Predict" then fire_distance=parry_accuracy+speed*0.05 end
-            if ball_target==LocalPlayer.Name and distance <= fire_distance then
-                local sent
-                if genvFlags.AutoParryMode=="Keypress" then sent = System.parry.keypress()
-                else sent = System.parry.execute_action() end
-                -- NOIR v1.4 (модель Oxyo): ОДИН парри на подлёт мяча, реарм через 1с.
-                -- Если мяч перебросил таргет — state.target сбросит readyAt в 0 сразу.
-                -- Прежний ретрай каждые 0.08-0.5с при пинге 200-300мс сжигал свинги:
-                -- кулдаун свинга глотал решающую попытку у мяча.
-                if sent then state.readyAt = os.clock() + 1.0 end
-            end
+            System.autoparry.fire(state, mode, speed, genvFlags, closing, distance, fireDist, tti, rtt, curved)
         end  
         if training_ball then  
-            -- NOIR perf: zoomies тренировочного мяча кэшируется в его состоянии
+            -- NOIR v1.4: тренировочный мяч идёт через ту же формулу, что и боевой
             local tstate = System.autoparry.state(training_ball)
             local zoomies = tstate.zoomies
             if not zoomies or zoomies.Parent ~= training_ball then
                 zoomies = training_ball:FindFirstChild('zoomies')
                 tstate.zoomies = zoomies
             end
-            if zoomies then  
-                local state = System.autoparry.state(training_ball)
-                if os.clock() >= state.readyAt then  
-                    local ball_target=training_ball:GetAttribute('target')
-                    local velocity=zoomies.VectorVelocity
-                    local speed=velocity.Magnitude
-                    -- NOIR v1.4: та же модель Oxyo, что и в основном цикле
-                    local myRoot=LocalPlayer.Character.PrimaryPart
-                    local halfRtt=autoparryPingMs/2000
-                    local futureBall=training_ball.Position+velocity*halfRtt
-                    local okPV2,pv2=pcall(function() return myRoot.AssemblyLinearVelocity end)
-                    local futureMe=myRoot.Position+(okPV2 and pv2 or Vector3.zero)*halfRtt
-                    local distance=(futureMe-futureBall).Magnitude
-                    local adjustedPing=autoparryPingMs/10
-                    if genvFlags.HighPingCompensation and autoparryPingMs>150 then adjustedPing=adjustedPing*1.5 end
-                    local capped_speed_diff=math.min(math.max(speed-9.5,0),820)
-                    local speed_divisor=(2.4+capped_speed_diff*0.002)*System.__properties.__divisor_multiplier
-                    if System.__properties.__randomized_accuracy_enabled then
-                        speed_divisor=speed_divisor*(0.85+math.random()*0.30)
+            if zoomies and os.clock() >= tstate.readyAt and tstate.target == LocalPlayer.Name then
+                local velocity = zoomies.VectorVelocity
+                local speed = velocity.Magnitude
+                if not (genvFlags.BallVelocityAbove800 and speed > 800) then
+                    local rtt = math.clamp(autoparryPingMs / 1000, 0, System.cfg.MAX_RTT)
+                    local mode = genvFlags.AutoParryMode
+                    local frameDt = autoparryFrameDt * (mode == "Predict" and 2 or 1)
+                    local inRange, closing, distance, fireDist, tti = System.autoparry.evaluate(
+                        LocalPlayer.Character.PrimaryPart, training_ball.Position, velocity, tstate, false, rtt, frameDt)
+                    if inRange then
+                        System.autoparry.fire(tstate, mode, speed, genvFlags, closing, distance, fireDist, tti, rtt, false)
                     end
-                    local parry_accuracy=adjustedPing+math.max(speed/speed_divisor,9.5)
-                    -- NOIR Skip 800+: тренировочный мяч быстрее 800 тоже пропускается
-                    if ball_target==LocalPlayer.Name and distance <= parry_accuracy
-                       and not (genvFlags.BallVelocityAbove800 and speed>800) then
-                        local sent
-                        if genvFlags.AutoParryMode=="Keypress" then sent = System.parry.keypress()
-                        else sent = System.parry.execute_action() end
-                        if sent then state.readyAt = os.clock() + 1.0 end
-                    end
-                end  
-            end  
-        end  
+                end
+            end
+        end
     end)  
 end  
   
@@ -12796,32 +12818,33 @@ do
     -- NOIR: у каждого режима — всплывающее пояснение, чтобы было понятно,
     -- чем они отличаются (вопрос игрока: "что за режим Predict?")
     local modeHints = {
-        Remote   = "Parry Mode: Remote — парри пакетом ровно по формуле (рекомендую с новым движком)",
-        Keypress = "Parry Mode: Keypress — клик/тап парри как игрок (mouse1click/VIM, как в Oxyo)",
-        Predict  = "Parry Mode: Predict — то же + 50мс форы к дистанции (для слабого/плавающего FPS)",
+        Remote   = "Parry Mode: Remote — парри пакетом, момент считается по времени до удара (пинг + кадр + Accuracy)",
+        Keypress = "Parry Mode: Keypress — жмёт клавишу парри как игрок (меньше палева)",
+        Predict  = "Parry Mode: Predict — как Remote, но +1 кадр упреждения (для низкого FPS)",
     }
     sMain:AddDropdown("Parry Mode", { "Remote", "Keypress", "Predict" }, function(v)
         genv.AutoParryMode = v
         pcall(function() Notify(modeHints[v] or ("Parry Mode: " .. tostring(v)), 4) end)
     end)
-    local accuracyCtl = sMain:AddSlider("Accuracy", 1, 100, 100, function(v)
-        setProp("__accuracy", tonumber(v) or 100)
+    local accuracyCtl = sMain:AddSlider("Accuracy", 1, 100, 50, function(v)
+        setProp("__accuracy", tonumber(v) or 50)
         -- NOIR fix: в оригинале вызывался несуществующий Update_Divisor (nil) —
         -- слайдер Accuracy никогда не пересчитывал множитель и не работал
         pcall(function() update_divisor() end)
     end)
+    -- NOIR v1.4: Random Accuracy слайдер больше не двигает (хук оставлен для совместимости)
+    getgenv().__NoirAccuracySync = function(acc)
+        pcall(function() accuracyCtl.SetValue(accuracyCtl, tonumber(acc) or 50, false) end)
+    end
     sMain:AddDropdown("Parry Type", CURVE_NAMES, function(v)
         Selected_Parry_Type = v
         CurveType = v
     end)
     sMain:AddToggle("Random Accuracy", function(on)
         setProp("__randomized_accuracy_enabled", on)
-        Notify(on and "Random Accuracy: ON — каждая попытка парри с ±15% случайным разбросом дистанции (слайдер не трогается)" or "Random Accuracy: OFF — разброс отключён", 4.5)
-    end)
-    -- NOIR v1.4: High Ping Compensation из Oxyo — при пинге >150мс порог дистанции x1.5
-    sMain:AddToggle("High Ping Compensation", function(on)
-        genv.HighPingCompensation = on
-        Notify(on and "High Ping Comp: ON — при пинге >150мс дистанция парри x1.5 (компенсация задержки)" or "High Ping Comp: OFF", 4.5)
+        pcall(function() if update_randomized_accuracy then update_randomized_accuracy() end end)
+        -- NOIR: пояснение что реально делает тумблер и какие диапазоны
+        Notify(on and "Random Accuracy: ON — разброс ±12 вокруг ТВОЕГО слайдера, новый бросок на каждый парри (пинг считается отдельно, всегда)" or "Random Accuracy: OFF — Accuracy ровно по слайдеру", 5)
     end)
     sMain:AddToggle("Random Curve", function(on)
         local c = prop("__connections")
@@ -12848,7 +12871,7 @@ do
     end)
     -- NOIR improvement: клавиша парри для Keypress-режима (реальное нажатие)
     sMain:AddKeybind("Parry Key", "F", function(v) genv.AutoParryKey = tostring(v) end)
-    sMain:AddLabel("Движок v1.4 (модель Oxyo): Accuracy держи 80-100. Подстройка под пинг — тумблер High Ping Compensation.")
+    sMain:AddLabel("Accuracy: меньше = парри раньше, больше = позже. Пинг теперь учитывается сам — ставь ~50. Random Accuracy = ±12 вокруг слайдера на каждый парри.")
 
     local sDet = tab:AddSection("DETECTION", "special ball events")
     local detKeys = { { "Infinity Detection", "__infinity" }, { "Death Slash Detection", "__deathslash" },
