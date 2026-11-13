@@ -3,6 +3,8 @@
   Noir UI — ПОЛНАЯ БИБЛИОТЕКА МЕНЮ (все её функции) | бренд NOIR CREATOR
   Построена на базе UI-библиотеки AirFlow (из stage_7.lua "FieldKit / Cybrion"):
   тот же движок и анимации, но своё имя, логотип, тема Noir и погода Rain.
+  Вкладка Combat: Silent Aim для пистолета (GunFired) и ножа
+  (HandleTouched / KnifeThrown / KnifeStabbed).
 ═══════════════════════════════════════════════════════════════════════════════
 
   ЧТО ЭТО
@@ -20099,17 +20101,363 @@ local autoOk, autoErr = pcall(function()
         ToggleButton = { Platform = "Both", Icon = "layout-grid" },
     })
 
-    -- Выгрузка регистрируется сразу: повторный запуск не дублирует окна
-    genv.NoirAutoUnload = function()
-        genv.NoirAutoUnload = nil
-        if window and not window._destroyed then
-            pcall(window.Destroy, window)
-        end
-    end
-
     -- Уведомления (Type: Success / Warning / Error / Info)
     local function Notify(title, text, typ)
         window:Notify({ Title = title, Content = text, Duration = 4, Type = typ })
+    end
+
+    -- ═════════════════════════════════════════════════════════════════════
+    --  SILENT AIM CORE
+    --  Ремуоты (по логам Remote Spy):
+    --    GunFired:      FireServer(Handle, Origin, HitPos, HitPart)
+    --    HandleTouched: FireServer(Part)            — удар/касание ножом
+    --    KnifeThrown:   FireServer(CFrame, TargetCFrame) — бросок ножа
+    --    KnifeStabbed:  FireServer()                — взмах ножом
+    --  Лежат: ReplicatedStorage.ClientServices.WeaponService.GunFired
+    --        и Players.<ты>.Backpack|Character.<Tool>.Events.*
+    -- ═════════════════════════════════════════════════════════════════════
+    local SA = {
+        -- пистолет
+        Enabled   = false,   -- вкл/выкл
+        Part      = "Head",  -- куда стрелять
+        FOV       = 250,     -- радиус захвата цели (px)
+        IgnoreFOV = false,   -- цель = любой видимый на экране
+        WallCheck = true,    -- не целиться сквозь стены
+        TeamCheck = true,    -- пропускать свою команду
+        ShowFOV   = false,   -- рисовать круг FOV
+        -- нож
+        Knife         = false, -- перенаправлять касания ножом в цель
+        KnifeAuto     = false, -- каждый взмах сам бьёт ближайшего врага
+        KnifeThrow    = false, -- брошенный нож летит в цель
+        KnifeRange    = 18,    -- дистанция удара (studs)
+        KnifeWallCheck = true, -- не бить сквозь стены
+    }
+
+    local SAPlayers = game:GetService("Players")
+    local SARun = game:GetService("RunService")
+    local SAInput = game:GetService("UserInputService")
+    local SALocal = SAPlayers.LocalPlayer
+
+    -- ── поиск ремуотов ─────────────────────────────────────────────────────
+    local GunRemote = nil
+    local function resyncGunRemote()
+        local node = game:GetService("ReplicatedStorage"):FindFirstChild("ClientServices")
+        node = node and node:FindFirstChild("WeaponService")
+        local remote = node and node:FindFirstChild("GunFired")
+        if typeof(remote) == "Instance" and remote:IsA("RemoteEvent") then
+            GunRemote = remote
+        end
+        return GunRemote
+    end
+    resyncGunRemote()
+    task.spawn(function() -- если сервис ещё не создан — дождаться
+        for _ = 1, 60 do
+            if resyncGunRemote() then break end
+            task.wait(1)
+        end
+    end)
+
+    -- Ножевые ремуоты лежат в Tool'е (Backpack или Character)
+    local function getKnifeEvents()
+        local containers = {}
+        local bp = SALocal:FindFirstChildOfClass("Backpack")
+        local char = SALocal.Character
+        if bp then table.insert(containers, bp) end
+        if char then table.insert(containers, char) end
+        for _, container in ipairs(containers) do
+            for _, tool in ipairs(container:GetChildren()) do
+                if tool:IsA("Tool") then
+                    local events = tool:FindFirstChild("Events")
+                    if typeof(events) == "Instance"
+                    and (events:FindFirstChild("HandleTouched")
+                        or events:FindFirstChild("KnifeThrown")
+                        or events:FindFirstChild("KnifeStabbed")) then
+                        return events
+                    end
+                end
+            end
+        end
+        return nil
+    end
+
+    -- ── выбор цели ─────────────────────────────────────────────────────────
+    local SA_PARTS = { "Head", "HumanoidRootPart", "Torso", "UpperTorso" }
+
+    local function saAlive(plr)
+        local char = plr.Character
+        if not char then return nil end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hum or hum.Health <= 0 then return nil end
+        return char
+    end
+
+    local function saFriendly(plr)
+        if not SA.TeamCheck then return false end
+        local mine, theirs = SALocal.Team, plr.Team
+        return mine ~= nil and theirs ~= nil and mine == theirs
+    end
+
+    -- Точка прицела: центр экрана на телефоне, курсор на ПК
+    local function saScreenPoint()
+        local camera = workspace.CurrentCamera
+        if not camera then return nil end
+        local v = camera.ViewportSize
+        if SAInput.TouchEnabled and not SAInput.KeyboardEnabled then
+            return Vector2.new(v.X * 0.5, v.Y * 0.5)
+        end
+        local ok, loc = pcall(function() return SAInput:GetMouseLocation() end)
+        if ok and typeof(loc) == "Vector2" then return loc end
+        return Vector2.new(v.X * 0.5, v.Y * 0.5)
+    end
+
+    -- Есть ли стена между камерой и целью (персонажи не считаются препятствием)
+    local function saWallBlocked(targetPart)
+        local camera = workspace.CurrentCamera
+        if not camera then return false end
+        local params = RaycastParams.new()
+        params.FilterType = Enum.RaycastFilterType.Exclude
+        local exclude = {}
+        for _, plr in ipairs(SAPlayers:GetPlayers()) do
+            if plr.Character then table.insert(exclude, plr.Character) end
+        end
+        params.FilterDescendantsInstances = exclude
+        local origin = camera.CFrame.Position
+        local hit = workspace:Raycast(origin, targetPart.Position - origin, params)
+        return hit ~= nil
+    end
+
+    local function saPickPart(char, want)
+        if want == "Closest" then
+            local camera = workspace.CurrentCamera
+            local sp = camera and saScreenPoint()
+            if not camera or not sp then return char:FindFirstChild("HumanoidRootPart") end
+            local best, bestD = nil, math.huge
+            for _, name in ipairs(SA_PARTS) do
+                local p = char:FindFirstChild(name)
+                if p then
+                    local vp, onScreen = camera:WorldToViewportPoint(p.Position)
+                    if onScreen then
+                        local d = (Vector2.new(vp.X, vp.Y) - sp).Magnitude
+                        if d < bestD then best, bestD = p, d end
+                    end
+                end
+            end
+            return best or char:FindFirstChild("HumanoidRootPart")
+        end
+        return char:FindFirstChild(want) or char:FindFirstChild("HumanoidRootPart")
+    end
+
+    -- Цель для пистолета/броска: ближайшая к точке прицела в пределах FOV
+    local function saFindTarget()
+        local camera = workspace.CurrentCamera
+        if not camera then return nil, nil end
+        local sp = saScreenPoint()
+        if not sp then return nil, nil end
+        local list = {}
+        for _, plr in ipairs(SAPlayers:GetPlayers()) do
+            if plr ~= SALocal and not saFriendly(plr) then
+                local char = saAlive(plr)
+                if char then
+                    local part = saPickPart(char, SA.Part)
+                    if part then
+                        local vp, onScreen = camera:WorldToViewportPoint(part.Position)
+                        if onScreen then
+                            table.insert(list, {
+                                part = part, plr = plr,
+                                d = (Vector2.new(vp.X, vp.Y) - sp).Magnitude,
+                                depth = (part.Position - camera.CFrame.Position).Magnitude,
+                            })
+                        end
+                    end
+                end
+            end
+        end
+        table.sort(list, function(a, b) return a.d < b.d end)
+        for _, cand in ipairs(list) do
+            if SA.IgnoreFOV or cand.d <= SA.FOV then
+                if not SA.WallCheck or not saWallBlocked(cand.part) then
+                    return cand.part, cand
+                end
+            end
+        end
+        return nil, nil
+    end
+
+    -- Цель для ножа: ближайший враг в радиусе удара от персонажа
+    local function saKnifeTarget()
+        local char = SALocal.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return nil end
+        local best, bestD = nil, math.huge
+        for _, plr in ipairs(SAPlayers:GetPlayers()) do
+            if plr ~= SALocal and not saFriendly(plr) then
+                local pchar = saAlive(plr)
+                if pchar then
+                    local part = pchar:FindFirstChild("HumanoidRootPart")
+                        or pchar:FindFirstChild("Torso")
+                        or pchar:FindFirstChild("UpperTorso")
+                        or pchar:FindFirstChild("Head")
+                    if part then
+                        local d = (part.Position - root.Position).Magnitude
+                        if d <= SA.KnifeRange and d < bestD
+                        and (not SA.KnifeWallCheck or not saWallBlocked(part)) then
+                            best, bestD = part, d
+                        end
+                    end
+                end
+            end
+        end
+        return best
+    end
+
+    -- ── круг FOV ───────────────────────────────────────────────────────────
+    local saCircle = nil
+    local saNoDrawing = false
+    local function saDrawFOV()
+        if saNoDrawing then return end
+        if not saCircle then
+            local ok = pcall(function()
+                saCircle = Drawing.new("Circle")
+                saCircle.Thickness = 1
+                saCircle.Filled = false
+                saCircle.NumSides = 64
+                saCircle.Color = Color3.fromRGB(228, 52, 66) -- акцент Noir
+                saCircle.Transparency = 0.7
+            end)
+            if not ok then saNoDrawing = true saCircle = nil return end
+        end
+        local sp = saScreenPoint()
+        if sp then
+            saCircle.Visible = true
+            saCircle.Position = sp
+            saCircle.Radius = SA.FOV
+        end
+    end
+    local function saHideFOV()
+        if saCircle then pcall(function() saCircle.Visible = false end) end
+    end
+
+    -- ── хук __namecall ─────────────────────────────────────────────────────
+    local saOldNamecall = nil
+    local saHooked = false
+
+    local function saOurCall()
+        local f = checkcaller
+        return typeof(f) == "function" and f() or false
+    end
+
+    local function saLocalKnife(self)
+        local char = SALocal.Character
+        if char and self:IsDescendantOf(char) then return true end
+        local bp = SALocal:FindFirstChildOfClass("Backpack")
+        if bp and self:IsDescendantOf(bp) then return true end
+        return false
+    end
+
+    local function saInstallHook()
+        if saHooked then return true end
+        if typeof(hookmetamethod) ~= "function" or typeof(getnamecallmethod) ~= "function" then
+            Notify("Silent Aim", "Исполнитель не поддерживает hookmetamethod", "Error")
+            return false
+        end
+        local wrap = (typeof(newcclosure) == "function") and newcclosure or function(f) return f end
+        local ok, err = pcall(function()
+            saOldNamecall = hookmetamethod(game, "__namecall", wrap(function(self, ...)
+                if getnamecallmethod() ~= "FireServer" then
+                    return saOldNamecall(self, ...)
+                end
+                if typeof(self) ~= "Instance" or not self:IsA("RemoteEvent") then
+                    return saOldNamecall(self, ...)
+                end
+                local name = self.Name
+                -- ПИСТОЛЕТ: GunFired(Handle, Origin, HitPos, HitPart) ->
+                -- подменяем HitPos и HitPart на цель
+                if SA.Enabled and not saOurCall()
+                and (GunRemote ~= nil and self == GunRemote
+                    or (self.Parent ~= nil and self.Parent.Name == "WeaponService")) then
+                    local args = { ... }
+                    if #args >= 4
+                    and typeof(args[3]) == "Vector3"
+                    and typeof(args[4]) == "Instance" then
+                        local target = saFindTarget()
+                        if target then
+                            args[3] = target.Position
+                            args[4] = target
+                        end
+                        return saOldNamecall(self, table.unpack(args))
+                    end
+                end
+                -- НОЖ: касание -> ближайший враг
+                if name == "HandleTouched" and SA.Knife and saLocalKnife(self) then
+                    local args = { ... }
+                    if #args == 0 or typeof(args[1]) == "Instance" then
+                        local target = saKnifeTarget()
+                        if target then args[1] = target end
+                        return saOldNamecall(self, table.unpack(args))
+                    end
+                end
+                -- НОЖ: бросок -> цель (по FOV)
+                if name == "KnifeThrown" and SA.KnifeThrow and saLocalKnife(self) then
+                    local args = { ... }
+                    if #args >= 2 and typeof(args[2]) == "CFrame" then
+                        local target = saFindTarget()
+                        if target then
+                            args[2] = CFrame.new(target.Position)
+                        end
+                        return saOldNamecall(self, table.unpack(args))
+                    end
+                end
+                -- НОЖ: авто-удар при взмахе (после KnifeStabbed шлём HandleTouched)
+                if name == "KnifeStabbed" and SA.KnifeAuto
+                and saLocalKnife(self) and not saOurCall() then
+                    local result = saOldNamecall(self, ...)
+                    local target = saKnifeTarget()
+                    if target then
+                        local events = getKnifeEvents()
+                        local remote = events and events:FindFirstChild("HandleTouched")
+                        if remote then
+                            task.defer(function()
+                                pcall(function() remote:FireServer(target) end)
+                            end)
+                        end
+                    end
+                    return result
+                end
+                return saOldNamecall(self, ...)
+            end))
+        end)
+        if not ok then
+            warn("[Noir] silent aim hook: " .. tostring(err))
+            Notify("Silent Aim", "Не удалось поставить хук (см. консоль)", "Error")
+            return false
+        end
+        saHooked = true
+        return true
+    end
+
+    local function saEnsure()
+        if SA.Enabled or SA.Knife or SA.KnifeAuto or SA.KnifeThrow then
+            saInstallHook()
+        end
+    end
+
+    local saRenderConn = SARun.RenderStepped:Connect(function()
+        if SA.ShowFOV then saDrawFOV() else saHideFOV() end
+    end)
+
+    -- ── выгрузка ───────────────────────────────────────────────────────────
+    genv.NoirAutoUnload = function()
+        genv.NoirAutoUnload = nil
+        pcall(function() if saRenderConn then saRenderConn:Disconnect() end end)
+        pcall(function() if saCircle then saCircle:Remove() end end)
+        pcall(function()
+            if saHooked and saOldNamecall then
+                hookmetamethod(game, "__namecall", saOldNamecall)
+            end
+        end)
+        if window and not window._destroyed then
+            pcall(window.Destroy, window)
+        end
     end
 
     -- ═════════════════════════════════════════════════════════════════════
@@ -20153,16 +20501,170 @@ local autoOk, autoErr = pcall(function()
         right:CreateLabel("Это демо-вкладка автозапуска.")
         right:CreateParagraph({
             Title   = "Как пользоваться",
-            Content = "Плавающая кнопка на экране открывает/закрывает меню. "
-                    .. "На ПК — клавиша RightControl. "
-                    .. "Свои функции добавляй по образцу из этого блока "
-                    .. "(внизу файла).",
+            Content = "Вкладка Combat — Silent Aim для пистолета и ножа. "
+                    .. "Плавающая кнопка на экране открывает/закрывает меню. "
+                    .. "На ПК — клавиша RightControl.",
         })
         right:CreateDivider("конец")
     end
 
     -- ═════════════════════════════════════════════════════════════════════
-    --  ВКЛАДКА 2: SETTINGS — темы, конфиги, погода, масштаб, выгрузка
+    --  ВКЛАДКА 2: COMBAT — Silent Aim (пистолет + нож)
+    -- ═════════════════════════════════════════════════════════════════════
+    local combatRows
+    do
+        local tab = window:CreateTab({ Name = "Combat", Icon = "crosshair", Desc = "Silent Aim" })
+
+        local gun = tab:AddLeftGroupbox({ Name = "Пистолет", Icon = "crosshair" })
+        gun:CreateToggle({
+            Name    = "Silent Aim",
+            Desc    = "Выстрелы летят в цель без наведения",
+            Default = false,
+            Flag    = "GunSilentAim",
+            Callback = function(v)
+                SA.Enabled = v
+                saEnsure()
+            end,
+        })
+        gun:CreateDropdown({
+            Name    = "Часть тела",
+            Options = { "Head", "HumanoidRootPart", "Torso", "UpperTorso", "Closest" },
+            Default = "Head",
+            Flag    = "GunPart",
+            Callback = function(v) SA.Part = v end,
+        })
+        gun:CreateSlider({
+            Name     = "FOV",
+            Min      = 30, Max = 1000, Default = 250,
+            Suffix   = "px",
+            Flag     = "GunFOV",
+            Callback = function(v) SA.FOV = v end,
+        })
+        gun:CreateToggle({
+            Name    = "Без FOV (любая цель на экране)",
+            Default = false,
+            Flag    = "GunNoFOV",
+            Callback = function(v) SA.IgnoreFOV = v end,
+        })
+        gun:CreateToggle({
+            Name    = "Проверка стен",
+            Desc    = "Не целиться сквозь препятствия",
+            Default = true,
+            Flag    = "GunWalls",
+            Callback = function(v) SA.WallCheck = v end,
+        })
+        gun:CreateToggle({
+            Name    = "Не бить свою команду",
+            Default = true,
+            Flag    = "GunTeam",
+            Callback = function(v) SA.TeamCheck = v end,
+        })
+        gun:CreateToggle({
+            Name    = "Круг FOV на экране",
+            Default = false,
+            Flag    = "GunCircle",
+            Callback = function(v) SA.ShowFOV = v end,
+        })
+
+        local knife = tab:AddRightGroupbox({ Name = "Нож", Icon = "sword" })
+        knife:CreateToggle({
+            Name    = "Silent Aim (удары)",
+            Desc    = "Касание ножом бьёт ближайшего врага",
+            Default = false,
+            Flag    = "KnifeSilent",
+            Callback = function(v)
+                SA.Knife = v
+                saEnsure()
+            end,
+        })
+        knife:CreateToggle({
+            Name    = "Авто-удар при взмахе",
+            Desc    = "Взмах сам попадает по врагу рядом",
+            Default = false,
+            Flag    = "KnifeAuto",
+            Callback = function(v)
+                SA.KnifeAuto = v
+                saEnsure()
+            end,
+        })
+        knife:CreateToggle({
+            Name    = "Метание в цель",
+            Desc    = "Брошенный нож летит в цель (по FOV)",
+            Default = false,
+            Flag    = "KnifeThrow",
+            Callback = function(v)
+                SA.KnifeThrow = v
+                saEnsure()
+            end,
+        })
+        knife:CreateSlider({
+            Name     = "Дистанция удара",
+            Min      = 5, Max = 40, Default = 18,
+            Suffix   = " м",
+            Flag     = "KnifeRange",
+            Callback = function(v) SA.KnifeRange = v end,
+        })
+        knife:CreateToggle({
+            Name    = "Проверка стен (удары)",
+            Default = true,
+            Flag    = "KnifeWalls",
+            Callback = function(v) SA.KnifeWallCheck = v end,
+        })
+
+        local diag = tab:AddRightGroupbox({ Name = "Цель", Icon = "target" })
+        combatRows = diag:CreateStatuses({
+            { Name = "Цель",       Value = "-" },
+            { Name = "Дистанция",  Value = "-" },
+            { Name = "Часть",      Value = "-" },
+            { Name = "Пистолет",   Value = "?" },
+            { Name = "Нож",        Value = "?" },
+        }, { Style = "Row" })
+        diag:CreateButton({
+            Name = "Перепроверить ремуоты", Icon = "radar",
+            Callback = function()
+                resyncGunRemote()
+                local events = getKnifeEvents()
+                local gunOk = GunRemote ~= nil
+                local knifeOk = events ~= nil
+                Notify("Диагностика",
+                    "Пистолет: " .. (gunOk and "найден" or "НЕ найден")
+                    .. " | Нож: " .. (knifeOk and "найден" or "возьми нож"),
+                    gunOk and knifeOk and "Success" or "Warning")
+            end,
+        })
+    end
+
+    -- Живые статусы: какая сейчас цель
+    task.spawn(function()
+        while not window._destroyed do
+            task.wait(0.25)
+            pcall(function()
+                if not combatRows then return end
+                combatRows["Пистолет"]:Set(GunRemote ~= nil and "найден" or "нет")
+                combatRows["Нож"]:Set(getKnifeEvents() ~= nil and "найден" or "нет")
+                local anyOn = SA.Enabled or SA.Knife or SA.KnifeAuto or SA.KnifeThrow
+                if anyOn then
+                    local part, cand = saFindTarget()
+                    if cand then
+                        combatRows["Цель"]:Set(cand.plr.DisplayName)
+                        combatRows["Дистанция"]:Set(string.format("%.0f м", cand.depth))
+                        combatRows["Часть"]:Set(part.Name)
+                    else
+                        combatRows["Цель"]:Set("нет в FOV")
+                        combatRows["Дистанция"]:Set("-")
+                        combatRows["Часть"]:Set("-")
+                    end
+                else
+                    combatRows["Цель"]:Set("выключено")
+                    combatRows["Дистанция"]:Set("-")
+                    combatRows["Часть"]:Set("-")
+                end
+            end)
+        end
+    end)
+
+    -- ═════════════════════════════════════════════════════════════════════
+    --  ВКЛАДКА 3: SETTINGS — темы, конфиги, погода, масштаб, выгрузка
     -- ═════════════════════════════════════════════════════════════════════
     do
         local tab = window:CreateTab({ Name = "Settings", Icon = "settings" })
@@ -20194,7 +20696,7 @@ local autoOk, autoErr = pcall(function()
             Callback = function()
                 window:Confirm({
                     Title       = "Выгрузить Noir?",
-                    Content     = "Меню закроется и очистится.",
+                    Content     = "Меню закроется, Silent Aim выключится.",
                     ConfirmText = "Выгрузить",
                     Callback    = function() genv.NoirAutoUnload() end,
                 })
@@ -20206,7 +20708,7 @@ local autoOk, autoErr = pcall(function()
         tab:CreateThemeManager({ Name = "Темы", Side = "Right" })
     end
 
-    print("[Noir] Меню загружено. Кнопка на экране / RightControl")
+    print("[Noir] Меню загружено: Combat = Silent Aim (пистолет + нож). Кнопка на экране / RightControl")
 end)
 
 if not autoOk then
