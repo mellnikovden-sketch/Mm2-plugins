@@ -10,13 +10,18 @@
        То есть КЛИЕНТ сам говорит серверу, куда летит нож. Отсюда и silent aim:
        мы просто отправляем эту точку сами / подменяем её.
 
-    2) Два режима работы:
+    2) Два режима работы (хук общий для ножа и пистолета):
        - ТИХИЙ ХУК: подменяем функции модуля
          ReplicatedStorage.ClientServices.WeaponService ->
-         GetMouseTargetCFrame / GetTargetPosition. Игра вызывает их при твоём
-         обычном клике, и бросок улетает в выбранную цель. Камера и мышь не
-         двигаются вообще (в этом смысл "тихого" прицела).
-       - КЛАВИША БРОСКА: сами шлём KnifeThrown:FireServer по нажатию клавиши.
+         GetMouseTargetCFrame / GetTargetPosition. Игра вызывает их и при
+         броске ножа, и при выстреле из пистолета: клик обычный, а удар/выстрел
+         летит в выбранную цель. Камера и мышь не двигаются вообще.
+       - КЛАВИШИ БРОСКА/ВЫСТРЕЛА: сами шлём remote по нажатию клавиши.
+
+    2а) Пистолет: у Tool "Gun" есть RemoteEvent "Shoot". Игра стреляет так:
+           shoot:FireServer(CFrame.new(откуда, куда), CFrame.new(куда))
+        откуда = позиция твоей головы (Head). Пуля мгновенная (hitscan),
+        поэтому прогноз только на пинг, без времени полёта.
 
     3) Определение маньяка:
        - главный источник: ReplicatedStorage.Remotes.Gameplay.PlayerDataChanged
@@ -33,12 +38,14 @@
        cooldown = max(1.45, ThrowSpeed*2 + 0.08).
 
     УПРАВЛЕНИЕ:
-       X  — вкл/выкл тихий прицел (клик мышью = бросок в цель)
-       G  — мгновенный тихий бросок в цель (без клика, вообще без анимации прицела)
+       X  — вкл/выкл тихий прицел (клик мышью = бросок/выстрел в цель)
+       G  — мгновенный тихий бросок ножа (ты маньяк)
+       H  — мгновенный тихий выстрел из пистолета (если пистолет при тебе)
 
     API для своего меню:
        getgenv().KnifeSilentAim.Enable(bool)   -- вкл/выкл
-       getgenv().KnifeSilentAim.Throw()        -- тихий бросок сейчас
+       getgenv().KnifeSilentAim.Throw()        -- тихий бросок ножа сейчас
+       getgenv().KnifeSilentAim.Shoot()        -- тихий выстрел из пистолета сейчас
        getgenv().KnifeSilentAim.CFG            -- таблица настроек
        getgenv().KnifeSilentAim.Unload()       -- выгрузить скрипт
 ]]
@@ -70,7 +77,8 @@ local CFG = {
 
     -- клавиши
     ToggleKey    = Enum.KeyCode.X,    -- вкл/выкл тихого прицела
-    ThrowKey     = Enum.KeyCode.G,    -- прямой тихий бросок
+    ThrowKey     = Enum.KeyCode.G,    -- прямой тихий бросок (нож)
+    ShootKey     = Enum.KeyCode.H,    -- прямой тихий выстрел (пистолет)
 }
 
 -- ═══════════════════════════════ СОСТОЯНИЕ ═══════════════════════════════
@@ -84,9 +92,12 @@ local State = {
 local stickyChar   = nil   -- текущая "прилипшая" цель (Model)
 local lastTarget   = nil   -- последняя выбранная цель (Model)
 local lastDist     = 0
-local lastThrow    = 0     -- os.clock() последнего броска
-local aimCache     = nil   -- кэш точки прицела
+local lastThrow    = -10   -- os.clock() последнего броска ножа
+local lastShot     = -10   -- os.clock() последнего выстрела
+local aimCache     = nil   -- кэш точки прицела (нож)
 local aimCacheT    = 0
+local gunCache     = nil   -- кэш точки прицела (пистолет)
+local gunCacheT    = 0
 
 local Connections  = {}    -- все соединения для Unload()
 local marker       = nil   -- BillboardGui
@@ -318,8 +329,8 @@ local function candidates(origin)
     return list
 end
 
--- главная функция: вернуть точку для броска (или nil)
-local function aim()
+-- главная функция ножа: вернуть точку для броска (или nil)
+local function aimKnife()
     if not (State.On or CFG.AutoThrow) then return nil end
     if not isMurderer() then return nil end
 
@@ -380,9 +391,172 @@ local function throwTo(point)
     return ok
 end
 
+-- ════════════════════ ПИСТОЛЕТ (тихий выстрел) ══════════════════════════
+
+-- шериф/герой/любой с пистолетом при себе
+local function isSheriff()
+    local char = LocalPlayer.Character
+    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+    local hasGun = (char and char:FindFirstChild("Gun") ~= nil)
+        or (backpack and backpack:FindFirstChild("Gun") ~= nil)
+    if hasGun then return true end
+
+    local myRole = Roles[LocalPlayer.Name]
+    if myRole and myRole.Role then
+        local n = myRole.Role:lower()
+        return n:find("sheriff") ~= nil or n:find("hero") ~= nil
+    end
+    return false
+end
+
+-- живой маньяк: по ролям, фолбэк — игрок с ножом
+local function findMurdererCharacter()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if isValidTarget(player) then
+            local role = Roles[player.Name]
+            if role and role.Role and role.Role:lower():find("murder") then
+                return player.Character
+            end
+        end
+    end
+    for _, player in ipairs(Players:GetPlayers()) do
+        if isValidTarget(player) then
+            local char, backpack = player.Character, player:FindFirstChildOfClass("Backpack")
+            if (char and char:FindFirstChild("Knife")) or (backpack and backpack:FindFirstChild("Knife")) then
+                return char
+            end
+        end
+    end
+    return nil
+end
+
+-- прогноз для пули: мгновенная, поправка только на пинг
+local function predictBullet(character)
+    local root = character:FindFirstChild(CFG.AimPart) or character:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
+    local position = root.Position
+
+    if not CFG.Prediction then return position end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local move = Vector3.new(0, 0, 0)
+    if humanoid then
+        local dir = humanoid.MoveDirection
+        move = Vector3.new(dir.X, 0, dir.Z) * humanoid.WalkSpeed
+    end
+    return position + move * (pingSeconds() + 0.05)
+end
+
+-- главная функция пистолета: точка выстрела (или nil)
+local function aimGun()
+    if not State.On then return nil end
+    if not isSheriff() then return nil end
+
+    local char = LocalPlayer.Character
+    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+    if not humanoid or humanoid.Health <= 0 then return nil end
+
+    local now = os.clock()
+    if gunCache and now - gunCacheT < 0.035 then return gunCache end
+
+    local ownRoot = char:FindFirstChild("HumanoidRootPart")
+    if not ownRoot then return nil end
+
+    local targetChar = findMurdererCharacter()
+    local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+    if not targetRoot then return nil end
+
+    local point = predictBullet(targetChar)
+    if point and not blocked(ownRoot.Position, point) then
+        gunCache, gunCacheT = point, now
+        lastTarget = targetChar
+        lastDist   = (targetRoot.Position - ownRoot.Position).Magnitude
+        return point
+    end
+    return nil
+end
+
+-- тихий выстрел: Shoot:FireServer(CFrame.new(голова, точка), CFrame.new(точка))
+local function shootGun()
+    local char = LocalPlayer.Character
+    if not char then return false end
+
+    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+    if not (char:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun"))) then
+        notify("Тихий выстрел", "Пистолета нет", 2)
+        return false
+    end
+
+    -- если пистолет в рюкзаке — экипируем и ждём
+    local gun = char:FindFirstChild("Gun")
+    if not gun then
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        pcall(function() humanoid:EquipTool(backpack:FindFirstChild("Gun")) end)
+        local started = os.clock()
+        while not char:FindFirstChild("Gun") and os.clock() - started < 0.5 do
+            RunService.Heartbeat:Wait()
+        end
+        gun = char:FindFirstChild("Gun")
+    end
+    if not gun then return false end
+
+    local shoot = gun:FindFirstChild("Shoot")
+    if not shoot then
+        notify("Тихий выстрел", "Shoot не найден", 2)
+        return false
+    end
+
+    local point = aimGun()
+    if not point then
+        notify("Тихий выстрел", "Маньяк не найден", 2)
+        return false
+    end
+
+    local head = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+    if not head then return false end
+
+    lastShot = os.clock()
+    local ok = pcall(function()
+        shoot:FireServer(CFrame.new(head.Position, point), CFrame.new(point))
+    end)
+    return ok
+end
+
+local function _shootGunWithAim()
+    -- aimGun() требует включённый тумблер — временно включаем
+    local saved = State.On
+    State.On = true
+    local ok = shootGun()
+    State.On = saved
+    return ok
+end
+
 -- ════════════════ SILENT HOOK (подмена WeaponService) ════════════════════
 
 local HookRefs = nil
+
+-- что у нас при себе: "Gun" | "Knife" | nil (руки важнее рюкзака)
+local function currentWeapon()
+    local char = LocalPlayer.Character
+    if char then
+        if char:FindFirstChild("Gun") then return "Gun" end
+        if char:FindFirstChild("Knife") then return "Knife" end
+    end
+    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+    if backpack then
+        if backpack:FindFirstChild("Gun") then return "Gun" end
+        if backpack:FindFirstChild("Knife") then return "Knife" end
+    end
+    return nil
+end
+
+-- что у нас в руках/рюкзаке — туда и направляем хук
+local function hookAim()
+    local weapon = currentWeapon()
+    if weapon == "Gun" then return aimGun() end
+    if weapon == "Knife" then return aimKnife() end
+    return nil
+end
 
 local function installHook()
     if HookRefs then return true end
@@ -402,12 +576,12 @@ local function installHook()
         end
 
         local function mouse(self, ...)
-            local okAim, point = pcall(aim)
+            local okAim, point = pcall(hookAim)
             if okAim and point then return CFrame.new(point) end
             return oldMouse(self, ...)
         end
         local function target(self, ...)
-            local okAim, point = pcall(aim)
+            local okAim, point = pcall(hookAim)
             if okAim and point then return CFrame.new(point) end
             return oldTarget(self, ...)
         end
@@ -426,7 +600,7 @@ local function installHook()
     end)
 
     if not ok then
-        notify("Тихий нож", "Хук не встал, работает только клавиша G", 3)
+        notify("Тихий нож", "Хук не встал, работают только клавиши G и H", 3)
     end
     return ok and HookRefs ~= nil
 end
@@ -473,7 +647,7 @@ local function ensureMarker()
     return gui
 end
 
-local function setMarker(character, distance)
+local function setMarker(character, distance, weapon)
     if not CFG.Marker then
         if marker then marker.Enabled = false end
         return
@@ -489,7 +663,13 @@ local function setMarker(character, distance)
     gui.Enabled = true
     local label = gui:FindFirstChild("L")
     if label then
-        label.Text = string.format("НОЖ %dм", math.floor(distance + 0.5))
+        if weapon == "Gun" then
+            label.Text = string.format("ВЫСТРЕЛ %dм", math.floor(distance + 0.5))
+            label.TextColor3 = Color3.fromRGB(90, 170, 255)
+        else
+            label.Text = string.format("НОЖ %dм", math.floor(distance + 0.5))
+            label.TextColor3 = Color3.fromRGB(255, 120, 70)
+        end
     end
 end
 
@@ -519,23 +699,44 @@ end
 
 local function step()
     if not (State.On or CFG.AutoThrow) then setMarker(nil) return end
-    if not isMurderer() then setMarker(nil) return end
 
-    local point = aim()
-    if point and lastTarget and lastTarget.Parent then
-        local origin = knifeOrigin()
-        local distance = lastDist
-        if origin and lastTarget:FindFirstChild("HumanoidRootPart") then
-            distance = (lastTarget.HumanoidRootPart.Position - origin).Magnitude
-        end
-        setMarker(lastTarget, distance)
+    local weapon = currentWeapon()
 
-        -- авто-бросок
-        if CFG.AutoThrow and origin and distance <= CFG.AutoRange then
-            if os.clock() - lastThrow >= throwCooldown() then
-                throwTo(point)
+    if weapon == "Gun" then
+        -- ПИСТОЛЕТ: цель — маньяк, метка голубым
+        local point = aimGun()
+        if point and lastTarget and lastTarget.Parent then
+            local char = LocalPlayer.Character
+            local ownRoot = char and char:FindFirstChild("HumanoidRootPart")
+            local distance = lastDist
+            if ownRoot and lastTarget:FindFirstChild("HumanoidRootPart") then
+                distance = (lastTarget.HumanoidRootPart.Position - ownRoot.Position).Magnitude
             end
+            setMarker(lastTarget, distance, "Gun")
+        else
+            setMarker(nil)
         end
+
+    elseif weapon == "Knife" then
+        -- НОЖ: кандидаты, метка, авто-бросок
+        local point = aimKnife()
+        if point and lastTarget and lastTarget.Parent then
+            local origin = knifeOrigin()
+            local distance = lastDist
+            if origin and lastTarget:FindFirstChild("HumanoidRootPart") then
+                distance = (lastTarget.HumanoidRootPart.Position - origin).Magnitude
+            end
+            setMarker(lastTarget, distance, "Knife")
+
+            if CFG.AutoThrow and origin and distance <= CFG.AutoRange then
+                if os.clock() - lastThrow >= throwCooldown() then
+                    throwTo(point)
+                end
+            end
+        else
+            setMarker(nil)
+        end
+
     else
         setMarker(nil)
     end
@@ -595,10 +796,10 @@ track(UIS.InputBegan:Connect(function(input, gameProcessed)
             end
             if os.clock() - lastThrow < 0.35 then return end
 
-            -- временно включаем прицел, чтобы aim() отработал
+            -- временно включаем прицел, чтобы aimKnife() отработал
             local saved = State.On
             State.On = true
-            local point = aim()
+            local point = aimKnife()
             State.On = saved
 
             if point then
@@ -606,6 +807,12 @@ track(UIS.InputBegan:Connect(function(input, gameProcessed)
             else
                 notify("Тихий нож", "Нет цели в зоне", 2)
             end
+        end)
+
+    elseif input.KeyCode == CFG.ShootKey then
+        task.spawn(function()
+            if os.clock() - lastShot < 1 then return end
+            _shootGunWithAim()
         end)
     end
 end))
@@ -670,14 +877,19 @@ getgenv().KnifeSilentAim = {
         return State.On
     end,
 
-    -- тихий бросок прямо сейчас (для кнопки в меню / бинда)
+    -- тихий бросок ножа прямо сейчас (для кнопки в меню / бинда)
     Throw = function()
         local saved = State.On
         State.On = true
-        local point = aim()
+        local point = aimKnife()
         State.On = saved
         if point then return throwTo(point) end
         return false
+    end,
+
+    -- тихий выстрел из пистолета прямо сейчас
+    Shoot = function()
+        return _shootGunWithAim()
     end,
 
     Unload = unload,
@@ -687,5 +899,5 @@ getgenv().KnifeSilentAim = {
 if State.On then
     task.spawn(installHook)
 end
-notify("Тихий нож", string.format("Загружен | X — вкл/выкл, G — бросок | режим: %s", CFG.Mode), 3)
+notify("Тихий нож", string.format("Загружен | X — вкл/выкл, G — нож, H — пистолет | режим: %s", CFG.Mode), 3)
 print("[НожТихийПрицел] загружен. API: getgenv().KnifeSilentAim")
