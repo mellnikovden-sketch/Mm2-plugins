@@ -26610,7 +26610,21 @@ local MurderFeature = {}
             return roles
         end
 
-        local environmentProxy = setmetatable({}, { __index = _G })
+        -- прокси окружения для ESP-движка: _G в Luau не содержит глобалы Roblox,
+        -- поэтому сеем нужные глобалы явно и добавляем fallback на реальный env
+        local okEnv, globalEnv = pcall(function() return getfenv(0) end)
+        local environmentProxy = setmetatable({
+            Color3 = Color3, Instance = Instance, Enum = Enum, UDim = UDim, UDim2 = UDim2,
+            Vector2 = Vector2, Vector3 = Vector3, CFrame = CFrame, ColorSequence = ColorSequence,
+            ColorSequenceKeypoint = ColorSequenceKeypoint, NumberSequence = NumberSequence,
+            NumberSequenceKeypoint = NumberSequenceKeypoint, NumberRange = NumberRange,
+            Rect = Rect, Ray = Ray, Random = Random, Drawing = Drawing, TweenInfo = TweenInfo,
+            Font = Font, RaycastParams = RaycastParams,
+            os = os, math = math, string = string, table = table, task = task, utf8 = utf8,
+            pcall = pcall, typeof = typeof, tostring = tostring, tonumber = tonumber,
+            select = select, ipairs = ipairs, next = next, unpack = unpack, tick = tick,
+            game = game, workspace = Workspace, wait = wait, time = time,
+        }, { __index = (okEnv and type(globalEnv) == "table") and globalEnv or _G })
         environmentProxy.getgenv = function() return genv end
         local espConfiguration = { rolesp = { on = false } }
         local espState = EspFeature.create({
