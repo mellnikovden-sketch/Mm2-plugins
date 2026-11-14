@@ -21882,11 +21882,42 @@ end
  
  
 local function piercerShotOrigin(origin, aim, part, enabled)
-    -- NOIR v1.5 (Pulse wallbang): старт выстрела не переносим — сервер MM2
-    -- доверяет точке попадания, а перенос origin за стену отбрасывал выстрелы
-    -- (срабатывал через раз, с задержкой/промахом). Сквозь стену бьёт сам
-    -- redirect точки попадания (args[2] = aim), как в пульсе.
-    return origin
+    -- NOIR v1.6 (Pulse Wallbang): сервер MM2 проверяет линию выстрела, поэтому
+    -- за стеной старт выстрела переносится на сторону цели: луч от новой точки
+    -- до точки попадания чистый, и килл засчитывается. Если цель видна —
+    -- origin не трогаем (обычный выстрел без спуфа).
+    if not enabled or not origin or not aim or not part then return origin end
+    local direction = aim - origin
+    local distance = direction.Magnitude
+    if distance <= 0.05 then return origin end
+    local dir = direction.Unit
+    -- свой фильтр на каждый выстрел: исключаем всех игроков и сам пистолет,
+    -- чтобы чужие тела и ствол не ловили обратный луч (в v1.4 давало «через раз»)
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    local exclude = {}
+    for _, pl in ipairs(getPlayers()) do
+        if pl.Character then exclude[#exclude + 1] = pl.Character end
+    end
+    local character = LocalPlayer.Character
+    if character then exclude[#exclude + 1] = character end
+    local backpack = LocalPlayer:FindFirstChildOfClass("\x42ackpack")
+    local gunTool = (character and character:FindFirstChild("\x47un")) or (backpack and backpack:FindFirstChild("\x47un"))
+    if gunTool then exclude[#exclude + 1] = gunTool end
+    params.FilterDescendantsInstances = exclude
+    if not Workspace:Raycast(origin, dir * distance, params) then return origin end
+    -- поверхность стены со стороны цели
+    local inner = Workspace:Raycast(aim, -dir * distance, params)
+    if not inner then return origin end
+    -- прогрессивный подбор: точка чуть за стеной, луч до цели свободен
+    for _, offset in ipairs({ 1.0, 0.6, 0.35 }) do
+        local candidate = inner.Position + dir * offset
+        local toAim = aim - candidate
+        if toAim.Magnitude > 0.05 and not Workspace:Raycast(candidate, toAim, params) then
+            return candidate
+        end
+    end
+    return aim - dir * 0.25
 end
 
 function knifeRemote(remote, args)
@@ -22866,7 +22897,7 @@ task.spawn(function()
             if player and inFOV(player) then
                 local part = getAimPart(player)
                 if part and (__R1.config.piercerBullet or not __R1.config.wallCheck or targetVisible(part))
-                    and (not __R1.config.autoFireWallCheck or targetVisible(part)) then fireGunAt(player) end
+                    and (not __R1.config.autoFireWallCheck or __R1.config.piercerBullet or targetVisible(part)) then fireGunAt(player) end
             end
             task.wait(0.03)
         else
@@ -22876,6 +22907,10 @@ task.spawn(function()
 end)
 
 function removeShootButton()
+    -- NOIR v1.6: возвращаем нативную мобильную FIRE-кнопку MM2, если прятали
+    pcall(function()
+        if type(__R1.restoreNativeFire) == "\x66unction" then __R1.restoreNativeFire() end
+    end)
     if __R1.shootGui then __R1.shootGui:Destroy(); __R1.shootGui = nil; __R1.shootButton = nil end
 end
 function createShootButton()
@@ -26115,6 +26150,142 @@ __R1.config.knifeAim.pulsePredict = true
             buttonCorner.CornerRadius = UDim.new(1, 0) -- даже fallback-фон круглый
             buttonCorner.Parent = button
             local novaFx = noirNovaButton(button, { round = true, thickness = 2, pressScale = 1.08 })
+            -- novaFx.outer — прокси-стейт: для твенов нужен настоящий UIStroke
+            local realOuter
+            for _, d in ipairs(button:GetChildren()) do
+                if d:IsA("UIStroke") and math.abs((d.Thickness or 0) - 2) < 0.01 then realOuter = d; break end
+            end
+            -- NOIR v1.6: белый квадрат вокруг кристалла — это нативная мобильная
+            -- FIRE-кнопка MM2 (CAS-подложка). Прячем её, пока активна кнопка Noir;
+            -- removeShootButton возвращает как было (restoreNativeFire).
+            __R1.hiddenNativeFire = {}
+            __R1.restoreNativeFire = function()
+                for _, inst in ipairs(__R1.hiddenNativeFire or {}) do
+                    pcall(function()
+                        if typeof(inst) == "Instance" and inst.Parent then inst.Visible = true end
+                    end)
+                end
+                __R1.hiddenNativeFire = {}
+            end
+            do
+                local function isNoirOwn(inst)
+                    local node = inst
+                    while node and node ~= game do
+                        local nm = tostring(node.Name or "")
+                        if nm == "MM2ShootMurdererButton" or nm == "NoirSilentAimUI"
+                            or nm == "NoirGrabGunBindButton" then return true end
+                        node = node.Parent
+                    end
+                    return false
+                end
+                local function hideNative(inst)
+                    if typeof(inst) ~= "Instance" then return end
+                    if inst == gui or inst == button or inst:IsDescendantOf(button) then return end
+                    if isNoirOwn(inst) then return end
+                    local nameLower = string.lower(tostring(inst.Name or ""))
+                    local textLower = ""
+                    pcall(function()
+                        if inst:IsA("TextLabel") then
+                            textLower = string.lower(inst.Text or "")
+                        elseif inst:IsA("GuiButton") then
+                            for _, d in ipairs(inst:GetDescendants()) do
+                                if d:IsA("TextLabel") and d.Text and d.Text ~= "" then
+                                    textLower = string.lower(d.Text)
+                                    break
+                                end
+                            end
+                        end
+                    end)
+                    local hit = string.find(nameLower, "fire", 1, true) or string.find(nameLower, "shoot", 1, true)
+                        or (textLower ~= "" and (string.find(textLower, "fire", 1, true) or string.find(textLower, "shoot", 1, true)))
+                    if not hit then return end
+                    pcall(function()
+                        if inst.Visible ~= false then
+                            inst.Visible = false
+                            table.insert(__R1.hiddenNativeFire, inst)
+                        end
+                    end)
+                end
+                pcall(function()
+                    local casFrame = parent:FindFirstChild("ContextButtonFrame")
+                    if casFrame then
+                        -- CAS-кнопки рендерятся белым квадратом с иконкой: прячем их все
+                        for _, d in ipairs(casFrame:GetDescendants()) do
+                            if d:IsA("GuiButton") then hideNative(d) end
+                        end
+                    end
+                end)
+                pcall(function()
+                    for _, d in ipairs(parent:GetDescendants()) do
+                        if d:IsA("GuiButton") or d:IsA("Frame") or d:IsA("ImageLabel") then hideNative(d) end
+                    end
+                end)
+                -- MM2 пересоздаёт CAS-кнопку каждый раунд — следим и прячем снова
+                task.spawn(function()
+                    while button.Parent do
+                        task.wait(1.5)
+                        pcall(function()
+                            local casFrame = parent:FindFirstChild("ContextButtonFrame")
+                            if casFrame then
+                                for _, d in ipairs(casFrame:GetDescendants()) do
+                                    if d:IsA("GuiButton") and d.Visible ~= false then
+                                        d.Visible = false
+                                        table.insert(__R1.hiddenNativeFire, d)
+                                    end
+                                end
+                            end
+                        end)
+                    end
+                end)
+            end
+            -- NOIR v1.6: стеклянное ядро — глубина под прицелом
+            local core = Instance.new("Frame")
+            core.Name = "NoirCore"
+            core.AnchorPoint = Vector2.new(0.5, 0.5)
+            core.Position = UDim2.fromScale(0.5, 0.5)
+            core.Size = UDim2.fromScale(0.80, 0.80)
+            core.BackgroundColor3 = Color3.fromRGB(6, 14, 20)
+            core.BackgroundTransparency = 0.30
+            core.BorderSizePixel = 0
+            core.ZIndex = 6
+            core.Parent = button
+            local coreCorner = Instance.new("UICorner")
+            coreCorner.CornerRadius = UDim.new(1, 0)
+            coreCorner.Parent = core
+            local coreGradient = Instance.new("UIGradient")
+            coreGradient.Rotation = 90
+            coreGradient.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.05),
+                NumberSequenceKeypoint.new(0.55, 0.45),
+                NumberSequenceKeypoint.new(1, 0.7),
+            })
+            coreGradient.Parent = core
+            local coreStroke = Instance.new("UIStroke")
+            coreStroke.Color = Library.Theme.Accent
+            coreStroke.Thickness = 1
+            coreStroke.Transparency = 0.45
+            coreStroke.Parent = core
+            pcall(bindColors, coreStroke, { Color = Library.Theme.Accent })
+            -- живой неон: медленное вращение градиента внешнего кольца
+            pcall(function()
+                local outerGrad = realOuter and realOuter:FindFirstChildOfClass("UIGradient")
+                if outerGrad then
+                    task.spawn(function()
+                        while button.Parent do
+                            pcall(function()
+                                TweenService:Create(outerGrad, TweenInfo.new(7, Enum.EasingStyle.Linear),
+                                    { Rotation = 360 }):Play()
+                            end)
+                            local waited = 0
+                            while button.Parent and waited < 7 do
+                                task.wait(0.06)
+                                waited += 0.06
+                            end
+                            if outerGrad then outerGrad.Rotation = 0 end
+                        end
+                    end)
+                end
+            end)
             -- центральный прицел + подпись
             local iconHolder = Instance.new("Frame")
             iconHolder.Name = "CrosshairHolder"
@@ -26172,10 +26343,10 @@ __R1.config.knifeAim.pulsePredict = true
                     ringStroke.Parent = ring
                     pcall(bindColors, ringStroke, { Color = Library.Theme.Accent })
                     TweenService:Create(ring, TweenInfo.new(0.55, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-                        { Size = UDim2.fromScale(2.1, 2.1) }):Play()
+                        { Size = UDim2.fromScale(1.55, 1.55) }):Play()
                     TweenService:Create(ringStroke, TweenInfo.new(0.55, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
                         { Transparency = 1 }):Play()
-                    task.delay(0.6, function() ring:Destroy() end)
+                    task.delay(0.5, function() ring:Destroy() end)
                 end)
             end
             -- вращение ретикл-орбиты: медленный скан в покое, х4 быстрее
@@ -26460,12 +26631,13 @@ __R1.config.knifeAim.pulsePredict = true
                     sweepDuration = 1.1
                     label.Text = "FIRE"
                     icon.ImageColor3 = Color3.new(1, 1, 1) -- белая вспышка, без красного
-                    sonar(); sonar(0.14); burst()
-                    task.spawn(function()
-                        while firing and button.Parent do
-                            task.wait(0.6)
-                            if firing and button.Parent then sonar() end
-                        end
+                    -- NOIR v1.6: ОДНО кольцо на нажатие + искры (без спама кругов)
+                    sonar(); burst()
+                    pcall(function()
+                        TweenService:Create(realOuter, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                            { Thickness = 3.2 }):Play()
+                        TweenService:Create(iconHolder, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                            { Size = UDim2.fromOffset(42, 42) }):Play()
                     end)
                 end
             end)
@@ -26489,6 +26661,12 @@ __R1.config.knifeAim.pulsePredict = true
                     NoirPersistence.SetPosition("shoot_v2", button.Position)
                     label.Text = "SHOOT"
                     icon.ImageColor3 = Library.Theme.Accent
+                    pcall(function()
+                        TweenService:Create(realOuter, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                            { Thickness = 2 }):Play()
+                        TweenService:Create(iconHolder, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                            { Size = UDim2.fromOffset(30, 30) }):Play()
+                    end)
                 end
             end)
             button.Activated:Connect(function() if not moved then task.spawn(shootTarget) end end)
