@@ -23138,9 +23138,10 @@ end
                 end })
         end
 
-        -- ── SHOOT MURDER BUTTON — стиль кнопки открытия меню и кнопок ──────
-        -- сохранения конфигов: primary-карточка в палитре Theme, crosshair-иконка
-        -- слева, hint-иконка справа, press-scale + ripple, drag с памятью позиции.
+        -- ── SHOOT MURDER BUTTON v3 — круглый Noir-кристалл ─────────────────
+        -- Тот же конструктор, что у кнопок NovaUI: 9-slice корпус, вращающийся
+        -- ретикл-орбита, звук. Плюс живые анимации: дыхание прицела, sonar-кольца
+        -- при удержании, вспышка FIRE с красным прицелом. Drag + память позиции.
         function createShootButton()
             if __R1.shootButton then return end
             local parent = guiParent
@@ -23153,59 +23154,125 @@ end
             gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
             gui.Parent = parent
             __R1.shootGui = gui
-            local button = Instance.new("TextButton")
+            local button = Instance.new("ImageButton")
             button.Name = "ShootMurderer"
             button.AnchorPoint = Vector2.new(0.5, 0.5)
             button.Position = NoirPersistence.GetPosition("shoot_v2", UDim2.new(1, -132, 1, -124))
-            button.Size = UDim2.fromOffset(196, 64)
-            button.BackgroundColor3 = Theme.Accent
-            button.BackgroundTransparency = 0.12
+            button.Size = UDim2.fromOffset(96, 96)
+            button.BackgroundColor3 = Theme.Background
             button.BorderSizePixel = 0
             button.AutoButtonColor = false
-            button.Text = ""
+            button.Image = ""
             button.ClipsDescendants = true
             button.ZIndex = 5
             button.Parent = gui
             __R1.shootButton = button
-            corner(button, UDim.new(0, 14))
-            local buttonStroke = stroke(button, Theme.Accent, 0.4)
-            local buttonScale = Instance.new("UIScale")
-            buttonScale.Parent = button
-            glowIcon(button, "crosshair", Theme.AccentDark, UDim2.new(0, 14, 0.5, 0))
-            local title = Instance.new("TextLabel")
-            title.Name = "BodyText"
-            title.BackgroundTransparency = 1
-            title.Position = UDim2.fromOffset(40, 0)
-            title.Size = UDim2.new(1, -78, 1, 0)
-            title.Font = Enum.Font.GothamBold
-            title.Text = "Shoot Murder"
-            title.TextColor3 = Theme.AccentDark
-            title.TextSize = 17
-            title.TextXAlignment = Enum.TextXAlignment.Left
-            title.TextTruncate = Enum.TextTruncate.AtEnd
-            title.ZIndex = 6
-            title.Parent = button
-            glowIcon(button, BUTTON_HINT_ICON, Theme.AccentDark, UDim2.new(1, -30, 0.5, 0))
-            button.MouseEnter:Connect(function()
-                tween(button, { BackgroundTransparency = 0 }, 0.12)
-                tween(buttonStroke, { Transparency = 0 }, 0.12)
+            local novaFx = noirNovaButton(button, { round = true, thickness = 2, pressScale = 1.08 })
+            -- центральный прицел + подпись
+            local iconHolder = Instance.new("Frame")
+            iconHolder.Name = "CrosshairHolder"
+            iconHolder.AnchorPoint = Vector2.new(0.5, 0.5)
+            iconHolder.Position = UDim2.fromScale(0.5, 0.42)
+            iconHolder.Size = UDim2.fromOffset(26, 26)
+            iconHolder.BackgroundTransparency = 1
+            iconHolder.ZIndex = 8
+            iconHolder.Parent = button
+            local icon = Instance.new("ImageLabel")
+            icon.Name = "Crosshair"
+            icon.Size = UDim2.fromScale(1, 1)
+            icon.BackgroundTransparency = 1
+            icon.ImageColor3 = Theme.Accent
+            icon.ScaleType = Enum.ScaleType.Fit
+            icon.ZIndex = 8
+            icon.Parent = iconHolder
+            pcall(applyIcon, icon, "crosshair")
+            local label = Instance.new("TextLabel")
+            label.Name = "BodyText"
+            label.AnchorPoint = Vector2.new(0.5, 0)
+            label.Position = UDim2.fromScale(0.5, 0.63)
+            label.Size = UDim2.new(1, 0, 0, 14)
+            label.BackgroundTransparency = 1
+            label.Font = Enum.Font.GothamBold
+            label.Text = "SHOOT"
+            label.TextColor3 = Theme.Text
+            label.TextSize = 12
+            label.ZIndex = 8
+            label.Parent = button
+            -- sonar-кольца: расходящийся круг из центра (двойной на нажатие,
+            -- одиночный пульс каждые 0.6s, пока кнопка удерживается)
+            local function sonar(delay)
+                task.spawn(function()
+                    if delay then task.wait(delay) end
+                    if not button.Parent then return end
+                    local ring = Instance.new("Frame")
+                    ring.Name = "NoirSonar"
+                    ring.AnchorPoint = Vector2.new(0.5, 0.5)
+                    ring.Position = UDim2.fromScale(0.5, 0.5)
+                    ring.Size = UDim2.fromScale(0.55, 0.55)
+                    ring.BackgroundTransparency = 1
+                    ring.BorderSizePixel = 0
+                    ring.ZIndex = 4
+                    ring.Parent = button
+                    local ringCorner = Instance.new("UICorner")
+                    ringCorner.CornerRadius = UDim.new(1, 0)
+                    ringCorner.Parent = ring
+                    local ringStroke = Instance.new("UIStroke")
+                    ringStroke.Color = Theme.Accent
+                    ringStroke.Thickness = 2.5
+                    ringStroke.Transparency = 0.1
+                    ringStroke.Parent = ring
+                    TweenService:Create(ring, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+                        { Size = UDim2.fromScale(1.55, 1.55) }):Play()
+                    TweenService:Create(ringStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                        { Transparency = 1 }):Play()
+                    task.delay(0.55, function() ring:Destroy() end)
+                end)
+            end
+            -- вращение ретикл-орбиты (тики по кругу)
+            local orbit = button:FindFirstChild("NoirTickOrbit")
+            if orbit then
+                task.spawn(function()
+                    while button.Parent do
+                        pcall(function()
+                            TweenService:Create(orbit, TweenInfo.new(9, Enum.EasingStyle.Linear), { Rotation = 360 }):Play()
+                        end)
+                        task.wait(9)
+                        if orbit then orbit.Rotation = 0 end
+                    end
+                end)
+            end
+            -- дыхание прицела
+            local breath = Instance.new("UIScale")
+            breath.Parent = iconHolder
+            task.spawn(function()
+                while button.Parent do
+                    pcall(function()
+                        TweenService:Create(breath, TweenInfo.new(1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                            { Scale = 1.14 }):Play()
+                    end)
+                    task.wait(1.1)
+                    pcall(function()
+                        TweenService:Create(breath, TweenInfo.new(1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                            { Scale = 1 }):Play()
+                    end)
+                    task.wait(1.1)
+                end
             end)
-            button.MouseLeave:Connect(function()
-                tween(button, { BackgroundTransparency = 0.12 }, 0.25)
-                tween(buttonStroke, { Transparency = 0.4 }, 0.25)
-            end)
-            local normalSize = UDim2.fromOffset(196, 64)
-            local pressedSize = UDim2.fromOffset(206, 72)
-            local pressTween = TweenInfo.new(0.30, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-            local dragging, moved, dragStart, startPosition, dragInput = false, false, nil, nil, nil
+            local firing, dragging, moved, dragStart, startPosition, dragInput = false, false, false, nil, nil, nil
             button.InputBegan:Connect(function(input)
                 if isPrimaryPress(input) then
                     dragging = not __R1.config.lockShootButton; moved = false
                     dragStart = input.Position; startPosition = button.Position
-                    tween(buttonScale, { Scale = 0.94 }, 0.18, Enum.EasingStyle.Quint)
-                    TweenService:Create(button, pressTween, { Size = pressedSize }):Play()
-                    title.Text = "TARGET LOCK"
-                    ripple(button)
+                    firing = true
+                    label.Text = "FIRE"
+                    icon.ImageColor3 = Theme.Error
+                    sonar(); sonar(0.14)
+                    task.spawn(function()
+                        while firing and button.Parent do
+                            task.wait(0.6)
+                            if firing and button.Parent then sonar() end
+                        end
+                    end)
                 end
             end)
             button.InputChanged:Connect(function(input)
@@ -23222,10 +23289,10 @@ end
             UIS.InputEnded:Connect(function(input)
                 if isPrimaryPress(input) then
                     dragging = false
+                    firing = false
                     NoirPersistence.SetPosition("shoot_v2", button.Position)
-                    tween(buttonScale, { Scale = 1 }, 0.35, Enum.EasingStyle.Back)
-                    TweenService:Create(button, TweenInfo.new(.62, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = normalSize }):Play()
-                    title.Text = "Shoot Murder"
+                    label.Text = "SHOOT"
+                    icon.ImageColor3 = Theme.Accent
                 end
             end)
             button.Activated:Connect(function() if not moved then task.spawn(shootTarget) end end)
@@ -26666,13 +26733,36 @@ local MurderFeature = {}
         -- вкладка Visuals: фасад ниже ссылается на `tab`, создаём его здесь
         local tab = window:CreateTab({ Name = "Visuals", Icon = "eye", Desc = "ESP: Box, Chams, Tracers, Radar" })
 
-        -- facade: maps the pulsehub section API onto Noir groupboxes
+        -- facade: maps the pulsehub section API onto Noir groupboxes.
+        -- Раскладка как в Combat: слева основное/подписи/чамсы/трейсеры,
+        -- справа бокс/цвета/скелет. Группы кэшируются по заголовку.
         local currentBox
         local espFacade = {}
+        local ESP_GROUP_MAP = {
+            ["ESP"]        = { Title = "ESP — ОСНОВНОЕ",         Side = "Left",  Icon = "eye" },
+            ["ESP Box"]    = { Title = "ESP — БОКС",             Side = "Right", Icon = "box" },
+            ["ESP Text"]   = { Title = "ESP — ПОДПИСИ",          Side = "Left",  Icon = "type" },
+            ["ESP Colors"] = { Title = "ESP — ЦВЕТА",            Side = "Right", Icon = "palette" },
+            ["ESP Chams"]  = { Title = "ESP — ЧАМСЫ",            Side = "Left",  Icon = "layers" },
+            ["ESP Look"]   = { Title = "ESP — СКЕЛЕТ И МАРКЕРЫ", Side = "Right", Icon = "person-standing" },
+            ["ESP Extras"] = { Title = "ESP — ТРЕЙСЕРЫ И РАДАР", Side = "Left",  Icon = "activity" },
+        }
+        local espGroups = {}
         function espFacade:Group(opts)
-            currentBox = (opts and opts.Side == "Right")
-                and tab:AddRightGroupbox({ Name = tostring(opts.Title or "ESP"), Icon = "eye" })
-                or tab:AddLeftGroupbox({ Name = tostring(opts.Title or "ESP"), Icon = "eye" })
+            local spec = (opts and ESP_GROUP_MAP[opts.Title]) or {
+                Title = (opts and opts.Title) or "ESP",
+                Side = opts and opts.Side or "Left",
+                Icon = "eye",
+            }
+            local key = spec.Title .. "|" .. tostring(spec.Side)
+            local box = espGroups[key]
+            if not box then
+                box = (spec.Side == "Right")
+                    and tab:AddRightGroupbox({ Name = spec.Title, Icon = spec.Icon })
+                    or tab:AddLeftGroupbox({ Name = spec.Title, Icon = spec.Icon })
+                espGroups[key] = box
+            end
+            currentBox = box
             return currentBox
         end
         local function decimalsIncrement(decimals)
@@ -26729,16 +26819,19 @@ local MurderFeature = {}
             return roles
         end
 
-        -- по умолчанию всё выключено: главный тумблер ESP и все под-тумблеры
-        -- гасятся после создания дефолтной таблицы движка (UI читает settings.X)
+        -- по умолчанию всё выключено: мастер-тумблер ESP и функциональные тумблеры
+        -- гасятся после создания дефолтной таблицы движка. Селекторы контента
+        -- (roles/box/outline/name) остаются в дефолте движка — это «что рисовать»,
+        -- как Target Mode в Combat: без них ESP с включённым мастером пустой.
         local espSettingsCreateBase = EspSettings.create
         local ESP_OFF_FIELDS = {
-            "on", "murderer", "sheriff", "hero", "innocent", "noRole", "visCheck", "box", "boxFill",
-            "boxGlow", "gradient", "pulse", "skeleton", "boneRole", "headDot", "lookLine", "health",
-            "healthNum", "smoothHealth", "name", "roleText", "weaponIcon", "distance", "textGrad",
-            "textGradAnim", "outline", "textOutline", "textMatch", "hideGameNames", "dimHidden", "fade",
-            "chams", "chamsOutline", "chamsRole", "chamsFlash", "highlight", "tracer", "tracerRole",
-            "radar", "tags", "glow", "aliveCheck", "teamCheck", "ignoreWalls",
+            "on", "noRole", "visCheck", "boxFill", "boxGlow", "gradient", "pulse", "skeleton",
+            "boneRole", "headDot", "lookLine", "health", "healthNum", "smoothHealth", "roleText",
+            "weaponIcon", "distance", "textGrad", "textGradAnim", "textMatch", "hideGameNames",
+            "dimHidden", "fade", "chams", "chamsOutline", "chamsRole", "chamsFlash", "highlight",
+            "tracer", "tracerRole", "radar", "tags", "glow", "aliveCheck", "teamCheck", "ignoreWalls",
+            "joints", "boneGrad", "arrowName", "arrowPulse", "ringText", "murdererFocus", "offscreen",
+            "distScale", "limits", "nameTag", "infoCase",
         }
         function EspSettings.create(environment, configuration)
             local settings = espSettingsCreateBase(environment, configuration)
