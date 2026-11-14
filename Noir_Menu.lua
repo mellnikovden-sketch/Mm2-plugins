@@ -23084,15 +23084,18 @@ end
 
 
     -- ═════════════════════════════════════════════════════════════════════
-    --  ВКЛАДКА: SILENT AIM — full port from Noir_Part1/Part2 combat sections
-    --  Control list mirrors the original hub 1:1 (labels identical), driven
-    --  by the transplanted __R1 engine below.
+    --  ВКЛАДКА: COMBAT — только Silent Aim (движок Pulse v1.4) и Knife
+    --  Silent Aim + их профили предиктов. Профили реально читаются движком
+    --  на каждый выстрел: leadTime() → calculateAim() / calculateKnifeAim().
     -- ═════════════════════════════════════════════════════════════════════
     do
         local cfg = __R1.config
-        local tab = window:CreateTab({ Name = "Silent Aim", Icon = "crosshair", Desc = "Server FireServer redirect" })
+        local tab = window:CreateTab({ Name = "Combat", Icon = "crosshair", Desc = "Silent Aim (Pulse) + Knife Silent Aim" })
 
-        local function addPrediction(section, profile)
+        local function addPrediction(section, profile, mirrorKey, isKnife)
+            section:CreateLabel(isKnife
+                and "Профиль ножа из Pulse: читается calculateKnifeAim() на каждый бросок."
+                or "Профиль ствола из Pulse: читается calculateAim() на каждый выстрел.")
             section:CreateToggle({ Name = "Adaptive Engine", Default = profile.adaptive == true,
                 Callback = function(v) profile.adaptive = v == true end })
             section:CreateToggle({ Name = "Prioritize Your Ping", Default = profile.prioritizePing == true,
@@ -23109,8 +23112,12 @@ end
                 Suffix = "ms", Callback = function(v) profile.maxSimulationMs = v end })
             section:CreateSlider({ Name = "Prediction Interval", Min = 1, Max = 100, Default = profile.predictionIntervalMs or 72,
                 Suffix = "ms", Callback = function(v) profile.predictionIntervalMs = v end })
-            section:CreateSlider({ Name = "Prediction Ping", Min = 10, Max = 1000, Default = profile.manualPingMs or 80,
-                Suffix = "ms", Callback = function(v) profile.manualPingMs = v end })
+            local pingSlider = section:CreateSlider({ Name = "Prediction Ping", Min = 10, Max = 1000,
+                Default = profile.manualPingMs or 80, Suffix = "ms",
+                Callback = function(v) profile.manualPingMs = v end })
+            -- реальная привязка: авто-тюнинг движка (Prioritize Your Ping) двигает
+            -- этот слайдер под живой пинг через __R1.noirMirrorControls
+            __R1.noirMirrorControls[mirrorKey] = function(value) pcall(function() pingSlider:Set(value, true) end) end
             section:CreateSlider({ Name = "X Position Offset", Min = -100, Max = 100, Default = profile.offsetX or 0,
                 Suffix = "%", Callback = function(v) profile.offsetX = v end })
             section:CreateSlider({ Name = "Y Position Offset", Min = -100, Max = 100, Default = profile.offsetY or 0,
@@ -23123,12 +23130,18 @@ end
                 Suffix = "%", Callback = function(v) profile.verticalMultiplier = v end })
             section:CreateSlider({ Name = "Lead Scale", Min = 25, Max = 250, Default = profile.leadScale or 100,
                 Suffix = "%", Callback = function(v) profile.leadScale = v end })
+            section:CreateButton({ Name = "Test Prediction", Icon = "activity",
+                Callback = function()
+                    local lead = (isKnife and leadTime("knife") or leadTime()) * 1000
+                    Notify("Prediction", string.format("%s: текущее упреждение %.0f мс",
+                        isKnife and "Knife" or "Silent Aim", lead))
+                end })
         end
 
-        -- ── SILENT AIM (left) ──────────────────────────────────────────────
+        -- ── SILENT AIM (left) — движок Pulse v1.4 ──────────────────────────
         local combatAim = tab:AddLeftGroupbox({ Name = "SILENT AIM", Icon = "zap" })
         combatAim:CreateToggle({
-            Name = "Enabled", Desc = "Server FireServer redirect", Default = false, Flag = "SA_Enabled",
+            Name = "Enabled", Desc = "Серверный FireServer redirect", Default = false, Flag = "SA_Enabled",
             Callback = function(v)
                 toggle(v == true)
                 if v == true and not cfg.enabled then
@@ -23138,18 +23151,6 @@ end
         })
         combatAim:CreateToggle({ Name = "Wall Check", Default = false, Flag = "SA_WallCheck",
             Callback = function(v) cfg.wallCheck = v == true end })
-        combatAim:CreateToggle({ Name = "Show Shoot Murder Button", Default = false, Flag = "SA_ShootBtn",
-            Callback = function(v) cfg.showShootButton = v == true; if v then createShootButton() else removeShootButton() end end })
-        combatAim:CreateToggle({ Name = "Lock Shoot Murder Button", Default = false, Flag = "SA_LockBtn",
-            Callback = function(v) cfg.lockShootButton = v == true end })
-        combatAim:CreateLabel("Infection mode: silent aim targets zombies automatically.")
-        combatAim:CreateDropdown({
-            Name = "Silent Aim Mode", Options = { "Noir", "Tering" }, Default = "Noir", Flag = "SA_Mode",
-            Callback = function(v)
-                NoirGenv().__NoirSilentMode = (v == "Tering" and "Tering" or "Noir")
-                if v == "Tering" then pcall(function() if NoirGenv().__TeringInstall then NoirGenv().__TeringInstall() end end) end
-            end,
-        })
         combatAim:CreateDropdown({
             Name = "Target Mode", Options = { "Murderer", "Sheriff", "Hero", "Nearest", "Crosshair", "Lowest Health", "Random" },
             Default = "Murderer", Flag = "SA_TargetMode",
@@ -23160,61 +23161,8 @@ end
             Default = "HumanoidRootPart", Flag = "SA_HitPart",
             Callback = function(v) cfg.hitPart = tostring(v) end,
         })
-        combatAim:CreateSlider({ Name = "FOV Size", Min = 0, Max = 500, Default = 0, Suffix = "px", Flag = "SA_Fov",
-            Callback = function(v) cfg.fovSize = v end })
-        combatAim:CreateToggle({ Name = "Show FOV", Default = false, Flag = "SA_ShowFov",
-            Callback = function(v) cfg.showFov = v == true end })
-        combatAim:CreateKeybind({ Name = "Aim Key (hold)", Default = "None", Flag = "SA_AimKey",
-            Callback = function(key) cfg.aimKey = tostring(key or "None") end })
-        combatAim:CreateKeybind({ Name = "Toggle Key", Default = "None", Flag = "SA_ToggleKey",
-            Callback = function(key) cfg.toggleKey = tostring(key or "None") end })
-        combatAim:CreateToggle({ Name = "Auto Fire", Default = false, Flag = "SA_AutoFire",
-            Callback = function(v) cfg.autoFire = v == true end })
-        combatAim:CreateKeybind({ Name = "Auto Fire Key (hold)", Default = "None", Flag = "SA_AutoFireKey",
-            Callback = function(key) cfg.autoFireKey = tostring(key or "None") end })
-        combatAim:CreateDropdown({
-            Name = "Shot Method", Options = { "Remote", "CFrame" }, Default = "Remote", Flag = "SA_ShotMethod",
-            Callback = function(v) cfg.shotMethod = tostring(v) end,
-        })
-        combatAim:CreateToggle({ Name = "Ignore Dead", Default = true, Flag = "SA_IgnoreDead",
-            Callback = function(v) cfg.ignoreDead = v == true end })
-        combatAim:CreateToggle({ Name = "Ignore Friends", Default = false, Flag = "SA_IgnoreFriends",
-            Callback = function(v) cfg.ignoreFriends = v == true end })
-        combatAim:CreateSlider({ Name = "Max Distance", Min = 0, Max = 2000, Default = 0, Suffix = " st", Flag = "SA_MaxDist",
-            Callback = function(v) cfg.maxDistance = v end })
 
-        -- ── GUN (left, extra engine-backed controls) ───────────────────────
-        local combatGun = tab:AddLeftGroupbox({ Name = "GUN", Icon = "target" })
-        combatGun:CreateToggle({ Name = "Piercer Bullet", Default = false, Flag = "SA_Piercer",
-            Callback = function(v)
-                setPiercerBullet(v == true)
-                if v == true and not cfg.piercerBullet then
-                    Notify("Silent Aim", "Piercer Bullet требует поддержку хуков", "Warning")
-                end
-            end })
-        combatGun:CreateLabel("If a wall is between you and the target, the shot starts on their side of the wall. Turn this on with Silent Aim.")
-        combatGun:CreateToggle({ Name = "Gun Dual Effect", Default = false, Flag = "SA_GunDual",
-            Callback = function(v)
-                cfg.gunDualEffect = v == true
-                local runtime = NoirGenv().__NoirGunTriggerRuntime
-                if runtime and runtime.RefreshDual then pcall(runtime.RefreshDual, runtime) end
-            end })
-        combatGun:CreateToggle({ Name = "Gun Trigger Bot", Default = false, Flag = "SA_Trigger",
-            Callback = function(v) cfg.gunTriggerBot = v == true end })
-        combatGun:CreateToggle({ Name = "Gun Trigger Bot Wall Check", Default = true, Flag = "SA_TriggerWall",
-            Callback = function(v) cfg.gunTriggerBotWallCheck = v == true end })
-        combatGun:CreateToggle({ Name = "Apply Prediction On Gun Trigger Bot", Default = true, Flag = "SA_TriggerPred",
-            Callback = function(v) cfg.gunTriggerBotPrediction = v == true end })
-        combatGun:CreateToggle({ Name = "Instant Role Detection", Default = false, Flag = "SA_InstantRoles",
-            Callback = function(v) __R1.instantRoleDetection = v == true; if v then task.spawn(refreshTarget) end end })
-        combatGun:CreateToggle({ Name = "Auto Notify Roles", Default = false, Flag = "SA_NotifyRoles",
-            Callback = function(v) __R1.autoNotifyRoles = v == true; if not v then table.clear(__R1.announcedRoles) else task.spawn(refreshTarget) end end })
-        combatGun:CreateButton({ Name = "Show Murderer Chance", Icon = "dice-5",
-            Callback = function() pcall(showMurdererChance) end })
-        combatGun:CreateButton({ Name = "Refresh Roles", Icon = "refresh-cw",
-            Callback = function() pcall(function() refreshTarget(true) end) end })
-
-        -- ── KNIFE SILENT AIM (right) ───────────────────────────────────────
+        -- ── KNIFE SILENT AIM (right) — предикты ножа из Pulse ──────────────
         local combatKnife = tab:AddRightGroupbox({ Name = "KNIFE SILENT AIM", Icon = "sword" })
         combatKnife:CreateToggle({
             Name = "Knife Silent Aim", Desc = "Nearest player or Sheriff-only targeting", Default = false, Flag = "SA_Knife",
@@ -23226,56 +23174,14 @@ end
                 end
                 Notify("Silent Aim", v and "Knife Silent Aim: ON" or "Knife Silent Aim: OFF")
             end })
-        combatKnife:CreateToggle({ Name = "KnifeThrown Aura", Default = true, Flag = "SA_KnifeAura",
-            Callback = function(v) cfg.knifeThrownAura = v == true end })
-        combatKnife:CreateSlider({ Name = "Knife Throw Aura", Min = 1, Max = 40, Default = cfg.knifeRadius or 15,
-            Suffix = " st", Flag = "SA_KnifeRadius", Callback = function(v) cfg.knifeRadius = v end })
         combatKnife:CreateToggle({ Name = "Knife Wall Check", Default = false, Flag = "SA_KnifeWall",
             Callback = function(v) cfg.knifeWallCheck = v == true end })
-        combatKnife:CreateToggle({ Name = "Prioritize Sheriff", Default = false, Flag = "SA_KnifeSheriff",
-            Callback = function(v) cfg.knifePrioritizeSheriff = v == true end })
-        combatKnife:CreateLabel("NATIVE KNIFE UTILITIES • equipped Knife only")
-        combatKnife:CreateToggle({ Name = "Use Knife Dual Effect", Default = false, Flag = "SA_KnifeDual",
-            Callback = function(v) cfg.knifeDualEffect = v == true end })
-        combatKnife:CreateToggle({ Name = "Instant Throw", Default = false, Flag = "SA_KnifeInstant",
-            Callback = function(v) cfg.knifeInstantThrow = v == true end })
-        combatKnife:CreateToggle({ Name = "Fast Throw", Default = false, Flag = "SA_KnifeFast",
-            Callback = function(v) cfg.knifeFastThrow = v == true end })
-        combatKnife:CreateToggle({ Name = "Auto Kill Everyone", Default = false, Flag = "SA_KillAll",
-            Callback = function(v) cfg.knifeAutoKillEveryone = v == true end })
-        combatKnife:CreateToggle({ Name = "Auto Kill Sheriff", Default = false, Flag = "SA_KillSheriff",
-            Callback = function(v) cfg.knifeAutoKillSheriff = v == true end })
-        combatKnife:CreateButton({ Name = "Kill Everyone", Icon = "skull",
-            Callback = function()
-                local runtime = NoirGenv().__NoirKnifeUtilityRuntime
-                if runtime and runtime.KillEveryone then pcall(runtime.KillEveryone, runtime) end
-            end })
-        combatKnife:CreateButton({ Name = "Kill Sheriff", Icon = "shield-off",
-            Callback = function()
-                local runtime = NoirGenv().__NoirKnifeUtilityRuntime
-                if runtime and runtime.KillSheriff then pcall(runtime.KillSheriff, runtime) end
-            end })
-        combatKnife:CreateToggle({ Name = "Enable Kill Sheriff Bindable Button", Default = false, Flag = "SA_SheriffBind",
-            Callback = function(v)
-                cfg.knifeSheriffBind = v == true
-                local runtime = NoirGenv().__NoirKnifeUtilityRuntime
-                if runtime and runtime.Refresh then pcall(runtime.Refresh, runtime) end
-            end })
-        combatKnife:CreateInput({ Name = "Kill Player (name)", Default = "", Placeholder = "ник игрока...", Flag = "SA_KillPlayer",
-            Callback = function(text) cfg.knifeKillPlayer = tostring(text or "N/A") end })
-        combatKnife:CreateButton({ Name = "Kill Player", Icon = "cross",
-            Callback = function()
-                local runtime = NoirGenv().__NoirKnifeUtilityRuntime
-                if runtime and runtime.KillSelected then pcall(runtime.KillSelected, runtime) end
-            end })
 
-        -- ── PISTOL / KNIFE PREDICTION profiles ─────────────────────────────
-        local pistolPrediction = tab:AddLeftGroupbox({ Name = "PISTOL PREDICTION", Icon = "gauge" })
-        pistolPrediction:CreateLabel("Independent server-shot prediction")
-        addPrediction(pistolPrediction, cfg)
-        local knifePrediction = tab:AddRightGroupbox({ Name = "KNIFE PREDICTION", Icon = "gauge" })
-        knifePrediction:CreateLabel("Independent KnifeThrown prediction")
-        addPrediction(knifePrediction, cfg.knifeAim)
+        -- ── PREDICTION профили (движок читает их на каждый выстрел) ────────
+        local predAim = tab:AddLeftGroupbox({ Name = "SILENT AIM PREDICTION", Icon = "gauge" })
+        addPrediction(predAim, cfg, "manualPingMs", false)
+        local predKnife = tab:AddRightGroupbox({ Name = "KNIFE PREDICTION", Icon = "gauge" })
+        addPrediction(predKnife, cfg.knifeAim, "knifeManualPingMs", true)
 
         combatAim:CreateDivider("BULLET TRACER")
         combatAim:CreateParagraph({
@@ -23286,7 +23192,7 @@ end
         })
         __NoirSAFacadeHost = combatAim -- tracer satellite (below) builds its controls here
     end
-    -- ═══════════════════════════ /SILENT AIM TAB ═════════════════════════
+    -- ═══════════════════════════ /COMBAT TAB ═════════════════════════════
 
 
     -- ═══════ BULLET TRACER satellite — verbatim from Noir_Part2 ═══════
