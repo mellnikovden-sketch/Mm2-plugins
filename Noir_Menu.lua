@@ -3,8 +3,6 @@
   Noir UI — ПОЛНАЯ БИБЛИОТЕКА МЕНЮ (все её функции) | бренд NOIR CREATOR
   Построена на базе UI-библиотеки AirFlow (из stage_7.lua "FieldKit / Cybrion"):
   тот же движок и анимации, но своё имя, логотип, тема Noir и погода Rain.
-  Вкладка Combat: Silent Aim для пистолета (GunFired) и ножа
-  (HandleTouched / KnifeThrown / KnifeStabbed).
 ═══════════════════════════════════════════════════════════════════════════════
 
   ЧТО ЭТО
@@ -20101,364 +20099,1105 @@ local autoOk, autoErr = pcall(function()
         ToggleButton = { Platform = "Both", Icon = "layout-grid" },
     })
 
+    -- Выгрузка регистрируется сразу: повторный запуск не дублирует окна
+    genv.NoirAutoUnload = function()
+        genv.NoirAutoUnload = nil
+        -- stop the silent aim runtime first (loops + connections)
+        if type(genv.__NoirMenuSA) == "table" and type(genv.__NoirMenuSA.Stop) == "function" then
+            pcall(genv.__NoirMenuSA.Stop)
+            genv.__NoirMenuSA = nil
+        end
+        if window and not window._destroyed then
+            pcall(window.Destroy, window)
+        end
+    end
+
     -- Уведомления (Type: Success / Warning / Error / Info)
     local function Notify(title, text, typ)
         window:Notify({ Title = title, Content = text, Duration = 4, Type = typ })
     end
 
     -- ═════════════════════════════════════════════════════════════════════
-    --  SILENT AIM CORE
-    --  Ремуоты (по логам Remote Spy):
-    --    GunFired:      FireServer(Handle, Origin, HitPos, HitPart)
-    --    HandleTouched: FireServer(Part)            — удар/касание ножом
-    --    KnifeThrown:   FireServer(CFrame, TargetCFrame) — бросок ножа
-    --    KnifeStabbed:  FireServer()                — взмах ножом
-    --  Лежат: ReplicatedStorage.ClientServices.WeaponService.GunFired
-    --        и Players.<ты>.Backpack|Character.<Tool>.Events.*
+    --  NOIR SILENT AIM ENGINE — ported from Noir_Part1/Noir_Part2 (v1.4 Pulse)
+    --  Gun silent aim: hooks the executor namecall, finds the local Gun's
+    --  FireServer shot and rewrites it onto the predicted target point.
+    --  Knife silent aim: same for the local Knife "KnifeThrown" remote.
+    --  Everything OFF by default, controlled from the "Silent Aim" tab.
+    --  Unload: NoirAutoUnload stops the loops; the hook itself stays but
+    --  becomes inert once both features are off / runtime is stopped.
     -- ═════════════════════════════════════════════════════════════════════
-    local SA = {
-        -- пистолет
-        Enabled   = false,   -- вкл/выкл
-        Part      = "Head",  -- куда стрелять
-        FOV       = 250,     -- радиус захвата цели (px)
-        IgnoreFOV = false,   -- цель = любой видимый на экране
-        WallCheck = true,    -- не целиться сквозь стены
-        TeamCheck = true,    -- пропускать свою команду
-        ShowFOV   = false,   -- рисовать круг FOV
-        -- нож
-        Knife         = false, -- перенаправлять касания ножом в цель
-        KnifeAuto     = false, -- каждый взмах сам бьёт ближайшего врага
-        KnifeThrow    = false, -- брошенный нож летит в цель
-        KnifeRange    = 18,    -- дистанция удара (studs)
-        KnifeWallCheck = true, -- не бить сквозь стены
-    }
-
-    local SAPlayers = game:GetService("Players")
-    local SARun = game:GetService("RunService")
-    local SAInput = game:GetService("UserInputService")
-    local SALocal = SAPlayers.LocalPlayer
-
-    -- ── поиск ремуотов ─────────────────────────────────────────────────────
-    local GunRemote = nil
-    local function resyncGunRemote()
-        local node = game:GetService("ReplicatedStorage"):FindFirstChild("ClientServices")
-        node = node and node:FindFirstChild("WeaponService")
-        local remote = node and node:FindFirstChild("GunFired")
-        if typeof(remote) == "Instance" and remote:IsA("RemoteEvent") then
-            GunRemote = remote
+    do
+        -- stop a previous runtime so a reload never duplicates loops
+        if type(genv.__NoirMenuSA) == "table" and type(genv.__NoirMenuSA.Stop) == "function" then
+            pcall(genv.__NoirMenuSA.Stop)
+            genv.__NoirMenuSA = nil
         end
-        return GunRemote
-    end
-    resyncGunRemote()
-    task.spawn(function() -- если сервис ещё не создан — дождаться
-        for _ = 1, 60 do
-            if resyncGunRemote() then break end
-            task.wait(1)
-        end
-    end)
 
-    -- Ножевые ремуоты лежат в Tool'е (Backpack или Character)
-    local function getKnifeEvents()
-        local containers = {}
-        local bp = SALocal:FindFirstChildOfClass("Backpack")
-        local char = SALocal.Character
-        if bp then table.insert(containers, bp) end
-        if char then table.insert(containers, char) end
-        for _, container in ipairs(containers) do
-            for _, tool in ipairs(container:GetChildren()) do
-                if tool:IsA("Tool") then
-                    local events = tool:FindFirstChild("Events")
-                    if typeof(events) == "Instance"
-                    and (events:FindFirstChild("HandleTouched")
-                        or events:FindFirstChild("KnifeThrown")
-                        or events:FindFirstChild("KnifeStabbed")) then
-                        return events
-                    end
-                end
+        local Players           = game:GetService("Players")
+        local RunService        = game:GetService("RunService")
+        local Workspace         = game:GetService("Workspace")
+        local Stats             = game:GetService("Stats")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local LocalPlayer       = Players.LocalPlayer
+
+        local SA = { running = true, hooked = false, redirected = 0, connections = {} }
+
+        -- ── config: everything OFF by default ──────────────────────────────
+        SA.config = {
+            enabled      = false,      -- gun silent aim
+            targetMode   = "Murderer", -- Murderer/Sheriff/Hero/Nearest/Crosshair/Lowest Health/Random
+            hitPart      = "HumanoidRootPart",
+            wallCheck    = false,      -- skip shot when a wall blocks the target
+            ignoreFriends = false,
+            maxDistance  = 0,          -- 0 = unlimited
+            alignDirection = true,     -- rotate the shot origin towards the aim point
+            -- ping-adaptive prediction (defaults from Noir v1.4 Pulse)
+            adaptive     = true,
+            prioritizePing = true,     -- use measured ping instead of manualPingMs
+            predictJump  = false,
+            predictLag   = true,
+            fixedLead    = 0.075,      -- seconds, used when adaptive = false
+            extraLead    = 0.02,
+            maxSimulationMs = 180,
+            predictionIntervalMs = 72,
+            manualPingMs = 80,
+            leadScale    = 100,        -- % lead scaling
+            offsetX = 0, offsetY = 0, offsetZ = 0,            -- % of target part size
+            horizontalMultiplier = 100,
+            verticalMultiplier   = 100,
+        }
+        -- separate prediction profile for the knife throw
+        SA.config.knifeAim = {
+            adaptive = true, prioritizePing = true, predictJump = false, predictLag = true,
+            fixedLead = 0.075, extraLead = 0.02,
+            maxSimulationMs = 180, predictionIntervalMs = 72, manualPingMs = 80,
+            leadScale = 100,
+            offsetX = 0, offsetY = 0, offsetZ = 0,
+            horizontalMultiplier = 100, verticalMultiplier = 100,
+        }
+        SA.config.knifeEnabled           = false  -- knife silent aim
+        SA.config.knifeWallCheck         = false
+        SA.config.knifePrioritizeSheriff = false  -- aim the throw at the sheriff first
+
+        SA.cachedPing  = 0.05
+        SA.murderer, SA.sheriff, SA.hero = nil, nil, nil
+        SA.roleCache, SA.playerData, SA.announcedRoles = {}, {}, {}
+        SA.friendCache = {}
+        SA.measuredVelocity = Vector3.zero
+        SA.motionSamples = {}
+        SA.previousEstimatedVelocity = Vector3.zero
+        SA.estimatedAcceleration = Vector3.zero
+        SA.__infectionState = { npcs = {}, nextScan = 0, entity = nil, entityAt = 0, markerPlayers = {}, markersAt = 0 }
+
+        function SA.notify(message, duration)
+            pcall(function() Notify("Silent Aim", tostring(message)) end)
+        end
+
+        -- ── shared helpers ─────────────────────────────────────────────────
+        function SA.refreshPlayerCache() SA.cachedPlayers = Players:GetPlayers() end
+        SA.refreshPlayerCache()
+        function SA.getPlayers() return SA.cachedPlayers end
+        Players.PlayerAdded:Connect(SA.refreshPlayerCache)
+        Players.PlayerRemoving:Connect(function(player)
+            SA.refreshPlayerCache()
+            SA.playerData[player.UserId] = nil
+            SA.roleCache[player.UserId] = nil
+            SA.announcedRoles[player.UserId] = nil
+            SA.friendCache[player] = nil
+            if SA.murderer == player then SA.murderer = nil end
+            if SA.sheriff == player then SA.sheriff = nil end
+            if SA.hero == player then SA.hero = nil end
+        end)
+        table.insert(SA.connections, Players.PlayerAdded)
+        table.insert(SA.connections, Players.PlayerRemoving)
+
+        function SA.validTarget(player)
+            local character = player and player.Character
+            local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+            return player ~= nil and player ~= LocalPlayer and character ~= nil
+                and humanoid ~= nil and humanoid.Health > 0
+        end
+        function SA.localRoot()
+            local character = LocalPlayer.Character
+            if character ~= SA.localRootChar or not SA.localRootCache or not SA.localRootCache.Parent then
+                SA.localRootChar = character
+                SA.localRootCache = character
+                    and (character:FindFirstChild("HumanoidRootPart")
+                        or character:FindFirstChild("UpperTorso")
+                        or character:FindFirstChild("Torso"))
+                    or nil
             end
+            return SA.localRootCache
         end
-        return nil
-    end
-
-    -- ── выбор цели ─────────────────────────────────────────────────────────
-    local SA_PARTS = { "Head", "HumanoidRootPart", "Torso", "UpperTorso" }
-
-    local function saAlive(plr)
-        local char = plr.Character
-        if not char then return nil end
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if not hum or hum.Health <= 0 then return nil end
-        return char
-    end
-
-    local function saFriendly(plr)
-        if not SA.TeamCheck then return false end
-        local mine, theirs = SALocal.Team, plr.Team
-        return mine ~= nil and theirs ~= nil and mine == theirs
-    end
-
-    -- Точка прицела: центр экрана на телефоне, курсор на ПК
-    local function saScreenPoint()
-        local camera = workspace.CurrentCamera
-        if not camera then return nil end
-        local v = camera.ViewportSize
-        if SAInput.TouchEnabled and not SAInput.KeyboardEnabled then
-            return Vector2.new(v.X * 0.5, v.Y * 0.5)
+        function SA.playerHasTool(player, toolName)
+            local character = player and player.Character
+            local backpack = player and player:FindFirstChildOfClass("Backpack")
+            return (character and character:FindFirstChild(toolName))
+                or (backpack and backpack:FindFirstChild(toolName))
         end
-        local ok, loc = pcall(function() return SAInput:GetMouseLocation() end)
-        if ok and typeof(loc) == "Vector2" then return loc end
-        return Vector2.new(v.X * 0.5, v.Y * 0.5)
-    end
-
-    -- Есть ли стена между камерой и целью (персонажи не считаются препятствием)
-    local function saWallBlocked(targetPart)
-        local camera = workspace.CurrentCamera
-        if not camera then return false end
-        local params = RaycastParams.new()
-        params.FilterType = Enum.RaycastFilterType.Exclude
-        local exclude = {}
-        for _, plr in ipairs(SAPlayers:GetPlayers()) do
-            if plr.Character then table.insert(exclude, plr.Character) end
+        function SA.isFriend(player)
+            if not SA.config.ignoreFriends or player == nil then return false end
+            local cached = SA.friendCache[player]
+            if cached ~= nil then return cached end
+            local ok, result = pcall(function() return player:IsFriendsWith(LocalPlayer.UserId) end)
+            local value = (ok and result == true)
+            SA.friendCache[player] = value
+            return value
         end
-        params.FilterDescendantsInstances = exclude
-        local origin = camera.CFrame.Position
-        local hit = workspace:Raycast(origin, targetPart.Position - origin, params)
-        return hit ~= nil
-    end
+        function SA.distanceTo(player)
+            local root = SA.localRoot()
+            local character = SA.entityCharacter(player)
+            local target = character and character:FindFirstChild("HumanoidRootPart")
+            if root and target then return (target.Position - root.Position).Magnitude end
+            return math.huge
+        end
 
-    local function saPickPart(char, want)
-        if want == "Closest" then
-            local camera = workspace.CurrentCamera
-            local sp = camera and saScreenPoint()
-            if not camera or not sp then return char:FindFirstChild("HumanoidRootPart") end
-            local best, bestD = nil, math.huge
-            for _, name in ipairs(SA_PARTS) do
-                local p = char:FindFirstChild(name)
-                if p then
-                    local vp, onScreen = camera:WorldToViewportPoint(p.Position)
-                    if onScreen then
-                        local d = (Vector2.new(vp.X, vp.Y) - sp).Magnitude
-                        if d < bestD then best, bestD = p, d end
-                    end
-                end
+        -- lobby/spectator filter: team names, attributes and BoolValue flags
+        function SA.playerIsInLobby(player)
+            if not player then return true end
+            local teamName = player.Team and string.lower(tostring(player.Team.Name)) or ""
+            if string.find(teamName, "lobby", 1, true)
+                or string.find(teamName, "spectat", 1, true)
+                or string.find(teamName, "observer", 1, true)
+                or string.find(teamName, "waiting", 1, true) then
+                return true
             end
-            return best or char:FindFirstChild("HumanoidRootPart")
-        end
-        return char:FindFirstChild(want) or char:FindFirstChild("HumanoidRootPart")
-    end
-
-    -- Цель для пистолета/броска: ближайшая к точке прицела в пределах FOV
-    local function saFindTarget()
-        local camera = workspace.CurrentCamera
-        if not camera then return nil, nil end
-        local sp = saScreenPoint()
-        if not sp then return nil, nil end
-        local list = {}
-        for _, plr in ipairs(SAPlayers:GetPlayers()) do
-            if plr ~= SALocal and not saFriendly(plr) then
-                local char = saAlive(plr)
-                if char then
-                    local part = saPickPart(char, SA.Part)
-                    if part then
-                        local vp, onScreen = camera:WorldToViewportPoint(part.Position)
-                        if onScreen then
-                            table.insert(list, {
-                                part = part, plr = plr,
-                                d = (Vector2.new(vp.X, vp.Y) - sp).Magnitude,
-                                depth = (part.Position - camera.CFrame.Position).Magnitude,
-                            })
+            local containers = { player, player.Character }
+            for _, container in ipairs(containers) do
+                if container then
+                    for key, value in pairs(container:GetAttributes()) do
+                        local k = string.lower(tostring(key))
+                        if (string.find(k, "inround", 1, true) or string.find(k, "ingame", 1, true)
+                            or string.find(k, "isplaying", 1, true) or string.find(k, "alive", 1, true))
+                            and value == false then
+                            return true
+                        end
+                        if string.find(k, "state", 1, true) or string.find(k, "status", 1, true)
+                            or string.find(k, "location", 1, true) or string.find(k, "place", 1, true) then
+                            local textValue = string.lower(tostring(value))
+                            if string.find(textValue, "lobby", 1, true)
+                                or string.find(textValue, "spectat", 1, true)
+                                or string.find(textValue, "dead", 1, true)
+                                or string.find(textValue, "waiting", 1, true) then
+                                return true
+                            end
                         end
                     end
-                end
-            end
-        end
-        table.sort(list, function(a, b) return a.d < b.d end)
-        for _, cand in ipairs(list) do
-            if SA.IgnoreFOV or cand.d <= SA.FOV then
-                if not SA.WallCheck or not saWallBlocked(cand.part) then
-                    return cand.part, cand
-                end
-            end
-        end
-        return nil, nil
-    end
-
-    -- Цель для ножа: ближайший враг в радиусе удара от персонажа
-    local function saKnifeTarget()
-        local char = SALocal.Character
-        local root = char and char:FindFirstChild("HumanoidRootPart")
-        if not root then return nil end
-        local best, bestD = nil, math.huge
-        for _, plr in ipairs(SAPlayers:GetPlayers()) do
-            if plr ~= SALocal and not saFriendly(plr) then
-                local pchar = saAlive(plr)
-                if pchar then
-                    local part = pchar:FindFirstChild("HumanoidRootPart")
-                        or pchar:FindFirstChild("Torso")
-                        or pchar:FindFirstChild("UpperTorso")
-                        or pchar:FindFirstChild("Head")
-                    if part then
-                        local d = (part.Position - root.Position).Magnitude
-                        if d <= SA.KnifeRange and d < bestD
-                        and (not SA.KnifeWallCheck or not saWallBlocked(part)) then
-                            best, bestD = part, d
-                        end
+                    for _, name in ipairs({ "InLobby", "Spectating", "Dead", "IsDead" }) do
+                        local flag = container:FindFirstChild(name)
+                        if flag and flag:IsA("BoolValue") and flag.Value then return true end
+                    end
+                    for _, name in ipairs({ "InRound", "InGame", "IsPlaying", "Alive", "IsAlive" }) do
+                        local flag = container:FindFirstChild(name)
+                        if flag and flag:IsA("BoolValue") and not flag.Value then return true end
                     end
                 end
             end
+            return false
         end
-        return best
-    end
 
-    -- ── круг FOV ───────────────────────────────────────────────────────────
-    local saCircle = nil
-    local saNoDrawing = false
-    local function saDrawFOV()
-        if saNoDrawing then return end
-        if not saCircle then
-            local ok = pcall(function()
-                saCircle = Drawing.new("Circle")
-                saCircle.Thickness = 1
-                saCircle.Filled = false
-                saCircle.NumSides = 64
-                saCircle.Color = Color3.fromRGB(228, 52, 66) -- акцент Noir
-                saCircle.Transparency = 0.7
+        -- ── roles (murderer / sheriff / hero) ──────────────────────────────
+        function SA.entityCharacter(entity)
+            if typeof(entity) == "Instance" and entity:IsA("Model") then return entity end
+            return (entity and entity.Character) or nil
+        end
+        function SA.setTarget(player)
+            if not SA.validTarget(player) then player = nil end
+            if SA.murderer ~= player then
+                SA.murderer = player
+                if player then SA.notify("Target: " .. player.Name) end
+            end
+        end
+        function SA.findByKnife()
+            for _, player in ipairs(SA.getPlayers()) do
+                if player ~= LocalPlayer and SA.playerHasTool(player, "Knife") then return player end
+            end
+        end
+        function SA.findByGun()
+            for _, player in ipairs(SA.getPlayers()) do
+                if player ~= LocalPlayer and SA.playerHasTool(player, "Gun") then return player end
+            end
+        end
+        function SA.findSheriff()
+            if SA.validTarget(SA.sheriff) then return SA.sheriff end
+            return SA.findByGun()
+        end
+
+        function SA.consumeData(data, fullSnapshot)
+            if typeof(data) ~= "table" then return false end
+            local records = (typeof(data.Players) == "table" and data.Players)
+                or (typeof(data.players) == "table" and data.players) or data
+            local lookup = {}
+            for key, info in pairs(records) do
+                lookup[string.lower(tostring(key))] = info
+                if typeof(info) == "table" then
+                    for _, identity in ipairs({ info.Name, info.PlayerName, info.Username, info.UserId, info.UserID, info.Id, info.PlayerId }) do
+                        if identity ~= nil then lookup[string.lower(tostring(identity))] = info end
+                    end
+                end
+            end
+            local function normalizeRole(info)
+                if typeof(info) == "table" then
+                    if info.Dead == true or info.Killed == true or info.IsDead == true or info.Alive == false then return "dead" end
+                    info = info.Role or info.role or info.CurrentRole or info.currentRole or info.Team or info.team or info.Class
+                end
+                local value = string.lower(tostring(info or "innocent")):gsub("[%s_%-]", "")
+                if string.find(value, "murder", 1, true) or string.find(value, "killer", 1, true) then return "murderer" end
+                if string.find(value, "sheriff", 1, true) then return "sheriff" end
+                if string.find(value, "hero", 1, true) then return "hero" end
+                if string.find(value, "dead", 1, true) or string.find(value, "killed", 1, true) then return "dead" end
+                return "innocent"
+            end
+            local foundMurderer, foundSheriff, foundHero, received = nil, nil, nil, false
+            for _, player in ipairs(SA.getPlayers()) do
+                local info = lookup[string.lower(player.Name)] or lookup[tostring(player.UserId)]
+                if info ~= nil then
+                    received = true
+                    SA.playerData[player.UserId] = info
+                    local resolved = normalizeRole(info)
+                    if SA.roleCache[player.UserId] ~= resolved then
+                        SA.roleCache[player.UserId] = resolved
+                        if (resolved == "murderer" or resolved == "sheriff" or resolved == "hero")
+                            and SA.announcedRoles[player.UserId] ~= resolved then
+                            SA.announcedRoles[player.UserId] = resolved
+                            SA.notify(player.Name .. " is " .. string.upper(resolved))
+                        end
+                    end
+                    if resolved == "murderer" then foundMurderer = player
+                    elseif resolved == "sheriff" then foundSheriff = player
+                    elseif resolved == "hero" then foundHero = player end
+                elseif fullSnapshot then
+                    SA.roleCache[player.UserId] = "innocent"
+                end
+            end
+            if fullSnapshot then
+                SA.murderer, SA.sheriff, SA.hero = foundMurderer, foundSheriff, foundHero
+            else
+                SA.murderer = foundMurderer or SA.murderer
+                SA.sheriff = foundSheriff or SA.sheriff
+                SA.hero = foundHero or SA.hero
+            end
+            if foundMurderer then SA.setTarget(foundMurderer) end
+            return received
+        end
+
+        function SA.getPlayerDataRemote()
+            if SA.playerDataRemote and SA.playerDataRemote.Parent then return SA.playerDataRemote end
+            local remote = ReplicatedStorage:FindFirstChild("GetPlayerData", true) -- OK: MM2 remote
+            SA.playerDataRemote = (remote and remote:IsA("RemoteFunction")) and remote or nil
+            return SA.playerDataRemote
+        end
+
+        SA.scanBusy = false
+        function SA.refreshTarget(force)
+            if not SA.running or SA.scanBusy then return end
+            SA.scanBusy = true
+            task.spawn(function()
+                local knifeOwner, gunOwner = SA.findByKnife(), SA.findByGun()
+                if knifeOwner then SA.setTarget(knifeOwner) end
+                if gunOwner and gunOwner ~= knifeOwner then SA.sheriff = gunOwner end
+                local remote = SA.getPlayerDataRemote()
+                if remote then
+                    local ok, data = pcall(function() return remote:InvokeServer() end)
+                    if ok then SA.consumeData(data, true) end -- VERIFY: MM2 role feed, remote name "GetPlayerData"
+                end
+                SA.scanBusy = false
             end)
-            if not ok then saNoDrawing = true saCircle = nil return end
         end
-        local sp = saScreenPoint()
-        if sp then
-            saCircle.Visible = true
-            saCircle.Position = sp
-            saCircle.Radius = SA.FOV
+
+        function SA.updatePing()
+            pcall(function()
+                local network = Stats:FindFirstChild("Network")
+                local items = network and network:FindFirstChild("ServerStatsItem")
+                local pingItem = items and items:FindFirstChild("Data Ping")
+                if pingItem then
+                    local measured = pingItem:GetValue() / 1000
+                    if measured > 0 and measured < 2 then SA.cachedPing = SA.cachedPing * 0.7 + measured * 0.3 end
+                end
+            end)
         end
-    end
-    local function saHideFOV()
-        if saCircle then pcall(function() saCircle.Visible = false end) end
-    end
 
-    -- ── хук __namecall ─────────────────────────────────────────────────────
-    local saOldNamecall = nil
-    local saHooked = false
+        -- ── infection round detection (auto zombie targeting) ──────────────
+        local function zombieWordIn(textValue)
+            local lowered = string.lower(tostring(textValue or ""))
+            return string.find(lowered, "zomb", 1, true) ~= nil
+                or string.find(lowered, "infect", 1, true) ~= nil
+                or string.find(lowered, "undead", 1, true) ~= nil
+        end
+        local function modelRoot(model)
+            return model and (model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart) or nil
+        end
+        local function modelHasZombieMarker(model)
+            if zombieWordIn(model.Name) then return true end
+            local ok, hit = pcall(function()
+                for key, value in pairs(model:GetAttributes()) do
+                    if zombieWordIn(key) or (type(value) == "string" and zombieWordIn(value)) then return true end
+                end
+                for _, child in ipairs(model:GetChildren()) do
+                    if (child:IsA("BoolValue") or child:IsA("StringValue")) and zombieWordIn(child.Name) then return true end
+                end
+                return false
+            end)
+            return ok and hit or false
+        end
+        local function playerHasZombieMarker(player)
+            if not player then return false end
+            local now = os.clock()
+            if now - SA.__infectionState.markersAt >= 0.5 then
+                table.clear(SA.__infectionState.markerPlayers)
+                SA.__infectionState.markersAt = now
+            end
+            local cached = SA.__infectionState.markerPlayers[player]
+            if cached ~= nil then return cached end
+            local ok, hit = pcall(function()
+                if player.Team and zombieWordIn(player.Team.Name) then return true end
+                for key, value in pairs(player:GetAttributes()) do
+                    if value == true and zombieWordIn(key) then return true end
+                end
+                local character = player.Character
+                if character then
+                    for key, value in pairs(character:GetAttributes()) do
+                        if value == true and zombieWordIn(key) then return true end
+                    end
+                    for _, inst in ipairs(character:GetDescendants()) do
+                        if inst:IsA("BoolValue") and inst.Value and zombieWordIn(inst.Name) then return true end
+                        if (inst:IsA("StringValue") or inst:IsA("IntValue") or inst:IsA("ObjectValue"))
+                            and zombieWordIn(inst.Name) then return true end
+                    end
+                end
+                return false
+            end)
+            hit = ok and hit or false
+            SA.__infectionState.markerPlayers[player] = hit
+            return hit
+        end
+        local function localHasGun()
+            local character = LocalPlayer.Character
+            local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+            return (character and character:FindFirstChild("Gun") ~= nil)
+                or (backpack and backpack:FindFirstChild("Gun") ~= nil) or false
+        end
+        local infectionSignal, infectionAt = false, 0
+        function SA.infectionRoundActive()
+            local now = os.clock()
+            if now - infectionAt < 0.8 then return infectionSignal end
+            infectionAt = now
+            infectionSignal = false
+            pcall(function()
+                for _, player in ipairs(SA.getPlayers()) do
+                    if player ~= LocalPlayer and playerHasZombieMarker(player) then infectionSignal = true break end
+                end
+            end)
+            if not infectionSignal then
+                pcall(function()
+                    local hasKnife, gunCount = false, 0
+                    if localHasGun() then gunCount += 1 end
+                    for _, player in ipairs(SA.getPlayers()) do
+                        if player ~= LocalPlayer and SA.validTarget(player) then
+                            if SA.playerHasTool(player, "Knife") then hasKnife = true end
+                            if SA.playerHasTool(player, "Gun") then gunCount += 1 end
+                        end
+                    end
+                    if not hasKnife and gunCount >= 2 then infectionSignal = true end
+                end)
+            end
+            if not infectionSignal then
+                pcall(function()
+                    for _, model in ipairs(Workspace:GetDescendants()) do
+                        if model:IsA("Model") and not Players:GetPlayerFromCharacter(model)
+                            and model:FindFirstChildOfClass("Humanoid") and modelHasZombieMarker(model) then
+                            infectionSignal = true
+                            break
+                        end
+                    end
+                end)
+            end
+            return infectionSignal
+        end
+        function SA.scanZombieNPCs(force)
+            local now = os.clock()
+            if not force and now < SA.__infectionState.nextScan then return SA.__infectionState.npcs end
+            SA.__infectionState.nextScan = now + 1.2
+            local strict, loose = {}, {}
+            pcall(function()
+                for _, model in ipairs(Workspace:GetDescendants()) do
+                    if model:IsA("Model") and not Players:GetPlayerFromCharacter(model) then
+                        local humanoid = model:FindFirstChildOfClass("Humanoid")
+                        local root = modelRoot(model)
+                        if humanoid and humanoid.Health > 0 and root then
+                            if modelHasZombieMarker(model) then strict[#strict + 1] = model
+                            else loose[#loose + 1] = model end
+                        end
+                    end
+                end
+            end)
+            if #strict > 0 then
+                SA.__infectionState.npcs = strict
+            else
+                local signal = localHasGun()
+                if not signal then
+                    for _, player in ipairs(Players:GetPlayers()) do
+                        if player ~= LocalPlayer and playerHasZombieMarker(player) then signal = true break end
+                    end
+                end
+                SA.__infectionState.npcs = signal and loose or {}
+            end
+            return SA.__infectionState.npcs
+        end
+        function SA.nearestZombieEntity()
+            if not SA.infectionRoundActive() then return nil end
+            local now = os.clock()
+            if SA.__infectionState.entity and now - SA.__infectionState.entityAt < 0.35 then
+                local cached = SA.__infectionState.entity
+                local stillOk = false
+                pcall(function()
+                    if typeof(cached) == "Instance" and cached.Parent then
+                        if cached:IsA("Model") then
+                            local humanoid = cached:FindFirstChildOfClass("Humanoid")
+                            stillOk = humanoid ~= nil and humanoid.Health > 0 and modelRoot(cached) ~= nil
+                        else
+                            stillOk = SA.validTarget(cached) and cached.Character ~= nil
+                        end
+                    end
+                end)
+                if stillOk then return cached end
+                SA.__infectionState.entity = nil
+            end
+            local origin = SA.localRoot()
+            if not origin then return nil end
+            local best, bestDistance
+            local function consider(candidate, candidateRoot)
+                if not candidateRoot then return end
+                local d = (candidateRoot.Position - origin.Position).Magnitude
+                if SA.config.maxDistance > 0 and d > SA.config.maxDistance then return end
+                if not bestDistance or d < bestDistance then best, bestDistance = candidate, d end
+            end
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and SA.validTarget(player)
+                    and not SA.playerIsInLobby(player) and playerHasZombieMarker(player) then
+                    local character = player.Character
+                    consider(player, character and character:FindFirstChild("HumanoidRootPart") or nil)
+                end
+            end
+            if not best then
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and SA.validTarget(player)
+                        and not SA.playerIsInLobby(player) and not SA.isFriend(player)
+                        and not SA.playerHasTool(player, "Gun") then
+                        local character = player.Character
+                        consider(player, character and character:FindFirstChild("HumanoidRootPart") or nil)
+                    end
+                end
+            end
+            for _, model in ipairs(SA.scanZombieNPCs()) do
+                local humanoid = model:FindFirstChildOfClass("Humanoid")
+                if humanoid and humanoid.Health > 0 then consider(model, modelRoot(model)) end
+            end
+            if best and bestDistance then
+                local current = SA.__infectionState.entity
+                if current and current ~= best and typeof(current) == "Instance" and current.Parent then
+                    local currentRoot
+                    pcall(function()
+                        if current:IsA("Model") then currentRoot = modelRoot(current)
+                        elseif SA.validTarget(current) then currentRoot = current.Character and current.Character:FindFirstChild("HumanoidRootPart") or nil end
+                    end)
+                    if currentRoot and (currentRoot.Position - origin.Position).Magnitude <= bestDistance + 8 then best = current end
+                end
+            end
+            SA.__infectionState.entity = best
+            SA.__infectionState.entityAt = now
+            return best
+        end
 
-    local function saOurCall()
-        local f = checkcaller
-        return typeof(f) == "function" and f() or false
-    end
+        -- ── targeting ──────────────────────────────────────────────────────
+        function SA.getAimPart(player)
+            local character = SA.entityCharacter(player)
+            if not character then return nil end
+            local partName = SA.config.hitPart
+            if partName == "Random" then
+                local options = { "Head", "UpperTorso", "LowerTorso", "HumanoidRootPart" }
+                partName = options[math.random(#options)]
+            end
+            local part = character:FindFirstChild(partName)
+            if not part then part = character:FindFirstChild("HumanoidRootPart") or character.PrimaryPart end
+            return part
+        end
+        function SA.passesFilters(player, trusted)
+            if player == nil or player == LocalPlayer then return false end
+            if not SA.validTarget(player) then return false end
+            if not trusted and SA.playerIsInLobby(player) then return false end
+            if SA.isFriend(player) then return false end
+            if SA.config.maxDistance > 0 and SA.distanceTo(player) > SA.config.maxDistance then return false end
+            return true
+        end
+        function SA.selectTarget(mode)
+            -- infection rounds: silent aim targets the nearest zombie (NPC or player)
+            if SA.infectionRoundActive() then
+                local zombieEntity = SA.nearestZombieEntity()
+                if zombieEntity then return zombieEntity end
+            end
+            mode = mode or SA.config.targetMode
+            if mode == "Murderer" then return SA.passesFilters(SA.murderer, true) and SA.murderer or nil end
+            if mode == "Sheriff" then return SA.passesFilters(SA.sheriff, true) and SA.sheriff or nil end
+            if mode == "Hero" then return SA.passesFilters(SA.hero, true) and SA.hero or nil end
+            if mode == "Nearest" then
+                local best, bestDistance
+                for _, player in ipairs(SA.getPlayers()) do
+                    if SA.passesFilters(player) then
+                        local d = SA.distanceTo(player)
+                        if not bestDistance or d < bestDistance then best, bestDistance = player, d end
+                    end
+                end
+                return best
+            end
+            if mode == "Crosshair" then
+                local camera = Workspace.CurrentCamera
+                local best, bestDistance
+                if camera then
+                    local center = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+                    for _, player in ipairs(SA.getPlayers()) do
+                        if SA.passesFilters(player) then
+                            local part = SA.getAimPart(player)
+                            if part then
+                                local screen = camera:WorldToViewportPoint(part.Position)
+                                if screen.Z > 0 then
+                                    local d = (Vector2.new(screen.X, screen.Y) - center).Magnitude
+                                    if not bestDistance or d < bestDistance then best, bestDistance = player, d end
+                                end
+                            end
+                        end
+                    end
+                end
+                return best
+            end
+            if mode == "Lowest Health" then
+                local best, bestHealth
+                for _, player in ipairs(SA.getPlayers()) do
+                    if SA.passesFilters(player) then
+                        local humanoid = player.Character and player.Character:FindFirstChildWhichIsA("Humanoid")
+                        local health = humanoid and humanoid.Health or math.huge
+                        if not bestHealth or health < bestHealth then best, bestHealth = player, health end
+                    end
+                end
+                return best
+            end
+            if mode == "Random" then
+                local list = {}
+                for _, player in ipairs(SA.getPlayers()) do
+                    if SA.passesFilters(player) then list[#list + 1] = player end
+                end
+                if #list > 0 then return list[math.random(#list)] end
+                return nil
+            end
+            return SA.passesFilters(SA.murderer, true) and SA.murderer or nil
+        end
+        function SA.targetPart()
+            local player = SA.selectTarget()
+            if not player then player = SA.findByKnife() end
+            local character = SA.entityCharacter(player)
+            if not character then return nil end
+            return SA.getAimPart(player)
+                or character:FindFirstChild("HumanoidRootPart")
+                or character.PrimaryPart
+        end
+        function SA.findNearestKnifeTarget()
+            local root = SA.localRoot()
+            if not root then return nil end
+            local closest, closestDistance
+            for _, player in ipairs(SA.getPlayers()) do
+                if SA.passesFilters(player) then
+                    local targetRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    if targetRoot then
+                        local d = (targetRoot.Position - root.Position).Magnitude
+                        if not closestDistance or d < closestDistance then closest, closestDistance = player, d end
+                    end
+                end
+            end
+            return closest
+        end
+        function SA.knifeTargetPlayer()
+            if not SA.config.knifeEnabled then return nil end
+            if SA.config.knifePrioritizeSheriff == true then
+                local sheriffPlayer = SA.findSheriff()
+                return SA.passesFilters(sheriffPlayer, true) and sheriffPlayer or nil
+            end
+            return SA.findNearestKnifeTarget()
+        end
+        function SA.knifeTargetPart()
+            local player = SA.knifeTargetPlayer()
+            local character = player and player.Character
+            if not character then return nil end
+            return SA.getAimPart(player)
+                or character:FindFirstChild("HumanoidRootPart")
+                or character.PrimaryPart
+        end
 
-    local function saLocalKnife(self)
-        local char = SALocal.Character
-        if char and self:IsDescendantOf(char) then return true end
-        local bp = SALocal:FindFirstChildOfClass("Backpack")
-        if bp and self:IsDescendantOf(bp) then return true end
-        return false
-    end
+        -- ── ping-adaptive prediction ───────────────────────────────────────
+        SA.PingProfiles = {
+            { Ping = 20,  Sim = 48, Interval = 70, H = 154, V = 144, X = -5,  Y = -14, Z = 0 },
+            { Ping = 50,  Sim = 54, Interval = 66, H = 162, V = 152, X = -6,  Y = -14, Z = 0 },
+            { Ping = 100, Sim = 68, Interval = 60, H = 176, V = 166, X = -8,  Y = -15, Z = 0 },
+            { Ping = 150, Sim = 72, Interval = 64, H = 182, V = 170, X = -9,  Y = -12, Z = 0 },
+            { Ping = 200, Sim = 76, Interval = 70, H = 188, V = 174, X = -10, Y = -11, Z = 0 },
+            { Ping = 300, Sim = 82, Interval = 76, H = 196, V = 180, X = -12, Y = -10, Z = 0 },
+        }
+        function SA.autoTuneForPing()
+            local now = os.clock()
+            if now - (SA.lastAutoTune or 0) < 0.4 then return end
+            SA.lastAutoTune = now
+            local pingMs = math.clamp(math.floor(SA.cachedPing * 1000 + 0.5), 5, 1000)
+            if SA.config.prioritizePing and SA.config.manualPingMs ~= pingMs then SA.config.manualPingMs = pingMs end
+            local knife = SA.config.knifeAim
+            if knife.prioritizePing and knife.manualPingMs ~= pingMs then knife.manualPingMs = pingMs end
+        end
+        function SA.leadTime(profile)
+            -- profile "knife" reads the knifeAim prediction settings, gun reads config
+            local settings = profile == "knife" and SA.config.knifeAim or SA.config
+            local observedPing = settings.prioritizePing and SA.cachedPing or (settings.manualPingMs / 1000)
+            local prediction
+            if settings.adaptive then
+                prediction = observedPing + settings.extraLead
+                if settings.predictLag then
+                    local samplingDelay = math.clamp(settings.predictionIntervalMs / 2000, 0, 0.05)
+                    prediction = prediction + samplingDelay + math.max(0, observedPing - 0.10) * 0.15
+                end
+            else
+                prediction = settings.fixedLead
+            end
+            local simulationCap = settings.maxSimulationMs / 1000
+            if settings.adaptive then
+                simulationCap = math.min(0.30, simulationCap + math.clamp(observedPing - 0.10, 0, 0.25) * 0.45)
+            end
+            return math.clamp(prediction, 0.02, simulationCap)
+        end
+        local function motionRoot(part)
+            -- predict from HumanoidRootPart: walk animation bob on Head/limbs
+            -- never poisons the sampled velocity
+            if not part then return part end
+            local model = part.Parent
+            if model and model:FindFirstChildOfClass("Humanoid") then
+                return model:FindFirstChild("HumanoidRootPart") or part
+            end
+            return part
+        end
+        function SA.sampleMotion(part, settings)
+            settings = settings or SA.config
+            local now = os.clock()
+            if SA.motionPart ~= part then
+                SA.motionPart = part
+                SA.motionSamples = {}
+                SA.measuredVelocity = part.AssemblyLinearVelocity
+                SA.previousEstimatedVelocity = SA.measuredVelocity
+                SA.estimatedAcceleration = Vector3.zero
+            end
+            -- sample fast (16-50 ms) even if the UI interval is higher:
+            -- a strafe reversal is invisible to a 70+ ms sampler
+            local interval = math.clamp((tonumber(settings.predictionIntervalMs) or 72) / 1000, 0.016, 0.05)
+            local last = SA.motionSamples[#SA.motionSamples]
+            if not last or now - last.time >= interval then
+                SA.motionSamples[#SA.motionSamples + 1] = { position = part.Position, time = now }
+                while #SA.motionSamples > 14 or (#SA.motionSamples > 3 and now - SA.motionSamples[1].time > 0.28) do
+                    table.remove(SA.motionSamples, 1)
+                end
+                local count = #SA.motionSamples
+                if count >= 2 then
+                    local newest, previous = SA.motionSamples[count], SA.motionSamples[count - 1]
+                    local dt = newest.time - previous.time
+                    if dt > 0.004 then
+                        local recent = (newest.position - previous.position) / dt
+                        local sampled = recent
+                        if count >= 4 then
+                            -- least-squares slope over the window: stable lead direction
+                            local t0 = SA.motionSamples[1].time
+                            local n, st, sx, sz = 0, 0, 0, 0
+                            for i = 1, count do
+                                local s = SA.motionSamples[i]
+                                local t = s.time - t0
+                                n = n + 1; st = st + t; sx = sx + s.position.X; sz = sz + s.position.Z
+                            end
+                            local mt, mx, mz = st / n, sx / n, sz / n
+                            local numX, numZ, den = 0, 0, 0
+                            for i = 1, count do
+                                local s = SA.motionSamples[i]
+                                local t = s.time - t0
+                                numX = numX + (t - mt) * (s.position.X - mx)
+                                numZ = numZ + (t - mt) * (s.position.Z - mz)
+                                den = den + (t - mt) * (t - mt)
+                            end
+                            if den > 0.0001 then
+                                sampled = recent:Lerp(Vector3.new(numX / den, recent.Y, numZ / den), 0.5)
+                            end
+                        end
+                        if sampled.Magnitude < 250 then
+                            local oldVelocity = SA.measuredVelocity
+                            SA.measuredVelocity = SA.measuredVelocity:Lerp(sampled, math.clamp(dt * 26, 0.45, 1))
+                            local acceleration = (SA.measuredVelocity - oldVelocity) / math.max(dt, 0.016)
+                            if acceleration.Magnitude < 160 then
+                                SA.estimatedAcceleration = SA.estimatedAcceleration:Lerp(acceleration, 0.3)
+                            else
+                                SA.estimatedAcceleration = Vector3.zero
+                            end
+                            SA.previousEstimatedVelocity = oldVelocity
+                        end
+                    end
+                end
+            end
+            SA.motionPosition = part.Position
+            SA.motionTime = now
+        end
+        function SA.calculateAim(part)
+            local root = motionRoot(part)
+            SA.sampleMotion(root)
+            local assembly = root.AssemblyLinearVelocity
+            local velocity = assembly
+            local acceleration = Vector3.zero
+            if SA.config.predictLag and SA.motionPart == root and #SA.motionSamples >= 2 then
+                local disagreement = (assembly - SA.measuredVelocity).Magnitude
+                local measuredWeight = math.clamp(0.75 - disagreement / 120, 0.35, 0.75)
+                -- strafe reversal: sampling still points the old way, physics does not
+                if assembly.X * SA.measuredVelocity.X + assembly.Z * SA.measuredVelocity.Z < 0 then measuredWeight = 0.15 end
+                if assembly.Magnitude < 2.5 then measuredWeight = math.min(measuredWeight, 0.25) end
+                velocity = assembly:Lerp(SA.measuredVelocity, measuredWeight)
+                acceleration = SA.estimatedAcceleration
+            end
+            local horizontal = SA.config.horizontalMultiplier / 100
+            local vertical = SA.config.verticalMultiplier / 100
+            local time = SA.leadTime() * math.clamp((tonumber(SA.config.leadScale) or 100) / 100, 0.25, 2.5)
+            time = math.clamp(time, 0.02, 0.60)
+            local displacement = Vector3.new(velocity.X * horizontal * time, 0, velocity.Z * horizontal * time)
+            if SA.config.predictLag then
+                local horizontalAcceleration = Vector3.new(acceleration.X, 0, acceleration.Z)
+                displacement = displacement + horizontalAcceleration * (0.5 * time * time)
+            end
+            if SA.config.predictJump then
+                local verticalTime = time * vertical
+                local verticalDisplacement = velocity.Y * verticalTime
+                local humanoid = root.Parent and root.Parent:FindFirstChildWhichIsA("Humanoid")
+                if humanoid and humanoid.FloorMaterial == Enum.Material.Air then
+                    verticalDisplacement = verticalDisplacement - 0.5 * Workspace.Gravity * verticalTime * verticalTime
+                end
+                displacement = displacement + Vector3.new(0, verticalDisplacement, 0)
+            end
+            -- horizontal safety cap that leaves the jump arc alone
+            local flat = Vector3.new(displacement.X, 0, displacement.Z)
+            if flat.Magnitude > 60 then
+                flat = flat.Unit * 60
+                displacement = Vector3.new(flat.X, displacement.Y, flat.Z)
+            end
+            local offset = Vector3.new(
+                part.Size.X * SA.config.offsetX / 100,
+                part.Size.Y * SA.config.offsetY / 100,
+                part.Size.Z * SA.config.offsetZ / 100)
+            return part.Position + displacement + offset
+        end
+        function SA.calculateKnifeAim(part, origin)
+            local settings = SA.config.knifeAim
+            local root = motionRoot(part)
+            SA.sampleMotion(root, settings)
+            local assembly = root.AssemblyLinearVelocity
+            local velocity = assembly
+            if settings.predictLag and SA.motionPart == root and #SA.motionSamples >= 2 then
+                local weight = 0.65
+                if assembly.X * SA.measuredVelocity.X + assembly.Z * SA.measuredVelocity.Z < 0 then weight = 0.15 end
+                velocity = assembly:Lerp(SA.measuredVelocity, weight)
+            end
+            local horizontal = settings.horizontalMultiplier / 100
+            local vertical = settings.verticalMultiplier / 100
+            local predictedVelocity = Vector3.new(
+                velocity.X * horizontal,
+                settings.predictJump and velocity.Y * vertical or 0,
+                velocity.Z * horizontal)
+            local distance = (part.Position - origin).Magnitude
+            local travelTime = math.clamp(distance / 125, 0, 0.55) -- knife flies ~125 studs/s
+            local lead = SA.leadTime("knife") * math.clamp((tonumber(settings.leadScale) or 100) / 100, 0.25, 2.5)
+            local time = math.clamp(lead + travelTime, 0.03, 0.90)
+            local offset = Vector3.new(
+                part.Size.X * settings.offsetX / 100,
+                part.Size.Y * settings.offsetY / 100,
+                part.Size.Z * settings.offsetZ / 100)
+            return part.Position + predictedVelocity * time + offset
+        end
 
-    local function saInstallHook()
-        if saHooked then return true end
-        if typeof(hookmetamethod) ~= "function" or typeof(getnamecallmethod) ~= "function" then
-            Notify("Silent Aim", "Исполнитель не поддерживает hookmetamethod", "Error")
+        -- ── wall check ─────────────────────────────────────────────────────
+        SA.wallCheckParams = RaycastParams.new()
+        SA.wallCheckParams.FilterType = Enum.RaycastFilterType.Exclude
+        SA.wallCheckParams.IgnoreWater = true
+        function SA.targetVisible(part, forceWallCheck)
+            if not (forceWallCheck or SA.config.wallCheck) then return true end
+            local character = LocalPlayer.Character
+            local originPart = character
+                and (character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart"))
+            if not originPart or not part then return false end
+            SA.wallCheckParams.FilterDescendantsInstances = { character }
+            local result = Workspace:Raycast(originPart.Position, part.Position - originPart.Position, SA.wallCheckParams)
+            return result == nil or result.Instance:IsDescendantOf(part.Parent)
+        end
+
+        -- ── shot remote detection + redirect ───────────────────────────────
+        local function localGunTool()
+            local character = LocalPlayer.Character
+            local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+            return (character and character:FindFirstChild("Gun")) or (backpack and backpack:FindFirstChild("Gun"))
+        end
+        local function remoteBelongsToLocalGun(remote)
+            local character = LocalPlayer.Character
+            local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+            local tool = remote and remote:FindFirstAncestorOfClass("Tool")
+            if tool and tool.Name == "Gun"
+                and ((character and tool:IsDescendantOf(character)) or (backpack and tool:IsDescendantOf(backpack))) then
+                return true
+            end
+            local characterGun = character and character:FindFirstChild("Gun")
+            local backpackGun = backpack and backpack:FindFirstChild("Gun")
+            return (characterGun and remote:IsDescendantOf(characterGun))
+                or (backpackGun and remote:IsDescendantOf(backpackGun))
+        end
+        local function shotRemote(remote, args)
+            if not SA.config.enabled or args.n < 2 then return false end
+            if typeof(remote) ~= "Instance" or not remote:IsA("RemoteEvent") then return false end
+            if not remoteBelongsToLocalGun(remote) then return false end
+            local first, second = args[1], args[2]
+            local firstIsPos = typeof(first) == "Vector3" or typeof(first) == "CFrame"
+            local secondIsPos = typeof(second) == "Vector3" or typeof(second) == "CFrame"
+            return firstIsPos and secondIsPos
+        end
+        local function knifeRemote(remote, args)
+            if not SA.config.knifeEnabled or args.n < 2 then return false end
+            if typeof(remote) ~= "Instance" or not remote:IsA("RemoteEvent") then return false end
+            if remote.Name ~= "KnifeThrown" then return false end -- OK: MM2 knife throw remote
+            if typeof(args[1]) ~= "CFrame" or typeof(args[2]) ~= "CFrame" then return false end
+            local character = LocalPlayer.Character
+            local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+            local knife = character and character:FindFirstChild("Knife")
+            if knife and remote:IsDescendantOf(knife) then return true end
+            if character and remote:IsDescendantOf(character) then return true end
+            if backpack and remote:IsDescendantOf(backpack) then return true end
             return false
         end
-        local wrap = (typeof(newcclosure) == "function") and newcclosure or function(f) return f end
-        local ok, err = pcall(function()
-            saOldNamecall = hookmetamethod(game, "__namecall", wrap(function(self, ...)
-                if getnamecallmethod() ~= "FireServer" then
-                    return saOldNamecall(self, ...)
+        function SA.redirect(remote, args)
+            local part, useWallCheck, isKnife = nil, false, false
+            if shotRemote(remote, args) then
+                part = SA.targetPart()
+                useWallCheck = SA.config.wallCheck
+            elseif knifeRemote(remote, args) then
+                part = SA.knifeTargetPart()
+                useWallCheck = SA.config.knifeWallCheck
+                isKnife = true
+            else
+                return
+            end
+            if not part or typeof(part) ~= "Instance" or not part:IsA("BasePart") then return end
+            if useWallCheck and not SA.targetVisible(part, true) then return end
+
+            if isKnife then
+                local origin = args[1].Position
+                local aim = SA.calculateKnifeAim(part, origin)
+                if SA.config.alignDirection and (aim - origin).Magnitude > 0.01 then
+                    args[1] = CFrame.lookAt(origin, aim)
                 end
-                if typeof(self) ~= "Instance" or not self:IsA("RemoteEvent") then
-                    return saOldNamecall(self, ...)
+                args[2] = CFrame.new(aim)
+                SA.redirected = SA.redirected + 1
+                return
+            end
+
+            local aim = SA.calculateAim(part)
+            local firstType, secondType = typeof(args[1]), typeof(args[2])
+            if firstType == "CFrame" then
+                local origin = args[1].Position
+                if SA.config.alignDirection and (aim - origin).Magnitude > 0.01 then
+                    args[1] = CFrame.lookAt(origin, aim)
                 end
-                local name = self.Name
-                -- ПИСТОЛЕТ: GunFired(Handle, Origin, HitPos, HitPart) ->
-                -- подменяем HitPos и HitPart на цель
-                if SA.Enabled and not saOurCall()
-                and (GunRemote ~= nil and self == GunRemote
-                    or (self.Parent ~= nil and self.Parent.Name == "WeaponService")) then
-                    local args = { ... }
-                    if #args >= 4
-                    and typeof(args[3]) == "Vector3"
-                    and typeof(args[4]) == "Instance" then
-                        local target = saFindTarget()
-                        if target then
-                            args[3] = target.Position
-                            args[4] = target
-                        end
-                        return saOldNamecall(self, table.unpack(args))
+                if secondType == "CFrame" then
+                    args[2] = CFrame.new(aim)
+                elseif secondType == "Vector3" then
+                    args[2] = aim
+                else
+                    return
+                end
+            elseif firstType == "Vector3" then
+                local origin = args[1]
+                args[1] = origin
+                if secondType == "Vector3" then
+                    if args[2].Magnitude <= 1.5 and (aim - origin).Magnitude > 0.01 then
+                        args[2] = (aim - origin).Unit
+                    else
+                        args[2] = aim
                     end
+                elseif secondType == "CFrame" then
+                    args[2] = CFrame.new(aim)
+                else
+                    return
                 end
-                -- НОЖ: касание -> ближайший враг
-                if name == "HandleTouched" and SA.Knife and saLocalKnife(self) then
-                    local args = { ... }
-                    if #args == 0 or typeof(args[1]) == "Instance" then
-                        local target = saKnifeTarget()
-                        if target then args[1] = target end
-                        return saOldNamecall(self, table.unpack(args))
-                    end
-                end
-                -- НОЖ: бросок -> цель (по FOV)
-                if name == "KnifeThrown" and SA.KnifeThrow and saLocalKnife(self) then
-                    local args = { ... }
-                    if #args >= 2 and typeof(args[2]) == "CFrame" then
-                        local target = saFindTarget()
-                        if target then
-                            args[2] = CFrame.new(target.Position)
-                        end
-                        return saOldNamecall(self, table.unpack(args))
-                    end
-                end
-                -- НОЖ: авто-удар при взмахе (после KnifeStabbed шлём HandleTouched)
-                if name == "KnifeStabbed" and SA.KnifeAuto
-                and saLocalKnife(self) and not saOurCall() then
-                    local result = saOldNamecall(self, ...)
-                    local target = saKnifeTarget()
-                    if target then
-                        local events = getKnifeEvents()
-                        local remote = events and events:FindFirstChild("HandleTouched")
-                        if remote then
-                            task.defer(function()
-                                pcall(function() remote:FireServer(target) end)
-                            end)
-                        end
-                    end
-                    return result
-                end
-                return saOldNamecall(self, ...)
-            end))
-        end)
-        if not ok then
-            warn("[Noir] silent aim hook: " .. tostring(err))
-            Notify("Silent Aim", "Не удалось поставить хук (см. консоль)", "Error")
-            return false
+            else
+                return
+            end
+            SA.redirected = SA.redirected + 1
         end
-        saHooked = true
-        return true
-    end
 
-    local function saEnsure()
-        if SA.Enabled or SA.Knife or SA.KnifeAuto or SA.KnifeThrow then
-            saInstallHook()
+        -- ── executor hook (namecall, hookfunction fallback) ────────────────
+        function SA.installHook()
+            if SA.hooked then return true end
+            local wrap = type(newcclosure) == "function" and newcclosure or function(callback) return callback end
+            local isOwnCall = type(checkcaller) == "function" and checkcaller or function() return false end
+            if type(hookmetamethod) == "function" and type(getnamecallmethod) == "function" then
+                local old
+                local ok, err = pcall(function()
+                    old = hookmetamethod(game, "__namecall", wrap(function(self, ...)
+                        local method = getnamecallmethod()
+                        local methodLower = string.lower(tostring(method or ""))
+                        if methodLower == "fireserver" and typeof(self) == "Instance" then
+                            if self.ClassName == "RemoteEvent" and not isOwnCall() then
+                                local args = table.pack(...)
+                                pcall(SA.redirect, self, args)
+                                if type(setnamecallmethod) == "function" then setnamecallmethod(method) end
+                                return old(self, table.unpack(args, 1, args.n))
+                            end
+                        end
+                        return old(self, ...)
+                    end))
+                end)
+                if ok and type(old) == "function" then
+                    SA.hooked = true
+                    return true
+                end
+                SA.notify("Namecall hook failed: " .. tostring(err))
+            end
+            if type(hookfunction) ~= "function" then
+                SA.notify("No hook support in this executor")
+                return false
+            end
+            local probe = Instance.new("RemoteEvent")
+            local original
+            local ok, err = pcall(function()
+                original = hookfunction(probe.FireServer, wrap(function(self, ...)
+                    local args = table.pack(...)
+                    if typeof(self) == "Instance" and self.ClassName == "RemoteEvent" and not isOwnCall() then
+                        pcall(SA.redirect, self, args)
+                    end
+                    return original(self, table.unpack(args, 1, args.n))
+                end))
+            end)
+            probe:Destroy()
+            if not ok or type(original) ~= "function" then
+                SA.notify("Hook failed: " .. tostring(err))
+                return false
+            end
+            SA.hooked = true
+            return true
         end
-    end
 
-    local saRenderConn = SARun.RenderStepped:Connect(function()
-        if SA.ShowFOV then saDrawFOV() else saHideFOV() end
-    end)
+        function SA.setGunEnabled(value)
+            SA.config.enabled = value == true
+            if SA.config.enabled then
+                if not SA.installHook() then
+                    SA.config.enabled = false
+                    return false
+                end
+                task.spawn(function() SA.refreshTarget(true) end)
+                SA.notify("Silent Aim enabled")
+            else
+                SA.notify("Silent Aim disabled")
+            end
+            return true
+        end
+        function SA.setKnifeEnabled(value)
+            SA.config.knifeEnabled = value == true
+            if SA.config.knifeEnabled then
+                if not SA.installHook() then
+                    SA.config.knifeEnabled = false
+                    return false
+                end
+                SA.notify("Knife Silent Aim enabled")
+            else
+                SA.notify("Knife Silent Aim disabled")
+            end
+            return true
+        end
 
-    -- ── выгрузка ───────────────────────────────────────────────────────────
-    genv.NoirAutoUnload = function()
-        genv.NoirAutoUnload = nil
-        pcall(function() if saRenderConn then saRenderConn:Disconnect() end end)
-        pcall(function() if saCircle then saCircle:Remove() end end)
-        pcall(function()
-            if saHooked and saOldNamecall then
-                hookmetamethod(game, "__namecall", saOldNamecall)
+        -- ── round / role remote listeners (MM2) ────────────────────────────
+        local remoteConnections = {}
+        local function clearRoles()
+            SA.murderer, SA.sheriff, SA.hero = nil, nil, nil
+            table.clear(SA.roleCache)
+            table.clear(SA.announcedRoles)
+        end
+        local function connectRemote(name, handler)
+            local wanted = string.lower(tostring(name))
+            for _, remote in ipairs(ReplicatedStorage:GetDescendants()) do
+                if string.lower(remote.Name) == wanted then
+                    if remote:IsA("RemoteEvent") then
+                        remoteConnections[#remoteConnections + 1] = remote.OnClientEvent:Connect(function(...)
+                            pcall(handler, ...)
+                        end)
+                    end
+                end
+            end
+        end
+        connectRemote("PlayerDataChanged", function(first, second)
+            if typeof(second) == "table" and typeof(first) == "Instance" and first:IsA("Player") then
+                SA.consumeData({ [first.Name] = second }, false)
+            else
+                SA.consumeData(first, false)
             end
         end)
-        if window and not window._destroyed then
-            pcall(window.Destroy, window)
+        connectRemote("RoundStart", function(timerValue, roundData)
+            clearRoles()
+            if typeof(roundData) == "table" then SA.consumeData(roundData, true) end
+            SA.refreshTarget(true)
+        end)
+        connectRemote("RoundEndFade", clearRoles)
+        connectRemote("RoundEnd", clearRoles)
+        connectRemote("GameOver", clearRoles)
+        connectRemote("VictoryScreen", clearRoles)
+        connectRemote("RoleSelect", function() task.spawn(SA.refreshTarget) end)
+        connectRemote("ShowRoleSelect", function() task.spawn(SA.refreshTarget) end)
+        connectRemote("ShowRoleSelectNew", function() task.spawn(SA.refreshTarget) end)
+        connectRemote("ChangeTarget", function() task.spawn(SA.refreshTarget) end)
+        connectRemote("GiveWeapon", function() task.spawn(SA.refreshTarget) end)
+        connectRemote("KillEvent", function() task.spawn(SA.refreshTarget) end)
+        for _, connection in ipairs(remoteConnections) do table.insert(SA.connections, connection) end
+
+        -- ── background loops ───────────────────────────────────────────────
+        task.spawn(function() -- ping measurement + auto tune, 0.5 s
+            while SA.running do
+                SA.updatePing()
+                SA.autoTuneForPing()
+                task.wait(0.5)
+            end
+        end)
+        task.spawn(function() -- role scanner, 2 s
+            while SA.running do
+                SA.refreshTarget()
+                task.wait(2)
+            end
+        end)
+        task.spawn(function() -- motion sampler, 30 Hz while any silent aim is on
+            while SA.running do
+                if SA.config.enabled or SA.config.knifeEnabled then
+                    local part = SA.targetPart()
+                    local settings = SA.config.enabled and SA.config or SA.config.knifeAim
+                    if part then SA.sampleMotion(part, settings) end
+                end
+                task.wait(1 / 30)
+            end
+        end)
+
+        -- ── unload: loops stop, both features off; hook stays but is inert ──
+        function SA.Stop()
+            if not SA.running then return end
+            SA.running = false
+            SA.config.enabled = false
+            SA.config.knifeEnabled = false
+            for _, connection in ipairs(SA.connections) do
+                pcall(function() connection:Disconnect() end)
+            end
+            table.clear(SA.connections)
+            pcall(function() Notify("Silent Aim", "Движок выгружен") end)
         end
+        genv.__NoirMenuSA = SA
     end
+    -- ═══════════════════ /NOIR SILENT AIM ENGINE ═════════════════════════
+
 
     -- ═════════════════════════════════════════════════════════════════════
     --  ВКЛАДКА 1: MAIN — демо-элементы (замени на свои функции)
@@ -20501,170 +21240,156 @@ local autoOk, autoErr = pcall(function()
         right:CreateLabel("Это демо-вкладка автозапуска.")
         right:CreateParagraph({
             Title   = "Как пользоваться",
-            Content = "Вкладка Combat — Silent Aim для пистолета и ножа. "
-                    .. "Плавающая кнопка на экране открывает/закрывает меню. "
-                    .. "На ПК — клавиша RightControl.",
+            Content = "Плавающая кнопка на экране открывает/закрывает меню. "
+                    .. "На ПК — клавиша RightControl. "
+                    .. "Свои функции добавляй по образцу из этого блока "
+                    .. "(внизу файла).",
         })
         right:CreateDivider("конец")
     end
 
     -- ═════════════════════════════════════════════════════════════════════
-    --  ВКЛАДКА 2: COMBAT — Silent Aim (пистолет + нож)
+    --  ВКЛАДКА 1.5: SILENT AIM — gun + knife silent aim (порт из Noir_Part1/2)
     -- ═════════════════════════════════════════════════════════════════════
-    local combatRows
     do
-        local tab = window:CreateTab({ Name = "Combat", Icon = "crosshair", Desc = "Silent Aim" })
+        local SA = genv.__NoirMenuSA
+        local tab = window:CreateTab({ Name = "Silent Aim", Icon = "crosshair", Desc = "Gun + Knife silent aim" })
 
-        local gun = tab:AddLeftGroupbox({ Name = "Пистолет", Icon = "crosshair" })
+        local gun = tab:AddLeftGroupbox({ Name = "SILENT AIM", Icon = "zap" })
         gun:CreateToggle({
-            Name    = "Silent Aim",
-            Desc    = "Выстрелы летят в цель без наведения",
-            Default = false,
-            Flag    = "GunSilentAim",
+            Name     = "Silent Aim",
+            Desc     = "Перенаправляет выстрелы пистолета в предсказанную точку цели",
+            Default  = false,
+            Flag     = "SA_Enabled",
             Callback = function(v)
-                SA.Enabled = v
-                saEnsure()
+                if SA and SA.setGunEnabled then
+                    local ok = SA.setGunEnabled(v)
+                    if not ok and v then Notify("Silent Aim", "Хук не поддерживается исполнителем", "Error") end
+                end
             end,
         })
         gun:CreateDropdown({
-            Name    = "Часть тела",
-            Options = { "Head", "HumanoidRootPart", "Torso", "UpperTorso", "Closest" },
-            Default = "Head",
-            Flag    = "GunPart",
-            Callback = function(v) SA.Part = v end,
+            Name     = "Target Mode",
+            Options  = { "Murderer", "Sheriff", "Hero", "Nearest", "Crosshair", "Lowest Health", "Random" },
+            Default  = "Murderer",
+            Flag     = "SA_TargetMode",
+            Callback = function(v) if SA then SA.config.targetMode = tostring(v) end end,
+        })
+        gun:CreateDropdown({
+            Name     = "Hit Part",
+            Options  = { "HumanoidRootPart", "Head", "Torso", "UpperTorso", "LowerTorso", "Random" },
+            Default  = "HumanoidRootPart",
+            Flag     = "SA_HitPart",
+            Callback = function(v) if SA then SA.config.hitPart = tostring(v) end end,
+        })
+        gun:CreateToggle({
+            Name     = "Wall Check",
+            Desc     = "Не стрелять, если между тобой и целью стена",
+            Default  = false,
+            Flag     = "SA_WallCheck",
+            Callback = function(v) if SA then SA.config.wallCheck = v end end,
+        })
+        gun:CreateToggle({
+            Name     = "Ignore Friends",
+            Default  = false,
+            Flag     = "SA_IgnoreFriends",
+            Callback = function(v) if SA then SA.config.ignoreFriends = v end end,
         })
         gun:CreateSlider({
-            Name     = "FOV",
-            Min      = 30, Max = 1000, Default = 250,
-            Suffix   = "px",
-            Flag     = "GunFOV",
-            Callback = function(v) SA.FOV = v end,
+            Name     = "Max Distance", Min = 0, Max = 1000, Default = 0,
+            Suffix   = " studs", Flag = "SA_MaxDistance",
+            Callback = function(v) if SA then SA.config.maxDistance = v end end,
         })
-        gun:CreateToggle({
-            Name    = "Без FOV (любая цель на экране)",
-            Default = false,
-            Flag    = "GunNoFOV",
-            Callback = function(v) SA.IgnoreFOV = v end,
+        gun:CreateDivider("предикшн")
+        gun:CreateSlider({
+            Name     = "Lead Scale", Min = 25, Max = 250, Default = 100,
+            Suffix   = "%", Flag = "SA_LeadScale",
+            Callback = function(v) if SA then SA.config.leadScale = v end end,
         })
-        gun:CreateToggle({
-            Name    = "Проверка стен",
-            Desc    = "Не целиться сквозь препятствия",
-            Default = true,
-            Flag    = "GunWalls",
-            Callback = function(v) SA.WallCheck = v end,
+        gun:CreateSlider({
+            Name     = "Offset X", Min = -50, Max = 50, Default = 0,
+            Suffix   = "%", Flag = "SA_OffsetX",
+            Callback = function(v) if SA then SA.config.offsetX = v end end,
         })
-        gun:CreateToggle({
-            Name    = "Не бить свою команду",
-            Default = true,
-            Flag    = "GunTeam",
-            Callback = function(v) SA.TeamCheck = v end,
+        gun:CreateSlider({
+            Name     = "Offset Y", Min = -50, Max = 50, Default = 0,
+            Suffix   = "%", Flag = "SA_OffsetY",
+            Callback = function(v) if SA then SA.config.offsetY = v end end,
         })
-        gun:CreateToggle({
-            Name    = "Круг FOV на экране",
-            Default = false,
-            Flag    = "GunCircle",
-            Callback = function(v) SA.ShowFOV = v end,
+        gun:CreateSlider({
+            Name     = "Offset Z", Min = -50, Max = 50, Default = 0,
+            Suffix   = "%", Flag = "SA_OffsetZ",
+            Callback = function(v) if SA then SA.config.offsetZ = v end end,
+        })
+        gun:CreateSlider({
+            Name     = "Horizontal Mult", Min = 0, Max = 200, Default = 100,
+            Suffix   = "%", Flag = "SA_Horizontal",
+            Callback = function(v) if SA then SA.config.horizontalMultiplier = v end end,
+        })
+        gun:CreateSlider({
+            Name     = "Vertical Mult", Min = 0, Max = 200, Default = 100,
+            Suffix   = "%", Flag = "SA_Vertical",
+            Callback = function(v) if SA then SA.config.verticalMultiplier = v end end,
         })
 
-        local knife = tab:AddRightGroupbox({ Name = "Нож", Icon = "sword" })
+        local knife = tab:AddRightGroupbox({ Name = "KNIFE SILENT AIM", Icon = "sword" })
         knife:CreateToggle({
-            Name    = "Silent Aim (удары)",
-            Desc    = "Касание ножом бьёт ближайшего врага",
-            Default = false,
-            Flag    = "KnifeSilent",
+            Name     = "Knife Silent Aim",
+            Desc     = "Перенаправляет бросок ножа в предсказанную точку цели",
+            Default  = false,
+            Flag     = "SA_Knife",
             Callback = function(v)
-                SA.Knife = v
-                saEnsure()
+                if SA and SA.setKnifeEnabled then
+                    local ok = SA.setKnifeEnabled(v)
+                    if not ok and v then Notify("Silent Aim", "Хук не поддерживается исполнителем", "Error") end
+                end
             end,
         })
         knife:CreateToggle({
-            Name    = "Авто-удар при взмахе",
-            Desc    = "Взмах сам попадает по врагу рядом",
-            Default = false,
-            Flag    = "KnifeAuto",
-            Callback = function(v)
-                SA.KnifeAuto = v
-                saEnsure()
-            end,
+            Name     = "Prioritize Sheriff",
+            Desc     = "Нож сначала летит в шерифа, потом в ближайшего",
+            Default  = false,
+            Flag     = "SA_KnifeSheriff",
+            Callback = function(v) if SA then SA.config.knifePrioritizeSheriff = v end end,
         })
         knife:CreateToggle({
-            Name    = "Метание в цель",
-            Desc    = "Брошенный нож летит в цель (по FOV)",
-            Default = false,
-            Flag    = "KnifeThrow",
-            Callback = function(v)
-                SA.KnifeThrow = v
-                saEnsure()
-            end,
+            Name     = "Knife Wall Check",
+            Default  = false,
+            Flag     = "SA_KnifeWallCheck",
+            Callback = function(v) if SA then SA.config.knifeWallCheck = v end end,
+        })
+        knife:CreateDivider("предикшн ножа")
+        knife:CreateSlider({
+            Name     = "Lead Scale", Min = 25, Max = 250, Default = 100,
+            Suffix   = "%", Flag = "SA_KnifeLeadScale",
+            Callback = function(v) if SA then SA.config.knifeAim.leadScale = v end end,
         })
         knife:CreateSlider({
-            Name     = "Дистанция удара",
-            Min      = 5, Max = 40, Default = 18,
-            Suffix   = " м",
-            Flag     = "KnifeRange",
-            Callback = function(v) SA.KnifeRange = v end,
+            Name     = "Offset X", Min = -50, Max = 50, Default = 0,
+            Suffix   = "%", Flag = "SA_KnifeOffsetX",
+            Callback = function(v) if SA then SA.config.knifeAim.offsetX = v end end,
         })
-        knife:CreateToggle({
-            Name    = "Проверка стен (удары)",
-            Default = true,
-            Flag    = "KnifeWalls",
-            Callback = function(v) SA.KnifeWallCheck = v end,
+        knife:CreateSlider({
+            Name     = "Offset Y", Min = -50, Max = 50, Default = 0,
+            Suffix   = "%", Flag = "SA_KnifeOffsetY",
+            Callback = function(v) if SA then SA.config.knifeAim.offsetY = v end end,
         })
-
-        local diag = tab:AddRightGroupbox({ Name = "Цель", Icon = "target" })
-        combatRows = diag:CreateStatuses({
-            { Name = "Цель",       Value = "-" },
-            { Name = "Дистанция",  Value = "-" },
-            { Name = "Часть",      Value = "-" },
-            { Name = "Пистолет",   Value = "?" },
-            { Name = "Нож",        Value = "?" },
-        }, { Style = "Row" })
-        diag:CreateButton({
-            Name = "Перепроверить ремуоты", Icon = "radar",
-            Callback = function()
-                resyncGunRemote()
-                local events = getKnifeEvents()
-                local gunOk = GunRemote ~= nil
-                local knifeOk = events ~= nil
-                Notify("Диагностика",
-                    "Пистолет: " .. (gunOk and "найден" or "НЕ найден")
-                    .. " | Нож: " .. (knifeOk and "найден" or "возьми нож"),
-                    gunOk and knifeOk and "Success" or "Warning")
-            end,
+        knife:CreateSlider({
+            Name     = "Offset Z", Min = -50, Max = 50, Default = 0,
+            Suffix   = "%", Flag = "SA_KnifeOffsetZ",
+            Callback = function(v) if SA then SA.config.knifeAim.offsetZ = v end end,
         })
+        knife:CreateParagraph({
+            Title   = "Как работает",
+            Content = "Пуля/нож перенаправляются через FireServer-хук: Noir-режим (все пистолетные ремоуты) "
+                    .."и KnifeThrown для ножа. Предикшн адаптивный, сам подстраивается под пинг. "
+                    .."Режим Infection определяется автоматически — целимся в ближайшего зомби.",
+        })
+        knife:CreateLabel("Хук ставится один раз при первом включении; тумблеры лишь включают/выключают редирект.")
     end
 
-    -- Живые статусы: какая сейчас цель
-    task.spawn(function()
-        while not window._destroyed do
-            task.wait(0.25)
-            pcall(function()
-                if not combatRows then return end
-                combatRows["Пистолет"]:Set(GunRemote ~= nil and "найден" or "нет")
-                combatRows["Нож"]:Set(getKnifeEvents() ~= nil and "найден" or "нет")
-                local anyOn = SA.Enabled or SA.Knife or SA.KnifeAuto or SA.KnifeThrow
-                if anyOn then
-                    local part, cand = saFindTarget()
-                    if cand then
-                        combatRows["Цель"]:Set(cand.plr.DisplayName)
-                        combatRows["Дистанция"]:Set(string.format("%.0f м", cand.depth))
-                        combatRows["Часть"]:Set(part.Name)
-                    else
-                        combatRows["Цель"]:Set("нет в FOV")
-                        combatRows["Дистанция"]:Set("-")
-                        combatRows["Часть"]:Set("-")
-                    end
-                else
-                    combatRows["Цель"]:Set("выключено")
-                    combatRows["Дистанция"]:Set("-")
-                    combatRows["Часть"]:Set("-")
-                end
-            end)
-        end
-    end)
-
     -- ═════════════════════════════════════════════════════════════════════
-    --  ВКЛАДКА 3: SETTINGS — темы, конфиги, погода, масштаб, выгрузка
+    --  ВКЛАДКА 2: SETTINGS — темы, конфиги, погода, масштаб, выгрузка
     -- ═════════════════════════════════════════════════════════════════════
     do
         local tab = window:CreateTab({ Name = "Settings", Icon = "settings" })
@@ -20696,7 +21421,7 @@ local autoOk, autoErr = pcall(function()
             Callback = function()
                 window:Confirm({
                     Title       = "Выгрузить Noir?",
-                    Content     = "Меню закроется, Silent Aim выключится.",
+                    Content     = "Меню закроется и очистится.",
                     ConfirmText = "Выгрузить",
                     Callback    = function() genv.NoirAutoUnload() end,
                 })
@@ -20708,7 +21433,7 @@ local autoOk, autoErr = pcall(function()
         tab:CreateThemeManager({ Name = "Темы", Side = "Right" })
     end
 
-    print("[Noir] Меню загружено: Combat = Silent Aim (пистолет + нож). Кнопка на экране / RightControl")
+    print("[Noir] Меню загружено. Кнопка на экране / RightControl")
 end)
 
 if not autoOk then
