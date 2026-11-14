@@ -23083,30 +23083,28 @@ end
 
 
     -- ═════════════════════════════════════════════════════════════════════
-    --  ВКЛАДКА: COMBAT — только Silent Aim (движок Pulse v1.4) и Knife
-    --  Silent Aim + их профили предиктов. Профили реально читаются движком
+    --  ВКЛАДКА: COMBAT — Silent Aim + Knife Silent Aim + FIRE CONTROL
+    --  (shot method, auto fire, клавиши). Профили реально читаются движком
     --  на каждый выстрел: leadTime() → calculateAim() / calculateKnifeAim().
     -- ═════════════════════════════════════════════════════════════════════
     do
         local cfg = __R1.config
-        local tab = window:CreateTab({ Name = "Combat", Icon = "crosshair", Desc = "Silent Aim (Pulse) + Knife Silent Aim" })
+        local tab = window:CreateTab({ Name = "Combat", Icon = "crosshair", Desc = "Silent Aim + Knife Silent Aim" })
 
         local function addPrediction(section, profile, mirrorKey, isKnife)
-            section:CreateLabel(isKnife
-                and "Профиль ножа из Pulse: читается calculateKnifeAim() на каждый бросок."
-                or "Профиль ствола из Pulse: читается calculateAim() на каждый выстрел.")
-            section:CreateToggle({ Name = "Adaptive Engine", Default = profile.adaptive == true,
-                Callback = function(v) profile.adaptive = v == true end })
+            section:CreateToggle({ Name = "Adaptive Engine", Desc = "Упреждение считается от живого пинга; OFF — по фикс-значению",
+                Default = profile.adaptive == true,
+                Callback = function(v)
+                    profile.adaptive = v == true
+                    Notify("Prediction", v and ("Adaptive Engine: ON — упреждение от пинга (%d ms)"):format(profile.manualPingMs or 80)
+                        or "Adaptive Engine: OFF — упреждение по фиксу")
+                end })
             section:CreateToggle({ Name = "Prioritize Your Ping", Default = profile.prioritizePing == true,
                 Callback = function(v) profile.prioritizePing = v == true end })
             section:CreateToggle({ Name = "Predict Jump", Default = profile.predictJump == true,
                 Callback = function(v) profile.predictJump = v == true end })
             section:CreateToggle({ Name = "Predict Lag", Default = profile.predictLag == true,
                 Callback = function(v) profile.predictLag = v == true end })
-            section:CreateSlider({ Name = "Fixed Lead", Min = 0, Max = 0.5, Default = profile.fixedLead or 0.075,
-                Increment = 0.005, Suffix = "s", Callback = function(v) profile.fixedLead = v end })
-            section:CreateSlider({ Name = "Extra Lead", Min = 0, Max = 0.2, Default = profile.extraLead or 0.02,
-                Increment = 0.005, Suffix = "s", Callback = function(v) profile.extraLead = v end })
             section:CreateSlider({ Name = "Prediction Max Simulation", Min = 20, Max = 300, Default = profile.maxSimulationMs or 180,
                 Suffix = "ms", Callback = function(v) profile.maxSimulationMs = v end })
             section:CreateSlider({ Name = "Prediction Interval", Min = 1, Max = 100, Default = profile.predictionIntervalMs or 72,
@@ -23127,13 +23125,12 @@ end
                 Suffix = "%", Callback = function(v) profile.horizontalMultiplier = v end })
             section:CreateSlider({ Name = "Vertical Multiplier", Min = 0, Max = 400, Default = profile.verticalMultiplier or 100,
                 Suffix = "%", Callback = function(v) profile.verticalMultiplier = v end })
-            section:CreateSlider({ Name = "Lead Scale", Min = 25, Max = 250, Default = profile.leadScale or 100,
-                Suffix = "%", Callback = function(v) profile.leadScale = v end })
             section:CreateButton({ Name = "Test Prediction", Icon = "activity",
                 Callback = function()
                     local lead = (isKnife and leadTime("knife") or leadTime()) * 1000
-                    Notify("Prediction", string.format("%s: текущее упреждение %.0f мс",
-                        isKnife and "Knife" or "Silent Aim", lead))
+                    local mode = (isKnife and __R1.config.knifeAim.adaptive or cfg.adaptive) and "Adaptive" or "Fixed"
+                    Notify("Prediction", string.format("%s [%s]: текущее упреждение %.0f мс",
+                        isKnife and "Knife" or "Silent Aim", mode, lead))
                 end })
         end
 
@@ -23186,11 +23183,12 @@ end
             icon.Name = "Crosshair"
             icon.Size = UDim2.fromScale(1, 1)
             icon.BackgroundTransparency = 1
-            icon.ImageColor3 = Color3.fromRGB(10, 10, 12) -- чёрный акцент
+            icon.ImageColor3 = Library.Theme.Accent -- акцент темы UI, живёт с меню
             icon.ScaleType = Enum.ScaleType.Fit
             icon.ZIndex = 8
             icon.Parent = iconHolder
             pcall(applyIcon, icon, "crosshair")
+            pcall(bindColors, icon, { ImageColor3 = Library.Theme.Accent })
             local label = Instance.new("TextLabel")
             label.Name = "BodyText"
             label.AnchorPoint = Vector2.new(0.5, 0)
@@ -23256,6 +23254,8 @@ end
                 end)
             end
             -- градиентный sweep: световой блик бежит по ободу кристалла
+            -- (длительность переменная: lock-on/огонь ускоряют)
+            local sweepDuration = 3.4
             local sweep = Instance.new("Frame")
             sweep.Name = "NoirSweep"
             sweep.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -23285,11 +23285,16 @@ end
             sweepGradient.Parent = sweepStroke
             task.spawn(function()
                 while button.Parent do
+                    local dur = sweepDuration
                     pcall(function()
-                        TweenService:Create(sweepGradient, TweenInfo.new(3.4, Enum.EasingStyle.Linear),
+                        TweenService:Create(sweepGradient, TweenInfo.new(dur, Enum.EasingStyle.Linear),
                             { Rotation = 360 }):Play()
                     end)
-                    task.wait(3.4)
+                    local waited = 0
+                    while button.Parent and sweepDuration == dur and waited < dur do
+                        task.wait(0.06)
+                        waited += 0.06
+                    end
                     if sweepGradient then sweepGradient.Rotation = 0 end
                 end
             end)
@@ -23421,15 +23426,96 @@ end
                 end
             end)
             local firing, dragging, moved, dragStart, startPosition, dragInput = false, false, false, nil, nil, nil
+            -- spark-burst на нажатие: 8 искр разлетаются из центра за обод
+            local function burst()
+                task.spawn(function()
+                    if not button.Parent then return end
+                    for i = 1, 8 do
+                        local angle = math.rad(i * 45 + math.random(-14, 14))
+                        local spark = Instance.new("Frame")
+                        spark.AnchorPoint = Vector2.new(0.5, 0.5)
+                        spark.Position = UDim2.fromScale(0.5, 0.5)
+                        spark.Size = UDim2.fromOffset(3, 3)
+                        spark.BackgroundColor3 = Library.Theme.Accent
+                        spark.BackgroundTransparency = 0.1
+                        spark.BorderSizePixel = 0
+                        spark.ZIndex = 9
+                        spark.Parent = button
+                        local sparkCorner = Instance.new("UICorner")
+                        sparkCorner.CornerRadius = UDim.new(1, 0)
+                        sparkCorner.Parent = spark
+                        local dist = 62 + math.random(0, 18)
+                        TweenService:Create(spark, TweenInfo.new(0.45 + math.random() * 0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+                            { Position = UDim2.fromScale(0.5 + math.cos(angle) * dist / 110, 0.5 + math.sin(angle) * dist / 110),
+                                BackgroundTransparency = 1, Size = UDim2.fromOffset(2, 2) }):Play()
+                        task.delay(0.65, function() pcall(function() spark:Destroy() end) end)
+                    end
+                end)
+            end
+            -- heartbeat: мягкое одиночное кольцо раз в 2.6s в покое
+            task.spawn(function()
+                while button.Parent do
+                    if not firing and spinDuration == 9 then
+                        local ping = Instance.new("Frame")
+                        ping.AnchorPoint = Vector2.new(0.5, 0.5)
+                        ping.Position = UDim2.fromScale(0.5, 0.5)
+                        ping.Size = UDim2.fromScale(0.7, 0.7)
+                        ping.BackgroundTransparency = 1
+                        ping.BorderSizePixel = 0
+                        ping.ZIndex = 4
+                        ping.Parent = button
+                        local pingCorner = Instance.new("UICorner")
+                        pingCorner.CornerRadius = UDim.new(1, 0)
+                        pingCorner.Parent = ping
+                        local pingStroke = Instance.new("UIStroke")
+                        pingStroke.Color = Library.Theme.Accent
+                        pingStroke.Thickness = 1.2
+                        pingStroke.Transparency = 0.75
+                        pingStroke.Parent = ping
+                        pcall(bindColors, pingStroke, { Color = Library.Theme.Accent })
+                        TweenService:Create(ping, TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+                            { Size = UDim2.fromScale(1.9, 1.9) }):Play()
+                        TweenService:Create(pingStroke, TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+                            { Transparency = 1 }):Play()
+                        task.delay(1.45, function() pcall(function() ping:Destroy() end) end)
+                    end
+                    task.wait(2.6)
+                end
+            end)
+            -- lock-on: живая цель Silent Aim есть — кристалл отвечает
+            -- (прицел раздувается, sweep быстрее, подпись LOCK)
+            local lockState = false
+            task.spawn(function()
+                while button.Parent do
+                    local locked = false
+                    pcall(function()
+                        locked = cfg.enabled and type(selectTarget) == "function" and selectTarget() ~= nil
+                    end)
+                    if locked ~= lockState then
+                        lockState = locked
+                        sweepDuration = locked and 1.7 or 3.4
+                        if not firing then
+                            label.Text = locked and "LOCK" or "SHOOT"
+                        end
+                        pcall(function()
+                            TweenService:Create(iconHolder, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                                { Size = UDim2.fromOffset(locked and 36 or 30, locked and 36 or 30) }):Play()
+                        end)
+                        if locked then sonar() end
+                    end
+                    task.wait(0.4)
+                end
+            end)
             button.InputBegan:Connect(function(input)
                 if isPrimaryPress(input) then
                     dragging = not __R1.config.lockShootButton; moved = false
                     dragStart = input.Position; startPosition = button.Position
                     firing = true
                     spinDuration = 1.3
+                    sweepDuration = 1.1
                     label.Text = "FIRE"
                     icon.ImageColor3 = Color3.new(1, 1, 1) -- белая вспышка, без красного
-                    sonar(); sonar(0.14)
+                    sonar(); sonar(0.14); burst()
                     task.spawn(function()
                         while firing and button.Parent do
                             task.wait(0.6)
@@ -23454,9 +23540,10 @@ end
                     dragging = false
                     firing = false
                     spinDuration = 9
+                    sweepDuration = 3.4
                     NoirPersistence.SetPosition("shoot_v2", button.Position)
                     label.Text = "SHOOT"
-                    icon.ImageColor3 = Color3.fromRGB(10, 10, 12)
+                    icon.ImageColor3 = Library.Theme.Accent
                 end
             end)
             button.Activated:Connect(function() if not moved then task.spawn(shootTarget) end end)
@@ -23502,8 +23589,20 @@ end
             Default = "HumanoidRootPart", Flag = "SA_HitPart",
             Callback = function(v) cfg.hitPart = tostring(v) end,
         })
+        combatAim:CreateDropdown({
+            Name = "Shot Method", Options = { "Remote", "CFrame" },
+            Desc = "Remote — редирект FireServer; CFrame — только аргументы-позиции",
+            Default = tostring(cfg.shotMethod or "Remote"), Flag = "SA_ShotMethod",
+            Callback = function(v) cfg.shotMethod = tostring(v) end,
+        })
+        combatAim:CreateToggle({ Name = "Ignore Friends", Default = cfg.ignoreFriends == true, Flag = "SA_IgnoreFriends",
+            Callback = function(v) cfg.ignoreFriends = v == true end })
+        combatAim:CreateSlider({ Name = "Max Distance", Min = 0, Max = 500, Default = cfg.maxDistance or 0,
+            Suffix = "st", Callback = function(v) cfg.maxDistance = v end })
+        combatAim:CreateSlider({ Name = "FOV Size", Min = 0, Max = 600, Default = cfg.fovSize or 0,
+            Suffix = "px", Callback = function(v) cfg.fovSize = v end })
 
-        -- ── KNIFE SILENT AIM (right) — предикты ножа из Pulse ──────────────
+        -- ── KNIFE SILENT AIM (right) ────────────────────────────────────────
         local combatKnife = tab:AddRightGroupbox({ Name = "KNIFE SILENT AIM", Icon = "sword" })
         combatKnife:CreateToggle({
             Name = "Knife Silent Aim", Desc = "Nearest player or Sheriff-only targeting", Default = false, Flag = "SA_Knife",
@@ -23517,6 +23616,53 @@ end
             end })
         combatKnife:CreateToggle({ Name = "Knife Wall Check", Default = false, Flag = "SA_KnifeWall",
             Callback = function(v) cfg.knifeWallCheck = v == true end })
+
+        -- ── FIRE CONTROL (right) — автоогонь и клавиши движка ──────────────
+        local combatFire = tab:AddRightGroupbox({ Name = "FIRE CONTROL", Icon = "target" })
+        combatFire:CreateToggle({
+            Name = "Auto Fire", Desc = "Сам стреляет по цели в FOV, пока включён Silent Aim",
+            Default = cfg.autoFire == true, Flag = "SA_AutoFire",
+            Callback = function(v)
+                cfg.autoFire = v == true
+                Notify("Silent Aim", v and "Auto Fire: ON" or "Auto Fire: OFF")
+            end })
+        combatFire:CreateKeybind({ Name = "Auto Fire Key", Desc = "Auto Fire активен только пока зажата клавиша",
+            Default = tostring(cfg.autoFireKey or "None"),
+            OnChanged = function(key)
+                cfg.autoFireKey = typeof(key) == "EnumItem" and key.Name or tostring(key or "None")
+                if cfg.autoFireKey ~= "None" then __R1.autoFireHeld = false end
+                Notify("Silent Aim", "Auto Fire Key: " .. cfg.autoFireKey)
+            end })
+        combatFire:CreateKeybind({ Name = "Aim Key (hold)", Desc = "Silent Aim срабатывает только пока зажата клавиша",
+            Default = tostring(cfg.aimKey or "None"),
+            OnChanged = function(key)
+                cfg.aimKey = typeof(key) == "EnumItem" and key.Name or tostring(key or "None")
+                if cfg.aimKey ~= "None" then __R1.aimHeld = false end
+                Notify("Silent Aim", "Aim Key: " .. cfg.aimKey)
+            end })
+        combatFire:CreateToggle({ Name = "Align Direction", Desc = "Поворот выстрела точно на цель",
+            Default = cfg.alignDirection == true,
+            Callback = function(v) cfg.alignDirection = v == true end })
+
+        -- проводка клавиш: движок читает __R1.aimHeld / __R1.autoFireHeld
+        pcall(function()
+            local keyName = function(input)
+                if input.KeyCode and input.KeyCode ~= Enum.KeyCode.Unknown then return input.KeyCode.Name end
+                return nil
+            end
+            UIS.InputBegan:Connect(function(input, processed)
+                local name = not processed and keyName(input) or nil
+                if not name then return end
+                if cfg.aimKey ~= "None" and name == cfg.aimKey then __R1.aimHeld = true end
+                if cfg.autoFireKey ~= "None" and name == cfg.autoFireKey then __R1.autoFireHeld = true end
+            end)
+            UIS.InputEnded:Connect(function(input)
+                local name = keyName(input)
+                if not name then return end
+                if cfg.aimKey ~= "None" and name == cfg.aimKey then __R1.aimHeld = false end
+                if cfg.autoFireKey ~= "None" and name == cfg.autoFireKey then __R1.autoFireHeld = false end
+            end)
+        end)
 
         -- ── PREDICTION профили (движок читает их на каждый выстрел) ────────
         local predAim = tab:AddLeftGroupbox({ Name = "SILENT AIM PREDICTION", Icon = "gauge" })
