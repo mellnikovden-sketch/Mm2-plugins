@@ -23138,7 +23138,110 @@ end
                 end })
         end
 
-        -- ── SILENT AIM (left) — движок Pulse v1.4 ──────────────────────────
+        -- ── SHOOT MURDER BUTTON — стиль кнопки открытия меню и кнопок ──────
+        -- сохранения конфигов: primary-карточка в палитре Theme, crosshair-иконка
+        -- слева, hint-иконка справа, press-scale + ripple, drag с памятью позиции.
+        function createShootButton()
+            if __R1.shootButton then return end
+            local parent = guiParent
+            if typeof(parent) ~= "Instance" then parent = LocalPlayer:WaitForChild("PlayerGui") end
+            local gui = Instance.new("ScreenGui")
+            gui.Name = "MM2ShootMurdererButton"
+            gui.ResetOnSpawn = false
+            gui.IgnoreGuiInset = true
+            gui.DisplayOrder = 80
+            gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+            gui.Parent = parent
+            __R1.shootGui = gui
+            local button = Instance.new("TextButton")
+            button.Name = "ShootMurderer"
+            button.AnchorPoint = Vector2.new(0.5, 0.5)
+            button.Position = NoirPersistence.GetPosition("shoot_v2", UDim2.new(1, -132, 1, -124))
+            button.Size = UDim2.fromOffset(196, 64)
+            button.BackgroundColor3 = Theme.Accent
+            button.BackgroundTransparency = 0.12
+            button.BorderSizePixel = 0
+            button.AutoButtonColor = false
+            button.Text = ""
+            button.ClipsDescendants = true
+            button.ZIndex = 5
+            button.Parent = gui
+            __R1.shootButton = button
+            corner(button, UDim.new(0, 14))
+            local buttonStroke = stroke(button, Theme.Accent, 0.4)
+            local buttonScale = Instance.new("UIScale")
+            buttonScale.Parent = button
+            glowIcon(button, "crosshair", Theme.AccentDark, UDim2.new(0, 14, 0.5, 0))
+            local title = Instance.new("TextLabel")
+            title.Name = "BodyText"
+            title.BackgroundTransparency = 1
+            title.Position = UDim2.fromOffset(40, 0)
+            title.Size = UDim2.new(1, -78, 1, 0)
+            title.Font = Enum.Font.GothamBold
+            title.Text = "Shoot Murder"
+            title.TextColor3 = Theme.AccentDark
+            title.TextSize = 17
+            title.TextXAlignment = Enum.TextXAlignment.Left
+            title.TextTruncate = Enum.TextTruncate.AtEnd
+            title.ZIndex = 6
+            title.Parent = button
+            glowIcon(button, BUTTON_HINT_ICON, Theme.AccentDark, UDim2.new(1, -30, 0.5, 0))
+            button.MouseEnter:Connect(function()
+                tween(button, { BackgroundTransparency = 0 }, 0.12)
+                tween(buttonStroke, { Transparency = 0 }, 0.12)
+            end)
+            button.MouseLeave:Connect(function()
+                tween(button, { BackgroundTransparency = 0.12 }, 0.25)
+                tween(buttonStroke, { Transparency = 0.4 }, 0.25)
+            end)
+            local normalSize = UDim2.fromOffset(196, 64)
+            local pressedSize = UDim2.fromOffset(206, 72)
+            local pressTween = TweenInfo.new(0.30, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            local dragging, moved, dragStart, startPosition, dragInput = false, false, nil, nil, nil
+            button.InputBegan:Connect(function(input)
+                if isPrimaryPress(input) then
+                    dragging = not __R1.config.lockShootButton; moved = false
+                    dragStart = input.Position; startPosition = button.Position
+                    tween(buttonScale, { Scale = 0.94 }, 0.18, Enum.EasingStyle.Quint)
+                    TweenService:Create(button, pressTween, { Size = pressedSize }):Play()
+                    title.Text = "TARGET LOCK"
+                    ripple(button)
+                end
+            end)
+            button.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+            end)
+            UIS.InputChanged:Connect(function(input)
+                if dragging and input == dragInput and not __R1.config.lockShootButton then
+                    local delta = input.Position - dragStart
+                    if delta.Magnitude > 8 then moved = true end
+                    button.Position = UDim2.new(startPosition.X.Scale, startPosition.X.Offset + delta.X,
+                        startPosition.Y.Scale, startPosition.Y.Offset + delta.Y)
+                end
+            end)
+            UIS.InputEnded:Connect(function(input)
+                if isPrimaryPress(input) then
+                    dragging = false
+                    NoirPersistence.SetPosition("shoot_v2", button.Position)
+                    tween(buttonScale, { Scale = 1 }, 0.35, Enum.EasingStyle.Back)
+                    TweenService:Create(button, TweenInfo.new(.62, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = normalSize }):Play()
+                    title.Text = "Shoot Murder"
+                end
+            end)
+            button.Activated:Connect(function() if not moved then task.spawn(shootTarget) end end)
+        end
+
+        -- ── по умолчанию всё выключено ─────────────────────────────────────
+        -- движок стартует с предикт-флагами ON — гасим их до построения UI,
+        -- тумблеры профилей читают profile.X == true как Default.
+        cfg.adaptive, cfg.prioritizePing, cfg.predictJump, cfg.predictLag = false, false, false, false
+        do
+            local knifeProfile = cfg.knifeAim
+            knifeProfile.adaptive, knifeProfile.prioritizePing = false, false
+            knifeProfile.predictJump, knifeProfile.predictLag = false, false
+        end
+
+        -- ── SILENT AIM (left, ряд 1) — движок Pulse v1.4 ───────────────────
         local combatAim = tab:AddLeftGroupbox({ Name = "SILENT AIM", Icon = "zap" })
         combatAim:CreateToggle({
             Name = "Enabled", Desc = "Серверный FireServer redirect", Default = false, Flag = "SA_Enabled",
@@ -23183,14 +23286,27 @@ end
         local predKnife = tab:AddRightGroupbox({ Name = "KNIFE PREDICTION", Icon = "gauge" })
         addPrediction(predKnife, cfg.knifeAim, "knifeManualPingMs", true)
 
-        combatAim:CreateDivider("BULLET TRACER")
-        combatAim:CreateParagraph({
+        -- ── SHOOT MURDER BUTTON (left, ряд 3) ──────────────────────────────
+        local shootBox = tab:AddLeftGroupbox({ Name = "SHOOT MURDER BUTTON", Icon = "mouse-pointer-click" })
+        shootBox:CreateParagraph({
+            Title = "Shoot Murder Button",
+            Content = "Плавающая кнопка в стиле меню: primary-карточка темы, crosshair-иконка, "
+                .. "ripple и press-scale. Перетаскивается, позиция запоминается. Клик — выстрел в убийцу.",
+        })
+        shootBox:CreateToggle({ Name = "Show Shoot Murder Button", Default = false, Flag = "SA_ShootBtn",
+            Callback = function(v) cfg.showShootButton = v == true; if v then pcall(createShootButton) else pcall(removeShootButton) end end })
+        shootBox:CreateToggle({ Name = "Lock Shoot Murder Button", Desc = "Запретить перетаскивание кнопки", Default = false,
+            Callback = function(v) cfg.lockShootButton = v == true end })
+
+        -- ── BULLET TRACER (right, ряд 3) — сателлит строит контролы здесь ──
+        local tracerBox = tab:AddRightGroupbox({ Name = "BULLET TRACER", Icon = "activity" })
+        tracerBox:CreateParagraph({
             Title = "Bullet Tracer",
             Content = "Трейсер пули. Classic = прямая, Path Finder = обход стен через Pathfinding. "
-                .. "Стили задают текстуры/ширину/прозрачность как в стилях. Работает для Silent Aim (через fireGunAt) "
-                .. "и для любых выстрелов других игроков если включишь Show Other Shots.",
+                .. "Стили задают текстуры/ширину/прозрачность. Работает для Silent Aim (через fireGunAt) "
+                .. "и для любых выстрелов других игроков, если включить Show Other Shots.",
         })
-        __NoirSAFacadeHost = combatAim -- tracer satellite (below) builds its controls here
+        __NoirSAFacadeHost = tracerBox
     end
     -- ═══════════════════════════ /COMBAT TAB ═════════════════════════════
 
@@ -23210,8 +23326,8 @@ end
                 width = 100,
                 speed = 520,
                 life = 1.2,
-                impact = true,
-                muzzle = true,
+                impact = false,
+                muzzle = false,
                 others = false,
                 live = {},
                 pool = {},
@@ -26547,6 +26663,9 @@ function EspFeature.chamsControls(state)
 end
 
 local MurderFeature = {}
+        -- вкладка Visuals: фасад ниже ссылается на `tab`, создаём его здесь
+        local tab = window:CreateTab({ Name = "Visuals", Icon = "eye", Desc = "ESP: Box, Chams, Tracers, Radar" })
+
         -- facade: maps the pulsehub section API onto Noir groupboxes
         local currentBox
         local espFacade = {}
@@ -26608,6 +26727,25 @@ local MurderFeature = {}
                 }
             end
             return roles
+        end
+
+        -- по умолчанию всё выключено: главный тумблер ESP и все под-тумблеры
+        -- гасятся после создания дефолтной таблицы движка (UI читает settings.X)
+        local espSettingsCreateBase = EspSettings.create
+        local ESP_OFF_FIELDS = {
+            "on", "murderer", "sheriff", "hero", "innocent", "noRole", "visCheck", "box", "boxFill",
+            "boxGlow", "gradient", "pulse", "skeleton", "boneRole", "headDot", "lookLine", "health",
+            "healthNum", "smoothHealth", "name", "roleText", "weaponIcon", "distance", "textGrad",
+            "textGradAnim", "outline", "textOutline", "textMatch", "hideGameNames", "dimHidden", "fade",
+            "chams", "chamsOutline", "chamsRole", "chamsFlash", "highlight", "tracer", "tracerRole",
+            "radar", "tags", "glow", "aliveCheck", "teamCheck", "ignoreWalls",
+        }
+        function EspSettings.create(environment, configuration)
+            local settings = espSettingsCreateBase(environment, configuration)
+            for _, field in ipairs(ESP_OFF_FIELDS) do
+                if settings[field] == true then settings[field] = false end
+            end
+            return settings
         end
 
         -- прокси окружения для ESP-движка: _G в Luau не содержит глобалы Roblox,
