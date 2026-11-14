@@ -21887,32 +21887,6 @@ local function piercerShotOrigin(origin, aim, part, enabled)
     -- (срабатывал через раз, с задержкой/промахом). Сквозь стену бьёт сам
     -- redirect точки попадания (args[2] = aim), как в пульсе.
     return origin
-    if not enabled or not origin or not aim or not part then return origin end
-    local direction = aim - origin
-    local distance = direction.Magnitude
-    if distance <= 0.05 then return origin end
-    local dir = direction.Unit
-    local character = LocalPlayer.Character
-    local backpack = LocalPlayer:FindFirstChildOfClass("\x42ackpack")
-    local filter = { character, part.Parent }
-    local gun = (character and character:FindFirstChild("\x47un")) or (backpack and backpack:FindFirstChild("\x47un"))
-    if gun then filter[#filter + 1] = gun end
-    for _, player in ipairs(getPlayers()) do
-        if player.Character and player.Character ~= character then filter[#filter + 1] = player.Character end
-    end
-    __R1.wallCheckParams.FilterDescendantsInstances = filter
-    local blocked = Workspace:Raycast(origin, dir * distance, __R1.wallCheckParams)
-    if not blocked then return origin end
-    local inner = Workspace:Raycast(aim, -dir * distance, __R1.wallCheckParams)
-    local candidate = inner and (inner.Position + dir * 0.9) or (aim - dir * 0.9)
-    if (aim - candidate).Magnitude > 0.02 and not Workspace:Raycast(candidate, aim - candidate, __R1.wallCheckParams) then
-        return candidate
-    end
-    candidate = aim - dir * 0.5
-    if (aim - candidate).Magnitude > 0.02 and not Workspace:Raycast(candidate, aim - candidate, __R1.wallCheckParams) then
-        return candidate
-    end
-    return aim - dir * 0.4
 end
 
 function knifeRemote(remote, args)
