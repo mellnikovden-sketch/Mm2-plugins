@@ -20102,11 +20102,9 @@ local autoOk, autoErr = pcall(function()
     -- Выгрузка регистрируется сразу: повторный запуск не дублирует окна
     genv.NoirAutoUnload = function()
         genv.NoirAutoUnload = nil
-        -- stop the silent aim runtime first (loops + connections)
-        if type(genv.__NoirMenuSA) == "table" and type(genv.__NoirMenuSA.Stop) == "function" then
-            pcall(genv.__NoirMenuSA.Stop)
-            genv.__NoirMenuSA = nil
-        end
+        -- stop silent aim engine + ESP engine before destroying the window
+        pcall(function() if genv.__NoirMenuSAUnload then genv.__NoirMenuSAUnload() genv.__NoirMenuSAUnload = nil end end)
+        pcall(function() if genv.__NoirMenuESPStop then genv.__NoirMenuESPStop() genv.__NoirMenuESPStop = nil end end)
         if window and not window._destroyed then
             pcall(window.Destroy, window)
         end
@@ -20117,1276 +20115,6600 @@ local autoOk, autoErr = pcall(function()
         window:Notify({ Title = title, Content = text, Duration = 4, Type = typ })
     end
 
+
     -- ═════════════════════════════════════════════════════════════════════
-    --  NOIR SILENT AIM ENGINE — ported from Noir_Part1/Noir_Part2 (v1.4 Pulse)
-    --  Gun silent aim: hooks the executor namecall, finds the local Gun's
-    --  FireServer shot and rewrites it onto the predicted target point.
-    --  Knife silent aim: same for the local Knife "KnifeThrown" remote.
-    --  Everything OFF by default, controlled from the "Silent Aim" tab.
-    --  Unload: NoirAutoUnload stops the loops; the hook itself stays but
-    --  becomes inert once both features are off / runtime is stopped.
+    --  NOIR SILENT AIM + KNIFE ENGINE — transplanted verbatim from
+    --  Noir_Part1/Noir_Part2 (v1.4 Pulse). Host shims provide the pieces
+    --  the original hub used to own (persistence, translation, notify).
     -- ═════════════════════════════════════════════════════════════════════
-    do
-        -- stop a previous runtime so a reload never duplicates loops
-        if type(genv.__NoirMenuSA) == "table" and type(genv.__NoirMenuSA.Stop) == "function" then
-            pcall(genv.__NoirMenuSA.Stop)
-            genv.__NoirMenuSA = nil
+    local host = { Notify = function(text, duration)
+        pcall(function() Notify("Silent Aim", tostring(text)) end)
+    end }
+    local NoirTr = function(value) return value end
+    local NoirGenv = function() return genv end
+    local NoirPersistence = {
+        data = { toggles = {}, keybinds = {}, dropdowns = {}, positions = {} },
+        Save = function() end,
+        GetPosition = function(key, default) return default end,
+        SetPosition = function(key, position) end,
+    }
+    local PRESETS_FOLDER = "Noir UI/presets"
+    local __R1 = {}
+    -- facade: maps the original hub section API onto Noir groupboxes
+    function NoirSectionFacade(groupbox)
+        local facade = {}
+        function facade:AddToggle(name, callback)
+            groupbox:CreateToggle({ Name = tostring(name), Default = false,
+                Callback = function(v) pcall(callback, v == true) end })
         end
-
-        local Players           = game:GetService("Players")
-        local RunService        = game:GetService("RunService")
-        local Workspace         = game:GetService("Workspace")
-        local Stats             = game:GetService("Stats")
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local LocalPlayer       = Players.LocalPlayer
-
-        local SA = { running = true, hooked = false, redirected = 0, connections = {} }
-
-        -- ── config: everything OFF by default ──────────────────────────────
-        SA.config = {
-            enabled      = false,      -- gun silent aim
-            targetMode   = "Murderer", -- Murderer/Sheriff/Hero/Nearest/Crosshair/Lowest Health/Random
-            hitPart      = "HumanoidRootPart",
-            wallCheck    = false,      -- skip shot when a wall blocks the target
-            ignoreFriends = false,
-            maxDistance  = 0,          -- 0 = unlimited
-            alignDirection = true,     -- rotate the shot origin towards the aim point
-            -- ping-adaptive prediction (defaults from Noir v1.4 Pulse)
-            adaptive     = true,
-            prioritizePing = true,     -- use measured ping instead of manualPingMs
-            predictJump  = false,
-            predictLag   = true,
-            fixedLead    = 0.075,      -- seconds, used when adaptive = false
-            extraLead    = 0.02,
-            maxSimulationMs = 180,
-            predictionIntervalMs = 72,
-            manualPingMs = 80,
-            leadScale    = 100,        -- % lead scaling
-            offsetX = 0, offsetY = 0, offsetZ = 0,            -- % of target part size
-            horizontalMultiplier = 100,
-            verticalMultiplier   = 100,
-        }
-        -- separate prediction profile for the knife throw
-        SA.config.knifeAim = {
-            adaptive = true, prioritizePing = true, predictJump = false, predictLag = true,
-            fixedLead = 0.075, extraLead = 0.02,
-            maxSimulationMs = 180, predictionIntervalMs = 72, manualPingMs = 80,
-            leadScale = 100,
-            offsetX = 0, offsetY = 0, offsetZ = 0,
-            horizontalMultiplier = 100, verticalMultiplier = 100,
-        }
-        SA.config.knifeEnabled           = false  -- knife silent aim
-        SA.config.knifeWallCheck         = false
-        SA.config.knifePrioritizeSheriff = false  -- aim the throw at the sheriff first
-
-        SA.cachedPing  = 0.05
-        SA.murderer, SA.sheriff, SA.hero = nil, nil, nil
-        SA.roleCache, SA.playerData, SA.announcedRoles = {}, {}, {}
-        SA.friendCache = {}
-        SA.measuredVelocity = Vector3.zero
-        SA.motionSamples = {}
-        SA.previousEstimatedVelocity = Vector3.zero
-        SA.estimatedAcceleration = Vector3.zero
-        SA.__infectionState = { npcs = {}, nextScan = 0, entity = nil, entityAt = 0, markerPlayers = {}, markersAt = 0 }
-
-        function SA.notify(message, duration)
-            pcall(function() Notify("Silent Aim", tostring(message)) end)
+        function facade:AddSlider(name, min, max, default, callback)
+            groupbox:CreateSlider({ Name = tostring(name), Min = tonumber(min) or 0, Max = tonumber(max) or 100,
+                Default = tonumber(default) or tonumber(min) or 0,
+                Callback = function(v) pcall(callback, v) end })
         end
+        function facade:AddDropdown(name, options, callback)
+            local list = {}
+            for _, option in ipairs(options or {}) do list[#list + 1] = tostring(option) end
+            groupbox:CreateDropdown({ Name = tostring(name), Options = list, Default = list[1],
+                Callback = function(v) pcall(callback, v) end })
+        end
+        function facade:AddButton(name, callback)
+            groupbox:CreateButton({ Name = tostring(name), Callback = function() pcall(callback) end })
+        end
+        function facade:AddLabel(text)
+            groupbox:CreateLabel(tostring(text))
+        end
+        function facade:AddParagraph(title, text)
+            groupbox:CreateParagraph({ Title = tostring(title), Content = tostring(text) })
+        end
+        function facade:AddColorpicker(name, default, callback)
+            groupbox:CreateColorPicker({ Name = tostring(name), Default = default,
+                Callback = function(color) pcall(callback, color) end })
+        end
+        function facade:AddKeybind(name, default, callback)
+            groupbox:CreateKeybind({ Name = tostring(name), Default = tostring(default or "None"),
+                Callback = function(key) pcall(callback, key) end })
+        end
+        return facade
+    end
 
-        -- ── shared helpers ─────────────────────────────────────────────────
-        function SA.refreshPlayerCache() SA.cachedPlayers = Players:GetPlayers() end
-        SA.refreshPlayerCache()
-        function SA.getPlayers() return SA.cachedPlayers end
-        Players.PlayerAdded:Connect(SA.refreshPlayerCache)
-        Players.PlayerRemoving:Connect(function(player)
-            SA.refreshPlayerCache()
-            SA.playerData[player.UserId] = nil
-            SA.roleCache[player.UserId] = nil
-            SA.announcedRoles[player.UserId] = nil
-            SA.friendCache[player] = nil
-            if SA.murderer == player then SA.murderer = nil end
-            if SA.sheriff == player then SA.sheriff = nil end
-            if SA.hero == player then SA.hero = nil end
+local Players           = game:GetService("\x50layers")
+local UIS               = game:GetService("\x55serInputService")
+-- Safe TweenService: if the target Instance is already destroyed (page rebuilt,
+-- element cleared) Create() used to throw "Instance is null" into the console.
+local __NoirRealTweenService = game:GetService("\x54weenService")
+local function __NoirDeadTween()
+    local proxy
+    proxy = setmetatable({}, { __index = function() return function() return proxy end end })
+    return proxy
+end
+local TweenService = setmetatable({}, {
+    __index = function(_, key)
+        if key ~= "Create" then return __NoirRealTweenService[key] end
+        return function(_, inst, info, props)
+            if typeof(inst) ~= "Instance" then return __NoirDeadTween() end
+            local ok, tween = pcall(__NoirRealTweenService.Create, __NoirRealTweenService, inst, info, props)
+            if not ok or type(tween) ~= "table" and typeof(tween) ~= "Instance" then return __NoirDeadTween() end
+            return tween
+        end
+    end,
+})
+local RunService        = game:GetService("\x52unService")
+local Stats             = game:GetService("\x53tats")
+local Workspace         = game:GetService("\x57orkspace")
+local CoreGui           = game:GetService("\x43oreGui")
+local ReplicatedStorage = game:GetService("\x52eplicatedStorage")
+local HttpService       = game:GetService("\x48ttpService")
+local Lighting          = game:GetService("\x4cighting")
+local LocalPlayer       = Players.LocalPlayer
+local function isPrimaryPress(input)
+    return input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch
+end
+local guiParent = CoreGui
+function New(class, props)
+    props = props or {}
+    local x = Instance.new(class)
+    for k, v in pairs(props) do if k ~= "\x50arent" then x[k] = v end end
+    local isTextObject = false
+    pcall(function() isTextObject = x:IsA("TextLabel") or x:IsA("TextButton") or x:IsA("TextBox") end)
+    if isTextObject then
+        pcall(function() x.TextScaled = false end)
+        pcall(function() x.TextTruncate = Enum.TextTruncate.AtEnd end)
+        if props.Font == nil then pcall(function() x.Font = Enum.Font.GothamMedium end) end
+    end
+    local langState = NoirGenv().__NoirLangState
+    if type(langState) == "\x74able" then
+        langState.renderedToSource = langState.renderedToSource or {}
+        local function rememberText(property, sourceAttribute, renderedAttribute)
+            local ok, value = pcall(function() return x[property] end)
+            if not ok or type(value) ~= "\x73tring" then return end
+            local source = langState.renderedToSource[value] or value
+            pcall(function()
+                x:SetAttribute(sourceAttribute, source)
+                x:SetAttribute(renderedAttribute, value)
+            end)
+        end
+        local isTextLabel = false
+        local isTextButton = false
+        local isTextBox = false
+        pcall(function()
+            isTextLabel = x:IsA("TextLabel")
+            isTextButton = x:IsA("TextButton")
+            isTextBox = x:IsA("TextBox")
         end)
-        table.insert(SA.connections, Players.PlayerAdded)
-        table.insert(SA.connections, Players.PlayerRemoving)
-
-        function SA.validTarget(player)
-            local character = player and player.Character
-            local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
-            return player ~= nil and player ~= LocalPlayer and character ~= nil
-                and humanoid ~= nil and humanoid.Health > 0
-        end
-        function SA.localRoot()
-            local character = LocalPlayer.Character
-            if character ~= SA.localRootChar or not SA.localRootCache or not SA.localRootCache.Parent then
-                SA.localRootChar = character
-                SA.localRootCache = character
-                    and (character:FindFirstChild("HumanoidRootPart")
-                        or character:FindFirstChild("UpperTorso")
-                        or character:FindFirstChild("Torso"))
-                    or nil
+        if isTextBox then
+            local ok, value = pcall(function() return x.PlaceholderText end)
+            if ok and type(value) == "\x73tring" then
+                local source = langState.renderedToSource[value] or value
+                pcall(function() x.PlaceholderText = NoirTr(source) end)
             end
-            return SA.localRootCache
-        end
-        function SA.playerHasTool(player, toolName)
-            local character = player and player.Character
-            local backpack = player and player:FindFirstChildOfClass("Backpack")
-            return (character and character:FindFirstChild(toolName))
-                or (backpack and backpack:FindFirstChild(toolName))
-        end
-        function SA.isFriend(player)
-            if not SA.config.ignoreFriends or player == nil then return false end
-            local cached = SA.friendCache[player]
-            if cached ~= nil then return cached end
-            local ok, result = pcall(function() return player:IsFriendsWith(LocalPlayer.UserId) end)
-            local value = (ok and result == true)
-            SA.friendCache[player] = value
-            return value
-        end
-        function SA.distanceTo(player)
-            local root = SA.localRoot()
-            local character = SA.entityCharacter(player)
-            local target = character and character:FindFirstChild("HumanoidRootPart")
-            if root and target then return (target.Position - root.Position).Magnitude end
-            return math.huge
-        end
-
-        -- lobby/spectator filter: team names, attributes and BoolValue flags
-        function SA.playerIsInLobby(player)
-            if not player then return true end
-            local teamName = player.Team and string.lower(tostring(player.Team.Name)) or ""
-            if string.find(teamName, "lobby", 1, true)
-                or string.find(teamName, "spectat", 1, true)
-                or string.find(teamName, "observer", 1, true)
-                or string.find(teamName, "waiting", 1, true) then
-                return true
+            rememberText("PlaceholderText", "__NoirPlaceholderSource", "__NoirPlaceholderRendered")
+        elseif isTextLabel or isTextButton then
+            local ok, value = pcall(function() return x.Text end)
+            if ok and type(value) == "\x73tring" then
+                local source = langState.renderedToSource[value] or value
+                pcall(function() x.Text = NoirTr(source) end)
             end
-            local containers = { player, player.Character }
-            for _, container in ipairs(containers) do
-                if container then
-                    for key, value in pairs(container:GetAttributes()) do
-                        local k = string.lower(tostring(key))
-                        if (string.find(k, "inround", 1, true) or string.find(k, "ingame", 1, true)
-                            or string.find(k, "isplaying", 1, true) or string.find(k, "alive", 1, true))
-                            and value == false then
-                            return true
-                        end
-                        if string.find(k, "state", 1, true) or string.find(k, "status", 1, true)
-                            or string.find(k, "location", 1, true) or string.find(k, "place", 1, true) then
-                            local textValue = string.lower(tostring(value))
-                            if string.find(textValue, "lobby", 1, true)
-                                or string.find(textValue, "spectat", 1, true)
-                                or string.find(textValue, "dead", 1, true)
-                                or string.find(textValue, "waiting", 1, true) then
-                                return true
-                            end
-                        end
-                    end
-                    for _, name in ipairs({ "InLobby", "Spectating", "Dead", "IsDead" }) do
-                        local flag = container:FindFirstChild(name)
-                        if flag and flag:IsA("BoolValue") and flag.Value then return true end
-                    end
-                    for _, name in ipairs({ "InRound", "InGame", "IsPlaying", "Alive", "IsAlive" }) do
-                        local flag = container:FindFirstChild(name)
-                        if flag and flag:IsA("BoolValue") and not flag.Value then return true end
-                    end
+            rememberText("Text", "__NoirTextSource", "__NoirTextRendered")
+        end
+        if isTextLabel or isTextButton or isTextBox then
+            langState.originalTextDirections = langState.originalTextDirections or setmetatable({}, { __mode = "k" })
+            langState.originalTextXAlignments = langState.originalTextXAlignments or setmetatable({}, { __mode = "k" })
+            local alignmentOk, originalAlignment = pcall(function() return x.TextXAlignment end)
+            if alignmentOk and langState.originalTextXAlignments[x] == nil then
+                langState.originalTextXAlignments[x] = originalAlignment
+            end
+            if alignmentOk and langState.lang == "ar" and originalAlignment == Enum.TextXAlignment.Left then
+                pcall(function() x.TextXAlignment = Enum.TextXAlignment.Right end)
+            end
+            local directionOk, originalDirection = pcall(function() return x.TextDirection end)
+            if directionOk and langState.originalTextDirections[x] == nil then
+                langState.originalTextDirections[x] = originalDirection
+            end
+            if langState.lang == "ar" then
+                local txt2 = ""
+                pcall(function() txt2 = x.Text or "" end)
+                local hasArabic2 = txt2:match("[\216-\219][\128-\191]") ~= nil
+                local hasLatin2 = txt2:match("[A-Za-z]") ~= nil
+                if hasLatin2 and not hasArabic2 then
+                    pcall(function() x.TextDirection = Enum.TextDirection.LeftToRight end)
+                else
+                    pcall(function() x.TextDirection = Enum.TextDirection.RightToLeft end)
                 end
             end
-            return false
         end
+    end
+    x.Parent = props and props.Parent
+    return x
+end
+local function refreshNoirLanguage()
+    local state = NoirGenv().__NoirLangState
+    if type(state) ~= "table" then return false end
+    state.renderedToSource = state.renderedToSource or {}
+    state.originalTextDirections = state.originalTextDirections or setmetatable({}, { __mode = "k" })
+    state.originalTextXAlignments = state.originalTextXAlignments or setmetatable({}, { __mode = "k" })
+    local roots, seenRoots = {}, {}
+    local function addRoot(root)
+        if typeof(root) == "Instance" and not seenRoots[root] then
+            seenRoots[root] = true
+            roots[#roots + 1] = root
+        end
+    end
+    addRoot(gui)
+    if type(gethui) == "function" then local ok, root = pcall(gethui); if ok then addRoot(root) end end
+    if type(getcore) == "function" then local ok, root = pcall(getcore); if ok then addRoot(root) end end
+    addRoot(CoreGui)
+    local playerGuiOk, playerGui = pcall(function() return LocalPlayer:FindFirstChildOfClass("PlayerGui") end)
+    if playerGuiOk then addRoot(playerGui) end
 
-        -- ── roles (murderer / sheriff / hero) ──────────────────────────────
-        function SA.entityCharacter(entity)
-            if typeof(entity) == "Instance" and entity:IsA("Model") then return entity end
-            return (entity and entity.Character) or nil
+    local namedScreens = {
+        ["@fling"] = true, ["@odh_bjp_bigstorage"] = true, ["@odh_bjp_bindstorage"] = true,
+        ["@wallhopstorage"] = true, ["@bindstorage_v6"] = true, ["@bindstorage_v5"] = true,
+        ["@flingstorage_v1"] = true, ["MM2ShootMurderButton"] = true
+    }
+    local function belongsToNoirScreen(instance)
+        local cursor = instance
+        while cursor do
+            local ok, isScreenGui, name = pcall(function() return cursor:IsA("ScreenGui"), cursor.Name end)
+            if ok and isScreenGui then
+                return name == "NoirSilentAimUI" or name:sub(1, 4) == "Noir" or namedScreens[name] == true
+            end
+            local parentOk, parent = pcall(function() return cursor.Parent end)
+            if not parentOk then break end
+            cursor = parent
         end
-        function SA.setTarget(player)
-            if not SA.validTarget(player) then player = nil end
-            if SA.murderer ~= player then
-                SA.murderer = player
-                if player then SA.notify("Target: " .. player.Name) end
+        return false
+    end
+    local function hasNoirLanguageMarker(instance)
+        local ok, source, placeholder = pcall(function()
+            return instance:GetAttribute("__NoirTextSource"), instance:GetAttribute("__NoirPlaceholderSource")
+        end)
+        return ok and (type(source) == "\x73tring" or type(placeholder) == "\x73tring")
+    end
+    local function refreshProperty(instance, property, sourceAttribute, renderedAttribute)
+        local readOk, current = pcall(function() return instance[property] end)
+        if not readOk or type(current) ~= "string" or current == "" then return end
+        local source, lastRendered
+        pcall(function()
+            source = instance:GetAttribute(sourceAttribute)
+            lastRendered = instance:GetAttribute(renderedAttribute)
+        end)
+        if type(source) ~= "string" or current ~= lastRendered then
+            source = state.renderedToSource[current] or current
+        end
+        local translated = NoirTr(source)
+        pcall(function() instance[property] = translated end)
+        pcall(function()
+            instance:SetAttribute(sourceAttribute, source)
+            instance:SetAttribute(renderedAttribute, translated)
+        end)
+    end
+    local function applyDirection(instance)
+        local alignmentOk, currentAlignment = pcall(function() return instance.TextXAlignment end)
+        if alignmentOk then
+            if state.originalTextXAlignments[instance] == nil then state.originalTextXAlignments[instance] = currentAlignment end
+            local originalAlignment = state.originalTextXAlignments[instance]
+            if state.lang == "ar" and originalAlignment == Enum.TextXAlignment.Left then
+                pcall(function() instance.TextXAlignment = Enum.TextXAlignment.Right end)
+            elseif originalAlignment ~= nil then
+                pcall(function() instance.TextXAlignment = originalAlignment end)
             end
         end
-        function SA.findByKnife()
-            for _, player in ipairs(SA.getPlayers()) do
-                if player ~= LocalPlayer and SA.playerHasTool(player, "Knife") then return player end
-            end
-        end
-        function SA.findByGun()
-            for _, player in ipairs(SA.getPlayers()) do
-                if player ~= LocalPlayer and SA.playerHasTool(player, "Gun") then return player end
-            end
-        end
-        function SA.findSheriff()
-            if SA.validTarget(SA.sheriff) then return SA.sheriff end
-            return SA.findByGun()
-        end
-
-        function SA.consumeData(data, fullSnapshot)
-            if typeof(data) ~= "table" then return false end
-            local records = (typeof(data.Players) == "table" and data.Players)
-                or (typeof(data.players) == "table" and data.players) or data
-            local lookup = {}
-            for key, info in pairs(records) do
-                lookup[string.lower(tostring(key))] = info
-                if typeof(info) == "table" then
-                    for _, identity in ipairs({ info.Name, info.PlayerName, info.Username, info.UserId, info.UserID, info.Id, info.PlayerId }) do
-                        if identity ~= nil then lookup[string.lower(tostring(identity))] = info end
-                    end
-                end
-            end
-            local function normalizeRole(info)
-                if typeof(info) == "table" then
-                    if info.Dead == true or info.Killed == true or info.IsDead == true or info.Alive == false then return "dead" end
-                    info = info.Role or info.role or info.CurrentRole or info.currentRole or info.Team or info.team or info.Class
-                end
-                local value = string.lower(tostring(info or "innocent")):gsub("[%s_%-]", "")
-                if string.find(value, "murder", 1, true) or string.find(value, "killer", 1, true) then return "murderer" end
-                if string.find(value, "sheriff", 1, true) then return "sheriff" end
-                if string.find(value, "hero", 1, true) then return "hero" end
-                if string.find(value, "dead", 1, true) or string.find(value, "killed", 1, true) then return "dead" end
-                return "innocent"
-            end
-            local foundMurderer, foundSheriff, foundHero, received = nil, nil, nil, false
-            for _, player in ipairs(SA.getPlayers()) do
-                local info = lookup[string.lower(player.Name)] or lookup[tostring(player.UserId)]
-                if info ~= nil then
-                    received = true
-                    SA.playerData[player.UserId] = info
-                    local resolved = normalizeRole(info)
-                    if SA.roleCache[player.UserId] ~= resolved then
-                        SA.roleCache[player.UserId] = resolved
-                        if (resolved == "murderer" or resolved == "sheriff" or resolved == "hero")
-                            and SA.announcedRoles[player.UserId] ~= resolved then
-                            SA.announcedRoles[player.UserId] = resolved
-                            SA.notify(player.Name .. " is " .. string.upper(resolved))
-                        end
-                    end
-                    if resolved == "murderer" then foundMurderer = player
-                    elseif resolved == "sheriff" then foundSheriff = player
-                    elseif resolved == "hero" then foundHero = player end
-                elseif fullSnapshot then
-                    SA.roleCache[player.UserId] = "innocent"
-                end
-            end
-            if fullSnapshot then
-                SA.murderer, SA.sheriff, SA.hero = foundMurderer, foundSheriff, foundHero
+        local ok, current = pcall(function() return instance.TextDirection end)
+        if not ok then return end
+        if state.originalTextDirections[instance] == nil then state.originalTextDirections[instance] = current end
+        if state.lang == "ar" then
+            local txt = ""
+            pcall(function() txt = instance.Text or "" end)
+            local hasArabic = txt:match("[\216-\219][\128-\191]") ~= nil
+            local hasLatin = txt:match("[A-Za-z]") ~= nil
+            if hasLatin and not hasArabic then
+                pcall(function() instance.TextDirection = Enum.TextDirection.LeftToRight end)
             else
-                SA.murderer = foundMurderer or SA.murderer
-                SA.sheriff = foundSheriff or SA.sheriff
-                SA.hero = foundHero or SA.hero
+                pcall(function() instance.TextDirection = Enum.TextDirection.RightToLeft end)
             end
-            if foundMurderer then SA.setTarget(foundMurderer) end
-            return received
+        else
+            local original = state.originalTextDirections[instance]
+            if original ~= nil then pcall(function() instance.TextDirection = original end) end
         end
+    end
 
-        function SA.getPlayerDataRemote()
-            if SA.playerDataRemote and SA.playerDataRemote.Parent then return SA.playerDataRemote end
-            local remote = ReplicatedStorage:FindFirstChild("GetPlayerData", true) -- OK: MM2 remote
-            SA.playerDataRemote = (remote and remote:IsA("RemoteFunction")) and remote or nil
-            return SA.playerDataRemote
+    local seenInstances = {}
+    for _, root in ipairs(roots) do
+        local objects = { root }
+        local ok, descendants = pcall(function() return root:GetDescendants() end)
+        if ok then for _, child in ipairs(descendants) do objects[#objects + 1] = child end end
+        for _, instance in ipairs(objects) do
+            if not seenInstances[instance] and (belongsToNoirScreen(instance) or hasNoirLanguageMarker(instance)) then
+                seenInstances[instance] = true
+                local ok, isTextLabel, isTextButton, isTextBox = pcall(function()
+                    return instance:IsA("TextLabel"), instance:IsA("TextButton"), instance:IsA("TextBox")
+                end)
+                if ok then
+                    if isTextBox then
+                        refreshProperty(instance, "PlaceholderText", "__NoirPlaceholderSource", "__NoirPlaceholderRendered")
+                    elseif isTextLabel or isTextButton then
+                        refreshProperty(instance, "Text", "__NoirTextSource", "__NoirTextRendered")
+                    end
+                    if isTextLabel or isTextButton or isTextBox then applyDirection(instance) end
+                end
+            end
         end
+    end
+    return true
+end
+NoirGenv().__NoirRefreshLanguage = refreshNoirLanguage
 
-        SA.scanBusy = false
-        function SA.refreshTarget(force)
-            if not SA.running or SA.scanBusy then return end
-            SA.scanBusy = true
+function corner(x, r)
+    if not x then return nil end
+    local c = x:FindFirstChildOfClass("\x55ICorner")
+    if not c then c = New("\x55ICorner", { Name = "NoirCorner", Parent = x }) end
+    c.CornerRadius = UDim.new(0, math.max(0, tonumber(r) or 12))
+    return c
+end
+local gradientStrokes = { fast = {} }
+function ringStroke(x, thickness, transparency)
+    local ring = New("\x55IStroke", {
+        Parent = x,
+        Color = Color3.fromRGB(120, 255, 248),
+        Thickness = thickness or 1.6,
+        Transparency = transparency or .18,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+    })
+    New("\x55IGradient", { Parent = ring, Rotation = 25, Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0.00, Color3.fromRGB(56, 121, 120)),
+        ColorSequenceKeypoint.new(0.22, Color3.fromRGB(120, 255, 248)),
+        ColorSequenceKeypoint.new(0.48, Color3.fromRGB(72, 154, 152)),
+        ColorSequenceKeypoint.new(0.72, Color3.fromRGB(120, 255, 248)),
+        ColorSequenceKeypoint.new(1.00, Color3.fromRGB(53, 116, 115)),
+    }) })
+    return ring
+end
+
+function stroke(x, col, tr, thickness)
+    -- ВАЖНО: не передаём ApplyStrokeMode в таблицу свойств.
+    -- Новые билды Roblox кидают "Position is not a valid member of UIStroke",
+    -- когда UIStroke создаётся с таблицей свойств и BorderMode.
+    local s = New("\x55IStroke", { Color = col or C.border, Transparency = tr or .55, Thickness = thickness or 1, Parent = x })
+    pcall(function() s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end)
+    return s
+end
+local gradientAccum = 0
+RunService.RenderStepped:Connect(function(dt)
+    local fast = gradientStrokes.fast
+    if #fast == 0 then return end
+    gradientAccum += dt
+    -- OPTIM: шаг 0.15с вместо 0.12с + пропуск невидимых кнопок (меньше перерисовок GPU)
+    if gradientAccum < 0.15 then return end
+    local step = gradientAccum * 30
+    gradientAccum = 0
+    for i = #fast, 1, -1 do
+        local g = fast[i]
+        if g.Parent then
+            local host = g.Parent.Parent
+            if host and host.Visible ~= false then
+                g.Rotation = (g.Rotation + step) % 360
+            end
+        else
+            table.remove(fast, i)
+        end
+    end
+end)
+function kitiTitle(parent, value)
+    local accent = New("\x46rame", { Parent = parent, Position = UDim2.fromOffset(10, 8), Size = UDim2.fromOffset(3, 14),
+        BackgroundColor3 = C.accent, BorderSizePixel = 0 })
+    corner(accent, 1.5)
+    New("\x55IStroke", { Parent = accent, Color = C.accent, Thickness = 3, Transparency = .6, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+    local l = text(parent, value, 14, UDim2.fromOffset(20, 6))
+    l.Font = Enum.Font.GothamBold
+    l.Size = UDim2.new(1, -30, 0, 15)
+    l.TextTruncate = Enum.TextTruncate.AtEnd
+    l.TextColor3 = C.text
+    l.TextTransparency = 0
+    return l
+end
+function kitiDesc(parent, value)
+    local l = text(parent, value, 11, UDim2.fromOffset(20, 27), true)
+    l.Size = UDim2.new(1, -30, 0, 14)
+    l.TextTruncate = Enum.TextTruncate.AtEnd
+    return l
+end
+function text(parent, value, size, pos, dim)
+    return New("\x54extLabel", { Parent = parent, BackgroundTransparency = 1, Text = NoirTr(value), TextColor3 = dim and C.dim or C.text,
+        TextSize = size, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd, TextWrapped = false,
+        TextStrokeColor3 = Color3.new(0, 0, 0), TextStrokeTransparency = .82,
+        Position = pos or UDim2.new(), Size = UDim2.new(1, 0, 0, size + 8) })
+end
+
+function hudBrackets(parent, len, thick, color, transparency, zindex)
+    local list = {}
+    for _, c in ipairs({ { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } }) do
+        local ax, ay = c[1], c[2]
+        local hOk, hFrame = pcall(New, "Frame", { Parent = parent, AnchorPoint = Vector2.new(ax, ay), Position = UDim2.fromScale(ax, ay), Size = UDim2.fromOffset(len, thick),
+            BackgroundColor3 = color, BackgroundTransparency = transparency or 0, BorderSizePixel = 0, ZIndex = zindex or 10 })
+        if hOk and hFrame then list[#list + 1] = hFrame end
+        local vOk, vFrame = pcall(New, "Frame", { Parent = parent, AnchorPoint = Vector2.new(ax, ay), Position = UDim2.fromScale(ax, ay), Size = UDim2.fromOffset(thick, len),
+            BackgroundColor3 = color, BackgroundTransparency = transparency or 0, BorderSizePixel = 0, ZIndex = zindex or 10 })
+        if vOk and vFrame then list[#list + 1] = vFrame end
+    end
+    return list
+end
+
+-- ===== NOIR CYBER HUD v7: universal neon restyler shared by ALL floating buttons =====
+-- One design language for every on-screen button: dark solid body, rotating neon
+-- ring, soft halo, inner tech ring, top sheen, HUD brackets / reticle ticks.
+NoirCyberHUD = {
+    BODY = Color3.fromRGB(6, 18, 25),
+    TEXT = Color3.fromRGB(220, 248, 246),
+    CYAN = ColorSequence.new({
+        ColorSequenceKeypoint.new(0,    Color3.fromRGB(9, 62, 68)),
+        ColorSequenceKeypoint.new(0.18, Color3.fromRGB(38, 240, 228)),
+        ColorSequenceKeypoint.new(0.38, Color3.fromRGB(8, 26, 32)),
+        ColorSequenceKeypoint.new(0.62, Color3.fromRGB(160, 255, 250)),
+        ColorSequenceKeypoint.new(0.82, Color3.fromRGB(10, 78, 84)),
+        ColorSequenceKeypoint.new(1,    Color3.fromRGB(9, 62, 68)),
+    }),
+    GOLD = ColorSequence.new({
+        ColorSequenceKeypoint.new(0,    Color3.fromRGB(70, 44, 10)),
+        ColorSequenceKeypoint.new(0.18, Color3.fromRGB(255, 196, 64)),
+        ColorSequenceKeypoint.new(0.38, Color3.fromRGB(26, 20, 8)),
+        ColorSequenceKeypoint.new(0.62, Color3.fromRGB(255, 230, 140)),
+        ColorSequenceKeypoint.new(0.82, Color3.fromRGB(92, 60, 14)),
+        ColorSequenceKeypoint.new(1,    Color3.fromRGB(70, 44, 10)),
+    }),
+    WAIT = ColorSequence.new({
+        ColorSequenceKeypoint.new(0,   Color3.fromRGB(220, 248, 246)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(38, 240, 228)),
+        ColorSequenceKeypoint.new(1,   Color3.fromRGB(220, 248, 246)),
+    }),
+    CYAN_DIM = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(24, 104, 112)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 52, 58)),
+    }),
+    _items = {}, _conn = nil,
+}
+-- expose to satellite modules (movement / speed glitch / troll use NoirGenv().NoirCyberHUD)
+pcall(function() NoirGenv().NoirCyberHUD = NoirCyberHUD end)
+function NoirCyberHUD._register(button, gradient, orbit)
+    -- CYBER HUD v8: вращаем обводку (gradient) и орбиту палочек (orbit) на КАЖДОЙ
+    -- кнопке без исключений; один из аргументов может быть nil.
+    if typeof(button) ~= "Instance" then return end
+    local gradOk = gradient == nil or typeof(gradient) == "Instance"
+    local orbitOk = orbit == nil or typeof(orbit) == "Instance"
+    if not gradOk or not orbitOk or (gradient == nil and orbit == nil) then return end
+    NoirCyberHUD._items[button] = { grad = gradient, orbit = orbit, rot = math.random(0, 359) }
+    if NoirCyberHUD._conn then return end
+    NoirCyberHUD._conn = game:GetService("RunService").Heartbeat:Connect(function(dt)
+        local alive = false
+        for btn, item in pairs(NoirCyberHUD._items) do
+            if typeof(btn) == "Instance" and btn.Parent then
+                alive = true
+                item.rot = (item.rot + dt * 40) % 360
+                if item.grad then pcall(function() item.grad.Rotation = item.rot end) end
+                if item.orbit then pcall(function() item.orbit.Rotation = ((item.orbit.Rotation or 0) + dt * 55) % 360 end) end
+            else
+                NoirCyberHUD._items[btn] = nil
+            end
+        end
+        if not alive and NoirCyberHUD._conn then
+            NoirCyberHUD._conn:Disconnect()
+            NoirCyberHUD._conn = nil
+        end
+    end)
+end
+function NoirCyberHUD.apply(button, cfg)
+    cfg = cfg or {}
+    if typeof(button) ~= "Instance" then return nil end
+    local round = cfg.round ~= false
+    local z = button.ZIndex or 5
+    pcall(function()
+        for _, inst in ipairs(button:GetChildren()) do
+            if inst:IsA("UIStroke") then inst:Destroy() end
+        end
+        for _, nm in ipairs({ "NoirSheen", "NoirBracket", "NoirTickOrbit", "NoirTick", "NoirOrbitStroke" }) do
+            local old = button:FindFirstChild(nm)
+            if old then old:Destroy() end
+        end
+    end)
+    button.BorderSizePixel = 0
+    button.AutoButtonColor = false
+    corner(button, round and 999 or (cfg.radius or 12))
+    local ringColor = cfg.ring or (round and NoirCyberHUD.CYAN or NoirCyberHUD.CYAN)
+    local outer = New("UIStroke", { Parent = button, Name = "NoirRing", Color = C.accent,
+        Thickness = cfg.thickness or 2.4, Transparency = .06, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+    local ringGradient = New("UIGradient", { Parent = outer, Name = "NoirRingGradient", Rotation = 0, Color = ringColor })
+    local halo = New("UIStroke", { Parent = button, Name = "NoirHalo", Color = C.accent,
+        Thickness = 7, Transparency = .88, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+    local inner = New("UIStroke", { Parent = button, Name = "NoirOrbitStroke", Color = C.border,
+        Thickness = 1, Transparency = .5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+    local innerGradient = New("UIGradient", { Parent = inner, Rotation = 180, Color = NoirCyberHUD.CYAN_DIM })
+    local sheen = New("Frame", { Parent = button, Name = "NoirSheen", Size = UDim2.new(1, 0, .4, 0),
+        BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = .84, BorderSizePixel = 0, ZIndex = z + 2 })
+    New("UICorner", { Parent = sheen, CornerRadius = UDim.new(0, round and 999 or (cfg.radius or 12)) })
+    New("UIGradient", { Parent = sheen, Rotation = 90, Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, .3), NumberSequenceKeypoint.new(.65, .85), NumberSequenceKeypoint.new(1, 1) }) })
+    local brackets
+    if not round and cfg.brackets ~= false then
+        brackets = hudBrackets(button, cfg.bracketLen or 10, 1.6, C.accent2, .3, z + 3)
+        for _, f in ipairs(brackets) do f.Name = "NoirBracket" end
+    end
+    local tickOrbit
+    if round and cfg.tickMarks ~= false then
+        -- CYBER HUD v8: палочки живут во вращающемся контейнере и летят по орбите
+        tickOrbit = New("Frame", { Parent = button, Name = "NoirTickOrbit", AnchorPoint = Vector2.new(.5, .5),
+            Position = UDim2.fromScale(.5, .5), Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Rotation = 0, ZIndex = z + 3 })
+        for _, c in ipairs({ { 1, 0, 45 }, { 0, 0, -45 }, { 1, 1, -45 }, { 0, 1, 45 } }) do
+            New("Frame", { Parent = tickOrbit, Name = "NoirTick", AnchorPoint = Vector2.new(c[1], c[2]),
+                Position = UDim2.fromScale(c[1], c[2]), Size = UDim2.fromOffset(7, 1.6),
+                BackgroundColor3 = C.accent, BackgroundTransparency = .3, BorderSizePixel = 0,
+                Rotation = c[3], ZIndex = z + 3 })
+        end
+    end
+    -- v8: вращение обводки включено на ВСЕХ кнопках — cfg.autoRotate больше не отключает его
+    NoirCyberHUD._register(button, ringGradient, tickOrbit)
+    return { outer = ringGradient, ring = outer, halo = halo, inner = inner, sheen = sheen, brackets = brackets, orbit = tickOrbit }
+end
+
+-- noirHudCorners: technical bracket corners (ported from the Blade Ball build;
+-- was called by the dashboard but never defined -> loader FAILED)
+function noirHudCorners(parent, length, color, transparency, zIndex)
+    local z = zIndex or ((parent.ZIndex or 1) + 1)
+    for _, point in ipairs({ {0,0}, {1,0}, {0,1}, {1,1} }) do
+        local ax, ay = point[1], point[2]
+        local h = Instance.new("Frame")
+        h.AnchorPoint = Vector2.new(ax, ay); h.Position = UDim2.fromScale(ax, ay)
+        h.Size = UDim2.fromOffset(length, 1.4); h.BackgroundColor3 = color
+        h.BackgroundTransparency = transparency or 0; h.BorderSizePixel = 0; h.ZIndex = z; h.Parent = parent
+        local v = Instance.new("Frame")
+        v.AnchorPoint = Vector2.new(ax, ay); v.Position = UDim2.fromScale(ax, ay)
+        v.Size = UDim2.fromOffset(1.4, length); v.BackgroundColor3 = color
+        v.BackgroundTransparency = transparency or 0; v.BorderSizePixel = 0; v.ZIndex = z; v.Parent = parent
+    end
+end
+
+local function noirNovaButtonImpl(b, cfg)
+    -- NOIR CYBER HUD v6: дизайн с фото-референса — чёрный корпус, неоновый cyan-контур
+    -- с мягким гало, срезанные углы (9-slice) и верхний блик. Круглые кнопки
+    -- (cfg.round) рисуются векторным кольцом, прямоугольные получают 9-slice корпус
+    -- (если экзекутор поддерживает getcustomasset), иначе векторный фолбэк.
+    -- API сохранён: колбэки пишут novaFx.outer.Color = ColorSequence (прокси состояния).
+    cfg = cfg or {}
+    local z = b.ZIndex or 5
+    b.BorderSizePixel = 0
+    b.AutoButtonColor = false
+    local useRound = cfg.round == true
+    corner(b, useRound and 999 or (cfg.radius or 12))
+    local outer = New("UIStroke", { Parent = b, Color = C.accent, Thickness = cfg.thickness or 2, Transparency = .08, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+    local outerGradient = New("UIGradient", { Parent = outer, Rotation = 35, Color = cfg.gradient or novaMetal })
+    local halo = New("UIStroke", { Parent = b, Color = C.accent, Thickness = 6, Transparency = .87, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+    New("UIStroke", { Parent = b, Color = C.border, Thickness = 1, Transparency = .55, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+    local sheen = New("Frame", { Parent = b, Name = "NoirSheen", Size = UDim2.new(1, 0, .42, 0), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = .82, BorderSizePixel = 0, ZIndex = 4 })
+    New("UICorner", { Parent = sheen, CornerRadius = UDim.new(0, useRound and 999 or (cfg.radius or 12)) })
+    New("UIGradient", { Parent = sheen, Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, .4), NumberSequenceKeypoint.new(.6, .8), NumberSequenceKeypoint.new(1, 1) }) })
+    -- CYBER HUD v8: круглая форма — ретикл-тики на вращающейся орбите
+    local tickOrbit
+    if useRound then
+        tickOrbit = New("Frame", { Parent = b, Name = "NoirTickOrbit", AnchorPoint = Vector2.new(.5, .5),
+            Position = UDim2.fromScale(.5, .5), Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Rotation = 0, ZIndex = z + 3 })
+        for _, c in ipairs({ { 1, 0, 45 }, { 0, 0, -45 }, { 1, 1, -45 }, { 0, 1, 45 } }) do
+            New("Frame", { Parent = tickOrbit, Name = "NoirTick", AnchorPoint = Vector2.new(c[1], c[2]),
+                Position = UDim2.fromScale(c[1], c[2]), Size = UDim2.fromOffset(7, 1.6),
+                BackgroundColor3 = C.accent, BackgroundTransparency = .3, BorderSizePixel = 0,
+                Rotation = c[3], ZIndex = z + 3 })
+        end
+        local orbit = New("UIStroke", { Parent = b, Name = "NoirOrbitStroke", Color = C.border, Thickness = 1,
+            Transparency = .35, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+        New("UIGradient", { Parent = orbit, Rotation = 180, Color = novaMetal })
+    end
+    local brackets
+    if cfg.brackets and not useRound then pcall(function() brackets = hudBrackets(b, cfg.bracketLen or 8, 1.4, C.accent2, .3, z + 2) end) end
+    -- 9-slice корпус: срезанные углы как на референсе
+    local bodyImage, roundBody = false, false
+    if novaFrameIdle ~= "" and not useRound and b:IsA("ImageButton") then
+        bodyImage = true
+        b.BackgroundTransparency = 1
+        b.Image = novaFrameIdle
+        b.ScaleType = Enum.ScaleType.Slice
+        b.SliceCenter = novaSliceCenter
+        pcall(function() b.SliceScale = 1 end)
+        outer.Transparency = 1
+        halo.Transparency = 1
+        if brackets then for _, f in ipairs(brackets) do f.Visible = false end end
+    elseif useRound and novaRoundIdle ~= "" and b:IsA("ImageButton") then
+        roundBody = true
+        b.BackgroundTransparency = 1
+        b.Image = novaRoundIdle
+        b.ScaleType = Enum.ScaleType.Fit
+        outer.Transparency = 1
+        halo.Transparency = 1
+        for _, nm in ipairs({ "NoirOrbitStroke" }) do
+            local stale = b:FindFirstChild(nm)
+            if stale then
+                -- UIStroke/UIGradient are UIComponent: no .Visible member (crashed the whole build)
+                if stale:IsA("GuiObject") then stale.Visible = false else stale.Enabled = false end
+            end
+        end
+    end
+    local function seqLum(seq)
+        local r, g, bl, n = 0, 0, 0, 0
+        for _, kp in ipairs(seq.Keypoints) do r += kp.Value.R; g += kp.Value.G; bl += kp.Value.B; n += 1 end
+        if n == 0 then return 0 end
+        return (r + g + bl) / (3 * n)
+    end
+    -- прокси состояния: прежние колбэки пишут bindOuterGradient.Color = seq
+    local stateProxy = setmetatable({}, {
+        __newindex = function(_, key, value)
+            if key ~= "Color" or typeof(value) ~= "ColorSequence" then return end
             task.spawn(function()
-                local knifeOwner, gunOwner = SA.findByKnife(), SA.findByGun()
-                if knifeOwner then SA.setTarget(knifeOwner) end
-                if gunOwner and gunOwner ~= knifeOwner then SA.sheriff = gunOwner end
-                local remote = SA.getPlayerDataRemote()
-                if remote then
-                    local ok, data = pcall(function() return remote:InvokeServer() end)
-                    if ok then SA.consumeData(data, true) end -- VERIFY: MM2 role feed, remote name "GetPlayerData"
-                end
-                SA.scanBusy = false
-            end)
-        end
-
-        function SA.updatePing()
-            pcall(function()
-                local network = Stats:FindFirstChild("Network")
-                local items = network and network:FindFirstChild("ServerStatsItem")
-                local pingItem = items and items:FindFirstChild("Data Ping")
-                if pingItem then
-                    local measured = pingItem:GetValue() / 1000
-                    if measured > 0 and measured < 2 then SA.cachedPing = SA.cachedPing * 0.7 + measured * 0.3 end
-                end
-            end)
-        end
-
-        -- ── infection round detection (auto zombie targeting) ──────────────
-        local function zombieWordIn(textValue)
-            local lowered = string.lower(tostring(textValue or ""))
-            return string.find(lowered, "zomb", 1, true) ~= nil
-                or string.find(lowered, "infect", 1, true) ~= nil
-                or string.find(lowered, "undead", 1, true) ~= nil
-        end
-        local function modelRoot(model)
-            return model and (model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart) or nil
-        end
-        local function modelHasZombieMarker(model)
-            if zombieWordIn(model.Name) then return true end
-            local ok, hit = pcall(function()
-                for key, value in pairs(model:GetAttributes()) do
-                    if zombieWordIn(key) or (type(value) == "string" and zombieWordIn(value)) then return true end
-                end
-                for _, child in ipairs(model:GetChildren()) do
-                    if (child:IsA("BoolValue") or child:IsA("StringValue")) and zombieWordIn(child.Name) then return true end
-                end
-                return false
-            end)
-            return ok and hit or false
-        end
-        local function playerHasZombieMarker(player)
-            if not player then return false end
-            local now = os.clock()
-            if now - SA.__infectionState.markersAt >= 0.5 then
-                table.clear(SA.__infectionState.markerPlayers)
-                SA.__infectionState.markersAt = now
-            end
-            local cached = SA.__infectionState.markerPlayers[player]
-            if cached ~= nil then return cached end
-            local ok, hit = pcall(function()
-                if player.Team and zombieWordIn(player.Team.Name) then return true end
-                for key, value in pairs(player:GetAttributes()) do
-                    if value == true and zombieWordIn(key) then return true end
-                end
-                local character = player.Character
-                if character then
-                    for key, value in pairs(character:GetAttributes()) do
-                        if value == true and zombieWordIn(key) then return true end
-                    end
-                    for _, inst in ipairs(character:GetDescendants()) do
-                        if inst:IsA("BoolValue") and inst.Value and zombieWordIn(inst.Name) then return true end
-                        if (inst:IsA("StringValue") or inst:IsA("IntValue") or inst:IsA("ObjectValue"))
-                            and zombieWordIn(inst.Name) then return true end
-                    end
-                end
-                return false
-            end)
-            hit = ok and hit or false
-            SA.__infectionState.markerPlayers[player] = hit
-            return hit
-        end
-        local function localHasGun()
-            local character = LocalPlayer.Character
-            local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-            return (character and character:FindFirstChild("Gun") ~= nil)
-                or (backpack and backpack:FindFirstChild("Gun") ~= nil) or false
-        end
-        local infectionSignal, infectionAt = false, 0
-        function SA.infectionRoundActive()
-            local now = os.clock()
-            if now - infectionAt < 0.8 then return infectionSignal end
-            infectionAt = now
-            infectionSignal = false
-            pcall(function()
-                for _, player in ipairs(SA.getPlayers()) do
-                    if player ~= LocalPlayer and playerHasZombieMarker(player) then infectionSignal = true break end
-                end
-            end)
-            if not infectionSignal then
-                pcall(function()
-                    local hasKnife, gunCount = false, 0
-                    if localHasGun() then gunCount += 1 end
-                    for _, player in ipairs(SA.getPlayers()) do
-                        if player ~= LocalPlayer and SA.validTarget(player) then
-                            if SA.playerHasTool(player, "Knife") then hasKnife = true end
-                            if SA.playerHasTool(player, "Gun") then gunCount += 1 end
-                        end
-                    end
-                    if not hasKnife and gunCount >= 2 then infectionSignal = true end
-                end)
-            end
-            if not infectionSignal then
-                pcall(function()
-                    for _, model in ipairs(Workspace:GetDescendants()) do
-                        if model:IsA("Model") and not Players:GetPlayerFromCharacter(model)
-                            and model:FindFirstChildOfClass("Humanoid") and modelHasZombieMarker(model) then
-                            infectionSignal = true
-                            break
-                        end
-                    end
-                end)
-            end
-            return infectionSignal
-        end
-        function SA.scanZombieNPCs(force)
-            local now = os.clock()
-            if not force and now < SA.__infectionState.nextScan then return SA.__infectionState.npcs end
-            SA.__infectionState.nextScan = now + 1.2
-            local strict, loose = {}, {}
-            pcall(function()
-                for _, model in ipairs(Workspace:GetDescendants()) do
-                    if model:IsA("Model") and not Players:GetPlayerFromCharacter(model) then
-                        local humanoid = model:FindFirstChildOfClass("Humanoid")
-                        local root = modelRoot(model)
-                        if humanoid and humanoid.Health > 0 and root then
-                            if modelHasZombieMarker(model) then strict[#strict + 1] = model
-                            else loose[#loose + 1] = model end
-                        end
-                    end
-                end
-            end)
-            if #strict > 0 then
-                SA.__infectionState.npcs = strict
-            else
-                local signal = localHasGun()
-                if not signal then
-                    for _, player in ipairs(Players:GetPlayers()) do
-                        if player ~= LocalPlayer and playerHasZombieMarker(player) then signal = true break end
-                    end
-                end
-                SA.__infectionState.npcs = signal and loose or {}
-            end
-            return SA.__infectionState.npcs
-        end
-        function SA.nearestZombieEntity()
-            if not SA.infectionRoundActive() then return nil end
-            local now = os.clock()
-            if SA.__infectionState.entity and now - SA.__infectionState.entityAt < 0.35 then
-                local cached = SA.__infectionState.entity
-                local stillOk = false
-                pcall(function()
-                    if typeof(cached) == "Instance" and cached.Parent then
-                        if cached:IsA("Model") then
-                            local humanoid = cached:FindFirstChildOfClass("Humanoid")
-                            stillOk = humanoid ~= nil and humanoid.Health > 0 and modelRoot(cached) ~= nil
-                        else
-                            stillOk = SA.validTarget(cached) and cached.Character ~= nil
-                        end
-                    end
-                end)
-                if stillOk then return cached end
-                SA.__infectionState.entity = nil
-            end
-            local origin = SA.localRoot()
-            if not origin then return nil end
-            local best, bestDistance
-            local function consider(candidate, candidateRoot)
-                if not candidateRoot then return end
-                local d = (candidateRoot.Position - origin.Position).Magnitude
-                if SA.config.maxDistance > 0 and d > SA.config.maxDistance then return end
-                if not bestDistance or d < bestDistance then best, bestDistance = candidate, d end
-            end
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and SA.validTarget(player)
-                    and not SA.playerIsInLobby(player) and playerHasZombieMarker(player) then
-                    local character = player.Character
-                    consider(player, character and character:FindFirstChild("HumanoidRootPart") or nil)
-                end
-            end
-            if not best then
-                for _, player in ipairs(Players:GetPlayers()) do
-                    if player ~= LocalPlayer and SA.validTarget(player)
-                        and not SA.playerIsInLobby(player) and not SA.isFriend(player)
-                        and not SA.playerHasTool(player, "Gun") then
-                        local character = player.Character
-                        consider(player, character and character:FindFirstChild("HumanoidRootPart") or nil)
-                    end
-                end
-            end
-            for _, model in ipairs(SA.scanZombieNPCs()) do
-                local humanoid = model:FindFirstChildOfClass("Humanoid")
-                if humanoid and humanoid.Health > 0 then consider(model, modelRoot(model)) end
-            end
-            if best and bestDistance then
-                local current = SA.__infectionState.entity
-                if current and current ~= best and typeof(current) == "Instance" and current.Parent then
-                    local currentRoot
-                    pcall(function()
-                        if current:IsA("Model") then currentRoot = modelRoot(current)
-                        elseif SA.validTarget(current) then currentRoot = current.Character and current.Character:FindFirstChild("HumanoidRootPart") or nil end
-                    end)
-                    if currentRoot and (currentRoot.Position - origin.Position).Magnitude <= bestDistance + 8 then best = current end
-                end
-            end
-            SA.__infectionState.entity = best
-            SA.__infectionState.entityAt = now
-            return best
-        end
-
-        -- ── targeting ──────────────────────────────────────────────────────
-        function SA.getAimPart(player)
-            local character = SA.entityCharacter(player)
-            if not character then return nil end
-            local partName = SA.config.hitPart
-            if partName == "Random" then
-                local options = { "Head", "UpperTorso", "LowerTorso", "HumanoidRootPart" }
-                partName = options[math.random(#options)]
-            end
-            local part = character:FindFirstChild(partName)
-            if not part then part = character:FindFirstChild("HumanoidRootPart") or character.PrimaryPart end
-            return part
-        end
-        function SA.passesFilters(player, trusted)
-            if player == nil or player == LocalPlayer then return false end
-            if not SA.validTarget(player) then return false end
-            if not trusted and SA.playerIsInLobby(player) then return false end
-            if SA.isFriend(player) then return false end
-            if SA.config.maxDistance > 0 and SA.distanceTo(player) > SA.config.maxDistance then return false end
-            return true
-        end
-        function SA.selectTarget(mode)
-            -- infection rounds: silent aim targets the nearest zombie (NPC or player)
-            if SA.infectionRoundActive() then
-                local zombieEntity = SA.nearestZombieEntity()
-                if zombieEntity then return zombieEntity end
-            end
-            mode = mode or SA.config.targetMode
-            if mode == "Murderer" then return SA.passesFilters(SA.murderer, true) and SA.murderer or nil end
-            if mode == "Sheriff" then return SA.passesFilters(SA.sheriff, true) and SA.sheriff or nil end
-            if mode == "Hero" then return SA.passesFilters(SA.hero, true) and SA.hero or nil end
-            if mode == "Nearest" then
-                local best, bestDistance
-                for _, player in ipairs(SA.getPlayers()) do
-                    if SA.passesFilters(player) then
-                        local d = SA.distanceTo(player)
-                        if not bestDistance or d < bestDistance then best, bestDistance = player, d end
-                    end
-                end
-                return best
-            end
-            if mode == "Crosshair" then
-                local camera = Workspace.CurrentCamera
-                local best, bestDistance
-                if camera then
-                    local center = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
-                    for _, player in ipairs(SA.getPlayers()) do
-                        if SA.passesFilters(player) then
-                            local part = SA.getAimPart(player)
-                            if part then
-                                local screen = camera:WorldToViewportPoint(part.Position)
-                                if screen.Z > 0 then
-                                    local d = (Vector2.new(screen.X, screen.Y) - center).Magnitude
-                                    if not bestDistance or d < bestDistance then best, bestDistance = player, d end
-                                end
-                            end
-                        end
-                    end
-                end
-                return best
-            end
-            if mode == "Lowest Health" then
-                local best, bestHealth
-                for _, player in ipairs(SA.getPlayers()) do
-                    if SA.passesFilters(player) then
-                        local humanoid = player.Character and player.Character:FindFirstChildWhichIsA("Humanoid")
-                        local health = humanoid and humanoid.Health or math.huge
-                        if not bestHealth or health < bestHealth then best, bestHealth = player, health end
-                    end
-                end
-                return best
-            end
-            if mode == "Random" then
-                local list = {}
-                for _, player in ipairs(SA.getPlayers()) do
-                    if SA.passesFilters(player) then list[#list + 1] = player end
-                end
-                if #list > 0 then return list[math.random(#list)] end
-                return nil
-            end
-            return SA.passesFilters(SA.murderer, true) and SA.murderer or nil
-        end
-        function SA.targetPart()
-            local player = SA.selectTarget()
-            if not player then player = SA.findByKnife() end
-            local character = SA.entityCharacter(player)
-            if not character then return nil end
-            return SA.getAimPart(player)
-                or character:FindFirstChild("HumanoidRootPart")
-                or character.PrimaryPart
-        end
-        function SA.findNearestKnifeTarget()
-            local root = SA.localRoot()
-            if not root then return nil end
-            local closest, closestDistance
-            for _, player in ipairs(SA.getPlayers()) do
-                if SA.passesFilters(player) then
-                    local targetRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                    if targetRoot then
-                        local d = (targetRoot.Position - root.Position).Magnitude
-                        if not closestDistance or d < closestDistance then closest, closestDistance = player, d end
-                    end
-                end
-            end
-            return closest
-        end
-        function SA.knifeTargetPlayer()
-            if not SA.config.knifeEnabled then return nil end
-            if SA.config.knifePrioritizeSheriff == true then
-                local sheriffPlayer = SA.findSheriff()
-                return SA.passesFilters(sheriffPlayer, true) and sheriffPlayer or nil
-            end
-            return SA.findNearestKnifeTarget()
-        end
-        function SA.knifeTargetPart()
-            local player = SA.knifeTargetPlayer()
-            local character = player and player.Character
-            if not character then return nil end
-            return SA.getAimPart(player)
-                or character:FindFirstChild("HumanoidRootPart")
-                or character.PrimaryPart
-        end
-
-        -- ── ping-adaptive prediction ───────────────────────────────────────
-        SA.PingProfiles = {
-            { Ping = 20,  Sim = 48, Interval = 70, H = 154, V = 144, X = -5,  Y = -14, Z = 0 },
-            { Ping = 50,  Sim = 54, Interval = 66, H = 162, V = 152, X = -6,  Y = -14, Z = 0 },
-            { Ping = 100, Sim = 68, Interval = 60, H = 176, V = 166, X = -8,  Y = -15, Z = 0 },
-            { Ping = 150, Sim = 72, Interval = 64, H = 182, V = 170, X = -9,  Y = -12, Z = 0 },
-            { Ping = 200, Sim = 76, Interval = 70, H = 188, V = 174, X = -10, Y = -11, Z = 0 },
-            { Ping = 300, Sim = 82, Interval = 76, H = 196, V = 180, X = -12, Y = -10, Z = 0 },
-        }
-        function SA.autoTuneForPing()
-            local now = os.clock()
-            if now - (SA.lastAutoTune or 0) < 0.4 then return end
-            SA.lastAutoTune = now
-            local pingMs = math.clamp(math.floor(SA.cachedPing * 1000 + 0.5), 5, 1000)
-            if SA.config.prioritizePing and SA.config.manualPingMs ~= pingMs then SA.config.manualPingMs = pingMs end
-            local knife = SA.config.knifeAim
-            if knife.prioritizePing and knife.manualPingMs ~= pingMs then knife.manualPingMs = pingMs end
-        end
-        function SA.leadTime(profile)
-            -- profile "knife" reads the knifeAim prediction settings, gun reads config
-            local settings = profile == "knife" and SA.config.knifeAim or SA.config
-            local observedPing = settings.prioritizePing and SA.cachedPing or (settings.manualPingMs / 1000)
-            local prediction
-            if settings.adaptive then
-                prediction = observedPing + settings.extraLead
-                if settings.predictLag then
-                    local samplingDelay = math.clamp(settings.predictionIntervalMs / 2000, 0, 0.05)
-                    prediction = prediction + samplingDelay + math.max(0, observedPing - 0.10) * 0.15
-                end
-            else
-                prediction = settings.fixedLead
-            end
-            local simulationCap = settings.maxSimulationMs / 1000
-            if settings.adaptive then
-                simulationCap = math.min(0.30, simulationCap + math.clamp(observedPing - 0.10, 0, 0.25) * 0.45)
-            end
-            return math.clamp(prediction, 0.02, simulationCap)
-        end
-        local function motionRoot(part)
-            -- predict from HumanoidRootPart: walk animation bob on Head/limbs
-            -- never poisons the sampled velocity
-            if not part then return part end
-            local model = part.Parent
-            if model and model:FindFirstChildOfClass("Humanoid") then
-                return model:FindFirstChild("HumanoidRootPart") or part
-            end
-            return part
-        end
-        function SA.sampleMotion(part, settings)
-            settings = settings or SA.config
-            local now = os.clock()
-            if SA.motionPart ~= part then
-                SA.motionPart = part
-                SA.motionSamples = {}
-                SA.measuredVelocity = part.AssemblyLinearVelocity
-                SA.previousEstimatedVelocity = SA.measuredVelocity
-                SA.estimatedAcceleration = Vector3.zero
-            end
-            -- sample fast (16-50 ms) even if the UI interval is higher:
-            -- a strafe reversal is invisible to a 70+ ms sampler
-            local interval = math.clamp((tonumber(settings.predictionIntervalMs) or 72) / 1000, 0.016, 0.05)
-            local last = SA.motionSamples[#SA.motionSamples]
-            if not last or now - last.time >= interval then
-                SA.motionSamples[#SA.motionSamples + 1] = { position = part.Position, time = now }
-                while #SA.motionSamples > 14 or (#SA.motionSamples > 3 and now - SA.motionSamples[1].time > 0.28) do
-                    table.remove(SA.motionSamples, 1)
-                end
-                local count = #SA.motionSamples
-                if count >= 2 then
-                    local newest, previous = SA.motionSamples[count], SA.motionSamples[count - 1]
-                    local dt = newest.time - previous.time
-                    if dt > 0.004 then
-                        local recent = (newest.position - previous.position) / dt
-                        local sampled = recent
-                        if count >= 4 then
-                            -- least-squares slope over the window: stable lead direction
-                            local t0 = SA.motionSamples[1].time
-                            local n, st, sx, sz = 0, 0, 0, 0
-                            for i = 1, count do
-                                local s = SA.motionSamples[i]
-                                local t = s.time - t0
-                                n = n + 1; st = st + t; sx = sx + s.position.X; sz = sz + s.position.Z
-                            end
-                            local mt, mx, mz = st / n, sx / n, sz / n
-                            local numX, numZ, den = 0, 0, 0
-                            for i = 1, count do
-                                local s = SA.motionSamples[i]
-                                local t = s.time - t0
-                                numX = numX + (t - mt) * (s.position.X - mx)
-                                numZ = numZ + (t - mt) * (s.position.Z - mz)
-                                den = den + (t - mt) * (t - mt)
-                            end
-                            if den > 0.0001 then
-                                sampled = recent:Lerp(Vector3.new(numX / den, recent.Y, numZ / den), 0.5)
-                            end
-                        end
-                        if sampled.Magnitude < 250 then
-                            local oldVelocity = SA.measuredVelocity
-                            SA.measuredVelocity = SA.measuredVelocity:Lerp(sampled, math.clamp(dt * 26, 0.45, 1))
-                            local acceleration = (SA.measuredVelocity - oldVelocity) / math.max(dt, 0.016)
-                            if acceleration.Magnitude < 160 then
-                                SA.estimatedAcceleration = SA.estimatedAcceleration:Lerp(acceleration, 0.3)
-                            else
-                                SA.estimatedAcceleration = Vector3.zero
-                            end
-                            SA.previousEstimatedVelocity = oldVelocity
-                        end
-                    end
-                end
-            end
-            SA.motionPosition = part.Position
-            SA.motionTime = now
-        end
-        function SA.calculateAim(part)
-            local root = motionRoot(part)
-            SA.sampleMotion(root)
-            local assembly = root.AssemblyLinearVelocity
-            local velocity = assembly
-            local acceleration = Vector3.zero
-            if SA.config.predictLag and SA.motionPart == root and #SA.motionSamples >= 2 then
-                local disagreement = (assembly - SA.measuredVelocity).Magnitude
-                local measuredWeight = math.clamp(0.75 - disagreement / 120, 0.35, 0.75)
-                -- strafe reversal: sampling still points the old way, physics does not
-                if assembly.X * SA.measuredVelocity.X + assembly.Z * SA.measuredVelocity.Z < 0 then measuredWeight = 0.15 end
-                if assembly.Magnitude < 2.5 then measuredWeight = math.min(measuredWeight, 0.25) end
-                velocity = assembly:Lerp(SA.measuredVelocity, measuredWeight)
-                acceleration = SA.estimatedAcceleration
-            end
-            local horizontal = SA.config.horizontalMultiplier / 100
-            local vertical = SA.config.verticalMultiplier / 100
-            local time = SA.leadTime() * math.clamp((tonumber(SA.config.leadScale) or 100) / 100, 0.25, 2.5)
-            time = math.clamp(time, 0.02, 0.60)
-            local displacement = Vector3.new(velocity.X * horizontal * time, 0, velocity.Z * horizontal * time)
-            if SA.config.predictLag then
-                local horizontalAcceleration = Vector3.new(acceleration.X, 0, acceleration.Z)
-                displacement = displacement + horizontalAcceleration * (0.5 * time * time)
-            end
-            if SA.config.predictJump then
-                local verticalTime = time * vertical
-                local verticalDisplacement = velocity.Y * verticalTime
-                local humanoid = root.Parent and root.Parent:FindFirstChildWhichIsA("Humanoid")
-                if humanoid and humanoid.FloorMaterial == Enum.Material.Air then
-                    verticalDisplacement = verticalDisplacement - 0.5 * Workspace.Gravity * verticalTime * verticalTime
-                end
-                displacement = displacement + Vector3.new(0, verticalDisplacement, 0)
-            end
-            -- horizontal safety cap that leaves the jump arc alone
-            local flat = Vector3.new(displacement.X, 0, displacement.Z)
-            if flat.Magnitude > 60 then
-                flat = flat.Unit * 60
-                displacement = Vector3.new(flat.X, displacement.Y, flat.Z)
-            end
-            local offset = Vector3.new(
-                part.Size.X * SA.config.offsetX / 100,
-                part.Size.Y * SA.config.offsetY / 100,
-                part.Size.Z * SA.config.offsetZ / 100)
-            return part.Position + displacement + offset
-        end
-        function SA.calculateKnifeAim(part, origin)
-            local settings = SA.config.knifeAim
-            local root = motionRoot(part)
-            SA.sampleMotion(root, settings)
-            local assembly = root.AssemblyLinearVelocity
-            local velocity = assembly
-            if settings.predictLag and SA.motionPart == root and #SA.motionSamples >= 2 then
-                local weight = 0.65
-                if assembly.X * SA.measuredVelocity.X + assembly.Z * SA.measuredVelocity.Z < 0 then weight = 0.15 end
-                velocity = assembly:Lerp(SA.measuredVelocity, weight)
-            end
-            local horizontal = settings.horizontalMultiplier / 100
-            local vertical = settings.verticalMultiplier / 100
-            local predictedVelocity = Vector3.new(
-                velocity.X * horizontal,
-                settings.predictJump and velocity.Y * vertical or 0,
-                velocity.Z * horizontal)
-            local distance = (part.Position - origin).Magnitude
-            local travelTime = math.clamp(distance / 125, 0, 0.55) -- knife flies ~125 studs/s
-            local lead = SA.leadTime("knife") * math.clamp((tonumber(settings.leadScale) or 100) / 100, 0.25, 2.5)
-            local time = math.clamp(lead + travelTime, 0.03, 0.90)
-            local offset = Vector3.new(
-                part.Size.X * settings.offsetX / 100,
-                part.Size.Y * settings.offsetY / 100,
-                part.Size.Z * settings.offsetZ / 100)
-            return part.Position + predictedVelocity * time + offset
-        end
-
-        -- ── wall check ─────────────────────────────────────────────────────
-        SA.wallCheckParams = RaycastParams.new()
-        SA.wallCheckParams.FilterType = Enum.RaycastFilterType.Exclude
-        SA.wallCheckParams.IgnoreWater = true
-        function SA.targetVisible(part, forceWallCheck)
-            if not (forceWallCheck or SA.config.wallCheck) then return true end
-            local character = LocalPlayer.Character
-            local originPart = character
-                and (character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart"))
-            if not originPart or not part then return false end
-            SA.wallCheckParams.FilterDescendantsInstances = { character }
-            local result = Workspace:Raycast(originPart.Position, part.Position - originPart.Position, SA.wallCheckParams)
-            return result == nil or result.Instance:IsDescendantOf(part.Parent)
-        end
-
-        -- ── shot remote detection + redirect ───────────────────────────────
-        local function localGunTool()
-            local character = LocalPlayer.Character
-            local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-            return (character and character:FindFirstChild("Gun")) or (backpack and backpack:FindFirstChild("Gun"))
-        end
-        local function remoteBelongsToLocalGun(remote)
-            local character = LocalPlayer.Character
-            local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-            local tool = remote and remote:FindFirstAncestorOfClass("Tool")
-            if tool and tool.Name == "Gun"
-                and ((character and tool:IsDescendantOf(character)) or (backpack and tool:IsDescendantOf(backpack))) then
-                return true
-            end
-            local characterGun = character and character:FindFirstChild("Gun")
-            local backpackGun = backpack and backpack:FindFirstChild("Gun")
-            return (characterGun and remote:IsDescendantOf(characterGun))
-                or (backpackGun and remote:IsDescendantOf(backpackGun))
-        end
-        local function shotRemote(remote, args)
-            if not SA.config.enabled or args.n < 2 then return false end
-            if typeof(remote) ~= "Instance" or not remote:IsA("RemoteEvent") then return false end
-            if not remoteBelongsToLocalGun(remote) then return false end
-            local first, second = args[1], args[2]
-            local firstIsPos = typeof(first) == "Vector3" or typeof(first) == "CFrame"
-            local secondIsPos = typeof(second) == "Vector3" or typeof(second) == "CFrame"
-            return firstIsPos and secondIsPos
-        end
-        local function knifeRemote(remote, args)
-            if not SA.config.knifeEnabled or args.n < 2 then return false end
-            if typeof(remote) ~= "Instance" or not remote:IsA("RemoteEvent") then return false end
-            if remote.Name ~= "KnifeThrown" then return false end -- OK: MM2 knife throw remote
-            if typeof(args[1]) ~= "CFrame" or typeof(args[2]) ~= "CFrame" then return false end
-            local character = LocalPlayer.Character
-            local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-            local knife = character and character:FindFirstChild("Knife")
-            if knife and remote:IsDescendantOf(knife) then return true end
-            if character and remote:IsDescendantOf(character) then return true end
-            if backpack and remote:IsDescendantOf(backpack) then return true end
-            return false
-        end
-        function SA.redirect(remote, args)
-            local part, useWallCheck, isKnife = nil, false, false
-            if shotRemote(remote, args) then
-                part = SA.targetPart()
-                useWallCheck = SA.config.wallCheck
-            elseif knifeRemote(remote, args) then
-                part = SA.knifeTargetPart()
-                useWallCheck = SA.config.knifeWallCheck
-                isKnife = true
-            else
-                return
-            end
-            if not part or typeof(part) ~= "Instance" or not part:IsA("BasePart") then return end
-            if useWallCheck and not SA.targetVisible(part, true) then return end
-
-            if isKnife then
-                local origin = args[1].Position
-                local aim = SA.calculateKnifeAim(part, origin)
-                if SA.config.alignDirection and (aim - origin).Magnitude > 0.01 then
-                    args[1] = CFrame.lookAt(origin, aim)
-                end
-                args[2] = CFrame.new(aim)
-                SA.redirected = SA.redirected + 1
-                return
-            end
-
-            local aim = SA.calculateAim(part)
-            local firstType, secondType = typeof(args[1]), typeof(args[2])
-            if firstType == "CFrame" then
-                local origin = args[1].Position
-                if SA.config.alignDirection and (aim - origin).Magnitude > 0.01 then
-                    args[1] = CFrame.lookAt(origin, aim)
-                end
-                if secondType == "CFrame" then
-                    args[2] = CFrame.new(aim)
-                elseif secondType == "Vector3" then
-                    args[2] = aim
-                else
+                local bright = seqLum(value) > .45
+                if bodyImage then
+                    pcall(function() b.Image = bright and novaFrameActive or novaFrameIdle end)
                     return
                 end
-            elseif firstType == "Vector3" then
-                local origin = args[1]
-                args[1] = origin
-                if secondType == "Vector3" then
-                    if args[2].Magnitude <= 1.5 and (aim - origin).Magnitude > 0.01 then
-                        args[2] = (aim - origin).Unit
-                    else
-                        args[2] = aim
-                    end
-                elseif secondType == "CFrame" then
-                    args[2] = CFrame.new(aim)
-                else
+                if roundBody then
+                    pcall(function() b.Image = bright and novaRoundActive or novaRoundIdle end)
                     return
                 end
-            else
-                return
-            end
-            SA.redirected = SA.redirected + 1
-        end
-
-        -- ── executor hook (namecall, hookfunction fallback) ────────────────
-        function SA.installHook()
-            if SA.hooked then return true end
-            local wrap = type(newcclosure) == "function" and newcclosure or function(callback) return callback end
-            local isOwnCall = type(checkcaller) == "function" and checkcaller or function() return false end
-            if type(hookmetamethod) == "function" and type(getnamecallmethod) == "function" then
-                local old
-                local ok, err = pcall(function()
-                    old = hookmetamethod(game, "__namecall", wrap(function(self, ...)
-                        local method = getnamecallmethod()
-                        local methodLower = string.lower(tostring(method or ""))
-                        if methodLower == "fireserver" and typeof(self) == "Instance" then
-                            if self.ClassName == "RemoteEvent" and not isOwnCall() then
-                                local args = table.pack(...)
-                                pcall(SA.redirect, self, args)
-                                if type(setnamecallmethod) == "function" then setnamecallmethod(method) end
-                                return old(self, table.unpack(args, 1, args.n))
-                            end
-                        end
-                        return old(self, ...)
-                    end))
+                pcall(function() outerGradient.Color = value end)
+                pcall(function()
+                    TweenService:Create(halo, TweenInfo.new(.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Transparency = bright and .72 or .87, Thickness = bright and 9 or 6 }):Play()
+                    TweenService:Create(outer, TweenInfo.new(.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Transparency = bright and 0 or .14 }):Play()
                 end)
-                if ok and type(old) == "function" then
-                    SA.hooked = true
+            end)
+        end,
+    })
+    pcall(function()
+        if NoirCyberHUD and NoirCyberHUD._register then NoirCyberHUD._register(b, outerGradient, tickOrbit) end
+    end)
+    local pressScale = New("UIScale", { Parent = b, Scale = 1 })
+    local function ripple()
+        local r = New("Frame", { Parent = b, Name = "NovaRipple", AnchorPoint = Vector2.new(.5, .5),
+            Position = UDim2.fromScale(.5, .5), Size = UDim2.fromScale(.35, .35), BackgroundTransparency = 1, ZIndex = z + 1 })
+        corner(r, 999)
+        local ring = New("UIStroke", { Parent = r, Color = C.accent2, Thickness = 2, Transparency = .2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+        local grow = TweenService:Create(r, TweenInfo.new(.42, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.fromScale(1, 1) })
+        local fade = TweenService:Create(ring, TweenInfo.new(.42, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Transparency = 1 })
+        grow:Play(); fade:Play()
+        grow.Completed:Connect(function() r:Destroy() end)
+    end
+    local sound
+    if cfg.sound ~= false then
+        sound = Instance.new("Sound")
+        sound.Name = "NoirButtonSound"; sound.SoundId = "rbxassetid://3868133279"; sound.Volume = .3; sound.Parent = b
+    end
+    if cfg.press ~= false then
+        b.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if sound then sound:Play() end
+                ripple()
+                TweenService:Create(pressScale, novaPressInfo, { Scale = cfg.pressScale or 1.06 }):Play()
+            end
+        end)
+        b.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                TweenService:Create(pressScale, novaReleaseInfo, { Scale = 1 }):Play()
+            end
+        end)
+    end
+    return { outer = stateProxy, inner = nil, scale = pressScale, ripple = ripple, sound = sound, ring = outer, halo = halo }
+end
+
+-- SAFETY NET v7.1: одна сломанная кнопка больше НЕ убивает сборку всего модуля.
+-- Любая ошибка стилизации изолируется pcall и возвращает безопасный заглушечный fx.
+function noirNovaButton(b, cfg)
+    local ok, fx = pcall(noirNovaButtonImpl, b, cfg)
+    if ok and type(fx) == "table" then return fx end
+    pcall(function()
+        warn("[Noir] button decoration failed safely: " .. tostring(fx))
+        if typeof(b) == "Instance" then
+            b.BorderSizePixel = 0
+            b.AutoButtonColor = false
+        end
+    end)
+    local fallbackProxy = setmetatable({}, { __newindex = function() end })
+    return { outer = fallbackProxy, inner = nil, scale = nil, ripple = function() end, sound = nil, ring = nil, halo = nil }
+end
+
+ 
+ 
+local miniArrowImage = ""
+do
+    local customAsset = (type(getcustomasset) == "\x66unction" and getcustomasset) or (type(getsynasset) == "\x66unction" and getsynasset)
+    if type(writefile) == "\x66unction" and customAsset then
+        local encodedArrow = "\x69VBORw0KGgoAAAANSUhEUgAAAJYAAACWCAQAAACWCLlpAAAAIGNIUk0AAHomAACA\x68AAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAD/h4/MvwAAAAd0\x53U1FB+oFCgkRIyI5lL0AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjYtMDUtMTBUMDk6\x4dTc6MzUrMDA6MDC/MZyeAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDI2LTA1LTEwVDA5\x4fjE3OjM1KzAwOjAwzmwkIgAAACh0RVh0ZGF0ZTp0aW1lc3RhbXAAMjAyNi0wNS0x\x4dFQwOToxNzozNSswMDowMJl5Bf0AAAlKSURBVHja7Z17jBVnGYefmbM3dpcCW26l\x79K4FiqWsAtpVRKSXpCACFaoJQQMNjRQsjYmJRo1tTWOJtQlNDaS0pFELbcVgYoxG\x326hJvZBINFYSixEr4ALSlksBAWF3z88/ztlznTlnbufM7Jx55q9zf78n7/d+35n5\x5asYQxRgk2GGGHcBIIpHlgkSWC/KyrmMBrWGHE3GU2VL6ndL6gZL6XomsrF4NSDqo\x56NjxRJnhbriSFNCS1LBKNAFgsgwDaMNM5l0VEEJTdEWSdFrtonhLyJPpdouz42B7\x4etMSLDEBgzuyva2JzrADijImYLIo92hy2AFFGROYQk/u0dSwA4oyJjC3YOZ+Q9gB\x52RkTgw/m5gcGs5K5gj0mML/gcU/YAUUZE5NZBY97k8yqgCbqkvJc0IRkUmqHyWRG\x46Tzu5OawQ4ouZllJvy3piHaYTC3qawYfCTuk6FI+Df0QzWEHFVVMppR0ux7eG3ZQ\x55cVkTNkzt4cdVFQxub7kGYMlSYm3pjyzYDEdYYcVTaxkjWNx2GFFE5O2sucMViUd\x30RJdVjn/0ejk7045pmUOTeLOsAOLIqZl8hisSzqiBTovK/6rqUk3LMXkiuXz7Xwu\x79a0y9Kas+YfakswqxuSczSszWB52cFHD5KzNKwZfTI5PF2Pyru1rH80dfE0AwOSt\x43q99LVmCVIhJf4UqfmeSW4WYnKwwRUjxiJqSoz051Ke07BnS8kRWXtYUXVUl/pqZ\x62yWyALXqaEVZaW1JZA3LMvRrVeZtTUlkQWZhyOtV3jOBrckUAgChtRVLvCQNammS\x57RlZt2pA1TissYkshFp0oqos6RkZpcu+G06ekKEfO5A1oJWNLssExGsOWt3EMw2/\x50FcIzdGgg9ySXlVrI2dWpsmtOuxIVlqPlVauhkKZqrWj6vRhuHKtbnRZ6BMOZUln\x31Nvosjp1yqEs6bAmN6as4b8xl/iF48/MYG/+hKioFfyaxpP72rs15Di3pH3l42Ij\x79WrVERey0nq2dB9qI8kytNVxkc/oelJmo8pCs/Q/F7KktB4v1xU29ZJl6OeuZElp\x66VupxpSFlrsq8pI0pG1qbkxZzTroUpaU1vcKD2mETa6XZLcgv9soad797PKw1Ohn\x66JYLNj9QczlldLKMu7iVTt7lIK/wK65WEODux4q2Dv3LdW5J0h81LZx5V8nvpXS/\x6ahWN6mkd0iqrcdtDfGUf/4KrCUSeY+qz2pdaV1nt2mMZ/aC2Wc8K/crqtF3eVo0L\x57lf/qUTBbzXphxUq687igSgYWWiDx9ySBvW0RoUma1PFuNPaaZVdfmW16nWPsqS0\x39mt6KLLG6mTV2Cx0+ZWFljrczWzNaa3Nd8c6yTK03kF/sPhH61+WqZ/4kCUN6YXh\x459PrJutFh5lfkl2uMEq27JfMtFkf75xjWmk/YAfXTXOy/uwwLttS7yAeG1mGvu65\x7aA8zqD2FS0pqKsvUIcdx2ZR677LQKP3JpyxJekeb1RKpzKqiy5ss1Je9Xps/0jqg\x3260P/Qcqa4/LqHZ62HlZQZahR313xQwD2qvZtVkrkYt1nctYvcy7KshCbfpDILIk\x36bK2q7tcWECy0BhHy1tKdTUHJwvdrDOB6ZIuaFupsMBkoQdc9wOL7PIjC63xNUEt\x356J26Ja8sABlNekl19H4m3eVBWPoqYAqV56r2qs77Idvz1u7fupfl48yIdSm3wQs\x535KGdEAb1WU/TnraOoLW5T7NJztcZeM+zDPapY+rJUBlXrOrOShZaK7O1kSXJA3p\x6bB7XB5QKSFmg2eWtgC6xvKhBUKQ1oL9pq/rUGoCyAHV5k4XW61oNdWUY0jE9r7Wa\x4atOXtMB0eZVl6Euujyt6Ia20rugv+q4+o241e5QWkC6vspCph+uiKx/8VR3RPn1V\x79zRN7TKEC3VeddkeNK562KzErck3+UbdL2IgIM0pjvIGR/g7JzjJOwyStgszSwcv\x738L1bz3HFgatXnIrC0we5pHQzuURBgKucpnznOAUFznDWc5ziWsMcI0BAFI00UwL\x593mMrqB0uZcFBl/hW5E6Mz8fpFH2rJdeIHbxYLkuL7LAYAPbLS4mFR8ss8ubLDBY\x77QsWFyqLD+I5Hsp26lyjq37Glj728Z6w21RDyrLLT6E+wCIOhN2iGmKwke2Ftdnf\x71HaMu9jtduY2gjDYyI68Lt8zJqXYzHeKLmYdLwo6o39ZYLCA7zMz7FbVjJyuICaX\x59j8LeLlgPh0vDDayDTOYzMqQYg1PMSHsltWINPexOzhZAN08zcqYXv7uOHOClQUp\x31vJELG9IIzYG/Yd4iN3M49nimW8sMPhk0Jk1/MULeYIFMeuQRwJvTk5eM2t5lJ4Y\x43btUO1kAo9nEl2MzQp6urSyA8TzEg3TFIMP2114WGEzkATYzaUQLE0/WQxaAwVg2\x73InpI1bYNfrqJStDGyvZwgJSI1DZbtbXVxaAyTw+z71cP6KE/ZOFvF1/WQAGY1jF\x66fTROiKU9bOEQyHcJrpApslN3Msaem3udxAV+lnKGxCurAxNvI97WM0cmiOp7DhL\x4dqqiICsThUkPd7OCPrrCiMqWXFYRRlgVapoBXMd8lrKI99MeAWVFqqIlKx+TwTj6\x2bBi3MTc7aoYhrkRVNGUVxtbBdOYzj7lMZ1L2fur1oUxVtGUVxziKifRyE7cwkxmM\x5aRRNgIFq0oaCsl4aSB3xfZDRAFK0cQM30k0P45nGVMbTRXt2Ib//dllkVSiy/FIk\x4fx99M6PpoIsbmcwEJjGRMXQxnm5a/KkacYKKZTnYMlcLMfVpD+e1/VuzPS+TjBou\x56pWu9rC+ukRVY8gyPKnqL1XVGLICUtUIsgLpgI0gy1sHtFEVd1mBqhrhsirKC6Cs\x785oiWff4L+uxpqChs3XOfweMNQXnFb0SRK2KNblmftjBbUsclPVKxOV+OgarSbn6\x78HHrPQuxJjcOvuanrDdWZsF4F+/tt9q1V50ondvlD+e12fP+qvhk1lsO39fvvVbF\x529bvHeWWD1UxIFeae6vc1NKmrDcUBf8LfxT0vCp2FDR8WsUrlcZxf5UPWWihTtuo\x4fhrL/VW+ZKE5OlB2Aau0XrW7pniDycpjZNS1ap1+qysakjSki/qlPlV4WQu/vxAT\x4dgejBWAyjumM5hxvcrH41D4/DY6RrExzqp306KfBsZmUZiTUtgbFRlY9SnVsZNWD\x2fwNVQ1uk90AZPQAAAABJRU5ErkJggg=="
+        local alphabet = "\x41BCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        local decodedArrow = encodedArrow:gsub("\x5b^" .. alphabet .. "\x3d]", ""):gsub("\x2e", function(x)
+            if x == "\x3d" then return "" end
+            local r, f = "", alphabet:find(x, 1, true) - 1
+            for i = 6, 1, -1 do r = r .. (f % 2 ^ i - f % 2 ^ (i - 1) > 0 and "\x31" or "\x30") end
+            return r
+        end):gsub("\x25d%d%d?%d?%d?%d?%d?%d?", function(x)
+            if #x ~= 8 then return "" end
+            local c = 0
+            for i = 1, 8 do c = c + (x:sub(i, i) == "\x31" and 2 ^ (8 - i) or 0) end
+            return string.char(c)
+        end)
+        local arrowPath = ASSETS_FOLDER .. "\x2fNOIR_MINIMIZE_ARROW.png"
+        local wrote = pcall(writefile, arrowPath, decodedArrow)
+        if wrote then
+            local ok, asset = pcall(customAsset, arrowPath)
+            if ok and type(asset) == "\x73tring" then miniArrowImage = asset end
+        end
+    end
+end
+
+local mini = topButton(miniArrowImage == "" and "-" or "", -98, C.btn, 35)
+if miniArrowImage ~= "" then
+    New("\x49mageLabel", {
+        Parent = mini,
+        Name = "\x4dinimizeArrow",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.fromOffset(35, 35),
+        BackgroundTransparency = 1,
+        Active = false,
+        Image = miniArrowImage,
+        ImageColor3 = C.text,
+        ScaleType = Enum.ScaleType.Fit,
+        ZIndex = mini.ZIndex + 1,
+    })
+end
+
+      __R1.config = {
+    enabled = false,
+    targetMode = "\x4durderer",
+    hitPart = "\x48umanoidRootPart",
+    fovSize = 0,
+    showFov = false,
+    aimKey = "\x4eone",
+    toggleKey = "\x4eone",
+    autoFire = false,
+    autoFireKey = "\x4eone",
+    shotMethod = "\x52emote",
+    wallCheck = false,
+    piercerBullet = false,
+    ignoreDead = true,
+    ignoreFriends = false,
+    maxDistance = 0,
+    adaptive = true,
+    fixedLead = 0.075,
+    extraLead = 0.02,
+    targetPart = "\x48umanoidRootPart",
+    alignDirection = true,
+    prioritizePing = true,
+    predictJump = false,
+    predictLag = true,
+    maxSimulationMs = 180,
+    predictionIntervalMs = 72,
+    manualPingMs = 80,
+    leadScale = 100,
+    offsetX = 0, offsetY = 0, offsetZ = 0,
+    horizontalMultiplier = 100, verticalMultiplier = 100,
+    knifeAim = {
+        adaptive = true,
+        fixedLead = 0.075,
+        extraLead = 0.02,
+        prioritizePing = true,
+        predictJump = false,
+        predictLag = true,
+        maxSimulationMs = 180,
+        predictionIntervalMs = 72,
+        manualPingMs = 80,
+        leadScale = 100,
+        offsetX = 0, offsetY = 0, offsetZ = 0,
+        horizontalMultiplier = 100, verticalMultiplier = 100,
+    },
+    knifeEnabled = false,
+    knifeWallCheck = false,
+    knifePrioritizeSheriff = false,
+    knifeAutoThrow = false,
+     
+    knifeDualEffect = false,
+    knifeInstantThrow = false,
+    knifeFastThrow = false,
+    knifeAutoKillEveryone = false,
+    knifeAutoKillSheriff = false,
+    knifeKillPlayer = "\x4e/A",
+    knifeSheriffBind = false,
+    knifeSheriffBindShape = "\x43ircle",
+     
+    knifeThrownAura = true,
+    knifeRadius = 15,
+    showShootButton = false,
+    lockShootButton = false,
+     
+    gunDualEffect = false,
+    gunTriggerBot = false,
+    gunTriggerBotWallCheck = true,
+    gunTriggerBotPrediction = true,
+    infectionZombies = false,
+    selectedPlayer = nil,
+}
+
+ 
+NoirPersistence.data.toggles["\x53ILENT AIM::Use Gun Dual Effect"] = false
+NoirPersistence.data.toggles["\x4bNIFE SILENT AIM::Use Knife Dual Effect"] = false
+ 
+do
+          __R1.oldProjectedDual = NoirGenv().__NoirCameraProjectedDual
+    if type(__R1.oldProjectedDual) == "\x74able" and type(__R1.oldProjectedDual.Stop) == "\x66unction" then pcall(__R1.oldProjectedDual.Stop, __R1.oldProjectedDual) end
+    NoirGenv().__NoirCameraProjectedDual = nil
+end
+NoirPersistence.Save()
+
+                             
+      __R1.cachedPing = 0.05
+      __R1.redirected = 0
+      __R1.hooked = false
+      __R1.running = true
+      __R1.shootButton, __R1.shootGui, __R1.shootBusy = nil, nil, false
+      __R1.buttonShotActive, __R1.buttonShotTarget = false, nil
+local presetName = "\x64efault"
+      __R1.PRESET_FOLDER = PRESETS_FOLDER
+      __R1.revertControls, __R1.revertToggleStates, __R1.syncRevertControls = {}, {}, nil
+      __R1.noirMirrorControls = {}
+                    
+                                            
+      __R1.measuredVelocity = Vector3.zero
+      __R1.motionSamples = {}
+      __R1.previousEstimatedVelocity = Vector3.zero
+      __R1.estimatedAcceleration = Vector3.zero
+      __R1.lastAutoTune = 0
+                                         
+      __R1.roundState = "\x77aiting"
+      __R1.roundResetToken = 0
+      __R1.lastRoundResetAt = os.clock()
+      __R1.instantRoleDetection = false
+      __R1.autoNotifyRoles = false
+      __R1.announcedRoles = {}
+      __R1.roleCache = {}
+      __R1.playerData = {}
+      __R1.aimHeld = true
+      __R1.autoFireHeld = false
+
+      __R1.cachedPlayers = {}
+local function refreshPlayerCache() __R1.cachedPlayers = Players:GetPlayers() end
+refreshPlayerCache()
+local function getPlayers() return __R1.cachedPlayers end
+Players.PlayerAdded:Connect(refreshPlayerCache)
+Players.PlayerRemoving:Connect(function(player)
+    refreshPlayerCache()
+    __R1.playerData[player.UserId], __R1.roleCache[player.UserId], __R1.announcedRoles[player.UserId] = nil, nil, nil
+    local changed = __R1.murderer == player or __R1.sheriff == player or __R1.hero == player
+    if __R1.murderer == player then __R1.murderer = nil end
+    if __R1.sheriff == player then __R1.sheriff = nil end
+    if __R1.hero == player then __R1.hero = nil end
+    if changed then
+        local bus = NoirGenv().__NoirV4RoleBus
+        if bus and bus.Emit then bus:Emit() end
+    end
+end)
+
+function notify(msg, time)
+    if type(host.Notify) == "\x66unction" then pcall(host.Notify, "\x4dM2 Silent Aim: " .. tostring(msg), time or 3) end
+end
+-- Satellite chunks (Troll / SNPWARE / Emotes) call shared.Notify directly; expose it so they never hit a nil call.
+pcall(function()
+    shared.Notify = function(textValue, duration)
+        if type(host.Notify) == "\x66unction" then pcall(host.Notify, tostring(textValue), tonumber(duration) or 3) end
+    end
+    NoirGenv().Notify = shared.Notify
+end)
+function validTarget(player)
+    local character = player and player.Character
+    local humanoid = character and character:FindFirstChildWhichIsA("\x48umanoid")
+    return player ~= nil and player ~= LocalPlayer and character ~= nil and humanoid ~= nil and humanoid.Health > 0
+end
+function localCharacter() return LocalPlayer.Character end
+                                 
+function localHumanoid()
+    local c = LocalPlayer.Character
+     
+    if c ~= __R1.localHumChar or not __R1.localHumCache or not __R1.localHumCache.Parent then
+        __R1.localHumChar = c
+        __R1.localHumCache = c and c:FindFirstChildWhichIsA("\x48umanoid") or nil
+    end
+    return __R1.localHumCache
+end
+                                   
+function localRoot()
+    local c = LocalPlayer.Character
+     
+    if c ~= __R1.localRootChar or not __R1.localRootCache or not __R1.localRootCache.Parent then
+        __R1.localRootChar = c
+        __R1.localRootCache = c and (c:FindFirstChild("\x48umanoidRootPart") or c:FindFirstChild("\x55pperTorso") or c:FindFirstChild("\x54orso")) or nil
+    end
+    return __R1.localRootCache
+end
+function playerHasTool(player, toolName)
+    local character = player and player.Character
+    local backpack = player and player:FindFirstChildOfClass("\x42ackpack")
+    return (character and character:FindFirstChild(toolName)) or (backpack and backpack:FindFirstChild(toolName))
+end
+      __R1.friendCache = {}
+Players.PlayerRemoving:Connect(function(p) __R1.friendCache[p] = nil end)
+function isFriend(player)
+    if not __R1.config.ignoreFriends or player == nil then return false end
+    local cached = __R1.friendCache[player]
+    if cached ~= nil then return cached end
+    local ok, res = pcall(function() return player:IsFriendsWith(LocalPlayer.UserId) end)
+    local value = (ok and res == true)
+    __R1.friendCache[player] = value
+    return value
+end
+function distanceTo(player)
+    local root = localRoot()
+    local targetCharacter = entityCharacter(player)
+    local t = targetCharacter and targetCharacter:FindFirstChild("\x48umanoidRootPart")
+    if root and t then return (t.Position - root.Position).Magnitude end
+    return math.huge
+end
+
+local function playerIsInLobby(player)
+    if not player then return true end
+    local teamName = player.Team and string.lower(tostring(player.Team.Name)) or ""
+    if string.find(teamName, "\x6cobby", 1, true)
+        or string.find(teamName, "\x73pectat", 1, true)
+        or string.find(teamName, "\x6fbserver", 1, true)
+        or string.find(teamName, "\x77aiting", 1, true) then
+        return true
+    end
+
+    local containers = { player, player.Character }
+    for _, container in ipairs(containers) do
+        if container then
+            for key, value in pairs(container:GetAttributes()) do
+                local k = string.lower(tostring(key))
+                if (string.find(k, "\x69nround", 1, true) or string.find(k, "\x69ngame", 1, true)
+                    or string.find(k, "\x69splaying", 1, true) or string.find(k, "\x61live", 1, true))
+                    and value == false then
                     return true
                 end
-                SA.notify("Namecall hook failed: " .. tostring(err))
-            end
-            if type(hookfunction) ~= "function" then
-                SA.notify("No hook support in this executor")
-                return false
-            end
-            local probe = Instance.new("RemoteEvent")
-            local original
-            local ok, err = pcall(function()
-                original = hookfunction(probe.FireServer, wrap(function(self, ...)
-                    local args = table.pack(...)
-                    if typeof(self) == "Instance" and self.ClassName == "RemoteEvent" and not isOwnCall() then
-                        pcall(SA.redirect, self, args)
+                if string.find(k, "\x73tate", 1, true) or string.find(k, "\x73tatus", 1, true)
+                    or string.find(k, "\x6cocation", 1, true) or string.find(k, "\x70lace", 1, true) then
+                    local textValue = string.lower(tostring(value))
+                    if string.find(textValue, "\x6cobby", 1, true)
+                        or string.find(textValue, "\x73pectat", 1, true)
+                        or string.find(textValue, "\x64ead", 1, true)
+                        or string.find(textValue, "\x77aiting", 1, true) then
+                        return true
                     end
-                    return original(self, table.unpack(args, 1, args.n))
-                end))
+                end
+            end
+            for _, name in ipairs({ "\x49nLobby", "\x53pectating", "\x44ead", "\x49sDead" }) do
+                local flag = container:FindFirstChild(name)
+                if flag and flag:IsA("\x42oolValue") and flag.Value then return true end
+            end
+            for _, name in ipairs({ "\x49nRound", "\x49nGame", "\x49sPlaying", "\x41live", "\x49sAlive" }) do
+                local flag = container:FindFirstChild(name)
+                if flag and flag:IsA("\x42oolValue") and not flag.Value then return true end
+            end
+        end
+    end
+    return false
+end
+
+do -- Noir infection block: scope its locals (Luau 200-register limit)
+-- ===== Infection mode: target NPC zombies + infected players =====
+-- The first zombie of the round is a workspace NPC (not a Player), the rest
+-- are infected players. Both must be valid silent-aim targets.
+      __R1.__infectionState = { npcs = {}, nextScan = 0, entity = nil, entityAt = 0, markerPlayers = {}, markersAt = 0 }
+NoirGenv().__NoirInfectionRuntime = __R1.__infectionState
+
+function entityCharacter(entity)
+    if typeof(entity) == "\x49nstance" and entity:IsA("\x4dodel") then return entity end
+    return (entity and entity.Character) or nil
+end
+
+local function zombieWordIn(textValue)
+    local lowered = string.lower(tostring(textValue or ""))
+    return string.find(lowered, "\x7aomb", 1, true) ~= nil
+        or string.find(lowered, "\x69nfect", 1, true) ~= nil
+        or string.find(lowered, "\x75ndead", 1, true) ~= nil
+end
+
+local function modelRoot(model)
+    return model and (model:FindFirstChild("\x48umanoidRootPart") or model.PrimaryPart) or nil
+end
+
+local function modelHasZombieMarker(model)
+    if zombieWordIn(model.Name) then return true end
+    local ok, hit = pcall(function()
+        for key, value in pairs(model:GetAttributes()) do
+            if zombieWordIn(key) or (type(value) == "\x73tring" and zombieWordIn(value)) then return true end
+        end
+        for _, child in ipairs(model:GetChildren()) do
+            if (child:IsA("\x42oolValue") or child:IsA("\x53tringValue")) and zombieWordIn(child.Name) then return true end
+        end
+        return false
+    end)
+    return ok and hit or false
+end
+
+local function playerHasZombieMarker(player)
+    if not player then return false end
+    local now = os.clock()
+    if now - __R1.__infectionState.markersAt >= 0.5 then
+        table.clear(__R1.__infectionState.markerPlayers)
+        __R1.__infectionState.markersAt = now
+    end
+    local cached = __R1.__infectionState.markerPlayers[player]
+    if cached ~= nil then return cached end
+    local ok, hit = pcall(function()
+        if player.Team and zombieWordIn(player.Team.Name) then return true end
+        for key, value in pairs(player:GetAttributes()) do
+            if value == true and zombieWordIn(key) then return true end
+        end
+        local character = player.Character
+        if character then
+            for key, value in pairs(character:GetAttributes()) do
+                if value == true and zombieWordIn(key) then return true end
+            end
+            for _, inst in ipairs(character:GetDescendants()) do
+                if inst:IsA("\x42oolValue") and inst.Value and zombieWordIn(inst.Name) then return true end
+                if (inst:IsA("\x53tringValue") or inst:IsA("\x49ntValue") or inst:IsA("\x4fbjectValue"))
+                    and zombieWordIn(inst.Name) then return true end
+            end
+        end
+        return false
+    end)
+    hit = ok and hit or false
+    __R1.__infectionState.markerPlayers[player] = hit
+    return hit
+end
+
+local function localHasGun()
+    local character = LocalPlayer.Character
+    local backpack = LocalPlayer:FindFirstChildOfClass("\x42ackpack")
+    return (character and character:FindFirstChild("\x47un") ~= nil)
+        or (backpack and backpack:FindFirstChild("\x47un") ~= nil) or false
+end
+
+    -- NOIR v1.4 (Pulse style): автоматическое определение режима Infection.
+    -- Сигналы: (A) у игрока зомби-маркер (Team/атрибуты/values),
+    -- (B) в workspace есть NPC-модель с зомби-маркером,
+    -- (C) ни у кого нет Knife и >=2 держат Gun — первый раунд инфекции,
+    -- когда первый зомби ещё NPC без маркера, а выжившие уже получили Gun.
+    -- В обычном раунде (Murderer с Knife / один Gun) все сигналы молчат.
+    local infectionSignal, infectionAt = false, 0
+    function infectionRoundActive()
+        local now = os.clock()
+        if now - infectionAt < 0.8 then return infectionSignal end
+        infectionAt = now
+        infectionSignal = false
+        pcall(function()
+            for _, player in ipairs(getPlayers()) do
+                if player ~= LocalPlayer and playerHasZombieMarker(player) then infectionSignal = true break end
+            end
+        end)
+        if not infectionSignal then
+            pcall(function()
+                local hasKnife, gunCount = false, 0
+                if localHasGun() then gunCount += 1 end
+                for _, player in ipairs(getPlayers()) do
+                    if player ~= LocalPlayer and validTarget(player) then
+                        if playerHasTool(player, "\x4bnife") then hasKnife = true end
+                        if playerHasTool(player, "\x47un") then gunCount += 1 end
+                    end
+                end
+                if not hasKnife and gunCount >= 2 then infectionSignal = true end
             end)
-            probe:Destroy()
-            if not ok or type(original) ~= "function" then
-                SA.notify("Hook failed: " .. tostring(err))
-                return false
-            end
-            SA.hooked = true
-            return true
         end
-
-        function SA.setGunEnabled(value)
-            SA.config.enabled = value == true
-            if SA.config.enabled then
-                if not SA.installHook() then
-                    SA.config.enabled = false
-                    return false
+        if not infectionSignal then
+            pcall(function()
+                for _, model in ipairs(workspace:GetDescendants()) do
+                    if model:IsA("\x4dodel") and not Players:GetPlayerFromCharacter(model)
+                        and model:FindFirstChildOfClass("\x48umanoid") and modelHasZombieMarker(model) then
+                        infectionSignal = true
+                        break
+                    end
                 end
-                task.spawn(function() SA.refreshTarget(true) end)
-                SA.notify("Silent Aim enabled")
-            else
-                SA.notify("Silent Aim disabled")
-            end
-            return true
+            end)
         end
-        function SA.setKnifeEnabled(value)
-            SA.config.knifeEnabled = value == true
-            if SA.config.knifeEnabled then
-                if not SA.installHook() then
-                    SA.config.knifeEnabled = false
-                    return false
-                end
-                SA.notify("Knife Silent Aim enabled")
-            else
-                SA.notify("Knife Silent Aim disabled")
-            end
-            return true
-        end
+        return infectionSignal
+    end
 
-        -- ── round / role remote listeners (MM2) ────────────────────────────
-        local remoteConnections = {}
+function scanZombieNPCs(force)
+    local now = os.clock()
+    if not force and now < __R1.__infectionState.nextScan then return __R1.__infectionState.npcs end
+    __R1.__infectionState.nextScan = now + 1.2
+    local strict, loose = {}, {}
+    pcall(function()
+        for _, model in ipairs(workspace:GetDescendants()) do
+            if model:IsA("\x4dodel") and not Players:GetPlayerFromCharacter(model) then
+                local humanoid = model:FindFirstChildOfClass("\x48umanoid")
+                local root = modelRoot(model)
+                if humanoid and humanoid.Health > 0 and root then
+                    if modelHasZombieMarker(model) then
+                        strict[#strict + 1] = model
+                    else
+                        loose[#loose + 1] = model
+                    end
+                end
+            end
+        end
+    end)
+    if #strict > 0 then
+        __R1.__infectionState.npcs = strict
+    else
+        -- heuristic fallback: the first zombie NPC may carry no marker; accept
+        -- non-player humanoids while another infection signal exists
+        local signal = localHasGun()
+        if not signal then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and playerHasZombieMarker(player) then
+                    signal = true
+                    break
+                end
+            end
+        end
+        __R1.__infectionState.npcs = signal and loose or {}
+    end
+    return __R1.__infectionState.npcs
+end
+
+function nearestZombieEntity()
+    -- NOIR v1.4 (Pulse): тоггл убран — режим Infection определяется автоматически.
+    -- Пока раунд не Infection, функция мгновенно возвращает nil (дешёвая проверка).
+    if not infectionRoundActive() then return nil end
+    local now = os.clock()
+    if __R1.__infectionState.entity and now - __R1.__infectionState.entityAt < 0.35 then
+        local cached = __R1.__infectionState.entity
+        local stillOk = false
+        pcall(function()
+            if typeof(cached) == "\x49nstance" and cached.Parent then
+                if cached:IsA("\x4dodel") then
+                    local humanoid = cached:FindFirstChildOfClass("\x48umanoid")
+                    stillOk = humanoid ~= nil and humanoid.Health > 0 and modelRoot(cached) ~= nil
+                else
+                    stillOk = validTarget(cached) and cached.Character ~= nil
+                end
+            end
+        end)
+        if stillOk then return cached end
+        __R1.__infectionState.entity = nil
+    end
+    local origin = localRoot()
+    if not origin then return nil end
+    local best, bestDistance
+    local function consider(candidate, candidateRoot)
+        if not candidateRoot then return end
+        local d = (candidateRoot.Position - origin.Position).Magnitude
+        if __R1.config.maxDistance > 0 and d > __R1.config.maxDistance then return end
+        if __R1.config.fovSize > 0 then
+            local cam = Workspace.CurrentCamera
+            if cam then
+                local screen = cam:WorldToViewportPoint(candidateRoot.Position)
+                local center = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
+                if screen.Z <= 0 or (Vector2.new(screen.X, screen.Y) - center).Magnitude > __R1.config.fovSize / 2 then return end
+            end
+        end
+        if not bestDistance or d < bestDistance then best, bestDistance = candidate, d end
+    end
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and validTarget(player)
+            and not playerIsInLobby(player) and playerHasZombieMarker(player) then
+            local character = player.Character
+            consider(player, character and character:FindFirstChild("\x48umanoidRootPart") or nil)
+        end
+    end
+    -- NOIR fix v2 (hub style): в режиме инфекции выжившие держат Gun,
+    -- зомби — нет. Если поиск по маркерам никого не нашёл, целимся в
+    -- ближайшего безоружного игрока в раунде (дистанция/FOV учитываются
+    -- в consider), поэтому стрелять перестаёт "залипать" на одном зомби
+    if not best then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and validTarget(player)
+                and not playerIsInLobby(player) and not isFriend(player)
+                and not playerHasTool(player, "\x47un") then
+                local character = player.Character
+                consider(player, character and character:FindFirstChild("\x48umanoidRootPart") or nil)
+            end
+        end
+    end
+    for _, model in ipairs(scanZombieNPCs()) do
+        local humanoid = model:FindFirstChildOfClass("\x48umanoid")
+        if humanoid and humanoid.Health > 0 then consider(model, modelRoot(model)) end
+    end
+    -- NOIR v1.4 (Pulse zombieTarget): текущий зомби остаётся целью, пока ближайший
+    -- не ближе на 8+ стадов — прицел не прыгает между зомби каждый кадр.
+    if best and bestDistance then
+        local current = __R1.__infectionState.entity
+        if current and current ~= best and typeof(current) == "\x49nstance" and current.Parent then
+            local currentRoot
+            pcall(function()
+                if current:IsA("\x4dodel") then currentRoot = modelRoot(current)
+                elseif validTarget(current) then currentRoot = current.Character and current.Character:FindFirstChild("\x48umanoidRootPart") or nil end
+            end)
+            if currentRoot and (currentRoot.Position - origin.Position).Magnitude <= bestDistance + 8 then best = current end
+        end
+    end
+    __R1.__infectionState.entity = best
+    __R1.__infectionState.entityAt = now
+    return best
+end
+end -- /Noir infection block (locals freed: Luau 200-register limit)
+
+function setTarget(player)
+    if not validTarget(player) then player = nil end
+    if __R1.murderer ~= player then
+        __R1.murderer = player
+        if player then notify("\x54arget: " .. player.Name, 2) end
+    end
+end
+function findByKnife()
+    for _, player in ipairs(getPlayers()) do
+        if player ~= LocalPlayer and playerHasTool(player, "\x4bnife") then return player end
+    end
+end
+function findByGun()
+    for _, player in ipairs(getPlayers()) do
+        if player ~= LocalPlayer and playerHasTool(player, "\x47un") then return player end
+    end
+end
+ 
+do
+    local roleBus = { revision = 0, listeners = {} }
+    function roleBus:Subscribe(callback)
+        if type(callback) ~= "\x66unction" then return function() end end
+        self.listeners[#self.listeners + 1] = callback
+        local index = #self.listeners
+        return function() self.listeners[index] = false end
+    end
+    function roleBus:Emit()
+        self.revision += 1
+        for _, callback in ipairs(self.listeners) do if type(callback) == "\x66unction" then pcall(callback, self.revision) end end
+    end
+    NoirGenv().__NoirV4RoleBus = roleBus
+end
+
+function consumeData(data, fullSnapshot)
+    if typeof(data) ~= "\x74able" then return false end
+    local records = (typeof(data.Players) == "\x74able" and data.Players) or (typeof(data.players) == "\x74able" and data.players) or data
+    local lookup = {}
+    for key, info in pairs(records) do
+        local keyText = string.lower(tostring(key))
+        lookup[keyText] = info
+        if typeof(info) == "\x74able" then
+            for _, identity in ipairs({ info.Name, info.PlayerName, info.Username, info.UserId, info.UserID, info.Id, info.PlayerId }) do
+                if identity ~= nil then lookup[string.lower(tostring(identity))] = info end
+            end
+        end
+    end
+    local function normalizeRole(info)
+        if typeof(info) == "\x74able" then
+            if info.Dead == true or info.Killed == true or info.IsDead == true or info.Alive == false then return "\x64ead" end
+            info = info.Role or info.role or info.CurrentRole or info.currentRole or info.Team or info.team or info.Class
+        end
+        local value = string.lower(tostring(info or "\x69nnocent")):gsub("\x5b%s_%-]", "")
+        if string.find(value, "\x6durder", 1, true) or string.find(value, "\x6biller", 1, true) then return "\x6durderer" end
+        if string.find(value, "\x73heriff", 1, true) then return "\x73heriff" end
+        if string.find(value, "\x68ero", 1, true) then return "\x68ero" end
+        if string.find(value, "\x64ead", 1, true) or string.find(value, "\x6billed", 1, true) then return "\x64ead" end
+        return "\x69nnocent"
+    end
+    local foundMurderer, foundSheriff, foundHero, received, changed = nil, nil, nil, false, false
+    for _, player in ipairs(getPlayers()) do
+        local info = lookup[string.lower(player.Name)] or lookup[tostring(player.UserId)] or lookup[string.lower(tostring(player.UserId))]
+        if info ~= nil then
+            received = true
+            __R1.playerData[player.UserId] = info
+            local resolved = normalizeRole(info)
+            if __R1.roleCache[player.UserId] ~= resolved then
+                __R1.roleCache[player.UserId], changed = resolved, true
+                if __R1.autoNotifyRoles and (resolved == "\x6durderer" or resolved == "\x73heriff" or resolved == "\x68ero") and __R1.announcedRoles[player.UserId] ~= resolved then
+                    __R1.announcedRoles[player.UserId] = resolved
+                    notify(player.Name .. "\x20is " .. string.upper(resolved), 5)
+                end
+            end
+            if resolved == "\x6durderer" then foundMurderer = player
+            elseif resolved == "\x73heriff" then foundSheriff = player
+            elseif resolved == "\x68ero" then foundHero = player end
+        elseif fullSnapshot and __R1.roleCache[player.UserId] ~= "\x69nnocent" then
+            __R1.roleCache[player.UserId], changed = "\x69nnocent", true
+        end
+    end
+    local previousMurderer, previousSheriff, previousHero = __R1.murderer, __R1.sheriff, __R1.hero
+    if fullSnapshot then
+        __R1.murderer, __R1.sheriff, __R1.hero = foundMurderer, foundSheriff, foundHero
+    else
+        __R1.murderer, __R1.sheriff, __R1.hero = foundMurderer or __R1.murderer, foundSheriff or __R1.sheriff, foundHero or __R1.hero
+    end
+    if foundMurderer then setTarget(foundMurderer) end
+    if previousMurderer ~= __R1.murderer or previousSheriff ~= __R1.sheriff or previousHero ~= __R1.hero then changed = true end
+    if changed then
+        local bus = NoirGenv().__NoirV4RoleBus
+        if bus and bus.Emit then bus:Emit() end
+    end
+    return received
+end
+                      
+function getPlayerDataRemote()
+    if __R1.playerDataRemote and __R1.playerDataRemote.Parent then return __R1.playerDataRemote end
+    local remote = ReplicatedStorage:FindFirstChild("\x47etPlayerData", true)
+    __R1.playerDataRemote = (remote and remote:IsA("\x52emoteFunction")) and remote or nil
+    return __R1.playerDataRemote
+end
+ 
+do
+    local scanner = { busy = false, queued = false, delayed = false, force = false, last = -1e9 }
+    function scanner:Request(force)
+        self.force = self.force or force == true
+        if self.busy then self.queued = true; return end
+        local interval = __R1.instantRoleDetection and 0.35 or 1.35
+        local elapsed = os.clock() - self.last
+        if not self.force and elapsed < interval then
+            self.queued = true
+            if not self.delayed then
+                self.delayed = true
+                task.delay(interval - elapsed, function()
+                    scanner.delayed = false
+                    if scanner.queued then scanner.queued = false; scanner:Request(false) end
+                end)
+            end
+            return
+        end
+        self.busy, self.queued = true, false
+        self.force = false
+        task.spawn(function()
+             
+            local knifeOwner, gunOwner = findByKnife(), findByGun()
+            local fallbackChanged = false
+            if knifeOwner and __R1.roleCache[knifeOwner.UserId] ~= "\x6durderer" then
+                for userId, role in pairs(__R1.roleCache) do if role == "\x6durderer" then __R1.roleCache[userId] = "\x69nnocent" end end
+                __R1.roleCache[knifeOwner.UserId], fallbackChanged = "\x6durderer", true
+                setTarget(knifeOwner)
+            end
+            if gunOwner and gunOwner ~= knifeOwner and __R1.roleCache[gunOwner.UserId] ~= "\x73heriff" then
+                for userId, role in pairs(__R1.roleCache) do if role == "\x73heriff" then __R1.roleCache[userId] = "\x69nnocent" end end
+                __R1.roleCache[gunOwner.UserId], __R1.sheriff, fallbackChanged = "\x73heriff", gunOwner, true
+            end
+            if fallbackChanged then
+                local bus = NoirGenv().__NoirV4RoleBus
+                if bus and bus.Emit then bus:Emit() end
+            end
+            local applied = false
+            local remote = getPlayerDataRemote()
+            if remote then
+                local ok, data = pcall(function() return remote:InvokeServer() end)
+                if ok then applied = consumeData(data, true) end
+            end
+            if not applied and not knifeOwner then setTarget(nil) end
+            scanner.last, scanner.busy = os.clock(), false
+            if scanner.queued then scanner.queued = false; scanner:Request(false) end
+        end)
+    end
+    NoirGenv().__NoirV4RoleScanner = scanner
+end
+function refreshTarget(force)
+    local scanner = NoirGenv().__NoirV4RoleScanner
+    if scanner and scanner.Request then scanner:Request(force == true) end
+end
+function updatePing()
+    pcall(function()
+        local network = Stats:FindFirstChild("\x4eetwork")
+        local items = network and network:FindFirstChild("\x53erverStatsItem")
+        local pingItem = items and items:FindFirstChild("\x44ata Ping")
+        if pingItem then
+            local measured = pingItem:GetValue() / 1000
+            if measured > 0 and measured < 2 then __R1.cachedPing = __R1.cachedPing * 0.7 + measured * 0.3 end
+        end
+    end)
+end
+
+function getAimPart(player)
+    local char = entityCharacter(player)
+    if not char then return nil end
+    local partName = __R1.config.hitPart
+    if partName == "\x52andom" then
+        local opts = { "\x48ead", "\x55pperTorso", "\x4cowerTorso", "\x48umanoidRootPart" }
+        partName = opts[math.random(#opts)]
+    end
+    local part = char:FindFirstChild(partName)
+    if not part then part = char:FindFirstChild("\x48umanoidRootPart") or char.PrimaryPart end
+    return part
+end
+function inFOV(player)
+    if __R1.config.fovSize <= 0 then return true end
+    local cam = Workspace.CurrentCamera
+    local part = getAimPart(player)
+    if not cam or not part then return false end
+    local screen = cam:WorldToViewportPoint(part.Position)
+    local center = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
+    return (Vector2.new(screen.X, screen.Y) - center).Magnitude <= __R1.config.fovSize / 2
+end
+function passesFilters(player, trusted)
+    if player == nil or player == LocalPlayer then return false end
+    if not validTarget(player) then return false end
+    if not trusted and playerIsInLobby(player) then return false end
+    if isFriend(player) then return false end
+    if __R1.config.maxDistance > 0 and distanceTo(player) > __R1.config.maxDistance then return false end
+    return true
+end
+function selectTarget(mode)
+    -- NOIR v1.4 (Pulse): режим Infection определяется автоматически, тоггл убран.
+    -- В раунде Infection оружие (silent aim / auto fire) целится в ближайшего зомби
+    -- — NPC или заражённого игрока; в обычном раунде работает прежний таргетинг.
+    if infectionRoundActive() then
+        local zombieEntity = nearestZombieEntity()
+        if zombieEntity then return zombieEntity end
+    end
+    mode = mode or __R1.config.targetMode
+    if mode == "\x4durderer" then return passesFilters(__R1.murderer, true) and __R1.murderer or nil end
+    if mode == "\x53heriff" then return passesFilters(__R1.sheriff, true) and __R1.sheriff or nil end
+    if mode == "\x48ero" then return passesFilters(__R1.hero, true) and __R1.hero or nil end
+    if mode == "\x53elected" then
+        local p = __R1.config.selectedPlayer and Players:FindFirstChild(__R1.config.selectedPlayer)
+        return passesFilters(p, true) and p or nil
+    end
+    if mode == "\x4eearest" then
+        local best, bd
+        for _, p in ipairs(getPlayers()) do
+            if passesFilters(p) then local d = distanceTo(p); if not bd or d < bd then best, bd = p, d end end
+        end
+        return best
+    end
+    if mode == "\x43rosshair" then
+        local cam = Workspace.CurrentCamera
+        local best, bd
+        if cam then
+            local center = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
+            for _, p in ipairs(getPlayers()) do
+                if passesFilters(p) then
+                    local part = getAimPart(p)
+                    if part then
+                        local screen = cam:WorldToViewportPoint(part.Position)
+                        if screen.Z > 0 then
+                            local d = (Vector2.new(screen.X, screen.Y) - center).Magnitude
+                            if not bd or d < bd then best, bd = p, d end
+                        end
+                    end
+                end
+            end
+        end
+        return best
+    end
+    if mode == "\x4cowest Health" then
+        local best, bh
+        for _, p in ipairs(getPlayers()) do
+            if passesFilters(p) then
+                local hum = p.Character and p.Character:FindFirstChildWhichIsA("\x48umanoid")
+                local h = hum and hum.Health or math.huge
+                if not bh or h < bh then best, bh = p, h end
+            end
+        end
+        return best
+    end
+    if mode == "\x52andom" then
+        local list = {}
+        for _, p in ipairs(getPlayers()) do if passesFilters(p) then list[#list + 1] = p end end
+        if #list > 0 then return list[math.random(#list)] end
+        return nil
+    end
+    return passesFilters(__R1.murderer, true) and __R1.murderer or nil
+end
+function targetPart()
+    local player = selectTarget()
+    if not player then player = findByKnife() end
+    local character = entityCharacter(player)
+    if not character then return nil end
+    return getAimPart(player) or character:FindFirstChild("\x48umanoidRootPart") or character.PrimaryPart
+end
+function findNearestKnifeTarget()
+    local root = localRoot()
+    if not root then return nil end
+    local closest, closestDistance
+    for _, player in ipairs(getPlayers()) do
+        if passesFilters(player) then
+            local targetRoot = player.Character and player.Character:FindFirstChild("\x48umanoidRootPart")
+            if targetRoot then
+                local d = (targetRoot.Position - root.Position).Magnitude
+                if not closestDistance or d < closestDistance then closest, closestDistance = player, d end
+            end
+        end
+    end
+    return closest
+end
+function knifeTargetPlayer()
+    if not __R1.config.knifeEnabled then return nil end
+    if __R1.config.knifePrioritizeSheriff == true then
+        local sheriffPlayer=findSheriff()
+        return passesFilters(sheriffPlayer, true) and sheriffPlayer or nil
+    end
+    return findNearestKnifeTarget()
+end
+function knifeTargetPart()
+    local player = knifeTargetPlayer()
+    local character = player and player.Character
+    if not character then return nil end
+    return getAimPart(player) or character:FindFirstChild("\x48umanoidRootPart") or character.PrimaryPart
+end
+
+      __R1.PingProfiles = {
+    { Ping = 20, Sim = 48, Interval = 70, H = 154, V = 144, X = -5, Y = -14, Z = 0 },
+    { Ping = 50, Sim = 54, Interval = 66, H = 162, V = 152, X = -6, Y = -14, Z = 0 },
+    { Ping = 100, Sim = 68, Interval = 60, H = 176, V = 166, X = -8, Y = -15, Z = 0 },
+    { Ping = 150, Sim = 72, Interval = 64, H = 182, V = 170, X = -9, Y = -12, Z = 0 },
+    { Ping = 200, Sim = 76, Interval = 70, H = 188, V = 174, X = -10, Y = -11, Z = 0 },
+    { Ping = 300, Sim = 82, Interval = 76, H = 196, V = 180, X = -12, Y = -10, Z = 0 },
+}
+function interpolateProfile(ping)
+    local a, b = __R1.PingProfiles[1], __R1.PingProfiles[1]
+    if ping >= __R1.PingProfiles[#__R1.PingProfiles].Ping then
+        a, b = __R1.PingProfiles[#__R1.PingProfiles], __R1.PingProfiles[#__R1.PingProfiles]
+    else
+        for index = 1, #__R1.PingProfiles - 1 do
+            if ping >= __R1.PingProfiles[index].Ping and ping <= __R1.PingProfiles[index + 1].Ping then a, b = __R1.PingProfiles[index], __R1.PingProfiles[index + 1]; break end
+        end
+    end
+    local span = b.Ping - a.Ping
+    local alpha = span > 0 and math.clamp((ping - a.Ping) / span, 0, 1) or 0
+    alpha = alpha * alpha * (3 - 2 * alpha)
+    local function mix(key) return a[key] + (b[key] - a[key]) * alpha end
+    return { Sim = math.floor(mix("\x53im") + 0.5), Interval = math.floor(mix("\x49nterval") + 0.5),
+        H = math.floor(mix("\x48") + 0.5), V = math.floor(mix("\x56") + 0.5),
+        X = math.floor(mix("\x58") + 0.5), Y = math.floor(mix("\x59") + 0.5), Z = math.floor(mix("\x5a") + 0.5) }
+end
+local function syncAutoPing(settings, controlKey, pingMs)
+    if not settings or not settings.prioritizePing then return end
+    if settings.manualPingMs ~= pingMs then
+        settings.manualPingMs = pingMs
+        local control = __R1.revertControls[controlKey]
+        if type(control) == "\x74able" and type(control.SetValue) == "\x66unction" then pcall(control.SetValue, control, pingMs)
+        elseif type(control) == "\x66unction" then pcall(control, pingMs) end
+        local mirror = __R1.noirMirrorControls[controlKey]
+        if type(mirror) == "\x74able" and type(mirror.SetValue) == "\x66unction" then pcall(mirror.SetValue, mirror, pingMs)
+        elseif type(mirror) == "\x66unction" then pcall(mirror, pingMs) end
+    end
+end
+function autoTuneForPing()
+    local now = os.clock()
+    if now - __R1.lastAutoTune < 0.4 then return end
+    __R1.lastAutoTune = now
+    local pingMs = math.clamp(math.floor(__R1.cachedPing * 1000 + 0.5), 5, 1000)
+    syncAutoPing(__R1.config, "\x6danualPingMs", pingMs)
+    syncAutoPing(__R1.config.knifeAim, "\x6bnifeManualPingMs", pingMs)
+end
+function leadTime(profile)
+    local settings = profile == "\x6bnife" and __R1.config.knifeAim or __R1.config
+    local observedPing = settings.prioritizePing and __R1.cachedPing or (settings.manualPingMs / 1000)
+    local prediction
+    if settings.adaptive then
+        prediction = observedPing + settings.extraLead
+        if settings.predictLag then
+            local samplingDelay = math.clamp(settings.predictionIntervalMs / 2000, 0, 0.05)
+            prediction = prediction + samplingDelay + math.max(0, observedPing - 0.10) * 0.15
+        end
+    else
+        prediction = settings.fixedLead
+    end
+     
+     
+     
+     
+     
+    local simulationCap = settings.maxSimulationMs / 1000
+    if settings.adaptive then
+        simulationCap = math.min(.30, simulationCap + math.clamp(observedPing - .10, 0, .25) * .45)
+    end
+    return math.clamp(prediction, 0.02, simulationCap)
+end
+local function motionRoot(part)
+    -- characters: predict from the HumanoidRootPart so walk animation bob on
+    -- Head / limbs never poisons the sampled velocity.
+    if not part then return part end
+    local model = part.Parent
+    if model and model:FindFirstChildOfClass("\x48umanoid") then
+        return model:FindFirstChild("\x48umanoidRootPart") or part
+    end
+    return part
+end
+function sampleMotion(part, settings)
+    settings = settings or __R1.config
+    local now = os.clock()
+    if __R1.motionPart ~= part then
+        __R1.motionPart = part; __R1.motionSamples = {}; __R1.measuredVelocity = part.AssemblyLinearVelocity
+        __R1.previousEstimatedVelocity = __R1.measuredVelocity; __R1.estimatedAcceleration = Vector3.zero
+    end
+    -- sample fast (16-50 ms) even if the UI interval slider is set higher:
+    -- a strafe reversal is invisible to a 70+ ms sampler.
+    local interval = math.clamp((tonumber(settings.predictionIntervalMs) or 72) / 1000, 0.016, 0.05)
+    local last = __R1.motionSamples[#__R1.motionSamples]
+    if not last or now - last.time >= interval then
+        __R1.motionSamples[#__R1.motionSamples + 1] = { position = part.Position, time = now }
+        while #__R1.motionSamples > 14 or (#__R1.motionSamples > 3 and now - __R1.motionSamples[1].time > 0.28) do table.remove(__R1.motionSamples, 1) end
+        local count = #__R1.motionSamples
+        if count >= 2 then
+            local newest, previous = __R1.motionSamples[count], __R1.motionSamples[count - 1]
+            local dt = newest.time - previous.time
+            if dt > 0.004 then
+                local recent = (newest.position - previous.position) / dt
+                local sampled = recent
+                if count >= 4 then
+                    -- least-squares slope over the whole window: stable lead direction
+                    local t0 = __R1.motionSamples[1].time
+                    local n, st, sx, sz = 0, 0, 0, 0
+                    for i = 1, count do
+                        local s = __R1.motionSamples[i]; local t = s.time - t0
+                        n = n + 1; st = st + t; sx = sx + s.position.X; sz = sz + s.position.Z
+                    end
+                    local mt, mx, mz = st / n, sx / n, sz / n
+                    local numX, numZ, den = 0, 0, 0
+                    for i = 1, count do
+                        local s = __R1.motionSamples[i]; local t = s.time - t0
+                        numX = numX + (t - mt) * (s.position.X - mx)
+                        numZ = numZ + (t - mt) * (s.position.Z - mz)
+                        den = den + (t - mt) * (t - mt)
+                    end
+                    if den > 0.0001 then
+                        sampled = recent:Lerp(Vector3.new(numX / den, recent.Y, numZ / den), 0.5)
+                    end
+                end
+                if sampled.Magnitude < 250 then
+                    local oldVelocity = __R1.measuredVelocity
+                    __R1.measuredVelocity = __R1.measuredVelocity:Lerp(sampled, math.clamp(dt * 26, 0.45, 1))
+                    local acceleration = (__R1.measuredVelocity - oldVelocity) / math.max(dt, 0.016)
+                    if acceleration.Magnitude < 160 then __R1.estimatedAcceleration = __R1.estimatedAcceleration:Lerp(acceleration, 0.3)
+                    else __R1.estimatedAcceleration = Vector3.zero end
+                    __R1.previousEstimatedVelocity = oldVelocity
+                end
+            end
+        end
+    end
+    __R1.motionPosition = part.Position; __R1.motionTime = now
+end
+function calculateAim(part)
+    local root = motionRoot(part)
+    sampleMotion(root)
+    local assembly = root.AssemblyLinearVelocity
+    local velocity = assembly
+    local acceleration = Vector3.zero
+    if __R1.config.predictLag and __R1.motionPart == root and #__R1.motionSamples >= 2 then
+        local disagreement = (assembly - __R1.measuredVelocity).Magnitude
+        local measuredWeight = math.clamp(0.75 - disagreement / 120, 0.35, 0.75)
+        -- strafe reversal: sampling still points the old way, live physics does not
+        if assembly.X * __R1.measuredVelocity.X + assembly.Z * __R1.measuredVelocity.Z < 0 then measuredWeight = 0.15 end
+        if assembly.Magnitude < 2.5 then measuredWeight = math.min(measuredWeight, 0.25) end
+        velocity = assembly:Lerp(__R1.measuredVelocity, measuredWeight)
+        acceleration = __R1.estimatedAcceleration
+    end
+    local horizontal = __R1.config.horizontalMultiplier / 100
+    local vertical = __R1.config.verticalMultiplier / 100
+    local time = leadTime() * math.clamp((tonumber(__R1.config.leadScale) or 100) / 100, 0.25, 2.5)
+    time = math.clamp(time, 0.02, 0.60)
+    local displacement = Vector3.new(velocity.X * horizontal * time, 0, velocity.Z * horizontal * time)
+    if __R1.config.predictLag then
+        local horizontalAcceleration = Vector3.new(acceleration.X, 0, acceleration.Z)
+        displacement = displacement + horizontalAcceleration * (0.5 * time * time)
+    end
+    if __R1.config.predictJump then
+        local verticalTime = time * vertical
+        local verticalDisplacement = velocity.Y * verticalTime
+        local humanoid = root.Parent and root.Parent:FindFirstChildWhichIsA("\x48umanoid")
+        if humanoid and humanoid.FloorMaterial == Enum.Material.Air then
+            verticalDisplacement = verticalDisplacement - 0.5 * Workspace.Gravity * verticalTime * verticalTime
+        end
+        displacement = displacement + Vector3.new(0, verticalDisplacement, 0)
+    end
+    -- was a hard 18-stud diagonal clamp (killed every fast / long-ping lead);
+    -- now a horizontal safety cap that leaves the jump arc alone
+    local flat = Vector3.new(displacement.X, 0, displacement.Z)
+    if flat.Magnitude > 60 then
+        flat = flat.Unit * 60
+        displacement = Vector3.new(flat.X, displacement.Y, flat.Z)
+    end
+    local offset = Vector3.new(part.Size.X * __R1.config.offsetX / 100, part.Size.Y * __R1.config.offsetY / 100, part.Size.Z * __R1.config.offsetZ / 100)
+    return part.Position + displacement + offset
+end
+function calculateKnifeAim(part, origin)
+    local settings = __R1.config.knifeAim
+    local root = motionRoot(part)
+    sampleMotion(root, settings)
+    local assembly = root.AssemblyLinearVelocity
+    local velocity = assembly
+    if settings.predictLag and __R1.motionPart == root and #__R1.motionSamples >= 2 then
+        local weight = 0.65
+        if assembly.X * __R1.measuredVelocity.X + assembly.Z * __R1.measuredVelocity.Z < 0 then weight = 0.15 end
+        velocity = assembly:Lerp(__R1.measuredVelocity, weight)
+    end
+    local horizontal = settings.horizontalMultiplier / 100
+    local vertical = settings.verticalMultiplier / 100
+    local predictedVelocity = Vector3.new(velocity.X * horizontal, settings.predictJump and velocity.Y * vertical or 0, velocity.Z * horizontal)
+    local distance = (part.Position - origin).Magnitude
+    local travelTime = math.clamp(distance / 125, 0, 0.55)
+    local lead = leadTime("\x6bnife") * math.clamp((tonumber(settings.leadScale) or 100) / 100, 0.25, 2.5)
+    local time = math.clamp(lead + travelTime, 0.03, 0.90)
+    local offset = Vector3.new(part.Size.X * settings.offsetX / 100, part.Size.Y * settings.offsetY / 100, part.Size.Z * settings.offsetZ / 100)
+    return part.Position + predictedVelocity * time + offset
+end
+      __R1.wallCheckParams = RaycastParams.new()
+__R1.wallCheckParams.FilterType = Enum.RaycastFilterType.Exclude
+__R1.wallCheckParams.IgnoreWater = true
+function targetVisible(part, forceWallCheck)
+    if not (forceWallCheck or __R1.config.wallCheck) then return true end
+    local character = LocalPlayer.Character
+    local originPart = character and (character:FindFirstChild("\x48ead") or character:FindFirstChild("\x48umanoidRootPart"))
+    if not originPart or not part then return false end
+    __R1.wallCheckParams.FilterDescendantsInstances = { character }
+    local result = Workspace:Raycast(originPart.Position, part.Position - originPart.Position, __R1.wallCheckParams)
+    return result == nil or result.Instance:IsDescendantOf(part.Parent)
+end
+
+ 
+ 
+ 
+local function piercerShotOrigin(origin, aim, part, enabled)
+    if not enabled or not origin or not aim or not part then return origin end
+    local direction = aim - origin
+    local distance = direction.Magnitude
+    if distance <= 0.05 then return origin end
+    local dir = direction.Unit
+    local character = LocalPlayer.Character
+    local backpack = LocalPlayer:FindFirstChildOfClass("\x42ackpack")
+    local filter = { character, part.Parent }
+    local gun = (character and character:FindFirstChild("\x47un")) or (backpack and backpack:FindFirstChild("\x47un"))
+    if gun then filter[#filter + 1] = gun end
+    for _, player in ipairs(getPlayers()) do
+        if player.Character and player.Character ~= character then filter[#filter + 1] = player.Character end
+    end
+    __R1.wallCheckParams.FilterDescendantsInstances = filter
+    local blocked = Workspace:Raycast(origin, dir * distance, __R1.wallCheckParams)
+    if not blocked then return origin end
+    local inner = Workspace:Raycast(aim, -dir * distance, __R1.wallCheckParams)
+    local candidate = inner and (inner.Position + dir * 0.9) or (aim - dir * 0.9)
+    if (aim - candidate).Magnitude > 0.02 and not Workspace:Raycast(candidate, aim - candidate, __R1.wallCheckParams) then
+        return candidate
+    end
+    candidate = aim - dir * 0.5
+    if (aim - candidate).Magnitude > 0.02 and not Workspace:Raycast(candidate, aim - candidate, __R1.wallCheckParams) then
+        return candidate
+    end
+    return aim - dir * 0.4
+end
+
+function knifeRemote(remote, args)
+    if not __R1.config.knifeEnabled or args.n < 2 then return false end
+    if typeof(remote) ~= "\x49nstance" or not remote:IsA("\x52emoteEvent") then return false end
+    if remote.Name ~= "\x4bnifeThrown" then return false end
+    if typeof(args[1]) ~= "\x43Frame" or typeof(args[2]) ~= "\x43Frame" then return false end
+    local character = LocalPlayer.Character
+    local backpack = LocalPlayer:FindFirstChildOfClass("\x42ackpack")
+    local knife = character and character:FindFirstChild("\x4bnife")
+    if knife and remote:IsDescendantOf(knife) then return true end
+    if character and remote:IsDescendantOf(character) then return true end
+    if backpack and remote:IsDescendantOf(backpack) then return true end
+    return false
+end
+local function localGunTool()
+    local character = LocalPlayer.Character
+    local backpack = LocalPlayer:FindFirstChildOfClass("\x42ackpack")
+    return (character and character:FindFirstChild("\x47un")) or (backpack and backpack:FindFirstChild("\x47un"))
+end
+local function remoteBelongsToLocalGun(remote)
+    local character=LocalPlayer.Character
+    local backpack=LocalPlayer:FindFirstChildOfClass("\x42ackpack")
+    local tool=remote and remote:FindFirstAncestorOfClass("\x54ool")
+    if tool and tool.Name=="\x47un" and ((character and tool:IsDescendantOf(character)) or (backpack and tool:IsDescendantOf(backpack))) then return true end
+    local characterGun=character and character:FindFirstChild("\x47un")
+    local backpackGun=backpack and backpack:FindFirstChild("\x47un")
+    return (characterGun and remote:IsDescendantOf(characterGun)) or (backpackGun and remote:IsDescendantOf(backpackGun))
+end
+function shotRemote(remote, args)
+    if not (__R1.config.enabled or __R1.config.piercerBullet or __R1.buttonShotActive) or args.n < 2 then return false end
+    if typeof(remote) ~= "\x49nstance" or not remote:IsA("\x52emoteEvent") then return false end
+    if not remoteBelongsToLocalGun(remote) then return false end
+    local first, second = args[1], args[2]
+    local firstIsPos = typeof(first) == "\x56ector3" or typeof(first) == "\x43Frame"
+    local secondIsPos = typeof(second) == "\x56ector3" or typeof(second) == "\x43Frame"
+    return firstIsPos and secondIsPos
+end
+local function fallbackGunOrigin()
+    local gun = localGunTool()
+    local handle = gun and gun:FindFirstChild("\x48andle", true)
+    if handle and handle:IsA("\x42asePart") then return handle.Position end
+    local character = LocalPlayer.Character
+    local root = character and (character:FindFirstChild("\x48ead") or character:FindFirstChild("\x48umanoidRootPart"))
+    return root and root.Position or nil
+end
+local function vectorOrCFramePosition(value)
+    if typeof(value) == "\x43Frame" then return value.Position end
+    if typeof(value) == "\x56ector3" then return value end
+    return nil
+end
+local function hasCFrameArgument(args)
+    for index = 1, args.n do
+        if typeof(args[index]) == "\x43Frame" then return true end
+    end
+    return false
+end
+function redirect(remote, args)
+    local part, useWallCheck, isKnife = nil, false, false
+    if shotRemote(remote, args) then
+        if not __R1.buttonShotActive and __R1.config.aimKey ~= "\x4eone" and not __R1.aimHeld then return end
+        if __R1.config.shotMethod == "\x43Frame" and not hasCFrameArgument(args) then return end
+        part = (__R1.buttonShotActive and __R1.buttonShotTarget and getAimPart(__R1.buttonShotTarget)) or targetPart()
+         
+        useWallCheck = __R1.config.wallCheck and not __R1.config.piercerBullet
+    elseif knifeRemote(remote, args) then
+        part = knifeTargetPart(); useWallCheck = __R1.config.knifeWallCheck; isKnife = true
+    else
+        return
+    end
+    if not part or typeof(part) ~= "\x49nstance" or not part:IsA("\x42asePart") then return end
+    if useWallCheck and not targetVisible(part, true) then return end
+
+    if isKnife then
+        local origin = args[1].Position
+        local aim = calculateKnifeAim(part, origin)
+        if __R1.config.alignDirection and (aim - origin).Magnitude > 0.01 then
+            args[1] = CFrame.lookAt(origin, aim)
+        end
+        args[2] = CFrame.new(aim)
+        __R1.redirected = __R1.redirected + 1
+        return
+    end
+
+    local aim = calculateAim(part)
+    local firstType, secondType = typeof(args[1]), typeof(args[2])
+    if firstType == "\x43Frame" then
+        local origin = args[1].Position
+        local shotOrigin = piercerShotOrigin(origin, aim, part, __R1.config.piercerBullet)
+        if (__R1.config.alignDirection or shotOrigin ~= origin) and (aim - shotOrigin).Magnitude > 0.01 then
+            args[1] = CFrame.lookAt(shotOrigin, aim)
+        end
+        if secondType == "\x43Frame" then
+            args[2] = CFrame.new(aim)
+        elseif secondType == "\x56ector3" then
+            args[2] = aim
+        else
+            return
+        end
+    elseif firstType == "\x56ector3" then
+        local origin = args[1]
+        local shotOrigin = piercerShotOrigin(origin, aim, part, __R1.config.piercerBullet)
+        args[1] = shotOrigin
+        if secondType == "\x56ector3" then
+            if args[2].Magnitude <= 1.5 and (aim - shotOrigin).Magnitude > 0.01 then
+                args[2] = (aim - shotOrigin).Unit
+            else
+                args[2] = aim
+            end
+        elseif secondType == "\x43Frame" then
+            args[2] = CFrame.new(aim)
+        else
+            return
+        end
+    else
+        return
+    end
+    __R1.redirected = __R1.redirected + 1
+end
+
+local function swallowKnifeRemote(self)
+    if typeof(self) ~= "\x49nstance" or self.ClassName ~= "\x52emoteEvent" then return false end
+    if string.lower(tostring(self.Name or "")) ~= "\x6bnifethrown" then return false end
+    if not (__R1.config.knifeInstantThrow or __R1.config.knifeFastThrow) then return false end
+    local runtime
+    pcall(function() runtime = NoirGenv().__NoirKnifeUtilityRuntime end)
+    return type(runtime) == "\x74able" and type(runtime.lastInstantThrow) == "\x6eumber" and os.clock() - runtime.lastInstantThrow < .48
+end
+function installHook()
+    if __R1.hooked then return true end
+    local wrap = type(newcclosure) == "\x66unction" and newcclosure or function(callback) return callback end
+    local isOwnCall = type(checkcaller) == "\x66unction" and checkcaller or function() return false end
+    if type(hookmetamethod) == "\x66unction" and type(getnamecallmethod) == "\x66unction" then
+        local old
+        local ok, err = pcall(function()
+            old = hookmetamethod(game, "\x5f_namecall", wrap(function(self, ...)
+                local method = getnamecallmethod()
+                local methodLower = string.lower(tostring(method or ""))
+                if (methodLower == "\x66ireserver" or methodLower == "\x69nvokeserver" or methodLower == "\x66ire") and typeof(self) == "\x49nstance" then
+                    if swallowKnifeRemote(self) then return end
+                    if self.ClassName == "\x52emoteEvent" and methodLower == "\x66ireserver" and not isOwnCall() then
+                        local args = table.pack(...)
+                        pcall(redirect, self, args)
+                        if type(setnamecallmethod) == "\x66unction" then setnamecallmethod(method) end
+                        return old(self, table.unpack(args, 1, args.n))
+                    end
+                end
+                return old(self, ...)
+            end))
+        end)
+        if ok and type(old) == "\x66unction" then
+            __R1.hooked = true
+            return true
+        end
+        notify("\x4eamecall hook failed: " .. tostring(err), 5)
+    end
+    if type(hookfunction) ~= "\x66unction" then notify("\x4eo hook support in this executor", 6) return false end
+    local probe = Instance.new("\x52emoteEvent")
+    local original
+    local ok, err = pcall(function()
+        original = hookfunction(probe.FireServer, wrap(function(self, ...)
+            local args = table.pack(...)
+            if typeof(self) == "\x49nstance" then
+                if swallowKnifeRemote(self) then return end
+                if self.ClassName == "\x52emoteEvent" and not isOwnCall() then pcall(redirect, self, args) end
+            end
+            return original(self, table.unpack(args, 1, args.n))
+        end))
+    end)
+    probe:Destroy()
+    if not ok or type(original) ~= "\x66unction" then notify("\x48ook failed: " .. tostring(err), 6) return false end
+    __R1.hooked = true
+    return true
+end
+function toggle(value)
+    __R1.config.enabled = value == true
+    if __R1.config.enabled then
+        if not installHook() then __R1.config.enabled = false return end
+        task.spawn(refreshTarget)
+        notify("\x45nabled", 2)
+    else
+        notify("\x44isabled", 2)
+    end
+end
+
+function setPiercerBullet(value)
+    __R1.config.piercerBullet = value == true
+    if __R1.config.piercerBullet and not installHook() then
+        __R1.config.piercerBullet = false
+        notify("\x50iercer Bullet requires hook support", 4)
+    end
+end
+
+do
+          __R1.CollectionService = game:GetService("\x43ollectionService")
+          __R1.touch = type(firetouchinterest) == "\x66unction" and firetouchinterest or nil
+    local active = {}
+    local stepConnection
+
+    local function ownKnifeTool()
+        local character = LocalPlayer.Character
+        local backpack = LocalPlayer:FindFirstChildOfClass("\x42ackpack")
+        return (character and character:FindFirstChild("\x4bnife")) or (backpack and backpack:FindFirstChild("\x4bnife"))
+    end
+
+    local function knifePosition(knife)
+        if not knife or not knife.Parent then return nil end
+        local blade = knife:FindFirstChild("\x42ladePosition")
+        if blade and blade:IsA("\x42asePart") then return blade.Position end
+        if blade and blade:IsA("\x41ttachment") then return blade.WorldPosition end
+        local visual = knife:FindFirstChild("\x4bnifeVisual")
+        if visual and visual:IsA("\x42asePart") then return visual.Position end
+        if knife:IsA("\x42asePart") then return knife.Position end
+        local part = knife:FindFirstChildWhichIsA("\x42asePart", true)
+        if part then return part.Position end
+        return nil
+    end
+
+    local function isOwnKnife(knife)
+        local link = knife:FindFirstChild("\x48andleLink")
+        local character = LocalPlayer.Character
+        local backpack = LocalPlayer:FindFirstChildOfClass("\x42ackpack")
+        if link and link:IsA("\x4fbjectValue") and link.Value then
+            if character and link.Value:IsDescendantOf(character) then return true end
+            if backpack and link.Value:IsDescendantOf(backpack) then return true end
+        end
+        local root = character and character:FindFirstChild("\x48umanoidRootPart")
+        local position = knifePosition(knife)
+        return root ~= nil and position ~= nil and ownKnifeTool() ~= nil and (position - root.Position).Magnitude <= 35
+    end
+
+    local function touchPair(first, second)
+        if not __R1.touch or not first or not second then return end
+        pcall(__R1.touch, first, second, true)
+        task.defer(function()
+            if first.Parent and second.Parent then pcall(__R1.touch, first, second, false) end
+        end)
+    end
+
+    local function strike(knife, part)
+        local tool = ownKnifeTool()
+        local handle = tool and tool:FindFirstChild("\x48andle", true)
+        local blade = knife:FindFirstChild("\x42ladePosition")
+        if not (blade and blade:IsA("\x42asePart")) then
+            blade = knife:IsA("\x42asePart") and knife or knife:FindFirstChildWhichIsA("\x42asePart", true)
+        end
+        touchPair(blade, part)
+        if handle and handle:IsA("\x42asePart") and handle ~= blade then touchPair(handle, part) end
+        if not tool then return end
+        local touched = tool:FindFirstChild("\x48andleTouched", true)
+        if touched and touched:IsA("\x52emoteEvent") then pcall(touched.FireServer, touched, part) end
+        local stabbed = tool:FindFirstChild("\x4bnifeStabbed", true)
+        if stabbed and stabbed:IsA("\x52emoteEvent") then pcall(stabbed.FireServer, stabbed) end
+    end
+
+    local function stopStep()
+        if stepConnection then
+            stepConnection:Disconnect()
+            stepConnection = nil
+        end
+    end
+
+    local function step()
+        if not __R1.config.knifeEnabled or not __R1.config.knifeThrownAura or next(active) == nil then stopStep() return end
+        local now = os.clock()
+        local radius = __R1.config.knifeRadius
+        for knife, data in pairs(active) do
+            if not knife.Parent or now - data.started > 3.5 then
+                active[knife] = nil
+            else
+                local position = knifePosition(knife)
+                if position then
+                    for _, player in ipairs(getPlayers()) do
+                        local character = player ~= LocalPlayer and player.Character
+                        local root = character and character:FindFirstChild("\x48umanoidRootPart")
+                        if root and validTarget(player) and (root.Position - position).Magnitude <= radius and now - (data.hit[player] or 0) >= 0.08 then
+                            data.hit[player] = now
+                            strike(knife, root)
+                        end
+                    end
+                end
+            end
+        end
+        if next(active) == nil then stopStep() end
+    end
+
+    local function track(knife)
+        if active[knife] or not __R1.config.knifeEnabled or not __R1.config.knifeThrownAura then return end
+        local isKnife = knife.Name == "\x54hrowingKnife" or knife:HasTag("\x54hrowingKnife")
+            or knife:FindFirstChild("\x48andleLink") ~= nil or knife:FindFirstChild("\x42ladePosition") ~= nil
+        if not isKnife then return end
+        if not isOwnKnife(knife) then
+            knife:WaitForChild("\x48andleLink", 0.1)
+            if not isOwnKnife(knife) then return end
+        end
+        active[knife] = { started = os.clock(), hit = {} }
+        if not stepConnection then stepConnection = RunService.Heartbeat:Connect(step) end
+    end
+
+    __R1.CollectionService:GetInstanceAddedSignal("\x54hrowingKnife"):Connect(function(knife) task.defer(track, knife) end)
+    Workspace.ChildAdded:Connect(function(child)
+        if child.Name == "\x54hrowingKnife" or child:HasTag("\x54hrowingKnife") then task.defer(track, child) end
+    end)
+end
+
+ 
+ 
+task.defer(function()
+    local prior = NoirGenv().__NoirKnifeUtilityRuntime
+    if type(prior) == "\x74able" and type(prior.Stop) == "\x66unction" then pcall(prior.Stop) end
+
+    local runtime = { stopped = false, connections = {}, bindConnections = {}, gui = nil, button = nil,
+        dualVisual = nil, dualSource = nil, dualLimb = nil, dualLeftShoulder = nil, dualRightShoulder = nil,
+        dualOriginalC0 = nil, dualOriginalTransform = nil, ghostModel = nil, ghostParts = {}, hiddenParts = {}, dualTorso = nil,
+        poseBind = "\x4eoirKnifeDualArmPose", nextAction = 0, lastInstantThrow = 0, lastStab = {} }
+    local function connect(signal, callback)
+        local connection = signal:Connect(callback)
+        runtime.connections[#runtime.connections + 1] = connection
+        return connection
+    end
+    local function findKnifeTool(parent)
+        if not parent then return nil end
+        local named = parent:FindFirstChild("\x4bnife")
+        if named and named:IsA("\x54ool") then return named end
+        for _, child in ipairs(parent:GetChildren()) do
+            if child:IsA("\x54ool") and (child:FindFirstChild("\x4bnifeThrown", true) or child:FindFirstChild("\x4bnifeStabbed", true) or child:FindFirstChild("\x48andleTouched", true)) then
+                return child
+            end
+        end
+        return nil
+    end
+    local function equippedKnife()
+        local tool = findKnifeTool(LocalPlayer.Character)
+        if tool then return tool end
+        -- Auto-equip: pull the knife out of the Backpack instead of asking the user to equip it.
+        local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+        local source = backpack and findKnifeTool(backpack)
+        if not source and backpack and backpack:FindFirstChild("Toys") then
+            source = findKnifeTool(backpack.Toys)
+        end
+        if source then
+            local character = LocalPlayer.Character
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                pcall(function() humanoid:EquipTool(source) end)
+                return findKnifeTool(character) or source
+            end
+        end
+        return nil
+    end
+    local function limbFor(character, side)
+        return character and (character:FindFirstChild(side .. "\x48and") or character:FindFirstChild(side .. "\x20Arm") or character:FindFirstChild(side .. "\x4cowerArm")) or nil
+    end
+    local function shoulderFor(character, side)
+        local joint = character and (character:FindFirstChild(side .. "\x53houlder", true) or character:FindFirstChild(side .. "\x20Shoulder", true))
+        return joint and joint:IsA("\x4dotor6D") and joint or nil
+    end
+    local function rootFor(player)
+        local character = player and player.Character
+        return character and (character:FindFirstChild("\x48umanoidRootPart") or character.PrimaryPart) or nil
+    end
+    local function killPlayerByName()
+        local name = tostring(__R1.config.knifeKillPlayer or "\x4e/A")
+        local player = name ~= "\x4e/A" and Players:FindFirstChild(name) or nil
+        return validTarget(player) and player or nil
+    end
+    local function sheriffTarget()
+        if validTarget(__R1.sheriff) then return __R1.sheriff end
+        local fallback = findByGun()
+        return validTarget(fallback) and fallback or nil
+    end
+    local function knifeThrowRemote(tool)
+        for _, object in ipairs(tool:GetDescendants()) do
+            if object:IsA("\x52emoteEvent") and object.Name == "\x4bnifeThrown" then return object end
+        end
+        return nil
+    end
+    local function throwCooldown()
+        if __R1.config.knifeInstantThrow then return .05 end
+        if __R1.config.knifeFastThrow then return .12 end
+        return .38
+    end
+    local function throwAt(player)
+        local tool, part = equippedKnife(), getAimPart(player)
+        local handle = tool and tool:FindFirstChild("\x48andle", true)
+        local remote = tool and knifeThrowRemote(tool)
+        if not tool then return false, "\x65quip" end
+        if not part or not handle or not handle:IsA("\x42asePart") or not remote then return false end
+        local now = os.clock()
+        if now < runtime.nextAction then return false end
+        runtime.nextAction = now + throwCooldown()
+        local origin = handle.Position
+        local aim = calculateKnifeAim(part, origin)
+        local look = CFrame.lookAt(origin, aim)
+        local hit = CFrame.new(aim)
+        local ok = pcall(function() remote:FireServer(look, hit) end)
+        if not ok then ok = pcall(function() remote:FireServer(hit) end) end
+        if not ok then ok = pcall(function() remote:FireServer(aim) end) end
+        if ok then runtime.lastInstantThrow = now end
+        return ok == true
+    end
+    local function pokeTouch(handle, part)
+        if not handle or not part or not handle.Parent or not part.Parent then return end
+        if type(firetouchinterest) ~= "\x66unction" then return end
+        pcall(firetouchinterest, handle, part, 0)
+        pcall(firetouchinterest, handle, part, 1)
+        pcall(firetouchinterest, handle, part, true)
+        pcall(firetouchinterest, handle, part, false)
+    end
+    local function stabAt(player)
+        local tool = equippedKnife()
+        local character = player and player.Character
+        if not tool or not character or not validTarget(player) then return false end
+        local handle = tool:FindFirstChild("\x48andle", true)
+        if not handle or not handle:IsA("\x42asePart") then return false end
+        local now = os.clock()
+        if now - (runtime.lastStab[player] or 0) < .08 then return false end
+        runtime.lastStab[player] = now
+        for _, part in ipairs(character:GetChildren()) do
+            if part:IsA("\x42asePart") then pokeTouch(handle, part) end
+        end
+        local hrp = character:FindFirstChild("\x48umanoidRootPart") or character.PrimaryPart
+        local touched = tool:FindFirstChild("\x48andleTouched", true)
+        local stabbed = tool:FindFirstChild("\x4bnifeStabbed", true)
+        if touched and touched:IsA("\x52emoteEvent") then
+            if hrp then pcall(touched.FireServer, touched, hrp) end
+            pcall(touched.FireServer, touched, character)
+        end
+        if stabbed and stabbed:IsA("\x52emoteEvent") then
+            pcall(stabbed.FireServer, stabbed)
+            if hrp then pcall(stabbed.FireServer, stabbed, hrp) end
+        end
+        return true
+    end
+    local function attack(player)
+        if not validTarget(player) then return false end
+        return stabAt(player)
+    end
+    local function killSheriff(silent)
+        if not equippedKnife() then
+            if not silent then notify("\x45quip the Knife first", 3) end
+            return false
+        end
+        local target = sheriffTarget()
+        local success = target and attack(target) or false
+        if not silent then notify(success and ("\x53tab: " .. target.Name) or "\x53heriff not found / knife not ready", 3) end
+        return success
+    end
+    local function killEveryone(silent)
+        if not equippedKnife() then
+            if not silent then notify("\x45quip the Knife first", 3) end
+            return 0
+        end
+        local count = 0
+        for _, player in ipairs(getPlayers()) do
+            if validTarget(player) and attack(player) then count += 1 end
+        end
+        if not silent then notify(count > 0 and ("\x53tabbed " .. tostring(count) .. "\x20target(s)") or "\x53tab: no valid target", 3) end
+        return count
+    end
+    local function killSelected(silent)
+        if not equippedKnife() then
+            if not silent then notify("\x45quip the Knife first", 3) end
+            return false
+        end
+        local target = killPlayerByName()
+        if not target then
+            if not silent then notify("\x53elect a player in Kill Player", 3) end
+            return false
+        end
+        local success = attack(target)
+        if not silent then notify(success and ("\x53tab: " .. target.Name) or "\x53tab: wait / failed", 3) end
+        return success
+    end
+    local function armPartPairs(character)
+        local pairs = {}
+        if character and character:FindFirstChild("\x52ight Arm") then
+            pairs[#pairs + 1] = { character:FindFirstChild("\x52ight Arm"), character:FindFirstChild("\x4ceft Arm") }
+        else
+            for _, suffix in ipairs({ "\x55pperArm", "\x4cowerArm", "\x48and" }) do
+                local source, target = character and character:FindFirstChild("\x52ight" .. suffix), character and character:FindFirstChild("\x4ceft" .. suffix)
+                if source and target then pairs[#pairs + 1] = { source, target } end
+            end
+        end
+        return pairs
+    end
+    local function cleanVisualClone(part)
+        local clone = part:Clone()
+        for _, child in ipairs(clone:GetDescendants()) do
+            if child:IsA("\x53cript") or child:IsA("\x4cocalScript") or child:IsA("\x57eld") or child:IsA("\x57eldConstraint") or child:IsA("\x4dotor6D") then child:Destroy() end
+        end
+        clone.Anchored, clone.CanCollide, clone.CanTouch, clone.CanQuery, clone.Massless = true, false, false, false, true
+        clone.CastShadow = false
+        return clone
+    end
+    local function destroyDualVisual()
+        if runtime.ghostModel and runtime.ghostModel.Parent then runtime.ghostModel:Destroy() end
+        for part, original in pairs(runtime.hiddenParts) do if part and part.Parent then pcall(function() part.LocalTransparencyModifier = original end) end end
+        table.clear(runtime.hiddenParts); table.clear(runtime.ghostParts)
+        runtime.ghostModel, runtime.dualVisual, runtime.dualSource, runtime.dualTorso = nil, nil, nil, nil
+        runtime.dualLimb, runtime.dualLeftShoulder, runtime.dualRightShoulder, runtime.dualOriginalC0, runtime.dualOriginalTransform = nil, nil, nil, nil, nil
+    end
+    local function refreshDualEffect()
+         
+        __R1.config.knifeDualEffect = false
+        destroyDualVisual()
+    end
+    local function updateGhostDual()
+        local torso, weapon = runtime.dualTorso, runtime.dualVisual
+        if not torso or not torso.Parent or not weapon or not weapon.Parent then return end
+        local function mirrored(source)
+            local relative = torso.CFrame:ToObjectSpace(source.CFrame)
+            local p = relative.Position
+            local x, y, z = relative:ToOrientation()
+            return torso.CFrame * CFrame.new(-p.X, p.Y, p.Z) * CFrame.Angles(x, -y, -z)
+        end
+        for clone, source in pairs(runtime.ghostParts) do if clone and clone.Parent and source and source.Parent then clone.CFrame = mirrored(source) end end
+        if runtime.dualSource and runtime.dualSource.Parent then weapon.CFrame = mirrored(runtime.dualSource) end
+    end
+    local function disconnectKnifeBind()
+        for _, connection in ipairs(runtime.bindConnections) do pcall(function() connection:Disconnect() end) end
+        table.clear(runtime.bindConnections)
+    end
+    local function destroyBind()
+        disconnectKnifeBind()
+        if runtime.gui then runtime.gui:Destroy() end
+        runtime.gui, runtime.button = nil, nil
+        for _, parent in ipairs({ guiParent, CoreGui, LocalPlayer:FindFirstChildOfClass("\x50layerGui") }) do
+            local stale = parent and parent:FindFirstChild("\x4eoirKnifeSheriffBind")
+            if stale then stale:Destroy() end
+        end
+    end
+    local function updateBindShape()
+        local button = runtime.button
+        if not button then return end
+        local cornerObject = button:FindFirstChild("\x4eoirShape")
+        if cornerObject then cornerObject.CornerRadius = __R1.config.knifeSheriffBindShape == "\x43ircle" and UDim.new(1, 0) or UDim.new(0, 11) end
+    end
+    local function createBind()
+        if runtime.button then updateBindShape(); return end
+        local parent = guiParent
+        if typeof(parent) ~= "\x49nstance" then parent = LocalPlayer:FindFirstChildOfClass("\x50layerGui") end
+        if typeof(parent) ~= "\x49nstance" then return end
+        local gui = New("\x53creenGui", { Parent = parent, Name = "\x4eoirKnifeSheriffBind", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 84, ZIndexBehavior = Enum.ZIndexBehavior.Sibling })
+        local button = New("\x49mageButton", { Parent = gui, Name = "\x4billSheriff", AnchorPoint = Vector2.new(.5, .5), Position = NoirPersistence.GetPosition("\x6bnife_sheriff_bind_v1", UDim2.new(.68, 0, .73, 0)), Size = UDim2.fromOffset(48, 48),
+            BackgroundColor3 = Color3.fromRGB(5, 12, 17), BackgroundTransparency = 0, BorderSizePixel = 0, AutoButtonColor = false, Image = "", ClipsDescendants = false, ZIndex = 8 })
+        local shape = New("\x55ICorner", { Parent = button, Name = "\x4eoirShape", CornerRadius = UDim.new(1, 0) })
+        local aspect = New("\x55IAspectRatioConstraint", { Parent = button, AspectRatio = 1, AspectType = Enum.AspectType.ScaleWithParentSize })
+        local outer = New("Frame", { Parent = button, Name = "NoirSheen", Size = UDim2.new(1, 0, .38, 0), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = .8, BorderSizePixel = 0, ZIndex = 8 })
+        New("\x55ICorner", { Parent = outer, CornerRadius = UDim.new(0, 11) })
+        New("UIGradient", { Parent = outer, Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, .4), NumberSequenceKeypoint.new(.6, .8), NumberSequenceKeypoint.new(1, 1) }) })
+        New("UIStroke", { Parent = button, Color = C.accent, Thickness = 6, Transparency = .87, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+        outer = New("UIStroke", { Parent = button, Color = C.accent, Thickness = 2.2, Transparency = .06, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+        local sheriffRingGrad = New("UIGradient", { Parent = outer, Rotation = 35, Color = novaMetal })
+        local inner = New("UIStroke", { Parent = button, Color = C.border, Thickness = 1, Transparency = .5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+        do
+            -- CYBER HUD v8: вращающееся кольцо + орбита палочек — как у Grab Gun
+            local sheriffOrbit = New("Frame", { Parent = button, Name = "NoirTickOrbit", AnchorPoint = Vector2.new(.5, .5),
+                Position = UDim2.fromScale(.5, .5), Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Rotation = 0, ZIndex = 9 })
+            for _, c in ipairs({ { 1, 0, 45 }, { 0, 0, -45 }, { 1, 1, -45 }, { 0, 1, 45 } }) do
+                New("Frame", { Parent = sheriffOrbit, Name = "NoirTick", AnchorPoint = Vector2.new(c[1], c[2]),
+                    Position = UDim2.fromScale(c[1], c[2]), Size = UDim2.fromOffset(7, 1.6),
+                    BackgroundColor3 = C.accent, BackgroundTransparency = .3, BorderSizePixel = 0,
+                    Rotation = c[3], ZIndex = 9 })
+            end
+            pcall(function()
+                if NoirCyberHUD and NoirCyberHUD._register then NoirCyberHUD._register(button, sheriffRingGrad, sheriffOrbit) end
+            end)
+        end
+        local label = New("\x54extLabel", { Parent = button, Name = "\x54ext", AnchorPoint = Vector2.new(.5, .5), Position = UDim2.fromScale(.5, .5), Size = UDim2.fromScale(.76, .76), BackgroundTransparency = 1, Text = "\x4bill\nSheriff", TextColor3 = C.text, TextSize = 9, TextWrapped = true, Font = Enum.Font.GothamBold, ZIndex = 9 })
+        local pressScale = New("\x55IScale", { Parent = button, Scale = 1 })
+        runtime.gui, runtime.button = gui, button
+        updateBindShape()
+        local dragging, moved, start, origin, dragInput, lastBind = false, false, nil, nil, nil, 0
+        local function fireBind()
+            if moved then return end
+            local now = os.clock()
+            if now - lastBind < .25 then return end
+            lastBind = now
+            killSheriff(false)
+        end
+        runtime.bindConnections[#runtime.bindConnections + 1] = button.InputBegan:Connect(function(input)
+            if not isPrimaryPress(input) then return end
+            dragging, moved, start, origin = true, false, input.Position, button.Position
+            TweenService:Create(pressScale, TweenInfo.new(.12, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Scale = 1.035 }):Play()
+        end)
+        runtime.bindConnections[#runtime.bindConnections + 1] = button.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+        end)
+        runtime.bindConnections[#runtime.bindConnections + 1] = UIS.InputChanged:Connect(function(input)
+            if not dragging or input ~= dragInput then return end
+            local delta = input.Position - start
+            if delta.Magnitude > 7 then moved = true end
+            button.Position = UDim2.new(origin.X.Scale, origin.X.Offset + delta.X, origin.Y.Scale, origin.Y.Offset + delta.Y)
+        end)
+        runtime.bindConnections[#runtime.bindConnections + 1] = UIS.InputEnded:Connect(function(input)
+            if not dragging or not isPrimaryPress(input) then return end
+            dragging = false
+            TweenService:Create(pressScale, TweenInfo.new(.20, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+            if moved then NoirPersistence.SetPosition("\x6bnife_sheriff_bind_v1", button.Position) return end
+            fireBind()
+        end)
+        runtime.bindConnections[#runtime.bindConnections + 1] = button.Activated:Connect(fireBind)
+        runtime.bindConnections[#runtime.bindConnections + 1] = button.MouseButton1Click:Connect(fireBind)
+    end
+    function runtime:Refresh()
+        refreshDualEffect()
+        if __R1.config.knifeSheriffBind then createBind() else destroyBind() end
+        updateBindShape()
+    end
+    function runtime:KillSheriff() return killSheriff(false) end
+    function runtime:KillEveryone() return killEveryone(false) end
+    function runtime:KillSelected() return killSelected(false) end
+    local function nearestTarget()
+        local chosen, distance = nil, math.huge
+        local ownRoot = localRoot()
+        for _, player in ipairs(getPlayers()) do
+            local root = rootFor(player)
+            if validTarget(player) and root then
+                local d = ownRoot and (root.Position - ownRoot.Position).Magnitude or 0
+                if d < distance then chosen, distance = player, d end
+            end
+        end
+        return chosen
+    end
+    local function onKnifeActivated()
+        if not (__R1.config.knifeInstantThrow or __R1.config.knifeFastThrow) then return end
+        local player = knifeTargetPlayer() or nearestTarget()
+        if player then throwAt(player) end
+    end
+    local boundTools = {}
+    local function bindKnifeTool(tool)
+        if not tool or not tool:IsA("\x54ool") or boundTools[tool] then return end
+        if tool.Name ~= "\x4bnife" and not tool:FindFirstChild("\x4bnifeThrown", true) then return end
+        boundTools[tool] = true
+        connect(tool.Activated, onKnifeActivated)
+    end
+    local function watchCharacter(character)
+        if not character then return end
+        local knife = findKnifeTool(character)
+        if knife then bindKnifeTool(knife) end
+        connect(character.ChildAdded, function(child)
+            if child:IsA("\x54ool") then bindKnifeTool(child) end
+        end)
+    end
+    if LocalPlayer.Character then watchCharacter(LocalPlayer.Character) end
+    connect(LocalPlayer.CharacterAdded, watchCharacter)
+    -- NOTE: the previous InputBegan hook fired on every raw touch (including the
+    -- mobile movement joystick), so Fast/Instant Throw threw the knife by itself.
+    -- Throws now happen only through tool.Activated (real attack presses).
+    pcall(function() RunService:UnbindFromRenderStep(runtime.poseBind) end)
+    RunService:BindToRenderStep(runtime.poseBind, Enum.RenderPriority.Last.Value, function()
+        if runtime.stopped or not __R1.config.knifeDualEffect or not (runtime.dualVisual and runtime.dualVisual.Parent) then return end
+        pcall(updateGhostDual)
+    end)
+    runtime.connections[#runtime.connections + 1] = RunService.Heartbeat:Connect(function()
+        if runtime.stopped then return end
+        pcall(refreshDualEffect)
+        if __R1.config.knifeAutoKillEveryone then pcall(killEveryone, true)
+        elseif __R1.config.knifeAutoKillSheriff then pcall(killSheriff, true) end
+    end)
+    function runtime:Stop()
+        if runtime.stopped then return end
+        runtime.stopped = true
+        pcall(function() RunService:UnbindFromRenderStep(runtime.poseBind) end)
+        for _, connection in ipairs(runtime.connections) do pcall(function() connection:Disconnect() end) end
+        destroyBind(); destroyDualVisual()
+    end
+    NoirGenv().__NoirKnifeUtilityRuntime = runtime
+    runtime:Refresh()
+end)
+function findGunRemote()
+    local gun=localGunTool()
+    if not gun then return nil end
+    local best,bestScore
+    for _,object in ipairs(gun:GetDescendants()) do
+        if object:IsA("\x52emoteEvent") then
+            local name=object.Name
+            local score=#name
+            if name=="\x53hoot" then score+=50 end
+            if name=="\x47unFired" or name=="\x4bnifeThrown" then score=-1 end
+            if score>=(bestScore or 0) then best,bestScore=object,score end
+        end
+    end
+    return best
+end
+function fireGunAt(player, usePrediction)
+    if __R1.shootBusy then return false end
+    __R1.shootBusy = true
+    local success = false
+    pcall(function()
+        local zombieModel = typeof(player) == "\x49nstance" and player:IsA("\x4dodel")
+            and player:FindFirstChildOfClass("\x48umanoid") ~= nil
+        if not validTarget(player) and not zombieModel then return end
+        local part = getAimPart(player)
+        local character = LocalPlayer.Character
+        local humanoid = character and character:FindFirstChildWhichIsA("\x48umanoid")
+        local backpack = LocalPlayer:FindFirstChildOfClass("\x42ackpack")
+        if not part or not character or not humanoid then return end
+        if __R1.config.wallCheck and not __R1.config.piercerBullet and not targetVisible(part) then return end
+        local autoEquipped = false
+        local gun = character:FindFirstChild("\x47un")
+        if not gun and backpack then
+            gun = backpack:FindFirstChild("\x47un")
+            if gun then humanoid:EquipTool(gun); autoEquipped = true; task.wait(0.10) end
+        end
+        if not gun or not gun:IsA("\x54ool") then
+            if autoEquipped and humanoid.Parent then humanoid:UnequipTools() end
+            return
+        end
+        local remote=findGunRemote()
+        local handle=gun:FindFirstChild("\x48andle",true)
+        if not remote or not handle or not handle:IsA("\x42asePart") then
+            if autoEquipped and humanoid.Parent then humanoid:UnequipTools() end
+            return
+        end
+        local aim = usePrediction == false and part.Position or calculateAim(part)
+        local origin=handle.Position
+        local shotOrigin=piercerShotOrigin(origin,aim,part,__R1.config.piercerBullet)
+        __R1.buttonShotActive = true
+        __R1.buttonShotTarget = player
+        success=pcall(function() remote:FireServer(CFrame.lookAt(shotOrigin,aim),CFrame.new(aim)) end)
+        task.wait(0.10)
+        if autoEquipped and humanoid.Parent then
+            task.wait(0.05)
+            humanoid:UnequipTools()
+        end
+    end)
+    __R1.buttonShotActive = false
+    __R1.buttonShotTarget = nil
+    __R1.shootBusy = false
+    return success
+end
+-- Tering Silent Aim — mode switch (fixed: also hooks GetTargetPosition for proper hub behavior)
+do
+        __R1.TeringHookInstalled = false
+        __R1.OldNamecall = nil
+        __R1.OldGetTarget = nil
+        __R1.OldGetMouse = nil
+  local function getMode()
+    local ok, m = pcall(function() return NoirGenv().__NoirSilentMode end)
+    if ok and (m=="Tering" or m=="Noir") then return m end
+    local ok2, v = pcall(function() return NoirPersistence and NoirPersistence.data.dropdowns and NoirPersistence.data.dropdowns["SILENT AIM::Silent Aim Mode"] end)
+    if ok2 and (v=="Tering" or v=="Noir") then return v end
+    return "Noir"
+  end
+  local function getTeringAim()
+    local target = nil
+    pcall(function() target = selectTarget and selectTarget() or nil end)
+    if not target then pcall(function() target = findByKnife and findByKnife() or nil end) end
+    if not target or not target.Parent then return nil end
+    local part = nil
+    pcall(function() part = getAimPart and getAimPart(target) or nil end)
+    if not part or not part.Parent then return nil end
+    -- NOIR v1.4 (Pulse FovTarget): подменяем выстрел только когда цель в FOV,
+    -- иначе игрок честно стреляет туда, куда смотрит.
+    if inFOV and not inFOV(target) then return nil end
+    local aim = part.Position
+    -- use Noir's calculateAim for ping-adaptive prediction, but Tering uses more direct (no extra offset)
+    pcall(function() if calculateAim then aim = calculateAim(part) end end)
+    return aim
+  end
+  local function installTeringHook()
+    if __R1.TeringHookInstalled then return true end
+    -- NOIR v1.4 (Pulse installPointHook): WeaponService-хук ставится НЕЗАВИСИМО от
+    -- hookmetamethod — в исполнителях без namecall-хуков работает V2 limited mode.
+    pcall(function()
+      local ok2, ws = pcall(function() return game:GetService("ReplicatedStorage"):FindFirstChild("ClientServices") and game:GetService("ReplicatedStorage").ClientServices:FindFirstChild("WeaponService") end)
+      -- fallback: try to find WeaponService via getgenv
+      local WeaponService
+      pcall(function() WeaponService = require(game:GetService("ReplicatedStorage").ClientServices.WeaponService) end)
+      if WeaponService and WeaponService.GetTargetPosition and WeaponService.GetMouseTargetCFrame then
+        __R1.OldGetTarget = WeaponService.GetTargetPosition
+        __R1.OldGetMouse = WeaponService.GetMouseTargetCFrame
+        local origTarget, origMouse = __R1.OldGetTarget, __R1.OldGetMouse
+        WeaponService.GetTargetPosition = function(self2, ...)
+          if getMode()=="Tering" and __R1.config and __R1.config.enabled then
+            local aim = getTeringAim()
+            if aim then return aim end -- FIX: Must return Vector3, not CFrame (was CFrame.new causing GunClient Line69 CoordinateFrame->bool error)
+          end
+          return origTarget(self2, ...)
+        end
+        WeaponService.GetMouseTargetCFrame = function(self2, ...)
+          if getMode()=="Tering" and __R1.config and __R1.config.enabled then
+            local aim = getTeringAim()
+            if aim then return CFrame.new(aim) end
+          end
+          return origMouse(self2, ...)
+        end
+        getgenv().__TeringWS = { origTarget=origTarget, origMouse=origMouse, ws=WeaponService }
+      end
+    end)
+    if type(hookmetamethod)~="function" or type(getnamecallmethod)~="function" or type(newcclosure)~="function" or type(checkcaller)~="function" then
+      -- NOIR v1.4 (Pulse): у эксплойтера нет namecall-хуков; V2/WeaponService режим уже поставлен
+      pcall(function() if notify then notify("Silent Aim Tering: no namecall hooks - WeaponService mode only", 5) end end)
+      return false
+    end
+    -- Hook FireServer for Shoot
+    local ok, hook = pcall(function()
+      return hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        if method=="FireServer" and self.Name=="Shoot" and self.Parent and self.Parent.Name=="Gun" and getMode()=="Tering" and __R1.config and __R1.config.enabled and not checkcaller() then
+          local aim = getTeringAim()
+          if aim then
+            local args = {...}
+            -- FIX hub-style: only redirect CFrame/Vector3 shoots, skip string-based (GunClient expects string for some assets)
+            local firstType = typeof(args[1])
+            if firstType=="CFrame" or firstType=="Vector3" then
+              if firstType=="CFrame" then
+                args[1] = CFrame.lookAt(args[1].Position, aim)
+              else
+                args[1] = aim
+              end
+              if #args>=2 then
+                if typeof(args[2])=="CFrame" then args[2]=CFrame.new(aim)
+                elseif typeof(args[2])=="Vector3" then args[2]=aim end
+              end
+              return __R1.OldNamecall(self, table.unpack(args))
+            end
+            -- if first arg is string (asset id) - do not intercept, let original pass (prevents "expects string but CFrame" error)
+          end
+        end
+        return __R1.OldNamecall(self, ...)
+      end))
+    end)
+    if not (ok and hook) then return false end
+    __R1.OldNamecall = hook
+    -- NOIR v1.4: WeaponService-хук теперь ставится в начале installTeringHook
+    -- (независимо от наличия hookmetamethod).
+    __R1.TeringHookInstalled=true
+    return true
+  end
+  NoirGenv().__TeringInstall = installTeringHook
+  getgenv().__TeringInstall = installTeringHook
+  task.spawn(function()
+    repeat task.wait(0.5) until __R1.config and __R1.config.enabled ~= nil
+    if getMode()=="Tering" then pcall(installTeringHook) end
+  end)
+  -- also ensure Noir's installHook is re-triggered when switching back to Noir
+  pcall(function()
+    local origDropdown = NoirGenv().__NoirSilentMode
+  end)
+end
+
+
+ 
+ 
+task.defer(function()
+    local prior = NoirGenv().__NoirGunTriggerRuntime
+    if type(prior) == "\x74able" and type(prior.Stop) == "\x66unction" then pcall(prior.Stop) end
+
+    local runtime = { stopped = false, connections = {}, dualVisual = nil, dualSource = nil, dualLimb = nil, dualLeftShoulder = nil, dualRightShoulder = nil,
+        dualOriginalC0 = nil, dualOriginalTransform = nil, ghostModel = nil, ghostParts = {}, hiddenParts = {}, dualTorso = nil,
+        poseBind = "\x4eoirGunDualArmPose", lastShot = 0, wasPointing = false, nextVisualCheck = 0 }
+    local function equippedGun()
+        local character = LocalPlayer.Character
+        return character and character:FindFirstChild("\x47un") or nil
+    end
+    local function shoulderFor(character, side)
+        local joint = character and (character:FindFirstChild(side .. "\x53houlder", true) or character:FindFirstChild(side .. "\x20Shoulder", true))
+        return joint and joint:IsA("\x4dotor6D") and joint or nil
+    end
+    local function armPartPairs(character)
+        local pairs = {}
+        if character and character:FindFirstChild("\x52ight Arm") then
+            pairs[#pairs + 1] = { character:FindFirstChild("\x52ight Arm"), character:FindFirstChild("\x4ceft Arm") }
+        else
+            for _, suffix in ipairs({ "\x55pperArm", "\x4cowerArm", "\x48and" }) do
+                local source, target = character and character:FindFirstChild("\x52ight" .. suffix), character and character:FindFirstChild("\x4ceft" .. suffix)
+                if source and target then pairs[#pairs + 1] = { source, target } end
+            end
+        end
+        return pairs
+    end
+    local function cleanVisualClone(part)
+        local clone = part:Clone()
+        for _, child in ipairs(clone:GetDescendants()) do
+            if child:IsA("\x53cript") or child:IsA("\x4cocalScript") or child:IsA("\x57eld") or child:IsA("\x57eldConstraint") or child:IsA("\x4dotor6D") then child:Destroy() end
+        end
+        clone.Anchored, clone.CanCollide, clone.CanTouch, clone.CanQuery, clone.Massless = true, false, false, false, true
+        clone.CastShadow = false
+        return clone
+    end
+    local function destroyDual()
+        if runtime.ghostModel and runtime.ghostModel.Parent then runtime.ghostModel:Destroy() end
+        for part, original in pairs(runtime.hiddenParts) do if part and part.Parent then pcall(function() part.LocalTransparencyModifier = original end) end end
+        table.clear(runtime.hiddenParts); table.clear(runtime.ghostParts)
+        runtime.ghostModel, runtime.dualVisual, runtime.dualSource, runtime.dualTorso = nil, nil, nil, nil
+        runtime.dualLimb, runtime.dualLeftShoulder, runtime.dualRightShoulder, runtime.dualOriginalC0, runtime.dualOriginalTransform = nil, nil, nil, nil, nil
+    end
+    local function refreshDual()
+         
+        __R1.config.gunDualEffect = false
+        destroyDual()
+    end
+    local function updateGhostDual()
+        local torso, weapon = runtime.dualTorso, runtime.dualVisual
+        if not torso or not torso.Parent or not weapon or not weapon.Parent then return end
+        local function mirrored(source)
+            local relative = torso.CFrame:ToObjectSpace(source.CFrame)
+            local p = relative.Position
+            local x, y, z = relative:ToOrientation()
+            return torso.CFrame * CFrame.new(-p.X, p.Y, p.Z) * CFrame.Angles(x, -y, -z)
+        end
+        for clone, source in pairs(runtime.ghostParts) do if clone and clone.Parent and source and source.Parent then clone.CFrame = mirrored(source) end end
+        if runtime.dualSource and runtime.dualSource.Parent then weapon.CFrame = mirrored(runtime.dualSource) end
+    end
+    local function murdererTarget()
+        local target = selectTarget("\x4durderer")
+        if not target then
+            local fallback = findByKnife()
+            if validTarget(fallback) then target = fallback end
+        end
+        return target
+    end
+    local function crosshairOn(player)
+        local camera, part = Workspace.CurrentCamera, getAimPart(player)
+        if not camera or not part then return false end
+        local center = camera.ViewportSize * .5
+        local ray = camera:ViewportPointToRay(center.X, center.Y)
+        local ownCharacter = LocalPlayer.Character
+        local params = RaycastParams.new()
+        params.FilterType = Enum.RaycastFilterType.Exclude
+        params.FilterDescendantsInstances = ownCharacter and { ownCharacter } or {}
+        params.IgnoreWater = true
+        local hit = Workspace:Raycast(ray.Origin, ray.Direction * 2000, params)
+        local aimCharacter = entityCharacter(player)
+        if hit and hit.Instance and aimCharacter and hit.Instance:IsDescendantOf(aimCharacter) then return true end
+         
+         
+        local projected, visible = camera:WorldToViewportPoint(part.Position)
+        if not visible or (Vector2.new(projected.X, projected.Y) - Vector2.new(center.X, center.Y)).Magnitude > 26 then return false end
+        return not __R1.config.gunTriggerBotWallCheck or targetVisible(part, true)
+    end
+    pcall(function() RunService:UnbindFromRenderStep(runtime.poseBind) end)
+    RunService:BindToRenderStep(runtime.poseBind, Enum.RenderPriority.Last.Value, function()
+        if runtime.stopped or not __R1.config.gunDualEffect or not (runtime.dualVisual and runtime.dualVisual.Parent) then return end
+        pcall(updateGhostDual)
+    end)
+    runtime.connections[#runtime.connections + 1] = RunService.RenderStepped:Connect(function()
+        if runtime.stopped then return end
+        local now = os.clock()
+        if now >= runtime.nextVisualCheck then runtime.nextVisualCheck = now + .25; refreshDual() end
+        if not __R1.config.gunTriggerBot then runtime.wasPointing = false; return end
+        local target = murdererTarget()
+        local pointing = target and crosshairOn(target) or false
+        if pointing and not runtime.wasPointing and now - runtime.lastShot >= .28 then
+            runtime.lastShot = now
+            fireGunAt(target, __R1.config.gunTriggerBotPrediction)
+        end
+        runtime.wasPointing = pointing
+    end)
+    function runtime:RefreshDual() refreshDual() end
+    function runtime:Stop()
+        if runtime.stopped then return end
+        runtime.stopped = true
+        pcall(function() RunService:UnbindFromRenderStep(runtime.poseBind) end)
+        for _, connection in ipairs(runtime.connections) do pcall(function() connection:Disconnect() end) end
+        destroyDual()
+    end
+    NoirGenv().__NoirGunTriggerRuntime = runtime
+    refreshDual()
+end)
+
+function shootTarget()
+    local player = selectTarget()
+     
+    if not player then player = findByKnife(); refreshTarget(true) end
+    if player then return fireGunAt(player) end
+    return false
+end
+task.spawn(function()
+    while __R1.running do
+        local active = __R1.config.autoFire and __R1.config.enabled and (__R1.config.autoFireKey == "\x4eone" or __R1.autoFireHeld)
+        if active then
+            local player = selectTarget()
+            if player and inFOV(player) then
+                local part = getAimPart(player)
+                if part and (__R1.config.piercerBullet or not __R1.config.wallCheck or targetVisible(part)) then fireGunAt(player) end
+            end
+            task.wait(0.03)
+        else
+            task.wait(0.18)
+        end
+    end
+end)
+
+function removeShootButton()
+    if __R1.shootGui then __R1.shootGui:Destroy(); __R1.shootGui = nil; __R1.shootButton = nil end
+end
+function createShootButton()
+    if __R1.shootButton then return end
+    local parent = guiParent
+    if typeof(parent) ~= "\x49nstance" then parent = LocalPlayer:WaitForChild("\x50layerGui") end
+    __R1.shootGui = Instance.new("\x53creenGui")
+    __R1.shootGui.Name = "\x4dM2ShootMurdererButton"; __R1.shootGui.ResetOnSpawn = false; __R1.shootGui.IgnoreGuiInset = true
+    __R1.shootGui.DisplayOrder = 80; __R1.shootGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling; __R1.shootGui.Parent = parent
+    local button = Instance.new("\x49mageButton")
+    button.Name = "\x53hootMurderer"
+    button.AnchorPoint = Vector2.new(0.5, 0.5)
+    button.Position = NoirPersistence.GetPosition("\x73hoot_v2", UDim2.new(1, -132, 1, -124))
+    button.Size = UDim2.new(0, 194, 0, 66)
+    button.BackgroundColor3 = Color3.fromRGB(6, 18, 25)
+    button.BackgroundTransparency = 0.12
+    button.BorderSizePixel = 0
+    button.ClipsDescendants = false
+    button.AutoButtonColor = false
+    button.ZIndex = 5
+    button.Parent = __R1.shootGui
+    __R1.shootButton = button
+    -- CYBER HUD v6: ImageButton не рендерит Text — текст живёт в дочернем
+    -- TextLabel поверх 9-slice корпуса (иначе присвоение button.Text падает)
+    local bodyText = Instance.new("\x54extLabel")
+    bodyText.Name = "\x42odyText"
+    bodyText.BackgroundTransparency = 1
+    bodyText.AnchorPoint = Vector2.new(.5, .5)
+    bodyText.Position = UDim2.fromScale(.5, .5)
+    bodyText.Size = UDim2.fromScale(.92, .78)
+    bodyText.Font = Enum.Font.Gotham
+    bodyText.Text = "\x53hoot Murder"
+    bodyText.TextColor3 = Color3.fromRGB(220, 248, 246)
+    bodyText.TextSize = 17
+    bodyText.TextWrapped = true
+    bodyText.ZIndex = 6
+    bodyText.Parent = button
+    -- NovaUI crystal design: единый премиум-конструктор (Cyber HUD: неон + 9-slice)
+    local novaFx = noirNovaButton(button, { radius = 16, brackets = true, bracketLen = 8 })
+    local traceA = Instance.new("\x46rame"); traceA.AnchorPoint = Vector2.new(.5, .5); traceA.Position = UDim2.fromScale(0, .08)
+    traceA.Size = UDim2.fromOffset(8, 8); traceA.BackgroundColor3 = Color3.new(1, 1, 1); traceA.BorderSizePixel = 0; traceA.ZIndex = 10; traceA.Parent = button
+    local traceB = traceA:Clone(); traceB.Position = UDim2.fromScale(1, .92); traceB.Parent = button
+    Instance.new("\x55ICorner", traceA).CornerRadius = UDim.new(1, 0)
+    Instance.new("\x55ICorner", traceB).CornerRadius = UDim.new(1, 0)
+    traceA.Visible = false; traceB.Visible = false
+    local sound = novaFx.sound -- звук клика теперь в общем конструкторе
+    local normalSize = UDim2.new(0, 194, 0, 66)
+    local pressedSize = UDim2.new(0, 206, 0, 72)
+    local pressTween = TweenInfo.new(0.30, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local dragging, moved, dragStart, startPosition, dragInput = false, false, nil, nil, nil
+    button.InputBegan:Connect(function(input)
+        if isPrimaryPress(input) then
+            dragging = not __R1.config.lockShootButton; moved = false; dragStart = input.Position; startPosition = button.Position
+            TweenService:Create(button, pressTween, { Size = pressedSize }):Play()
+            TweenService:Create(bodyText, pressTween, { TextSize = 18 }):Play()
+            bodyText.Text = "\x54 A R G E T   L O C K"
+            traceA.Visible = true; traceB.Visible = true
+            traceA.Position = UDim2.fromScale(0, .08); traceB.Position = UDim2.fromScale(1, .92)
+            TweenService:Create(traceA, TweenInfo.new(.68, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.fromScale(1, .08) }):Play()
+            TweenService:Create(traceB, TweenInfo.new(.68, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.fromScale(0, .92) }):Play()
+            sound:Play()
+        end
+    end)
+    button.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and input == dragInput and not __R1.config.lockShootButton then
+            local delta = input.Position - dragStart
+            if delta.Magnitude > 8 then moved = true end
+            button.Position = UDim2.new(startPosition.X.Scale, startPosition.X.Offset + delta.X,
+                startPosition.Y.Scale, startPosition.Y.Offset + delta.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(input)
+        if isPrimaryPress(input) then
+            dragging = false
+            NoirPersistence.SetPosition("\x73hoot_v2", button.Position)
+            TweenService:Create(button, TweenInfo.new(.62, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = normalSize }):Play()
+            TweenService:Create(bodyText, TweenInfo.new(.62, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { TextSize = 17 }):Play()
+            bodyText.Text = "\x53hoot Murder"
+            traceA.Visible = false; traceB.Visible = false
+        end
+    end)
+    button.Activated:Connect(function() if not moved then task.spawn(shootTarget) end end)
+end
+function setShootButtonVisible(value)
+    __R1.config.showShootButton = value == true
+    if __R1.config.showShootButton then createShootButton() else removeShootButton() end
+end
+
+      __R1.fovCircle = New("\x46rame", { Parent = gui, AnchorPoint = Vector2.new(.5, .5), Position = UDim2.fromScale(.5, .5),
+    BackgroundTransparency = 1, Size = UDim2.fromOffset(200, 200), Visible = false, ZIndex = 2 })
+New("\x55ICorner", { Parent = __R1.fovCircle, CornerRadius = UDim.new(.5, 0) })
+      __R1.fovStroke = New("\x55IStroke", { Parent = __R1.fovCircle, Color = Color3.fromRGB(38, 240, 228), Thickness = 1.5, Transparency = .35 })
+function updateFovCircle()
+    __R1.fovCircle.Visible = false
+end
+
+                   
+local function formatRoundTime(seconds)
+    seconds = math.max(0, math.floor(tonumber(seconds) or 0))
+    return string.format("%d:%02d", math.floor(seconds / 60), seconds % 60)
+end
+local function roundLengthFromEvent(value)
+    local direct = tonumber(value)
+    if direct and direct > 0 then return math.clamp(math.floor(direct + 0.5), 1, 600) end
+    if typeof(value) == "\x74able" then
+        for _, key in ipairs({ "\x54ime", "\x74ime", "\x54imer", "\x74imer", "\x54imeLeft", "\x74imeLeft", "\x52emaining", "\x72emaining", "\x53econds", "\x73econds", "\x56alue", "\x76alue" }) do
+            local nested = tonumber(value[key])
+            if nested and nested > 0 then return math.clamp(math.floor(nested + 0.5), 1, 600) end
+        end
+    end
+    return 180
+end
+function findSheriff()
+    if validTarget(__R1.sheriff) then return __R1.sheriff end
+    return findByGun()
+end
+
+function showMurdererChance()
+    local chance = ReplicatedStorage:FindFirstChild("\x47etChance", true)
+    if chance and chance:IsA("\x52emoteFunction") then
+        local ok, value = pcall(function() return chance:InvokeServer() end)
+        notify(ok and ("\x4durderer chance: " .. tostring(value) .. "\x25") or "\x43hance unavailable", 4)
+    else
+        notify("\x47etChance remote not found", 4)
+    end
+end
+
+    -- ═══════ engine background loops, keys, role remotes, FOV circle ═══════
+    do
+        local saRunning, saConnections = true, {}
+        local function bind(signal, callback)
+            local connection = signal:Connect(callback)
+            saConnections[#saConnections + 1] = connection
+            return connection
+        end
+        task.spawn(function() -- ping measurement + auto tune (Part2 loop)
+            while saRunning do
+                pcall(updatePing)
+                pcall(autoTuneForPing)
+                task.wait(0.5)
+            end
+        end)
+        task.spawn(function() -- role scanner (Part2 loop)
+            while saRunning do
+                pcall(function() refreshTarget() end)
+                task.wait(__R1.instantRoleDetection and 0.5 or 2)
+            end
+        end)
+        task.spawn(function() -- motion sampler 30 Hz (Part2 loop)
+            while saRunning do
+                if __R1.config.enabled or __R1.config.knifeEnabled then
+                    local part = targetPart()
+                    local settings = __R1.config.enabled and __R1.config or __R1.config.knifeAim
+                    if part then pcall(sampleMotion, part, settings) end
+                end
+                task.wait(1 / 30)
+            end
+        end)
+        bind(UIS.InputBegan, function(input, gameProcessed)
+            if gameProcessed or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+            local key = input.KeyCode.Name
+            if __R1.config.aimKey ~= "None" and key == __R1.config.aimKey then __R1.aimHeld = true end
+            if __R1.config.autoFireKey ~= "None" and key == __R1.config.autoFireKey then __R1.autoFireHeld = true end
+            if __R1.config.toggleKey ~= "None" and key == __R1.config.toggleKey then toggle(not __R1.config.enabled) end
+        end)
+        bind(UIS.InputEnded, function(input)
+            if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+            local key = input.KeyCode.Name
+            if key == __R1.config.aimKey then __R1.aimHeld = false end
+            if key == __R1.config.autoFireKey then __R1.autoFireHeld = false end
+        end)
         local function clearRoles()
-            SA.murderer, SA.sheriff, SA.hero = nil, nil, nil
-            table.clear(SA.roleCache)
-            table.clear(SA.announcedRoles)
+            __R1.murderer, __R1.sheriff, __R1.hero = nil, nil, nil
+            table.clear(__R1.roleCache)
+            table.clear(__R1.announcedRoles)
         end
         local function connectRemote(name, handler)
             local wanted = string.lower(tostring(name))
             for _, remote in ipairs(ReplicatedStorage:GetDescendants()) do
-                if string.lower(remote.Name) == wanted then
-                    if remote:IsA("RemoteEvent") then
-                        remoteConnections[#remoteConnections + 1] = remote.OnClientEvent:Connect(function(...)
-                            pcall(handler, ...)
-                        end)
-                    end
+                if string.lower(remote.Name) == wanted and remote:IsA("RemoteEvent") then
+                    bind(remote.OnClientEvent, function(...) pcall(handler, ...) end)
                 end
             end
         end
         connectRemote("PlayerDataChanged", function(first, second)
             if typeof(second) == "table" and typeof(first) == "Instance" and first:IsA("Player") then
-                SA.consumeData({ [first.Name] = second }, false)
+                consumeData({ [first.Name] = second }, false)
             else
-                SA.consumeData(first, false)
+                consumeData(first, false)
             end
         end)
         connectRemote("RoundStart", function(timerValue, roundData)
             clearRoles()
-            if typeof(roundData) == "table" then SA.consumeData(roundData, true) end
-            SA.refreshTarget(true)
+            if typeof(roundData) == "table" then consumeData(roundData, true) end
+            refreshTarget(true)
         end)
         connectRemote("RoundEndFade", clearRoles)
         connectRemote("RoundEnd", clearRoles)
         connectRemote("GameOver", clearRoles)
         connectRemote("VictoryScreen", clearRoles)
-        connectRemote("RoleSelect", function() task.spawn(SA.refreshTarget) end)
-        connectRemote("ShowRoleSelect", function() task.spawn(SA.refreshTarget) end)
-        connectRemote("ShowRoleSelectNew", function() task.spawn(SA.refreshTarget) end)
-        connectRemote("ChangeTarget", function() task.spawn(SA.refreshTarget) end)
-        connectRemote("GiveWeapon", function() task.spawn(SA.refreshTarget) end)
-        connectRemote("KillEvent", function() task.spawn(SA.refreshTarget) end)
-        for _, connection in ipairs(remoteConnections) do table.insert(SA.connections, connection) end
-
-        -- ── background loops ───────────────────────────────────────────────
-        task.spawn(function() -- ping measurement + auto tune, 0.5 s
-            while SA.running do
-                SA.updatePing()
-                SA.autoTuneForPing()
-                task.wait(0.5)
+        connectRemote("RoleSelect", function() task.spawn(refreshTarget) end)
+        connectRemote("ShowRoleSelect", function() task.spawn(refreshTarget) end)
+        connectRemote("ShowRoleSelectNew", function() task.spawn(refreshTarget) end)
+        connectRemote("ChangeTarget", function() task.spawn(refreshTarget) end)
+        connectRemote("GiveWeapon", function() task.spawn(refreshTarget) end)
+        connectRemote("KillEvent", function() task.spawn(refreshTarget) end)
+        local fovCircle
+        bind(RunService.RenderStepped, function()
+            if not __R1.config.showFov or (__R1.config.fovSize or 0) <= 0 or type(Drawing) ~= "table" then
+                if fovCircle then fovCircle.Visible = false end
+                return
             end
+            local camera = Workspace.CurrentCamera
+            if not camera then return end
+            fovCircle = fovCircle or Drawing.new("Circle")
+            fovCircle.Visible = true
+            fovCircle.Radius = __R1.config.fovSize / 2
+            fovCircle.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+            fovCircle.Thickness = 1.5
+            fovCircle.NumSides = 64
+            fovCircle.Color = Color3.fromRGB(235, 240, 250)
+            fovCircle.Filled = false
         end)
-        task.spawn(function() -- role scanner, 2 s
-            while SA.running do
-                SA.refreshTarget()
-                task.wait(2)
-            end
-        end)
-        task.spawn(function() -- motion sampler, 30 Hz while any silent aim is on
-            while SA.running do
-                if SA.config.enabled or SA.config.knifeEnabled then
-                    local part = SA.targetPart()
-                    local settings = SA.config.enabled and SA.config or SA.config.knifeAim
-                    if part then SA.sampleMotion(part, settings) end
-                end
-                task.wait(1 / 30)
-            end
-        end)
-
-        -- ── unload: loops stop, both features off; hook stays but is inert ──
-        function SA.Stop()
-            if not SA.running then return end
-            SA.running = false
-            SA.config.enabled = false
-            SA.config.knifeEnabled = false
-            for _, connection in ipairs(SA.connections) do
-                pcall(function() connection:Disconnect() end)
-            end
-            table.clear(SA.connections)
-            pcall(function() Notify("Silent Aim", "Движок выгружен") end)
+        genv.__NoirMenuSAUnload = function()
+            saRunning = false
+            __R1.config.enabled = false
+            __R1.config.knifeEnabled = false
+            pcall(removeShootButton)
+            if fovCircle then pcall(function() fovCircle:Remove() end) fovCircle = nil end
+            for _, connection in ipairs(saConnections) do pcall(function() connection:Disconnect() end) end
+            table.clear(saConnections)
+            local knifeRuntime = NoirGenv().__NoirKnifeUtilityRuntime
+            if knifeRuntime and knifeRuntime.Stop then pcall(knifeRuntime.Stop, knifeRuntime) end
+            local gunRuntime = NoirGenv().__NoirGunTriggerRuntime
+            if gunRuntime and gunRuntime.Stop then pcall(gunRuntime.Stop, gunRuntime) end
         end
-        genv.__NoirMenuSA = SA
     end
-    -- ═══════════════════ /NOIR SILENT AIM ENGINE ═════════════════════════
+    -- ═══════════════════════ /NOIR SILENT AIM ENGINE ══════════════════════
 
 
     -- ═════════════════════════════════════════════════════════════════════
-    --  ВКЛАДКА 1: MAIN — демо-элементы (замени на свои функции)
+    --  ВКЛАДКА: SILENT AIM — full port from Noir_Part1/Part2 combat sections
+    --  Control list mirrors the original hub 1:1 (labels identical), driven
+    --  by the transplanted __R1 engine below.
     -- ═════════════════════════════════════════════════════════════════════
     do
-        local tab = window:CreateTab({ Name = "Main", Icon = "star", Desc = "Демо-элементы" })
+        local cfg = __R1.config
+        local tab = window:CreateTab({ Name = "Silent Aim", Icon = "crosshair", Desc = "Server FireServer redirect" })
 
-        local left = tab:AddLeftGroupbox({ Name = "Настройки", Icon = "cog" })
-        left:CreateToggle({
-            Name     = "Включить функцию",
-            Desc     = "Главный тумблер",
-            Default  = false,
-            Flag     = "DemoToggle",       -- Flag → значение сохраняется в конфиги
+        local function addPrediction(section, profile)
+            section:CreateToggle({ Name = "Adaptive Engine", Default = profile.adaptive == true,
+                Callback = function(v) profile.adaptive = v == true end })
+            section:CreateToggle({ Name = "Prioritize Your Ping", Default = profile.prioritizePing == true,
+                Callback = function(v) profile.prioritizePing = v == true end })
+            section:CreateToggle({ Name = "Predict Jump", Default = profile.predictJump == true,
+                Callback = function(v) profile.predictJump = v == true end })
+            section:CreateToggle({ Name = "Predict Lag", Default = profile.predictLag == true,
+                Callback = function(v) profile.predictLag = v == true end })
+            section:CreateSlider({ Name = "Fixed Lead", Min = 0, Max = 0.5, Default = profile.fixedLead or 0.075,
+                Increment = 0.005, Suffix = "s", Callback = function(v) profile.fixedLead = v end })
+            section:CreateSlider({ Name = "Extra Lead", Min = 0, Max = 0.2, Default = profile.extraLead or 0.02,
+                Increment = 0.005, Suffix = "s", Callback = function(v) profile.extraLead = v end })
+            section:CreateSlider({ Name = "Prediction Max Simulation", Min = 20, Max = 300, Default = profile.maxSimulationMs or 180,
+                Suffix = "ms", Callback = function(v) profile.maxSimulationMs = v end })
+            section:CreateSlider({ Name = "Prediction Interval", Min = 1, Max = 100, Default = profile.predictionIntervalMs or 72,
+                Suffix = "ms", Callback = function(v) profile.predictionIntervalMs = v end })
+            section:CreateSlider({ Name = "Prediction Ping", Min = 10, Max = 1000, Default = profile.manualPingMs or 80,
+                Suffix = "ms", Callback = function(v) profile.manualPingMs = v end })
+            section:CreateSlider({ Name = "X Position Offset", Min = -100, Max = 100, Default = profile.offsetX or 0,
+                Suffix = "%", Callback = function(v) profile.offsetX = v end })
+            section:CreateSlider({ Name = "Y Position Offset", Min = -100, Max = 100, Default = profile.offsetY or 0,
+                Suffix = "%", Callback = function(v) profile.offsetY = v end })
+            section:CreateSlider({ Name = "Z Position Offset", Min = -100, Max = 100, Default = profile.offsetZ or 0,
+                Suffix = "%", Callback = function(v) profile.offsetZ = v end })
+            section:CreateSlider({ Name = "Horizontal Multiplier", Min = 0, Max = 400, Default = profile.horizontalMultiplier or 100,
+                Suffix = "%", Callback = function(v) profile.horizontalMultiplier = v end })
+            section:CreateSlider({ Name = "Vertical Multiplier", Min = 0, Max = 400, Default = profile.verticalMultiplier or 100,
+                Suffix = "%", Callback = function(v) profile.verticalMultiplier = v end })
+            section:CreateSlider({ Name = "Lead Scale", Min = 25, Max = 250, Default = profile.leadScale or 100,
+                Suffix = "%", Callback = function(v) profile.leadScale = v end })
+        end
+
+        -- ── SILENT AIM (left) ──────────────────────────────────────────────
+        local combatAim = tab:AddLeftGroupbox({ Name = "SILENT AIM", Icon = "zap" })
+        combatAim:CreateToggle({
+            Name = "Enabled", Desc = "Server FireServer redirect", Default = false, Flag = "SA_Enabled",
             Callback = function(v)
-                Notify("Noir", "Функция: " .. (v and "ВКЛ" or "ВЫКЛ"), v and "Success" or nil)
+                toggle(v == true)
+                if v == true and not cfg.enabled then
+                    Notify("Silent Aim", "Хук не поддерживается исполнителем", "Error")
+                end
             end,
         })
-        left:CreateSlider({
-            Name     = "Скорость",
-            Min      = 0, Max = 100, Default = 50,
-            Suffix   = "%",
-            Flag     = "DemoSpeed",
-            Callback = function(v) print("[Noir] Скорость:", v) end,
+        combatAim:CreateToggle({ Name = "Wall Check", Default = false, Flag = "SA_WallCheck",
+            Callback = function(v) cfg.wallCheck = v == true end })
+        combatAim:CreateToggle({ Name = "Show Shoot Murder Button", Default = false, Flag = "SA_ShootBtn",
+            Callback = function(v) cfg.showShootButton = v == true; if v then createShootButton() else removeShootButton() end end })
+        combatAim:CreateToggle({ Name = "Lock Shoot Murder Button", Default = false, Flag = "SA_LockBtn",
+            Callback = function(v) cfg.lockShootButton = v == true end })
+        combatAim:CreateLabel("Infection mode: silent aim targets zombies automatically.")
+        combatAim:CreateDropdown({
+            Name = "Silent Aim Mode", Options = { "Noir", "Tering" }, Default = "Noir", Flag = "SA_Mode",
+            Callback = function(v)
+                NoirGenv().__NoirSilentMode = (v == "Tering" and "Tering" or "Noir")
+                if v == "Tering" then pcall(function() if NoirGenv().__TeringInstall then NoirGenv().__TeringInstall() end end) end
+            end,
         })
-        left:CreateDropdown({
-            Name     = "Режим",
-            Options  = { "Лёгкий", "Нормальный", "Хардкор" },
-            Default  = "Нормальный",
-            Flag     = "DemoMode",
-            Callback = function(v) Notify("Noir", "Режим: " .. tostring(v)) end,
+        combatAim:CreateDropdown({
+            Name = "Target Mode", Options = { "Murderer", "Sheriff", "Hero", "Nearest", "Crosshair", "Lowest Health", "Random" },
+            Default = "Murderer", Flag = "SA_TargetMode",
+            Callback = function(v) cfg.targetMode = tostring(v) end,
         })
-        left:CreateButton({
-            Name = "Проверить меню", Style = "Primary", Icon = "check",
+        combatAim:CreateDropdown({
+            Name = "Hit Part", Options = { "HumanoidRootPart", "Head", "Torso", "UpperTorso", "LowerTorso", "Random" },
+            Default = "HumanoidRootPart", Flag = "SA_HitPart",
+            Callback = function(v) cfg.hitPart = tostring(v) end,
+        })
+        combatAim:CreateSlider({ Name = "FOV Size", Min = 0, Max = 500, Default = 0, Suffix = "px", Flag = "SA_Fov",
+            Callback = function(v) cfg.fovSize = v end })
+        combatAim:CreateToggle({ Name = "Show FOV", Default = false, Flag = "SA_ShowFov",
+            Callback = function(v) cfg.showFov = v == true end })
+        combatAim:CreateKeybind({ Name = "Aim Key (hold)", Default = "None", Flag = "SA_AimKey",
+            Callback = function(key) cfg.aimKey = tostring(key or "None") end })
+        combatAim:CreateKeybind({ Name = "Toggle Key", Default = "None", Flag = "SA_ToggleKey",
+            Callback = function(key) cfg.toggleKey = tostring(key or "None") end })
+        combatAim:CreateToggle({ Name = "Auto Fire", Default = false, Flag = "SA_AutoFire",
+            Callback = function(v) cfg.autoFire = v == true end })
+        combatAim:CreateKeybind({ Name = "Auto Fire Key (hold)", Default = "None", Flag = "SA_AutoFireKey",
+            Callback = function(key) cfg.autoFireKey = tostring(key or "None") end })
+        combatAim:CreateDropdown({
+            Name = "Shot Method", Options = { "Remote", "CFrame" }, Default = "Remote", Flag = "SA_ShotMethod",
+            Callback = function(v) cfg.shotMethod = tostring(v) end,
+        })
+        combatAim:CreateToggle({ Name = "Ignore Dead", Default = true, Flag = "SA_IgnoreDead",
+            Callback = function(v) cfg.ignoreDead = v == true end })
+        combatAim:CreateToggle({ Name = "Ignore Friends", Default = false, Flag = "SA_IgnoreFriends",
+            Callback = function(v) cfg.ignoreFriends = v == true end })
+        combatAim:CreateSlider({ Name = "Max Distance", Min = 0, Max = 2000, Default = 0, Suffix = " st", Flag = "SA_MaxDist",
+            Callback = function(v) cfg.maxDistance = v end })
+
+        -- ── GUN (left, extra engine-backed controls) ───────────────────────
+        local combatGun = tab:AddLeftGroupbox({ Name = "GUN", Icon = "target" })
+        combatGun:CreateToggle({ Name = "Piercer Bullet", Default = false, Flag = "SA_Piercer",
+            Callback = function(v)
+                setPiercerBullet(v == true)
+                if v == true and not cfg.piercerBullet then
+                    Notify("Silent Aim", "Piercer Bullet требует поддержку хуков", "Warning")
+                end
+            end })
+        combatGun:CreateLabel("If a wall is between you and the target, the shot starts on their side of the wall. Turn this on with Silent Aim.")
+        combatGun:CreateToggle({ Name = "Gun Dual Effect", Default = false, Flag = "SA_GunDual",
+            Callback = function(v)
+                cfg.gunDualEffect = v == true
+                local runtime = NoirGenv().__NoirGunTriggerRuntime
+                if runtime and runtime.RefreshDual then pcall(runtime.RefreshDual, runtime) end
+            end })
+        combatGun:CreateToggle({ Name = "Gun Trigger Bot", Default = false, Flag = "SA_Trigger",
+            Callback = function(v) cfg.gunTriggerBot = v == true end })
+        combatGun:CreateToggle({ Name = "Gun Trigger Bot Wall Check", Default = true, Flag = "SA_TriggerWall",
+            Callback = function(v) cfg.gunTriggerBotWallCheck = v == true end })
+        combatGun:CreateToggle({ Name = "Apply Prediction On Gun Trigger Bot", Default = true, Flag = "SA_TriggerPred",
+            Callback = function(v) cfg.gunTriggerBotPrediction = v == true end })
+        combatGun:CreateToggle({ Name = "Instant Role Detection", Default = false, Flag = "SA_InstantRoles",
+            Callback = function(v) __R1.instantRoleDetection = v == true; if v then task.spawn(refreshTarget) end end })
+        combatGun:CreateToggle({ Name = "Auto Notify Roles", Default = false, Flag = "SA_NotifyRoles",
+            Callback = function(v) __R1.autoNotifyRoles = v == true; if not v then table.clear(__R1.announcedRoles) else task.spawn(refreshTarget) end end })
+        combatGun:CreateButton({ Name = "Show Murderer Chance", Icon = "dice-5",
+            Callback = function() pcall(showMurdererChance) end })
+        combatGun:CreateButton({ Name = "Refresh Roles", Icon = "refresh-cw",
+            Callback = function() pcall(function() refreshTarget(true) end) end })
+
+        -- ── KNIFE SILENT AIM (right) ───────────────────────────────────────
+        local combatKnife = tab:AddRightGroupbox({ Name = "KNIFE SILENT AIM", Icon = "sword" })
+        combatKnife:CreateToggle({
+            Name = "Knife Silent Aim", Desc = "Nearest player or Sheriff-only targeting", Default = false, Flag = "SA_Knife",
+            Callback = function(v)
+                cfg.knifeEnabled = v == true
+                if v == true and not installHook() then
+                    cfg.knifeEnabled = false
+                    Notify("Silent Aim", "Хук не поддерживается исполнителем", "Error")
+                end
+                Notify("Silent Aim", v and "Knife Silent Aim: ON" or "Knife Silent Aim: OFF")
+            end })
+        combatKnife:CreateToggle({ Name = "KnifeThrown Aura", Default = true, Flag = "SA_KnifeAura",
+            Callback = function(v) cfg.knifeThrownAura = v == true end })
+        combatKnife:CreateSlider({ Name = "Knife Throw Aura", Min = 1, Max = 40, Default = cfg.knifeRadius or 15,
+            Suffix = " st", Flag = "SA_KnifeRadius", Callback = function(v) cfg.knifeRadius = v end })
+        combatKnife:CreateToggle({ Name = "Knife Wall Check", Default = false, Flag = "SA_KnifeWall",
+            Callback = function(v) cfg.knifeWallCheck = v == true end })
+        combatKnife:CreateToggle({ Name = "Prioritize Sheriff", Default = false, Flag = "SA_KnifeSheriff",
+            Callback = function(v) cfg.knifePrioritizeSheriff = v == true end })
+        combatKnife:CreateLabel("NATIVE KNIFE UTILITIES • equipped Knife only")
+        combatKnife:CreateToggle({ Name = "Use Knife Dual Effect", Default = false, Flag = "SA_KnifeDual",
+            Callback = function(v) cfg.knifeDualEffect = v == true end })
+        combatKnife:CreateToggle({ Name = "Instant Throw", Default = false, Flag = "SA_KnifeInstant",
+            Callback = function(v) cfg.knifeInstantThrow = v == true end })
+        combatKnife:CreateToggle({ Name = "Fast Throw", Default = false, Flag = "SA_KnifeFast",
+            Callback = function(v) cfg.knifeFastThrow = v == true end })
+        combatKnife:CreateToggle({ Name = "Auto Kill Everyone", Default = false, Flag = "SA_KillAll",
+            Callback = function(v) cfg.knifeAutoKillEveryone = v == true end })
+        combatKnife:CreateToggle({ Name = "Auto Kill Sheriff", Default = false, Flag = "SA_KillSheriff",
+            Callback = function(v) cfg.knifeAutoKillSheriff = v == true end })
+        combatKnife:CreateButton({ Name = "Kill Everyone", Icon = "skull",
             Callback = function()
-                Notify("Noir", "Меню полностью работает!", "Success")
-            end,
-        })
+                local runtime = NoirGenv().__NoirKnifeUtilityRuntime
+                if runtime and runtime.KillEveryone then pcall(runtime.KillEveryone, runtime) end
+            end })
+        combatKnife:CreateButton({ Name = "Kill Sheriff", Icon = "shield-off",
+            Callback = function()
+                local runtime = NoirGenv().__NoirKnifeUtilityRuntime
+                if runtime and runtime.KillSheriff then pcall(runtime.KillSheriff, runtime) end
+            end })
+        combatKnife:CreateToggle({ Name = "Enable Kill Sheriff Bindable Button", Default = false, Flag = "SA_SheriffBind",
+            Callback = function(v)
+                cfg.knifeSheriffBind = v == true
+                local runtime = NoirGenv().__NoirKnifeUtilityRuntime
+                if runtime and runtime.Refresh then pcall(runtime.Refresh, runtime) end
+            end })
+        combatKnife:CreateInput({ Name = "Kill Player (name)", Default = "", Placeholder = "ник игрока...", Flag = "SA_KillPlayer",
+            Callback = function(text) cfg.knifeKillPlayer = tostring(text or "N/A") end })
+        combatKnife:CreateButton({ Name = "Kill Player", Icon = "cross",
+            Callback = function()
+                local runtime = NoirGenv().__NoirKnifeUtilityRuntime
+                if runtime and runtime.KillSelected then pcall(runtime.KillSelected, runtime) end
+            end })
 
-        local right = tab:AddRightGroupbox({ Name = "Информация", Icon = "info" })
-        right:CreateLabel("Это демо-вкладка автозапуска.")
-        right:CreateParagraph({
-            Title   = "Как пользоваться",
-            Content = "Плавающая кнопка на экране открывает/закрывает меню. "
-                    .. "На ПК — клавиша RightControl. "
-                    .. "Свои функции добавляй по образцу из этого блока "
-                    .. "(внизу файла).",
+        -- ── PISTOL / KNIFE PREDICTION profiles ─────────────────────────────
+        local pistolPrediction = tab:AddLeftGroupbox({ Name = "PISTOL PREDICTION", Icon = "gauge" })
+        pistolPrediction:CreateLabel("Independent server-shot prediction")
+        addPrediction(pistolPrediction, cfg)
+        local knifePrediction = tab:AddRightGroupbox({ Name = "KNIFE PREDICTION", Icon = "gauge" })
+        knifePrediction:CreateLabel("Independent KnifeThrown prediction")
+        addPrediction(knifePrediction, cfg.knifeAim)
+
+        combatAim:CreateDivider("BULLET TRACER")
+        combatAim:CreateParagraph({
+            Title = "Bullet Tracer",
+            Content = "Трейсер пули. Classic = прямая, Path Finder = обход стен через Pathfinding. "
+                .. "Стили задают текстуры/ширину/прозрачность как в стилях. Работает для Silent Aim (через fireGunAt) "
+                .. "и для любых выстрелов других игроков если включишь Show Other Shots.",
         })
-        right:CreateDivider("конец")
+        __NoirSAFacadeHost = combatAim -- tracer satellite (below) builds its controls here
     end
+    -- ═══════════════════════════ /SILENT AIM TAB ═════════════════════════
 
-    -- ═════════════════════════════════════════════════════════════════════
-    --  ВКЛАДКА 1.5: SILENT AIM — gun + knife silent aim (порт из Noir_Part1/2)
-    -- ═════════════════════════════════════════════════════════════════════
+
+    -- ═══════ BULLET TRACER satellite — verbatim from Noir_Part2 ═══════
     do
-        local SA = genv.__NoirMenuSA
-        local tab = window:CreateTab({ Name = "Silent Aim", Icon = "crosshair", Desc = "Gun + Knife silent aim" })
+        local combatAim = NoirSectionFacade(__NoirSAFacadeHost)
+        do
+            -- состояние как в Tracer
+            local G = {
+                on = false,
+                method = "Classic",
+                style = "Energy",
+                col = Color3.fromRGB(110, 190, 255),
+                col2 = Color3.fromRGB(255, 90, 210),
+                rainbow = false,
+                width = 100,
+                speed = 520,
+                life = 1.2,
+                impact = true,
+                muzzle = true,
+                others = false,
+                live = {},
+                pool = {},
+                made = {},
+                log = {},
+            }
+            -- expose
+            pcall(function()
+                NoirGenv().__NoirTracers = G
+                getgenv().__NoirTracers = G
+                NoirGenv().__NoirTracer = G
+            end)
 
-        local gun = tab:AddLeftGroupbox({ Name = "SILENT AIM", Icon = "zap" })
-        gun:CreateToggle({
-            Name     = "Silent Aim",
-            Desc     = "Перенаправляет выстрелы пистолета в предсказанную точку цели",
-            Default  = false,
-            Flag     = "SA_Enabled",
-            Callback = function(v)
-                if SA and SA.setGunEnabled then
-                    local ok = SA.setGunEnabled(v)
-                    if not ok and v then Notify("Silent Aim", "Хук не поддерживается исполнителем", "Error") end
-                end
-            end,
-        })
-        gun:CreateDropdown({
-            Name     = "Target Mode",
-            Options  = { "Murderer", "Sheriff", "Hero", "Nearest", "Crosshair", "Lowest Health", "Random" },
-            Default  = "Murderer",
-            Flag     = "SA_TargetMode",
-            Callback = function(v) if SA then SA.config.targetMode = tostring(v) end end,
-        })
-        gun:CreateDropdown({
-            Name     = "Hit Part",
-            Options  = { "HumanoidRootPart", "Head", "Torso", "UpperTorso", "LowerTorso", "Random" },
-            Default  = "HumanoidRootPart",
-            Flag     = "SA_HitPart",
-            Callback = function(v) if SA then SA.config.hitPart = tostring(v) end end,
-        })
-        gun:CreateToggle({
-            Name     = "Wall Check",
-            Desc     = "Не стрелять, если между тобой и целью стена",
-            Default  = false,
-            Flag     = "SA_WallCheck",
-            Callback = function(v) if SA then SA.config.wallCheck = v end end,
-        })
-        gun:CreateToggle({
-            Name     = "Ignore Friends",
-            Default  = false,
-            Flag     = "SA_IgnoreFriends",
-            Callback = function(v) if SA then SA.config.ignoreFriends = v end end,
-        })
-        gun:CreateSlider({
-            Name     = "Max Distance", Min = 0, Max = 1000, Default = 0,
-            Suffix   = " studs", Flag = "SA_MaxDistance",
-            Callback = function(v) if SA then SA.config.maxDistance = v end end,
-        })
-        gun:CreateDivider("предикшн")
-        gun:CreateSlider({
-            Name     = "Lead Scale", Min = 25, Max = 250, Default = 100,
-            Suffix   = "%", Flag = "SA_LeadScale",
-            Callback = function(v) if SA then SA.config.leadScale = v end end,
-        })
-        gun:CreateSlider({
-            Name     = "Offset X", Min = -50, Max = 50, Default = 0,
-            Suffix   = "%", Flag = "SA_OffsetX",
-            Callback = function(v) if SA then SA.config.offsetX = v end end,
-        })
-        gun:CreateSlider({
-            Name     = "Offset Y", Min = -50, Max = 50, Default = 0,
-            Suffix   = "%", Flag = "SA_OffsetY",
-            Callback = function(v) if SA then SA.config.offsetY = v end end,
-        })
-        gun:CreateSlider({
-            Name     = "Offset Z", Min = -50, Max = 50, Default = 0,
-            Suffix   = "%", Flag = "SA_OffsetZ",
-            Callback = function(v) if SA then SA.config.offsetZ = v end end,
-        })
-        gun:CreateSlider({
-            Name     = "Horizontal Mult", Min = 0, Max = 200, Default = 100,
-            Suffix   = "%", Flag = "SA_Horizontal",
-            Callback = function(v) if SA then SA.config.horizontalMultiplier = v end end,
-        })
-        gun:CreateSlider({
-            Name     = "Vertical Mult", Min = 0, Max = 200, Default = 100,
-            Suffix   = "%", Flag = "SA_Vertical",
-            Callback = function(v) if SA then SA.config.verticalMultiplier = v end end,
-        })
+            local RunService = game:GetService("RunService")
+            local Players = game:GetService("Players")
+            local PathService = game:GetService("PathfindingService")
+            local Workspace_local = game:GetService("Workspace")
+            local Terrain = Workspace_local.Terrain
+            local TweenSvc = game:GetService("TweenService")
+            local ReplicatedStorage = game:GetService("ReplicatedStorage")
+            local LocalPlayer = Players.LocalPlayer
 
-        local knife = tab:AddRightGroupbox({ Name = "KNIFE SILENT AIM", Icon = "sword" })
-        knife:CreateToggle({
-            Name     = "Knife Silent Aim",
-            Desc     = "Перенаправляет бросок ножа в предсказанную точку цели",
-            Default  = false,
-            Flag     = "SA_Knife",
-            Callback = function(v)
-                if SA and SA.setKnifeEnabled then
-                    local ok = SA.setKnifeEnabled(v)
-                    if not ok and v then Notify("Silent Aim", "Хук не поддерживается исполнителем", "Error") end
+            -- текстуры Tracer
+            local Tex = {
+                glow = "rbxassetid://12781803086",
+                energy = "rbxassetid://12781800668",
+                core = "rbxassetid://12781750620",
+                bolt = "rbxassetid://12781757438",
+                earth = "rbxassetid://12781803991",
+                fire = "rbxassetid://12781855685",
+                smoke = "rbxassetid://12781879045",
+                helix = "rbxassetid://7071778278",
+                dust = "rbxassetid://1851669703",
+                dot = "rbxassetid://16512006463",
+                star = "rbxassetid://14590086212",
+                ring = "rbxassetid://12403112662",
+                soft = "rbxassetid://1075864321",
+            }
+            -- стили Tracer (c)
+            local Styles = {
+                Energy = {
+                    { tex = "core", w = 4, spd = 4, br = 1.6, a = 0.35, mix = 0 },
+                    { tex = "energy", w = 3.2, spd = 4, br = 3, a = 1, mix = 0.2, wrap = 7 },
+                    { tex = "core", w = 1, spd = 4, br = 3, a = 1, mix = 0.75 },
+                },
+                Laser = {
+                    { tex = "core", w = 4.5, spd = 4, br = 1.6, a = 0.4, mix = 0 },
+                    { tex = "core", w = 1.8, spd = 4, br = 2.4, a = 0.85, mix = 0.2 },
+                    { tex = "core", w = 0.7, spd = 4, br = 3.5, a = 1, mix = 0.85 },
+                },
+                Lightning = {
+                    { tex = "core", w = 4, spd = 4, br = 1.6, a = 0.3, mix = 0 },
+                    { tex = "bolt", w = 3.4, spd = 5, br = 4, a = 1, mix = 0.3, wrap = 9 },
+                    { tex = "core", w = 0.8, spd = 4, br = 3, a = 1, mix = 0.8 },
+                },
+                Plasma = {
+                    { tex = "core", w = 4, spd = 3, br = 1.6, a = 0.35, mix = 0 },
+                    { tex = "helix", w = 2.8, spd = 3, br = 3, a = 1, mix = 0.2, wrap = 6 },
+                    { tex = "core", w = 0.9, spd = 3, br = 3, a = 1, mix = 0.7 },
+                },
+                Fire = {
+                    { tex = "core", w = 4, spd = 4, br = 1.8, a = 0.4, mix = 0 },
+                    { tex = "fire", w = 3.2, spd = 5, br = 3.5, a = 1, mix = 0.1, wrap = 7 },
+                    { tex = "core", w = 0.9, spd = 4, br = 3, a = 1, mix = 0.6 },
+                },
+                Smoke = {
+                    { tex = "smoke", w = 3.4, spd = 3, br = 1.2, a = 0.8, mix = 0.6, wrap = 9 },
+                    { tex = "core", w = 0.6, spd = 4, br = 2.6, a = 1, mix = 0.85 },
+                },
+                Stardust = {
+                    { tex = "core", w = 4, spd = 3, br = 1.6, a = 0.3, mix = 0 },
+                    { tex = "dust", w = 3.2, spd = 3, br = 3.5, a = 1, mix = 0.3, wrap = 5 },
+                    { tex = "core", w = 0.8, spd = 3, br = 3, a = 1, mix = 0.75 },
+                },
+            }
+            local StyleList = {"Energy","Laser","Lightning","Plasma","Fire","Smoke","Stardust"}
+
+            -- helpers
+            local function logTracer(msg)
+                G.log[#G.log+1] = string.format("%.2f %s", os.clock(), msg)
+                if #G.log>30 then table.remove(G.log,1) end
+            end
+
+            -- stretch compensation (stretch)
+            local function stretchLog() return 0 end
+            local function stretchMul() return 1 end
+            -- preload textures
+            task.spawn(function()
+                local arr = {}
+                for _,v in pairs(Tex) do
+                    local d = Instance.new("Decal")
+                    d.Texture = v
+                    arr[#arr+1]=d
                 end
-            end,
-        })
-        knife:CreateToggle({
-            Name     = "Prioritize Sheriff",
-            Desc     = "Нож сначала летит в шерифа, потом в ближайшего",
-            Default  = false,
-            Flag     = "SA_KnifeSheriff",
-            Callback = function(v) if SA then SA.config.knifePrioritizeSheriff = v end end,
-        })
-        knife:CreateToggle({
-            Name     = "Knife Wall Check",
-            Default  = false,
-            Flag     = "SA_KnifeWallCheck",
-            Callback = function(v) if SA then SA.config.knifeWallCheck = v end end,
-        })
-        knife:CreateDivider("предикшн ножа")
-        knife:CreateSlider({
-            Name     = "Lead Scale", Min = 25, Max = 250, Default = 100,
-            Suffix   = "%", Flag = "SA_KnifeLeadScale",
-            Callback = function(v) if SA then SA.config.knifeAim.leadScale = v end end,
-        })
-        knife:CreateSlider({
-            Name     = "Offset X", Min = -50, Max = 50, Default = 0,
-            Suffix   = "%", Flag = "SA_KnifeOffsetX",
-            Callback = function(v) if SA then SA.config.knifeAim.offsetX = v end end,
-        })
-        knife:CreateSlider({
-            Name     = "Offset Y", Min = -50, Max = 50, Default = 0,
-            Suffix   = "%", Flag = "SA_KnifeOffsetY",
-            Callback = function(v) if SA then SA.config.knifeAim.offsetY = v end end,
-        })
-        knife:CreateSlider({
-            Name     = "Offset Z", Min = -50, Max = 50, Default = 0,
-            Suffix   = "%", Flag = "SA_KnifeOffsetZ",
-            Callback = function(v) if SA then SA.config.knifeAim.offsetZ = v end end,
-        })
-        knife:CreateParagraph({
-            Title   = "Как работает",
-            Content = "Пуля/нож перенаправляются через FireServer-хук: Noir-режим (все пистолетные ремоуты) "
-                    .."и KnifeThrown для ножа. Предикшн адаптивный, сам подстраивается под пинг. "
-                    .."Режим Infection определяется автоматически — целимся в ближайшего зомби.",
-        })
-        knife:CreateLabel("Хук ставится один раз при первом включении; тумблеры лишь включают/выключают редирект.")
+                pcall(function() game:GetService("ContentProvider"):PreloadAsync(arr) end)
+                for _,v in ipairs(arr) do pcall(function() v:Destroy() end) end
+            end)
+
+            -- pooling beams
+            local function acquireBeam()
+                local V = table.remove(G.pool)
+                if V and V.b.Parent and V.a0.Parent and V.a1.Parent then
+                    return V
+                end
+                local a0 = Instance.new("Attachment")
+                a0.Name = "NoirTracerA"
+                a0.Parent = Terrain
+                local a1 = Instance.new("Attachment")
+                a1.Name = "NoirTracerB"
+                a1.Parent = Terrain
+                local beam = Instance.new("Beam")
+                beam.Name = "NoirTracer"
+                beam.Attachment0, beam.Attachment1 = a0, a1
+                beam.FaceCamera = true
+                beam.LightEmission, beam.LightInfluence = 1, 0
+                beam.Enabled = false
+                beam.Parent = Terrain
+                V = {a0=a0, a1=a1, b=beam}
+                G.made[#G.made+1]=V
+                return V
+            end
+            local function releaseBeam(V)
+                if not V then return end
+                pcall(function() V.b.Enabled = false end)
+                if #G.pool < 160 then
+                    G.pool[#G.pool+1]=V
+                else
+                    pcall(function() V.b:Destroy(); V.a0:Destroy(); V.a1:Destroy() end)
+                end
+            end
+
+            -- raycast helper
+            local rayParams = RaycastParams.new()
+            rayParams.FilterType = Enum.RaycastFilterType.Exclude
+            pcall(function() rayParams.RespectCanCollide = true end)
+            local rayUpdate = 0
+            local function getRayParams()
+                if os.clock() - rayUpdate > 1 then
+                    rayUpdate = os.clock()
+                    local list = {}
+                    for _,pl in ipairs(Players:GetPlayers()) do
+                        if pl.Character then list[#list+1]=pl.Character end
+                    end
+                    local cam = Workspace_local.CurrentCamera
+                    if cam then list[#list+1]=cam end
+                    rayParams.FilterDescendantsInstances = list
+                end
+                return rayParams
+            end
+            local function isObstructed(a,b)
+                local dir = b - a
+                if dir.Magnitude < 0.05 then return nil end
+                -- try single ray, allow transparent parts
+                local cur = a
+                for i=1,5 do
+                    local hit = Workspace_local:Raycast(cur, b - cur, getRayParams())
+                    if not hit then return nil end
+                    local transp = 0
+                    pcall(function() transp = hit.Instance.Transparency end)
+                    if transp < 0.85 then return hit end
+                    cur = hit.Position + dir.Unit * 0.05
+                    if (b - cur):Dot(dir.Unit) <= 0 then return nil end
+                end
+                return nil
+            end
+
+            -- path finder wrapper (path finder)
+            local function buildPathfinder(s, e)
+                local ok, pts = pcall(function()
+                    local path = PathService:CreatePath({AgentRadius=1.5, AgentHeight=5, AgentCanJump=true, AgentCanClimb=true, WaypointSpacing=6})
+                    path:ComputeAsync(s - Vector3.new(0,2.5,0), e - Vector3.new(0,2.5,0))
+                    if path.Status ~= Enum.PathStatus.Success then return nil end
+                    local arr = {s}
+                    for _,wp in ipairs(path:GetWaypoints()) do
+                        arr[#arr+1]= wp.Position + Vector3.new(0,3,0)
+                    end
+                    arr[#arr+1]= e
+                    return arr
+                end)
+                if not ok or type(pts)~="table" then return nil end
+                local len=0
+                for i=1,#pts-1 do len += (pts[i+1]-pts[i]).Magnitude end
+                if len > (e-s).Magnitude*4+40 then return nil end
+                return pts
+            end
+
+            -- smoothing like catmull
+            local function smoothPoints(pts)
+                if #pts<=2 then return pts end
+                local out = {pts[1]}
+                local total=0
+                for i=1,#pts-1 do total += (pts[i+1]-pts[i]).Magnitude end
+                local step = math.max(2.2, total/44)
+                for i=1,#pts-1 do
+                    local p0 = pts[math.max(1,i-1)]
+                    local p1 = pts[i]
+                    local p2 = pts[i+1]
+                    local p3 = pts[math.min(#pts,i+2)]
+                    local segLen = (p2-p1).Magnitude
+                    local cnt = math.clamp(math.floor(segLen/step+0.5),2,16)
+                    for j=1,cnt do
+                        local t=j/cnt
+                        local t2=t*t
+                        local t3=t2*t
+                        local pt = 0.5*(2*p1 + (p2-p0)*t + (2*p0-5*p1+4*p2-p3)*t2 + (3*p1-p0-3*p2+p3)*t3)
+                        out[#out+1]=pt
+                    end
+                end
+                out[#out]=pts[#pts]
+                return out
+            end
+
+            -- FX helpers (FX helpers)
+            local function newAttachment(pos)
+                local a=Instance.new("Attachment")
+                a.Name="NoirTracerFx"
+                a.WorldPosition=pos
+                a.Parent=Terrain
+                return a
+            end
+            local function makeEmitter(parent, props)
+                local em=Instance.new("ParticleEmitter")
+                em.Rate=0
+                em.LightEmission, em.LightInfluence =1,0
+                em.Speed=NumberRange.new(0)
+                em.Rotation=NumberRange.new(0)
+                em.RotSpeed=NumberRange.new(0)
+                for k,v in pairs(props) do pcall(function() em[k]=v end) end
+                em.Parent=parent
+                return em
+            end
+            local function spawnMuzzle(pos, col)
+                local a=newAttachment(pos)
+                local cs=ColorSequence.new(col:Lerp(Color3.new(1,1,1),0.55), col)
+                makeEmitter(a,{Texture=Tex.star, Color=cs, Size=NumberSequence.new({NumberSequenceKeypoint.new(0,2.4),NumberSequenceKeypoint.new(1,0)}), Lifetime=NumberRange.new(0.1), Brightness=4, ZOffset=1}):Emit(1)
+                makeEmitter(a,{Texture=Tex.soft, Color=cs, Size=NumberSequence.new({NumberSequenceKeypoint.new(0,1.8),NumberSequenceKeypoint.new(1,0.4)}), Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.2),NumberSequenceKeypoint.new(1,1)}), Lifetime=NumberRange.new(0.14), Brightness=3}):Emit(1)
+                local light=Instance.new("PointLight")
+                light.Color, light.Range, light.Brightness = col, 9, 3.5
+                light.Parent=a
+                pcall(function() TweenSvc:Create(light, TweenInfo.new(0.12,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Brightness=0}):Play() end)
+                task.delay(0.5,function() pcall(function() a:Destroy() end) end)
+            end
+            local function spawnImpact(pos, col)
+                local a=newAttachment(pos)
+                local cs=ColorSequence.new(col:Lerp(Color3.new(1,1,1),0.6), col)
+                makeEmitter(a,{Texture=Tex.star, Color=cs, Size=NumberSequence.new({NumberSequenceKeypoint.new(0,3.6),NumberSequenceKeypoint.new(1,0)}), Lifetime=NumberRange.new(0.2), Brightness=4, ZOffset=1}):Emit(1)
+                makeEmitter(a,{Texture=Tex.ring, Color=cs, Size=NumberSequence.new({NumberSequenceKeypoint.new(0,0.4),NumberSequenceKeypoint.new(1,5.5)}), Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0),NumberSequenceKeypoint.new(1,1)}), Lifetime=NumberRange.new(0.35), Brightness=3}):Emit(1)
+                makeEmitter(a,{Texture=Tex.dot, Color=cs, Size=NumberSequence.new({NumberSequenceKeypoint.new(0,0.45),NumberSequenceKeypoint.new(1,0)}), Speed=NumberRange.new(12,30), SpreadAngle=Vector2.new(180,180), Acceleration=Vector3.new(0,-45,0), Drag=3, Lifetime=NumberRange.new(0.3,0.6), Brightness=3}):Emit(18)
+                makeEmitter(a,{Texture=Tex.soft, Color=cs, Size=NumberSequence.new({NumberSequenceKeypoint.new(0,2.6),NumberSequenceKeypoint.new(1,0.6)}), Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.3),NumberSequenceKeypoint.new(1,1)}), Lifetime=NumberRange.new(0.25), Brightness=2}):Emit(1)
+                local light=Instance.new("PointLight")
+                light.Color, light.Range, light.Brightness = col,12,3.5
+                light.Parent=a
+                pcall(function() TweenSvc:Create(light, TweenInfo.new(0.3,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Brightness=0}):Play() end)
+                task.delay(1.2,function() pcall(function() a:Destroy() end) end)
+            end
+            local function getColors(opts)
+                local rainbow = opts.rainbow
+                if rainbow==nil then rainbow = G.rainbow end
+                if rainbow then
+                    local h=os.clock()*0.18%1
+                    return Color3.fromHSV(h,0.7,1), Color3.fromHSV((h+0.18)%1,0.75,1)
+                end
+                return opts.col or G.col, opts.col2 or G.col2
+            end
+
+            -- core builder (builder)
+            local function buildTracer(pts, opts)
+                opts = opts or {}
+                if #pts < 2 then return end
+                while #G.live >= 8 do
+                    local old = table.remove(G.live,1)
+                    for _,row in ipairs(old.rows) do for _,b in ipairs(row) do releaseBeam(b) end end
+                    if old.head then pcall(function() old.head:Destroy() end) end
+                end
+                -- cumulative lengths
+                local cum = {0}
+                for i=2,#pts do cum[i]= cum[i-1]+(pts[i]-pts[i-1]).Magnitude end
+                local total=cum[#cum]
+                if total <0.5 then return end
+                local style = Styles[opts.style or G.style] or Styles.Energy
+                local col, col2 = getColors(opts)
+                local wk = (opts.width or G.width or 100)/100
+                -- wk scaled by stretch
+                -- build rows
+                local rows = {}
+                for li, layer in ipairs(style) do
+                    local row={}
+                    for i=1,#pts-1 do
+                        local b = acquireBeam()
+                        local beam=b.b
+                        beam.Texture = Tex[layer.tex]
+                        if layer.wrap then
+                            beam.TextureMode = Enum.TextureMode.Wrap
+                            beam.TextureLength = layer.wrap * wk
+                        else
+                            beam.TextureMode = Enum.TextureMode.Stretch
+                            beam.TextureLength = 1
+                        end
+                        beam.TextureSpeed = layer.spd
+                        beam.Brightness = layer.br
+                        beam.Segments = (#pts==2 and 24 or 4)
+                        beam.ZOffset = li*0.05
+                        b.a0.WorldPosition = pts[i]
+                        b.a1.WorldPosition = pts[i+1]
+                        beam.Enabled=false
+                        row[i]=b
+                    end
+                    rows[li]=row
+                end
+                local tracer = {
+                    pts=pts, cum=cum, L=total, t0=os.clock(), rows=rows, style=style, col=col, col2=col2, wk=wk,
+                    speed= math.max(40, opts.speed or G.speed or 520),
+                    life= math.max(0.2, opts.life or G.life or 1.2),
+                    impact = opts.impact,
+                    landed=false,
+                }
+                tracer.tail = opts.tail or math.clamp(total*0.45, 8, 60)
+                tracer.clearHead = opts.clearHead
+                if opts.muzzle then pcall(spawnMuzzle, pts[1], col) end
+                -- head fx
+                local head = newAttachment(pts[1])
+                makeEmitter(head,{Texture=Tex.dot, Color=ColorSequence.new(col:Lerp(Color3.new(1,1,1),0.5)), Size=NumberSequence.new(2.8*wk), Lifetime=NumberRange.new(total/tracer.speed+0.05), LockedToPart=true, Brightness=5, ZOffset=1}):Emit(1)
+                makeEmitter(head,{Texture=Tex.star, Color=ColorSequence.new(col:Lerp(Color3.new(1,1,1),0.35)), Size=NumberSequence.new(3.4*wk), Lifetime=NumberRange.new(total/tracer.speed+0.05), LockedToPart=true, Brightness=4, ZOffset=1.1}):Emit(1)
+                tracer.trail = makeEmitter(head,{Texture=Tex.dot, Color=ColorSequence.new(col:Lerp(Color3.new(1,1,1),0.3), col2), Size=NumberSequence.new({NumberSequenceKeypoint.new(0,0.32*wk),NumberSequenceKeypoint.new(1,0)}), Speed=NumberRange.new(1.5,5), SpreadAngle=Vector2.new(180,180), Drag=4, Lifetime=NumberRange.new(0.2,0.42), Rate=70, Brightness=3})
+                tracer.head = head
+                G.live[#G.live+1]=tracer
+                if opts.cb then task.spawn(opts.cb, tracer) end
+                return tracer
+            end
+
+            local function pointOnPath(tr, dist)
+                local cum, pts = tr.cum, tr.pts
+                if dist <=0 then return pts[1],1 end
+                if dist >= tr.L then return pts[#pts], #pts-1 end
+                local lo,hi=1,#cum
+                while hi-lo>1 do
+                    local mid=(lo+hi)//2
+                    if cum[mid]<=dist then lo=mid else hi=mid end
+                end
+                local segLen = cum[lo+1]-cum[lo]
+                local t = segLen>0 and (dist-cum[lo])/segLen or 0
+                return pts[lo]:Lerp(pts[lo+1], t), lo
+            end
+
+            -- heartbeat updater (Updater)
+            local function updateTracers()
+                if #G.live==0 then return end
+                local now=os.clock()
+                local i=1
+                while i <= #G.live do
+                    local tr = G.live[i]
+                    local elapsed = now - tr.t0
+                    local total, speed = tr.L, tr.speed
+                    local headDist = math.min(total, elapsed*speed)
+                    local tailDist = elapsed*speed - tr.tail
+                    local totalTime = total/speed
+                    if not tr.landed and headDist >= total then
+                        tr.landed=true
+                        if tr.trail then tr.trail.Rate=0 end
+                        if tr.clearHead and tr.head then
+                            for _,ch in ipairs(tr.head:GetChildren()) do
+                                if ch:IsA("ParticleEmitter") and ch~=tr.trail then pcall(function() ch:Clear() end) end
+                            end
+                        end
+                        if tr.impact then pcall(spawnImpact, tr.pts[#tr.pts], tr.col) end
+                    end
+                    local fade = 0.38
+                    if elapsed > totalTime then
+                        fade = 0.38 * math.clamp(1-(elapsed-totalTime)/tr.life,0,1)^1.5
+                    end
+                    local shouldRemove = elapsed > totalTime + tr.life and tailDist >= total
+                    if shouldRemove then
+                        for _,row in ipairs(tr.rows) do for _,b in ipairs(row) do releaseBeam(b) end end
+                        pcall(function() tr.head:Destroy() end)
+                        table.remove(G.live,i)
+                    else
+                        local headPos = pointOnPath(tr, headDist)
+                        if tr.head then tr.head.WorldPosition = headPos end
+                        local visibleTail = math.max(tailDist,0.01)
+                        local function alphaAt(d)
+                            if d>=tailDist and d<=headDist+0.001 then
+                                return ((d-tailDist)/math.max(headDist-tailDist,0.01))^1.4
+                            end
+                            return 0
+                        end
+                        local isStraight = #tr.pts==2
+                        for li, row in ipairs(tr.rows) do
+                            local layer = tr.style[li]
+                            local baseA = layer.a
+                            for segIdx, b in ipairs(row) do
+                                local segStart = tr.cum[segIdx]
+                                local segEnd = tr.cum[segIdx+1]
+                                if segStart >= headDist or (fade<=0.004 and segEnd <= tailDist) then
+                                    if b.b.Enabled then b.b.Enabled=false end
+                                else
+                                    local segTail = math.min(segEnd, headDist)
+                                    -- update attachments
+                                    if segEnd > headDist then
+                                        b.a1.WorldPosition = headPos
+                                    else
+                                        b.a1.WorldPosition = tr.pts[segIdx+1]
+                                    end
+                                    local segLen = segTail - segStart
+                                    -- transparency keys
+                                    local keys={}
+                                    local steps = isStraight and 9 or 2
+                                    for s=0,steps-1 do
+                                        local t = steps==1 and 0 or s/(steps-1)
+                                        local dist = segStart + (segEnd-segStart)*t
+                                        -- clamp to visible segment
+                                        if dist < tailDist then dist = tailDist end
+                                        if dist > segTail then dist = segTail end
+                                        keys[#keys+1]= NumberSequenceKeypoint.new(t, math.clamp(1 - alphaAt(dist)*baseA,0,1))
+                                    end
+                                    -- if straight need more keys
+                                    if not isStraight and #keys==2 then
+                                        -- keep 2 keys
+                                    end
+                                    b.b.Transparency = NumberSequence.new(keys)
+                                    local a0 = math.max(alphaAt(segStart),0)
+                                    local a1 = math.max(alphaAt(segEnd),0)
+                                    local w0 = 0.9*layer.w*tr.wk*(0.55+0.45*a0)
+                                    local w1 = 0.9*layer.w*tr.wk*(0.55+0.45*a1)
+                                    b.b.Width0, b.b.Width1 = w0, w1
+                                    local colA = tr.col2:Lerp(tr.col, segStart/total):Lerp(Color3.new(1,1,1), layer.mix)
+                                    local colB = tr.col2:Lerp(tr.col, segEnd/total):Lerp(Color3.new(1,1,1), layer.mix)
+                                    b.b.Color = ColorSequence.new(colA, colB)
+                                    if not b.b.Enabled then b.b.Enabled=true end
+                                end
+                            end
+                        end
+                        i+=1
+                    end
+                end
+            end
+            RunService.Heartbeat:Connect(function() pcall(updateTracers) end)
+
+            -- path builder wrapper (builder)
+            local function spawnFromTo(a, b, impact, muzzle, extra)
+                extra = extra or {}
+                local opts = {impact=impact, muzzle=muzzle, speed=extra.speed, life=extra.life, cb=extra.cb}
+                if (b-a).Magnitude > 700 then b = a + (b-a).Unit*700 end
+                if G.method == "Path Finder" then
+                    local startTime=os.clock()
+                    -- try direct first
+                    local directPts, reason
+                    -- simplified: try to use isObstructed
+                    if not isObstructed(a,b) then
+                        directPts, reason = {a,b}, "direct"
+                    else
+                        -- try simple waypoint offset sampling like Tracer Y (simplified placeholder)
+                        directPts = nil
+                    end
+                    if directPts then
+                        local pts = smoothPoints(directPts)
+                        logTracer(string.format("PF %s pts=%d %.1fms", reason or "?", #pts, (os.clock()-startTime)*1000))
+                        return buildTracer(pts, opts)
+                    end
+                    -- fallback to pathfinder async
+                    task.spawn(function()
+                        local st=os.clock()
+                        local pts = buildPathfinder(a,b)
+                        if pts then
+                            pts = smoothPoints(pts)
+                            logTracer(string.format("PF nav pts=%d %.1fms", #pts, (os.clock()-st)*1000))
+                            buildTracer(pts, opts)
+                        else
+                            logTracer("PF fallback straight")
+                            buildTracer({a,b}, opts)
+                        end
+                    end)
+                    return
+                end
+                return buildTracer({a,b}, opts)
+            end
+
+            G.build = spawnFromTo
+            -- helper to find origin from character/gun like Updater
+            local function findOrigin(char, part, vec)
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                local att = hrp and hrp:FindFirstChild("GunRaycastAttachment")
+                if att then return att.WorldPosition end
+                if typeof(part)=="Instance" and part:IsA("BasePart") then return part.Position end
+                if typeof(vec)=="Vector3" then return vec end
+                return nil
+            end
+
+            -- hook firing: wrap fireGunAt after it exists + listen to GunFired event
+            local function hookFireGunAt()
+                task.spawn(function()
+                    local tries=0
+                    local orig
+                    while tries < 80 do
+                        tries+=1
+                        orig = rawget(getgenv(), "fireGunAt") or _G.fireGunAt or getgenv().fireGunAt
+                        if typeof(orig)=="function" then break end
+                        task.wait(0.25)
+                    end
+                    if typeof(orig)~="function" then
+                        -- also try NoirGenv
+                        local ok, env = pcall(NoirGenv)
+                        if ok and type(env)=="table" then orig = env.fireGunAt end
+                    end
+                    if typeof(orig)~="function" then return end
+                    if orig.__tracerWrapped then return end
+                    local wrapped = function(plr, usePred)
+                        local ok, res = pcall(orig, plr, usePred)
+                        if G.on and plr and typeof(plr)=="Instance" then
+                            pcall(function()
+                                local myChar = LocalPlayer.Character
+                                local handle=nil
+                                if myChar then
+                                    local gun=myChar:FindFirstChild("Gun")
+                                    if not gun then
+                                        local bp=LocalPlayer:FindFirstChild("Backpack")
+                                        if bp then gun=bp:FindFirstChild("Gun") end
+                                    end
+                                    if gun then handle=gun:FindFirstChild("Handle",true) end
+                                end
+                                local origin = handle and handle.Position or (myChar and myChar:GetPivot().Position) or nil
+                                local targetPart = nil
+                                if plr.Character then
+                                    targetPart = plr.Character:FindFirstChild("HumanoidRootPart") or plr.Character:FindFirstChild("Head")
+                                end
+                                local dest = targetPart and targetPart.Position or nil
+                                if origin and dest then
+                                    spawnFromTo(origin, dest, G.impact, G.muzzle)
+                                end
+                            end)
+                        end
+                        return ok and res or false
+                    end
+                    wrapped.__tracerWrapped=true
+                    _G.fireGunAt = wrapped
+                    getgenv().fireGunAt = wrapped
+                    pcall(function() NoirGenv().fireGunAt = wrapped end)
+                    logTracer("hooked fireGunAt")
+                end)
+            end
+            hookFireGunAt()
+
+            -- GunFired hook (Tracer style) for other shots
+            task.spawn(function()
+                local ok, obj = pcall(function() return ReplicatedStorage:WaitForChild("ClientServices",5) end)
+                local ws = ok and obj and obj:FindFirstChild("WeaponService")
+                local ev = ws and ws:FindFirstChild("GunFired")
+                if not (ev and ev:IsA("RemoteEvent")) then
+                    -- also try MM2 path: ReplicatedStorage.Remotes
+                    local ok2, rem = pcall(function() return ReplicatedStorage:FindFirstChild("Remotes") end)
+                    if rem then
+                        -- listen to any ChildAdded Shoot events as fallback via DescendantAdded handled by fireGunAt hook
+                    end
+                    return
+                end
+                -- simple connection helper
+                ev.OnClientEvent:Connect(function(...)
+                    local args={...}
+                    task.spawn(function()
+                        pcall(function()
+                            -- GunFired logic simplified: args[1]=shooter char/instance?, args[3]=target Vector3
+                            -- try to extract Vector3 target
+                            local target=nil
+                            for _,v in ipairs(args) do if typeof(v)=="Vector3" then target=v end end
+                            if not target or not G.on then return end
+                            local shooter = args[1]
+                            local originPart = args[2]
+                            local isMe = false
+                            local char = typeof(shooter)=="Instance" and shooter or nil
+                            while char and not (char:IsA("Model") and char:FindFirstChildOfClass("Humanoid")) do char=char.Parent end
+                            if char and char==LocalPlayer.Character then isMe=true end
+                            if not isMe and not G.others then return end
+                            local origin = findOrigin(char, originPart, nil)
+                            if not origin then
+                                local myChar=LocalPlayer.Character
+                                origin = myChar and myChar:GetPivot().Position or target
+                            end
+                            spawnFromTo(origin, target, G.impact, G.muzzle)
+                        end)
+                    end)
+                end)
+                logTracer("GunFired hook armed")
+            end)
+
+            -- preview helper
+            G.preview = function(vec, extra)
+                if G.previewing then return end
+                local myChar = LocalPlayer.Character
+                local hrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                local cam = Workspace_local.CurrentCamera
+                if not (hrp and cam) then return end
+                G.previewing=true
+                local origin = (myChar:GetPivot() * CFrame.new(1.4,1.25,-3.45)).Position
+                local target
+                if typeof(vec)=="Vector3" then
+                    target=vec
+                else
+                    -- find nearest around
+                    local best, bestDist=nil, 1e9
+                    for _,pl in ipairs(Players:GetPlayers()) do
+                        if pl~=LocalPlayer and pl.Character then
+                            local hr = pl.Character:FindFirstChild("HumanoidRootPart")
+                            local hum = pl.Character:FindFirstChildOfClass("Humanoid")
+                            if hr and hum and hum.Health>0 then
+                                local d=(hr.Position-origin).Magnitude
+                                if d>12 and d<260 and d<bestDist then best, bestDist = hr.Position, d end
+                            end
+                        end
+                    end
+                    if best then target=best else
+                        local dir = cam.CFrame.LookVector
+                        local flat = Vector3.new(dir.X,0,dir.Z)
+                        flat = flat.Magnitude>0.1 and flat.Unit or cam.CFrame.LookVector
+                        local hit = Workspace_local:Raycast(origin, flat*140+Vector3.new(0,2,0), getRayParams())
+                        target = hit and hit.Position or origin+flat*140
+                    end
+                end
+                extra = extra or {}
+                extra.cb = function(tr) G._lastPreview=tr end
+                spawnFromTo(origin, target, true, true, extra)
+                local start=os.clock()
+                while not G._lastPreview and os.clock()-start<2 do task.wait() end
+                local tr=G._lastPreview; G._lastPreview=nil
+                if not tr then G.previewing=false; return end
+                -- camera chase (simplified)
+                local startCam=cam.CFrame.Position
+                local dir=(target-origin).Unit
+                local endPos=target
+                cam.CameraType=Enum.CameraType.Scriptable
+                local ok=pcall(function()
+                    local conn
+                    conn=RunService:BindToRenderStep("NoirTracerCam", Enum.RenderPriority.Camera.Value+2, function(dt)
+                        if not G.previewing then return end
+                        local elapsed=os.clock()-tr.t0
+                        local headDist=math.min(tr.L, elapsed*tr.speed)
+                        local headPos, _ = pointOnPath(tr, headDist)
+                        local t = headPos - origin
+                        if t.Magnitude>0.05 then dir=t.Unit end
+                        local off = Vector3.new(0,2.4,0) + dir:Cross(Vector3.yAxis).Unit*5
+                        if off.Magnitude<0.1 then off=Vector3.new(5,2.4,0) end
+                        local camPos = headDist<tr.L and (headPos - dir*5.5 + Vector3.new(0,2.4,0)) or (endPos + Vector3.new(9,3,0))
+                        local look = headDist<tr.L and (headPos + dir*2.5) or endPos
+                        startCam = startCam:Lerp(camPos, 1-math.exp(-(dt or 0.016)*14))
+                        cam.CFrame = CFrame.lookAt(startCam, look)
+                    end)
+                end)
+                local dur = tr.L/tr.speed
+                local endT=os.clock()
+                while os.clock()-endT < math.min(dur+1.5,9) and G.previewing do task.wait() end
+                pcall(function() RunService:UnbindFromRenderStep("NoirTracerCam") end)
+                pcall(function() cam.CameraType=Enum.CameraType.Custom; cam.CameraSubject = myChar:FindFirstChildOfClass("Humanoid") end)
+                G.previewing=false
+            end
+
+            -- UI рядом с Silent Aim
+            pcall(function()
+                combatAim:AddToggle("Bullet Tracers", function(v) G.on = v==true end)
+            end)
+            pcall(function()
+                combatAim:AddDropdown("Tracer Method", {"Classic","Path Finder"}, function(v) if v=="Classic" or v=="Path Finder" then G.method=v end end)
+            end)
+            pcall(function()
+                combatAim:AddDropdown("Tracer Style", StyleList, function(v) if Styles[v] then G.style=v end end)
+            end)
+            pcall(function()
+                combatAim:AddColorpicker("Tracer Color", G.col, function(c) if typeof(c)=="Color3" then G.col=c end end)
+            end)
+            pcall(function()
+                combatAim:AddColorpicker("Tail Color", G.col2, function(c) if typeof(c)=="Color3" then G.col2=c end end)
+            end)
+            pcall(function()
+                combatAim:AddToggle("Rainbow Tracers", function(v) G.rainbow = v==true end)
+            end)
+            pcall(function()
+                combatAim:AddSlider("Tracer Width", 40, 250, 100, function(v) G.width = tonumber(v) or 100 end)
+            end)
+            pcall(function()
+                combatAim:AddSlider("Tracer Speed", 150, 1500, 520, function(v) G.speed = tonumber(v) or 520 end)
+            end)
+            pcall(function()
+                combatAim:AddSlider("Tracer Duration", 3, 40, 12, function(v) G.life = (tonumber(v) or 12)/10 end)
+            end)
+            pcall(function()
+                combatAim:AddToggle("Impact Effect", function(v) G.impact = v==true end)
+            end)
+            pcall(function()
+                combatAim:AddToggle("Muzzle Flash", function(v) G.muzzle = v==true end)
+            end)
+            pcall(function()
+                combatAim:AddToggle("Show Other Shots", function(v) G.others = v==true end)
+            end)
+            pcall(function()
+                combatAim:AddButton("Preview Tracer", function() task.spawn(function() pcall(G.preview) end) end)
+            end)
+            combatAim:AddLabel("Стили: Energy/Laser/Lightning/Plasma/Fire/Smoke/Stardust. Preview — камера преследует трейсер.")
+        end
     end
+    -- ═══════════════════ /BULLET TRACER SATELLITE ════════════════════════
+
+
+    -- ═══════ VISUALS / ESP ENGINE — verbatim from pulsehub ═══════
+    do
+local EspSettings = {}
+
+function EspSettings.create(environment, configuration)
+	local color = environment.Color3
+	local settings = {
+		on = false, style = "Box", maxDist = 1000, murderer = true, sheriff = true, hero = true, innocent = true,
+		noRole = false, visCheck = false, dimHidden = true, hiddenStyle = "Fade", smooth = 40, fade = true, fadeFrom = 60,
+		box = true, boxStyle = "Corners", boxThickness = 1, cornerSize = 22, boxRound = 4, outline = true, boxFill = false,
+		boxFillAlpha = 8, boxGlow = false, glowStrength = 25, gradient = false,
+		gradientColour = color.fromRGB(255, 255, 255), pulse = false, pulseSpeed = 1.2, colorMode = "Role",
+		customColour = color.fromRGB(245, 245, 245), hiddenColour = color.fromRGB(150, 155, 170),
+		murdererColour = color.fromRGB(255, 64, 64), sheriffColour = color.fromRGB(80, 150, 255),
+		heroColour = color.fromRGB(255, 210, 60), innocentColour = color.fromRGB(90, 230, 130),
+		noRoleColour = color.fromRGB(176, 182, 204), skeleton = false, boneThick = 1.5, boneRole = true,
+		boneColour = color.fromRGB(235, 235, 235), boneHidden = color.fromRGB(170, 140, 255), headDot = false,
+		headScale = 80, lookLine = false, lookLength = 10, health = false, healthPosition = "Left", healthStyle = "Solid",
+		barThickness = 2, barGap = 3, healthNum = false, smoothHealth = true, healthLow = color.fromRGB(235, 60, 60),
+		healthHigh = color.fromRGB(90, 225, 120), name = true, nameMode = "Display name", roleText = true,
+		weaponIcon = true, distance = false, textFont = "GothamSSm", textSize = 12, infoSize = 10, textOutline = true,
+		textMatch = false, hideGameNames = true, textGrad = false, textGradStyle = "ESP Color",
+		textGradA = color.fromRGB(255, 94, 160), textGradB = color.fromRGB(90, 200, 255), textGradAnim = true,
+		textGradSpeed = 1, textGradAngle = 0, nameColour = color.fromRGB(250, 250, 250),
+		infoColour = color.fromRGB(200, 205, 215), nameOffset = 3, labelWidth = 240, plate = false, plateStyle = "Flat",
+		plateAlpha = 70, plateColour = color.fromRGB(20, 20, 24), chams = false, chamsStyle = "Soft", chamsAlpha = 45,
+		chamsThrough = false, chamsRange = 60, chamsOutline = true, chamsEdgeAlpha = 85, chamsRole = true,
+		chamsColour = color.fromRGB(255, 70, 70), chamsHidden = color.fromRGB(150, 110, 255),
+		chamsEdge = color.fromRGB(255, 255, 255), chamsEdgeHidden = color.fromRGB(200, 180, 255), chamsAnim = "None",
+		chamsSpeed = 1, chamsFlow = color.fromRGB(255, 200, 80), chamsFlash = true, chamsMaterial = "Flat", tracer = false,
+		tracerFrom = "Bottom", tracerThickness = 1, tracerAlpha = 60, tracerRole = true,
+		tracerColour = color.fromRGB(235, 235, 235), offscreen = false, radarStyle = "Arrow", ringRadius = 170,
+		arrowSize = 9, ringText = false, fxTargets = "All", glowHalo = 60, glowCore = 85, sparkles = false,
+		sparkleStyle = "Sparkles", sparkleRate = 14, skyBeam = false, murderBeam = false, brightness = 100,
+		saturation = 100, opacity = 100, lineScale = 100, textScale = 100, rainbowSpeed = 1, rainbowSat = 65,
+		murdererFocus = false, focusScale = 160, nearColour = color.fromRGB(255, 107, 107),
+		farColour = color.fromRGB(116, 170, 255), seenColour = color.fromRGB(125, 222, 170), boxWidth = 50, boxPad = 0,
+		boxColMode = "ESP", boxCol = color.fromRGB(255, 255, 255), boxAnim = "None", boxAnimSpeed = 1,
+		boxGradStyle = "Two Color", boxGradAngle = 90, fillStyle = "Solid", fillColMode = "ESP",
+		fillCol = color.fromRGB(255, 255, 255), glowSize = 5, glowColMode = "ESP", glowCol = color.fromRGB(255, 255, 255),
+		outlineCol = color.fromRGB(0, 0, 0), outlineAlpha = 65, outlineSize = 2, nameWeight = "SemiBold",
+		nameCase = "Normal", namePos = "Above", strokeSize = 0, strokeCol = color.fromRGB(5, 8, 13), distUnit = "Studs",
+		roleStyle = "Full", plateRadius = 5, plateBorder = 1, plateGrad = false, chamsBright = 100, chamsShell = 100,
+		chamsGradA = color.fromRGB(255, 120, 150), chamsGradB = color.fromRGB(110, 160, 255), chamsGradScroll = false,
+		boneStyle = "Line", boneAlpha = 100, joints = false, jointSize = 3, boneGrad = false,
+		boneTop = color.fromRGB(255, 255, 255), boneBottom = color.fromRGB(160, 170, 190), headStyle = "Ring",
+		headFill = 25, headColMode = "ESP", headCol = color.fromRGB(255, 255, 255), lookThick = 1.5, lookColMode = "ESP",
+		lookCol = color.fromRGB(255, 255, 255), tracerTo = "Feet", tracerStyle = "Line", tracerMurderer = false,
+		arrowPulse = false, arrowName = false, trail = false, trailLife = 0.8, trailWidth = 1, trailStyle = "Fade",
+		murdMat = "Same", sheriffMat = "Same", murdBox = "Same", limits = false, boxMaxDist = 0, nameMaxDist = 0,
+		chamsMaxDist = 0, skelMaxDist = 0, distScale = false, nameIcon = false, weaponStyle = "Icon", infoBg = false,
+		infoBgAlpha = 55, chamsEdgeRole = true, infoLayout = "Under Box", infoFont = "Same", infoCase = "Normal",
+		textShadow = false, textOutlineAlpha = 60, outlineInner = false, chamsOverlay = false, markerPos = "Around Center",
+		chamsHiddenDark = 30,
+	}
+	settings.on = configuration.rolesp and configuration.rolesp.on and true or false
+	return settings
+end
+
+local EspText = {}
+local ESP_ROLE_SHORT = {Murderer = "M", Sheriff = "S", Hero = "H", Innocent = "I"}
+
+function EspText.create()
+	return {upper = {}, upperCount = 0, distances = {}, distanceCount = 0,
+		names = setmetatable({}, {__mode = "k"})}
+end
+
+function EspText.upper(state, value)
+	if state.upperCount > 3000 then state.upper, state.upperCount = {}, 0 end
+	local cached = state.upper[value]
+	if cached then return cached end
+
+	local result = string.upper(value)
+	if string.find(result, "[\208\209]") then
+		local characters = {}
+		for _, code in utf8.codes(result) do
+			if code >= 1072 and code <= 1103 then code -= 32 end
+			if code == 1105 then code = 1025 end
+			table.insert(characters, utf8.char(code))
+		end
+		result = table.concat(characters)
+	end
+	state.upper[value] = result
+	state.upperCount += 1
+	return result
+end
+
+function EspText.case(state, value, mode)
+	if mode == "UPPER" then return EspText.upper(state, value) end
+	if mode == "lower" then return string.lower(value) end
+	return value
+end
+
+function EspText.role(state, role, mode, translate)
+	local label = translate(role)
+	if mode == "Short" then return ESP_ROLE_SHORT[role] or label:sub(1, 1) end
+	if mode == "Upper" then return EspText.upper(state, label) end
+	return label
+end
+
+function EspText.distance(state, distance, unit)
+	local value = math.max(tonumber(distance) or 0, 0)
+	local key = math.floor(value + 0.5)
+	if unit == "Meters" then
+		local meters = value * 0.28
+		key = meters < 10 and -(math.floor(meters * 10 + 0.5) + 1) or math.floor(meters + 0.5) + 1000000
+	end
+	if state.distanceCount > 4000 then state.distances, state.distanceCount = {}, 0 end
+	if state.distances[key] then return state.distances[key] end
+
+	local text = tostring(math.floor(value + 0.5)) .. " st"
+	if unit == "Meters" then
+		local meters = value * 0.28
+		text = meters < 10 and string.format("%.1f m", meters) or tostring(math.floor(meters + 0.5)) .. " m"
+	end
+	state.distances[key] = text
+	state.distanceCount += 1
+	return text
+end
+
+function EspText.clean(value)
+	if type(value) ~= "string" then return "" end
+	return (value:gsub("[%z\1-\31\127]", " "):gsub("^%s+", ""):gsub("%s+$", ""))
+end
+
+function EspText.name(state, player, mode)
+	local name, display = player.Name, player.DisplayName
+	local cached = state.names[player]
+	if cached and cached.name == name and cached.display == display and cached.mode == mode then
+		return cached.main, cached.second
+	end
+
+	local username, displayName = EspText.clean(name), EspText.clean(display)
+	if username == "" then username = displayName end
+	if username == "" then username = "Player" end
+	if displayName == "" then displayName = username end
+	local main, second = username, ""
+	if mode == "Display name" then main = displayName end
+	if mode == "Both" then
+		main = displayName
+		if displayName ~= username then second = "@" .. username end
+	end
+	state.names[player] = {name = name, display = display, mode = mode, main = main, second = second}
+	return main, second
+end
+
+local EspColor = {}
+local ESP_ROLE_COLORS = {Murderer = "murdererColour", Sheriff = "sheriffColour", Hero = "heroColour", Innocent = "innocentColour"}
+
+function EspColor.create(environment, settings)
+	return {environment = environment, settings = settings, white = environment.Color3.new(1, 1, 1),
+		black = environment.Color3.new(0, 0, 0)}
+end
+
+function EspColor.key(color)
+	return math.floor(color.R * 255 + 0.5) * 65536 + math.floor(color.G * 255 + 0.5) * 256 + math.floor(color.B * 255 + 0.5)
+end
+
+function EspColor.tone(state, color)
+	local settings = state.settings
+	local brightness, saturation = (settings.brightness or 100) / 100, (settings.saturation or 100) / 100
+	if brightness == 1 and saturation == 1 then return color end
+	if not state.tones or state.brightness ~= brightness or state.saturation ~= saturation then
+		state.tones, state.brightness, state.saturation, state.count = {}, brightness, saturation, 0
+	end
+
+	local cache, key = state.tones, EspColor.key(color)
+	if cache[key] then return cache[key] end
+	local hue, sat, value = color:ToHSV()
+	local adjusted = value * brightness
+	local result = state.environment.Color3.fromHSV(hue, math.clamp(sat * saturation, 0, 1), math.clamp(adjusted, 0, 1))
+	if adjusted > 1 then result = result:Lerp(state.white, math.clamp((adjusted - 1) * 0.6, 0, 0.6)) end
+	state.count += 1
+	if state.count > 4096 then state.tones = nil end
+	cache[key] = result
+	return result
+end
+
+function EspColor.ink(state, source, custom, color)
+	if source == "Custom" then return EspColor.tone(state, custom or state.white) end
+	if source == "White" then return EspColor.tone(state, state.white) end
+	if source == "Light" then return color:Lerp(state.white, 0.45) end
+	if source == "Dark" then return color:Lerp(state.black, 0.5) end
+	return color
+end
+
+function EspColor.roleBase(state, role)
+	return state.settings[ESP_ROLE_COLORS[role] or "noRoleColour"]
+end
+
+function EspColor.role(state, role)
+	return EspColor.tone(state, EspColor.roleBase(state, role))
+end
+
+function EspColor.select(state, role, isVisible, distance)
+	local settings, environment = state.settings, state.environment
+	local color = EspColor.roleBase(state, role)
+	if settings.colorMode == "Rainbow" then
+		local hue = environment.os.clock() * 0.09 * (settings.rainbowSpeed or 1) % 1
+		color = environment.Color3.fromHSV(hue, math.clamp((settings.rainbowSat or 65) / 100, 0, 1), 1)
+	end
+	if settings.colorMode == "Custom" then color = settings.customColour end
+	if settings.colorMode == "Distance" then
+		color = settings.nearColour:Lerp(settings.farColour, math.clamp((distance or 0) / math.max(settings.maxDist, 1), 0, 1))
+	end
+	if settings.colorMode == "Visibility" then color = isVisible and settings.seenColour or settings.hiddenColour end
+	if settings.visCheck and settings.dimHidden and not isVisible and settings.hiddenStyle == "Grey" then color = settings.hiddenColour end
+	return EspColor.tone(state, color)
+end
+
+function EspColor.cham(state, color)
+	local brightness = (state.settings.chamsBright or 100) / 100
+	if brightness > 1 then return color:Lerp(state.white, math.clamp((brightness - 1) * 0.6, 0, 0.6)) end
+	if brightness < 1 then return color:Lerp(state.black, math.clamp(1 - brightness, 0, 0.85)) end
+	return color
+end
+
+function EspColor.health(state, ratio)
+	return state.settings.healthLow:Lerp(state.settings.healthHigh, math.clamp(ratio, 0, 1))
+end
+
+local EspBox = {}
+
+function EspBox.create(context, parent, playerId)
+	local environment = context.environment
+	local function create(class, properties, owner)
+		local object = environment.Instance.new(class)
+		for key, value in properties do object[key] = value end
+		object.Parent = owner
+		return object
+	end
+	local function frame(owner, name, level)
+		return create("Frame", {Name = name, BackgroundTransparency = 1, BorderSizePixel = 0,
+			Active = false, Visible = false, ZIndex = level}, owner)
+	end
+	local function stroke(owner, thickness)
+		return create("UIStroke", {Thickness = thickness, Color = environment.Color3.new(0, 0, 0),
+			ApplyStrokeMode = environment.Enum.ApplyStrokeMode.Border, Transparency = 1}, owner)
+	end
+	local layer = frame(parent, "Player_" .. tostring(playerId), 2)
+	layer.Size = environment.UDim2.fromScale(1, 1)
+	local box, glow, outer = frame(layer, "Box", 3), frame(layer, "Glow", 2), frame(layer, "BoxOutline", 2)
+	local edge = stroke(box, 1.5)
+	local result = {layer = layer, box = box, edge = edge, glow = glow, outer = outer,
+		fillGradient = create("UIGradient", {Rotation = 90}, box),
+		edgeGradient = create("UIGradient", {Rotation = 90}, edge),
+		round = create("UICorner", {CornerRadius = environment.UDim.new(0, 0)}, box),
+		glowStroke = stroke(glow, 6), glowRound = create("UICorner", {}, glow),
+		outerStroke = stroke(outer, 3.5), outerRound = create("UICorner", {}, outer),
+		corners = {}, cornerGlow = {}, cornerEdge = {}}
+	result.make = create
+	result.frame = frame
+	result.stroke = stroke
+	EspBox.grow(context, result, 8)
+	return result
+end
+
+function EspBox.grow(context, box, count)
+	for index = #box.corners + 1, count do
+		local function line(name, level)
+			local frame = box.frame(box.layer, name, level)
+			frame.AnchorPoint = context.environment.Vector2.new(0.5, 0.5)
+			return {frame = frame, stroke = box.stroke(frame, 1)}
+		end
+		box.corners[index] = line("Corner" .. index, 4)
+		box.cornerGlow[index] = line("CornerGlow" .. index, 2)
+		box.cornerEdge[index] = box.frame(box.layer, "CornerEdge" .. index, 3)
+	end
+end
+
+function EspBox.hideSegments(box, first)
+	for index = first, #box.corners do
+		box.corners[index].frame.Visible = false
+		box.cornerGlow[index].frame.Visible = false
+		box.cornerEdge[index].Visible = false
+	end
+end
+
+function EspBox.sequence(context, first, second)
+	local state, settings = context.colors, context.settings
+	local isRoleFade = settings.boxGradStyle == "Role Fade"
+	local key = isRoleFade and -EspColor.key(first) - 1 or EspColor.key(first) * 16777216 + EspColor.key(second)
+	context.boxSequences = context.boxSequences or {}
+	if context.boxSequences[key] then return context.boxSequences[key] end
+
+	local colorSequence = context.environment.ColorSequence
+	local result = isRoleFade and colorSequence.new(first:Lerp(state.white, 0.25), first) or colorSequence.new(first, second)
+	context.boxSequenceCount = (context.boxSequenceCount or 0) + 1
+	if context.boxSequenceCount > 512 then context.boxSequences, context.boxSequenceCount = {}, 0 end
+	context.boxSequences[key] = result
+	return result
+end
+
+function EspBox.animation(context, player)
+	local settings = context.settings
+	if settings.boxAnim ~= "Pulse" and settings.boxAnim ~= "Breathe" then return 1, 0 end
+	local time = context.environment.os.clock() * (settings.boxAnimSpeed or 1) + (player and player.UserId % 89 * 0.37 or 0)
+	if settings.boxAnim == "Pulse" then return 0.7 + 0.3 * (0.5 + 0.5 * math.sin(time * 4.2)), 0 end
+	return 1, 0.5 + 0.5 * math.sin(time * 2.6)
+end
+
+function EspBox.inner(context, box)
+	if box.inner then return box.inner end
+	box.inner = box.frame(box.layer, "BoxInner", 3)
+	box.innerStroke = box.stroke(box.inner, 1)
+	box.innerRound = box.make("UICorner", {}, box.inner)
+	box.innerGrad = box.make("UIGradient", {Rotation = 90}, box.innerStroke)
+	return box.inner
+end
+
+function EspBox.quantize(value)
+	return math.floor(value * 200 + 0.5) / 200
+end
+
+function EspBox.fill(context, box, base, gradient, opacity)
+	local environment, settings = context.environment, context.settings
+	local color = EspColor.ink(context.colors, settings.fillColMode, settings.fillCol, base)
+	local second = settings.gradient and gradient or color
+	local key = (settings.gradient and 1 or 2) * 1000000000000000 + EspColor.key(color) * 16777216 + EspColor.key(second)
+	if box.fillKey ~= key or box.fillGS ~= settings.boxGradStyle then
+		box.fillKey, box.fillGS = key, settings.boxGradStyle
+		box.fillGradient.Color = settings.gradient and EspBox.sequence(context, color, second) or environment.ColorSequence.new(color)
+	end
+	local style = settings.fillStyle or "Solid"
+	if box.fillStyleOn == style then return end
+	box.fillStyleOn = style
+	local sequence = environment.NumberSequence
+	local fills = {Solid = function() return sequence.new(0) end,
+		["Fade Down"] = function() return sequence.new(0, 1) end,
+		["Fade Up"] = function() return sequence.new(1, 0) end}
+	box.fillGradient.Transparency = (fills[style] or fills.Solid)()
+	box.fillGradient.Rotation = 90
+end
+
+function EspBox.edge(context, box, base, gradient, opacity, thickness, rotation)
+	local environment, settings = context.environment, context.settings
+	local key = EspColor.key(base) * 16777216 + EspColor.key(gradient)
+	if box.edgeKey ~= key or box.edgeGS ~= settings.boxGradStyle or box.edgeG ~= settings.gradient then
+		box.edgeKey, box.edgeGS, box.edgeG = key, settings.boxGradStyle, settings.gradient
+		box.edgeGradient.Color = settings.gradient and EspBox.sequence(context, base, gradient) or environment.ColorSequence.new(base)
+		if box.innerGrad then box.innerGrad.Color = box.edgeGradient.Color end
+	end
+	local fade = settings.gradient and settings.boxGradStyle == "Role Fade"
+	if box.edgeFade ~= fade then
+		box.edgeFade = fade
+		box.edgeGradient.Transparency = fade and environment.NumberSequence.new(0, 0.7) or environment.NumberSequence.new(0)
+	end
+	box.edgeGradient.Rotation = rotation
+	box.edge.Color = context.colors.white
+	box.edge.Thickness = math.clamp(thickness, 0.5, 8)
+	box.edge.Transparency = EspBox.quantize(1 - opacity)
+end
+
+function EspBox.innerStyle(context, box, rect, style, opacity, thickness, rotation, hasOutline)
+	local environment, settings = context.environment, context.settings
+	local offset, stroke = 0, box.innerStroke
+	if style == "Double" then
+		EspBox.inner(context, box)
+		stroke = box.innerStroke
+		box.innerGrad.Color = box.edgeGradient.Color
+		offset = math.floor(thickness + 2.5)
+		box.innerRound.CornerRadius = environment.UDim.new(0, math.max(0, math.clamp(settings.boxRound, 0, 20) - offset))
+		stroke.Color = context.colors.white
+		stroke.Thickness = math.max(1, thickness * 0.6)
+		stroke.Transparency = EspBox.quantize(1 - opacity * 0.45)
+		box.innerGrad.Rotation = rotation
+	end
+	if style ~= "Double" and hasOutline then
+		EspBox.inner(context, box)
+		stroke = box.innerStroke
+		box.innerGrad.Color = environment.ColorSequence.new(context.colors.white)
+		offset = math.max(1, math.floor((settings.outlineSize or 1) * 0.5 + 0.5))
+		local radius = style == "Rounded" and math.max(0, math.clamp(settings.boxRound, 0, 20) - offset) or 0
+		box.innerRound.CornerRadius = environment.UDim.new(0, radius)
+		stroke.Color = settings.outlineCol or context.colors.black
+		stroke.Thickness = offset
+		stroke.Transparency = EspBox.quantize(1 - opacity * math.clamp((settings.outlineAlpha or 65) / 100, 0, 1))
+	end
+	box.inner.Position = environment.UDim2.fromOffset(rect.x + offset, rect.y + offset)
+	box.inner.Size = environment.UDim2.fromOffset(math.max(2, rect.w - offset * 2), math.max(2, rect.h - offset * 2))
+	box.inner.Visible = true
+end
+
+function EspBox.segments(context, box, rectangle, thickness, style)
+	local x, y, width, height = rectangle.x, rectangle.y, rectangle.w, rectangle.h
+	local line = math.max(1, math.floor(thickness + 0.5))
+	local length = math.min(math.max(math.min(width, height) * math.clamp(context.settings.cornerSize, 5, 50) / 100, 4), math.min(width, height) * 0.45)
+	length = math.max(line + 1, math.floor(length + 0.5))
+	local segments
+	if style == "Corners" then
+		segments = {{x, y, length, line}, {x, y, line, length}, {x + width - length, y, length, line},
+			{x + width - line, y, line, length}, {x, y + height - line, length, line}, {x, y + height - length, line, length},
+			{x + width - length, y + height - line, length, line}, {x + width - line, y + height - length, line, length}}
+	end
+	if style == "Brackets" then
+		local endWidth = math.max(line + 1, math.floor(math.min(length, width * 0.3) + 0.5))
+		segments = {{x, y, line, height}, {x, y, endWidth, line}, {x, y + height - line, endWidth, line},
+			{x + width - line, y, line, height}, {x + width - endWidth, y, endWidth, line},
+			{x + width - endWidth, y + height - line, endWidth, line}}
+	end
+	box.segs = box.segs or {}
+	for index, values in segments do
+		local entry = box.segs[index] or {}
+		entry[1], entry[2], entry[3], entry[4] = values[1], values[2], values[3], values[4]
+		box.segs[index] = entry
+	end
+	EspBox.grow(context, box, #segments)
+	EspBox.hideSegments(box, #segments + 1)
+end
+
+function EspBox.draw(context, box, rectangle, color, alpha, player, focus)
+	local environment, settings = context.environment, context.settings
+	local style = settings.boxStyle or "Corners"
+	if box.role == "Murderer" and settings.murdBox and settings.murdBox ~= "Same" then style = settings.murdBox end
+	local isVisible = settings.box == true and not box.boxOff
+	local segmented = style == "Corners" or style == "Brackets"
+	local full = isVisible and not segmented
+	local glow = settings.boxGlow == true or focus == true
+	local innerOutline = full and style ~= "Double" and settings.outline == true and settings.outlineInner == true
+	if not isVisible or not segmented then EspBox.hideSegments(box, 1) end
+	if box.inner and not (full and (style == "Double" or innerOutline)) then box.inner.Visible = false end
+	box.box.Visible, box.glow.Visible, box.outer.Visible = isVisible, full and glow, full and settings.outline
+	if not isVisible then return end
+
+	local animation, expansion = EspBox.animation(context, player)
+	local extra = expansion > 0 and math.floor(expansion * 2 + 0.5) or 0
+	local padding = math.floor(tonumber(settings.boxPad) or 0)
+	local rect = {x = rectangle.x - extra, y = rectangle.y - extra, w = rectangle.w + extra * 2, h = rectangle.h + extra * 2}
+	if padding ~= 0 then
+		rect = {x = rect.x - padding, y = rect.y - padding, w = math.max(4, rect.w + padding * 2), h = math.max(4, rect.h + padding * 2)}
+	end
+	local opacity = alpha * animation
+	local base = EspColor.ink(context.colors, settings.boxColMode, settings.boxCol, color)
+	local gradient = settings.gradient and EspColor.tone(context.colors, settings.gradientColour) or base
+	local thickness = (tonumber(settings.boxThickness) or 1) * (settings.lineScale or 100) / 100 * (context.lineWidthFactor or 1)
+	if focus then thickness *= (settings.focusScale or 160) / 100 end
+	local position, size = environment.UDim2.fromOffset(rect.x, rect.y), environment.UDim2.fromOffset(rect.w, rect.h)
+	box.box.Position, box.box.Size = position, size
+	local radius = (style == "Rounded" or style == "Double") and math.clamp(settings.boxRound, 0, 20) or 0
+	local corner = environment.UDim.new(0, radius)
+	box.round.CornerRadius, box.glowRound.CornerRadius, box.outerRound.CornerRadius = corner, corner, corner
+	local rotation = math.floor(settings.boxGradAngle or 90) % 360
+	if full and settings.outline then
+		box.outer.Position, box.outer.Size = position, size
+		box.outerStroke.Color = settings.outlineCol or context.colors.black
+		box.outerStroke.Thickness = thickness + (settings.outlineSize or 2)
+		box.outerStroke.Transparency = EspBox.quantize(1 - opacity * math.clamp((settings.outlineAlpha or 65) / 100, 0, 1))
+	end
+	box.box.BackgroundColor3 = context.colors.white
+	box.box.BackgroundTransparency = settings.boxFill and EspBox.quantize(1 - math.clamp(settings.boxFillAlpha / 100, 0, 1) * opacity) or 1
+	if settings.boxFill then EspBox.fill(context, box, base, gradient, opacity) end
+	if full then EspBox.edge(context, box, base, gradient, opacity, thickness, rotation) end
+	if not full then box.edge.Transparency = 1 end
+	if full and glow then EspBox.glow(context, box, position, size, base, opacity, thickness, focus) end
+	if full and (style == "Double" or innerOutline) then EspBox.innerStyle(context, box, rect, style, opacity, thickness, rotation, innerOutline) end
+	if segmented then EspBox.segments(context, box, rect, thickness, style) end
+end
+
+function EspBox.glow(context, box, position, size, base, opacity, thickness, focus)
+	local settings = context.settings
+	local pulse = settings.pulse and 0.72 + math.sin(context.environment.os.clock() * settings.pulseSpeed * math.pi * 2) * 0.28 or 1
+	if focus and not settings.pulse then pulse = 0.75 + math.sin(context.environment.os.clock() * 5) * 0.25 end
+	local strength = math.clamp(settings.glowStrength / 100, 0, 0.6)
+	if focus and not settings.boxGlow then strength = 0.3 end
+	box.glow.Position, box.glow.Size = position, size
+	box.glowStroke.Color = EspColor.ink(context.colors, settings.glowColMode, settings.glowCol, base)
+	box.glowStroke.Thickness = thickness + (settings.glowSize or 5) * (settings.lineScale or 100) / 100 * (context.lineWidthFactor or 1)
+	box.glowStroke.Transparency = EspBox.quantize(1 - opacity * strength * pulse)
+end
+
+local EspRole = {}
+local ESP_ROLE_MAP = {
+	Zombie = "Murderer", Vampire = "Murderer", Freezer = "Murderer",
+	Survivor = "Innocent", Hunter = "Innocent", Villager = "Innocent", Runner = "Innocent",
+}
+local ESP_UNDEAD = {Zombie = true, Vampire = true, Freezer = true}
+local ESP_ROLE_FIELDS = {Murderer = "murderer", Sheriff = "sheriff", Hero = "hero", Innocent = "innocent"}
+
+function EspRole.create(clock)
+	return {clock = clock, heroes = setmetatable({}, {__mode = "k"}), weapons = setmetatable({}, {__mode = "k"}),
+		parts = setmetatable({}, {__mode = "k"})}
+end
+
+function EspRole.of(state, player, roles)
+	if type(player) == "table" then return player.FakeRole end
+
+	local data = roles and roles[player.Name]
+	local role = data and data.Role
+	if data and (data.Dead == true or data.Killed == true) and not ESP_UNDEAD[role] then role = nil end
+	role = ESP_ROLE_MAP[role] or role
+	if role == "Innocent" and EspRole.hasHeroGun(state, player) then role = "Hero" end
+	if not ESP_ROLE_FIELDS[role] then return nil end
+	return role
+end
+
+function EspRole.hasHeroGun(state, player)
+	local now, hero = state.clock(), state.heroes[player]
+	if not hero then
+		hero = {at = -1, hasGun = false}
+		state.heroes[player] = hero
+	end
+	if now - hero.at > 0.12 then
+		hero.at = now
+		local character, backpack = player.Character, player:FindFirstChild("Backpack")
+		hero.hasGun = not not (character and character:FindFirstChild("Gun") or backpack and backpack:FindFirstChild("Gun"))
+	end
+	return hero.hasGun
+end
+
+function EspRole.shown(settings, role)
+	return settings[ESP_ROLE_FIELDS[role] or "noRole"]
+end
+
+function EspRole.weaponScan(player, role)
+	local character, backpack = player.Character, player:FindFirstChild("Backpack")
+	if character and character:FindFirstChild("Knife") then return "Knife", true end
+	if character and character:FindFirstChild("Gun") then return "Gun", true end
+	if backpack and backpack:FindFirstChild("Knife") then return "Knife", false end
+	if backpack and backpack:FindFirstChild("Gun") then return "Gun", false end
+	if role == "Murderer" then return "Knife", false end
+	if role == "Sheriff" or role == "Hero" then return "Gun", false end
+	return nil, false
+end
+
+function EspRole.weaponOf(state, player, role)
+	local now, cached, character = state.clock(), state.weapons[player], player.Character
+	if cached and now - cached.at < 0.15 and cached.role == role and cached.character == character then
+		return cached.name, cached.equipped
+	end
+
+	local name, equipped = EspRole.weaponScan(player, role)
+	state.weapons[player] = {at = now, role = role, character = character, name = name, equipped = equipped}
+	return name, equipped
+end
+
+function EspRole.partsOf(state, character)
+	local now, parts = state.clock(), state.parts[character]
+	if parts and parts.root and parts.hum then
+		if now - parts.at < 1 and parts.root.Parent == character and parts.hum.Parent == character then return parts end
+	end
+	if parts and (not parts.root or not parts.hum) and now - parts.at < 0.25 then return parts end
+	parts = parts or {}
+	parts.at = now
+	parts.hum = character:FindFirstChildOfClass("Humanoid")
+	parts.root = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+	parts.head = character:FindFirstChild("Head") or parts.root
+	state.parts[character] = parts
+	return parts
+end
+
+local EspProjection = {}
+
+function EspProjection.create(environment)
+	return {environment = environment, bounds = setmetatable({}, {__mode = "k"}), partKinds = {}}
+end
+
+function EspProjection.bounds(state, character, root)
+	local now, bounds = state.environment.os.clock(), state.bounds[character]
+	if bounds and now - bounds.at <= 0.15 then return bounds.top, bounds.bottom end
+
+	local top, bottom
+	for _, part in character:GetChildren() do
+		local isPart = state.partKinds[part.ClassName]
+		if isPart == nil then
+			isPart = part:IsA("BasePart")
+			state.partKinds[part.ClassName] = isPart
+		end
+		if not isPart then continue end
+		local half, position = part.Size.Y * 0.5, part.Position.Y
+		local high, low = position + half, position - half
+		top = top and math.max(top, high) or high
+		bottom = bottom and math.min(bottom, low) or low
+	end
+
+	local y = root.Position.Y
+	bounds = {at = now, top = (top or y + 3) - y, bottom = (bottom or y - 3) - y}
+	state.bounds[character] = bounds
+	return bounds.top, bounds.bottom
+end
+
+function EspProjection.point(state, camera, position)
+	local projection = state.projection
+	if projection and projection.enabled then
+		local point = projection.frame:PointToObjectSpace(position)
+		local depth = -point.Z
+		if depth > 0.08 then
+			return state.environment.Vector3.new(projection.centerX + point.X / depth * projection.focal,
+				projection.centerY - point.Y / depth * projection.focal, depth)
+		end
+	end
+	return camera:WorldToViewportPoint(position)
+end
+
+function EspProjection.project(state, character, root, camera, boxWidth)
+	local top, bottom = EspProjection.bounds(state, character, root)
+	local position = root.Position
+	local vector = state.environment.Vector3
+	local upper = EspProjection.point(state, camera, vector.new(position.X, position.Y + top + 0.12, position.Z))
+	local lower = EspProjection.point(state, camera, vector.new(position.X, position.Y + bottom - 0.08, position.Z))
+	if upper.Z <= 0.08 or lower.Z <= 0.08 then return nil end
+
+	local viewport = camera.ViewportSize
+	local height = math.abs(lower.Y - upper.Y)
+	if height < 2 or height > viewport.Y * 4 then return nil end
+	local width = height * math.clamp((boxWidth or 50) / 100, 0.2, 1)
+	local x, y = (upper.X + lower.X) * 0.5 - width * 0.5, math.min(upper.Y, lower.Y)
+	if x + width < 0 or x > viewport.X or y + height < 0 or y > viewport.Y then return nil end
+	if width < 12 then x, width = x - (12 - width) * 0.5, 12 end
+	if height < 22 then y, height = y - (22 - height) * 0.5, 22 end
+	return {x = x, y = y, w = width, h = height}
+end
+
+function EspProjection.smooth(record, rectangle, viewport, smooth, delta, center)
+	local factor = math.clamp(smooth, 0, 95) / 100
+	local alpha = factor > 0 and 1 - factor ^ (math.clamp(delta or 1 / 60, 0.001, 0.1) * 60) or 1
+	center = center or {X = rectangle.x + rectangle.w * 0.5, Y = rectangle.y + rectangle.h * 0.5}
+	local relative = {x = rectangle.x - center.X, y = rectangle.y - center.Y, w = rectangle.w, h = rectangle.h}
+	local previous = record.rect and record.rel
+	if previous then
+		local difference = math.abs(relative.x - previous.x) + math.abs(relative.y - previous.y)
+			+ math.abs(relative.w - previous.w) + math.abs(relative.h - previous.h)
+		if difference < math.max(viewport.X, viewport.Y) * 0.35 then
+			for _, key in {"x", "y", "w", "h"} do relative[key] = previous[key] + (relative[key] - previous[key]) * alpha end
+		end
+	end
+
+	record.rel = relative
+	record.rect = {x = center.X + relative.x, y = center.Y + relative.y, w = relative.w, h = relative.h}
+	local value = record.rect
+	return {x = math.floor(value.x + 0.5), y = math.floor(value.y + 0.5),
+		w = math.max(1, math.floor(value.w + 0.5)), h = math.max(1, math.floor(value.h + 0.5))}
+end
+
+function EspProjection.inView(state, camera, position)
+	if (position - camera.CFrame.Position).Magnitude <= 12 then return true end
+	local point, viewport = EspProjection.point(state, camera, position), camera.ViewportSize
+	local marginX, marginY = viewport.X * 0.35, viewport.Y * 0.35
+	return not (point.Z < -6 or point.X < -marginX or point.X > viewport.X + marginX
+		or point.Y < -marginY or point.Y > viewport.Y + marginY), point
+end
+
+function EspProjection.alpha(settings, distance, isVisible)
+	local alpha = settings.visCheck and settings.dimHidden and not isVisible and settings.hiddenStyle ~= "Grey" and 0.72 or 1
+	if settings.fade then
+		local start = settings.maxDist * math.clamp(settings.fadeFrom, 10, 95) / 100
+		if distance > start then alpha *= math.clamp(1 - (distance - start) / math.max(settings.maxDist - start, 1), 0.45, 1) end
+	end
+	return alpha * math.clamp((settings.opacity or 100) / 100, 0.05, 1)
+end
+
+function EspProjection.visible(context, origin, target, character)
+	local environment, workspace = context.environment, context.workspace
+	local parameters = environment.RaycastParams.new()
+	parameters.FilterType = environment.Enum.RaycastFilterType.Exclude
+	local ignored = {character, workspace.CurrentCamera}
+	if context.player.Character then table.insert(ignored, context.player.Character) end
+	parameters.FilterDescendantsInstances = ignored
+	parameters.IgnoreWater = true
+	local direction = target.Position - origin
+	if direction.Magnitude < 0.05 then return true end
+
+	for _ = 1, 6 do
+		local hit = workspace:Raycast(origin, direction, parameters)
+		if not hit then return true end
+		if hit.Instance.Transparency < 0.3 then return false end
+		table.insert(ignored, hit.Instance)
+		parameters.FilterDescendantsInstances = ignored
+	end
+	return false
+end
+
+local EspLabel = {}
+local ESP_FONT_ENUM = {
+	Fredoka = "FredokaOne", ["Luckiest Guy"] = "LuckiestGuy", Bangers = "Bangers", Cartoon = "Cartoon", Arcade = "Arcade",
+	["Sci-Fi"] = "SciFi", Michroma = "Michroma", Jura = "Jura", Sarpanch = "Sarpanch", Oswald = "Oswald", Ubuntu = "Ubuntu",
+	Nunito = "Nunito", Roboto = "Roboto", ["Roboto Condensed"] = "RobotoCondensed", Titillium = "TitilliumWeb",
+	["Builder Sans"] = "BuilderSans", Arimo = "Arimo", Highway = "Highway", ["Denk One"] = "DenkOne", Creepster = "Creepster",
+	["Permanent Marker"] = "PermanentMarker", Kalam = "Kalam", ["Indie Flower"] = "IndieFlower", ["Patrick Hand"] = "PatrickHand",
+	Amatic = "AmaticSC", ["Special Elite"] = "SpecialElite", ["Grenze Gotisch"] = "GrenzeGotisch", Bodoni = "Bodoni",
+	Merriweather = "Merriweather", Garamond = "Garamond", Antique = "Antique", Fantasy = "Fantasy", Montserrat = "Montserrat",
+	Code = "RobotoMono", ["Source Sans"] = "SourceSans",
+}
+
+function EspLabel.root(state)
+	if state.labelGui and state.labelGui.Parent then return state.labelGui end
+	local context, environment = state.context, state.context.environment
+	local holder = context.coreGui
+	if not holder or not holder.Parent then holder = context.player:FindFirstChildOfClass("PlayerGui") end
+	if not holder then return nil end
+	local gui = environment.Instance.new("ScreenGui")
+	gui.Name, gui.IgnoreGuiInset, gui.ResetOnSpawn = "PulseESP2Text", true, false
+	gui.DisplayOrder, gui.ZIndexBehavior = 10, environment.Enum.ZIndexBehavior.Sibling
+	gui.Parent = holder
+	state.labelGui, state.labels = gui, {}
+	return gui
+end
+
+function EspLabel.create(state, player)
+	local gui = EspLabel.root(state)
+	if not gui then return nil end
+	local environment = state.context.environment
+	local function create(class, properties, parent)
+		local object = environment.Instance.new(class)
+		for key, value in properties do object[key] = value end
+		object.Parent = parent
+		return object
+	end
+	local function frame(name)
+		return create("Frame", {Name = name, BorderSizePixel = 0, BackgroundTransparency = 1,
+			Active = false, Visible = false}, gui)
+	end
+	local function label(parent, name)
+		local enum = environment.Enum
+		return create("TextLabel", {Name = name, BackgroundTransparency = 1, BorderSizePixel = 0, Active = false,
+			RichText = false, TextScaled = false, TextWrapped = false, TextTruncate = enum.TextTruncate.AtEnd,
+			TextXAlignment = enum.TextXAlignment.Center, TextYAlignment = enum.TextYAlignment.Center,
+			TextStrokeColor3 = environment.Color3.fromRGB(5, 8, 13), Text = "", ZIndex = 3}, parent)
+	end
+	local top, bottom = frame("Name_" .. tostring(player.UserId)), frame("Info_" .. tostring(player.UserId))
+	local weaponShadow = create("ImageLabel", {Name = "WeaponShadow", BackgroundTransparency = 1, BorderSizePixel = 0,
+		ScaleType = environment.Enum.ScaleType.Fit, ImageColor3 = state.colors.black, Visible = false, ZIndex = 2}, bottom)
+	local weapon = create("ImageLabel", {Name = "Weapon", BackgroundTransparency = 1, BorderSizePixel = 0,
+		ScaleType = environment.Enum.ScaleType.Fit, Visible = false, ZIndex = 3}, bottom)
+	local result = {top = top, bottom = bottom, name = label(top, "Name"), handle = label(top, "Username"),
+		role = label(bottom, "Role"), distance = label(bottom, "Distance"), weaponText = label(bottom, "wtext"),
+		weapon = weapon, weaponShadow = weaponShadow,
+		measures = {}, createLabel = label}
+	state.labels[player] = result
+	return result
+end
+
+function EspLabel.font(state, name, weight)
+	local environment = state.context.environment
+	local enum, font = environment.Enum, environment.Font
+	state.fontFaces = state.fontFaces or {}
+	state.fontFaces[name] = state.fontFaces[name] or {}
+	local key = weight or enum.FontWeight.Medium
+	if state.fontFaces[name][key] then return state.fontFaces[name][key] end
+
+	local families = {Gotham = "GothamSSm", GothamSSm = "GothamSSm", Code = "RobotoMono",
+		["Source Sans"] = "SourceSansPro", Montserrat = "Montserrat"}
+	local family, result = families[name], nil
+	if not family and ESP_FONT_ENUM[name] then
+		local ok, face = pcall(function() return font.fromEnum(enum.Font[ESP_FONT_ENUM[name]]) end)
+		if ok and face then
+			result = face
+			if weight then
+				local made, weighted = pcall(font.new, face.Family, weight)
+				if made and weighted then result = weighted end
+			end
+		end
+	end
+	if not result and (family or not ESP_FONT_ENUM[name]) then
+		local ok, face = pcall(font.new, "rbxasset://fonts/families/" .. (family or "GothamSSm") .. ".json", key)
+		if ok then result = face end
+	end
+	result = result or font.fromEnum(enum.Font.GothamMedium)
+	state.fontFaces[name][key] = result
+	return result
+end
+
+function EspLabel.metricFont(state, name)
+	local enum = state.context.environment.Enum
+	local ok, value = pcall(function()
+		local id = ESP_FONT_ENUM[name]
+		return id and enum.Font[id]
+	end)
+	return ok and value or enum.Font.GothamMedium
+end
+
+function EspLabel.measure(state, labels, key, text, size, font, limit)
+	local cached = labels.measures[key]
+	if cached and cached.text == text and cached.size == size and cached.font == font and cached.limit == limit then
+		return cached.width, cached.height
+	end
+	local context, environment = state.context, state.context.environment
+	local ok, result = pcall(function()
+		return context.textService:GetTextSize(text, size, font, environment.Vector2.new(100000, 100000))
+	end)
+	local width = ok and math.ceil(result.X) or math.min(limit, #text * size * 0.55)
+	local height = ok and math.ceil(result.Y) or size + 3
+	width, height = math.min(math.max(width + 2, 1), limit), math.max(height + 2, size + 3)
+	labels.measures[key] = {text = text, size = size, font = font, limit = limit, width = width, height = height}
+	return width, height
+end
+
+function EspLabel.position(state, frame, rect, width, height, y)
+	local environment = state.context.environment
+	local viewport = state.viewport
+	local center = rect.x + rect.w * 0.5
+	local x = math.clamp(center - width * 0.5, 4, math.max(4, viewport.X - 4 - width))
+	y = math.clamp(y, 4, math.max(4, viewport.Y - 4 - height))
+	frame.Position = environment.UDim2.fromOffset(math.floor(x + 0.5), math.floor(y + 0.5))
+	frame.Size, frame.Visible = environment.UDim2.fromOffset(width, height), true
+	return y
+end
+
+function EspLabel.text(state, label, options)
+	local environment, settings = state.context.environment, state.settings
+	label.Visible = options.text ~= ""
+	if options.text == "" then return end
+	label.Text, label.FontFace, label.TextSize = options.text, options.font, options.size
+	label.TextColor3, label.TextTransparency = options.color, 1 - options.opacity
+	local outline = settings.textOutline == false and 1 or EspBox.quantize(1 - options.opacity * math.clamp((tonumber(settings.textOutlineAlpha) or 60) / 100, 0, 1))
+	label.TextStrokeTransparency = outline
+	label.Position = environment.UDim2.fromOffset(options.x, options.y)
+	label.Size = environment.UDim2.fromOffset(options.width, options.height)
+end
+
+function EspLabel.name(state, labels, player, rectangle, infoY, style)
+	local settings, environment = state.settings, state.context.environment
+	if not settings.name then labels.top.Visible = false; return infoY end
+	local main, handle = EspText.name(state.text, player, settings.nameMode)
+	main = EspText.case(state.text, main, settings.nameCase)
+	if handle ~= "" then handle = EspText.case(state.text, handle, settings.nameCase) end
+	local available = math.max(1, style.limit - 4)
+	local nameWidth, nameHeight = EspLabel.measure(state, labels, "name", main, style.nameSize, style.metricFont, available)
+	local handleWidth, handleHeight = 0, 0
+	if handle ~= "" then handleWidth, handleHeight = EspLabel.measure(state, labels, "handle", handle, style.infoSize, style.metricFont, available) end
+	local width, height = math.min(style.limit, math.max(nameWidth, handleWidth) + 4), nameHeight + handleHeight
+	local y = rectangle.y - (tonumber(settings.nameOffset) or 3) - height
+	if settings.namePos == "Below" then y = infoY end
+	local placed = EspLabel.position(state, labels.top, rectangle, width, height, y)
+	labels.top.BackgroundColor3 = EspColor.tone(state.colors, settings.plateColour)
+	labels.top.BackgroundTransparency = 1
+	local weights = environment.Enum.FontWeight
+	local font = EspLabel.font(state, settings.textFont, weights[settings.nameWeight or "SemiBold"] or weights.SemiBold)
+	EspLabel.text(state, labels.name, {text = main, font = font, size = style.nameSize, color = style.nameColor,
+		opacity = style.opacity, x = 2, y = 0, width = math.max(1, width - 4), height = nameHeight})
+	EspLabel.text(state, labels.handle, {text = handle, font = EspLabel.font(state, settings.textFont, weights.Medium),
+		size = style.infoSize, color = style.infoColor, opacity = style.opacity, x = 2, y = nameHeight,
+		width = math.max(1, width - 4), height = handleHeight})
+	if settings.namePos == "Below" then return placed + height + 2 end
+	return infoY
+end
+
+function EspLabel.info(state, labels, rectangle, infoY, data, style)
+	local settings, environment = state.settings, state.context.environment
+	local scale = math.clamp(rectangle.h / 110, 0.75, 1)
+	local textSize = math.max(math.floor((style.infoSize + 1) * scale + 0.5), 9)
+	local iconSize, gap = math.max(math.floor((style.infoSize + 4) * scale + 0.5), 11), math.max(math.floor(5 * scale + 0.5), 3)
+	local entries = {}
+	if data.ghostTag then
+		if not labels.ghost then labels.ghost = labels.createLabel(labels.bottom, "ghost") end
+		local ghost = data.ghostTag
+		if settings.infoCase == "UPPER" then ghost = EspText.upper(state.text, ghost) end
+		table.insert(entries, {kind = "ghost", text = ghost, color = data.roleColor:Lerp(state.colors.white, 0.2), padding = 12})
+	end
+	if settings.roleText and data.role then
+		local role = EspText.role(state.text, data.role, settings.roleStyle, state.context.translation.tr)
+		if settings.infoCase == "UPPER" then role = EspText.upper(state.text, role) end
+		table.insert(entries, {kind = "role", text = role, color = data.roleColor:Lerp(state.colors.white, 0.2)})
+	end
+	if settings.weaponIcon and data.weapon and settings.weaponStyle ~= "Text" then
+		table.insert(entries, {kind = "weapon", icon = data.weapon == "Knife" and "sword" or "crosshair", color = data.roleColor, dim = not data.equipped})
+	end
+	if settings.weaponIcon and data.weapon and settings.weaponStyle ~= "Icon" then
+		local weapon = state.context.translation.tr(data.weapon)
+		if settings.infoCase == "UPPER" then weapon = EspText.upper(state.text, weapon) end
+		local color = data.equipped and data.roleColor:Lerp(state.colors.white, 0.2)
+			or data.roleColor:Lerp(environment.Color3.fromRGB(188, 188, 188), 0.5)
+		table.insert(entries, {kind = "weaponText", text = weapon, color = color})
+	end
+	if settings.distance and type(data.distance) == "number" then
+		local distance = EspText.distance(state.text, data.distance, settings.distUnit)
+		if settings.infoCase == "UPPER" then distance = EspText.upper(state.text, distance) end
+		table.insert(entries, {kind = "distance", text = distance, color = style.infoColor})
+	end
+	local total, height = 0, 0
+	for index, entry in entries do
+		if entry.text then
+			entry.width, entry.height = EspLabel.measure(state, labels, entry.kind, entry.text, textSize, style.metricFont, style.limit)
+			if entry.padding then entry.width = math.min(entry.width + entry.padding, style.limit) end
+		end
+		if entry.icon then entry.width, entry.height = iconSize, iconSize end
+		total += entry.width + (index > 1 and gap or 0)
+		height = math.max(height, entry.height)
+	end
+	labels.role.Visible, labels.distance.Visible, labels.weaponText.Visible = false, false, false
+	labels.weapon.Visible, labels.weaponShadow.Visible = false, false
+	if labels.ghost then labels.ghost.Visible = false end
+	if total <= 0 or height <= 0 then labels.bottom.Visible = false; return end
+	EspLabel.position(state, labels.bottom, rectangle, total, height, infoY - 1)
+	local x = 0
+	for _, entry in entries do
+		local y = math.floor((height - entry.height) * 0.5 + 0.5)
+		if entry.text then
+			local label = labels[entry.kind]
+			EspLabel.text(state, label, {text = entry.text, font = EspLabel.font(state, settings.textFont, environment.Enum.FontWeight.SemiBold),
+				size = textSize, color = entry.color, opacity = style.opacity, x = x, y = y, width = entry.width, height = entry.height})
+		end
+		if entry.icon then EspLabel.icon(state, labels, entry, style.opacity, x, y) end
+		x += entry.width + gap
+	end
+end
+
+function EspLabel.icon(state, labels, entry, opacity, x, y)
+	local environment = state.context.environment
+	local icon, shadow = labels.weapon, labels.weaponShadow
+	if labels.icon ~= entry.icon then
+		labels.icon = entry.icon
+		pcall(function() state.context.nova.Icons.apply(icon, entry.icon) end)
+		shadow.Image, shadow.ImageRectOffset, shadow.ImageRectSize = icon.Image, icon.ImageRectOffset, icon.ImageRectSize
+	end
+	local strength = entry.dim and 0.72 or 1
+	icon.Position, icon.Size = environment.UDim2.fromOffset(x, y), environment.UDim2.fromOffset(entry.width, entry.height)
+	icon.ImageColor3, icon.ImageTransparency, icon.Visible = entry.color, EspBox.quantize(1 - opacity * strength), true
+	shadow.Position, shadow.Size = environment.UDim2.fromOffset(x + 1, y + 1), environment.UDim2.fromOffset(entry.width, entry.height)
+	shadow.ImageTransparency, shadow.Visible = EspBox.quantize(1 - opacity * 0.7 * strength), state.settings.textOutline ~= false
+end
+
+function EspLabel.update(state, player, rectangle, data)
+	if data.alpha <= 0 or state.viewport.X < 12 or state.viewport.Y < 12 then EspLabel.hide(state, player); return end
+	local labels = state.labels[player]
+	if not labels or not labels.top.Parent then labels = EspLabel.create(state, player) end
+	if not labels then return end
+	local settings, environment = state.settings, state.context.environment
+	local opacity = EspBox.quantize(math.clamp(0.35 + math.clamp(data.alpha, 0, 1) * 0.65, 0, 1))
+	local function textSize(value) return math.max(6, math.floor(value * (settings.textScale or 100) / 100 + 0.5)) end
+	local style = {opacity = opacity, nameSize = textSize(math.clamp(tonumber(settings.textSize) or 12, 9, 28)) + (data.focus and 2 or 0),
+		infoSize = textSize(math.clamp(tonumber(settings.infoSize) or 10, 8, 24)),
+		limit = math.min(math.max(tonumber(settings.labelWidth) or 240, 40), math.max(1, state.viewport.X - 8)),
+		metricFont = EspLabel.metricFont(state, settings.textFont)}
+	style.nameColor = settings.textMatch and data.color or EspColor.tone(state.colors, settings.nameColour)
+	style.infoColor = settings.textMatch and data.color or EspColor.tone(state.colors, settings.infoColour)
+	local infoY = EspLabel.name(state, labels, player, rectangle, rectangle.y + rectangle.h + 5, style)
+	EspLabel.info(state, labels, rectangle, infoY, data, style)
+end
+
+function EspLabel.gameNames(state)
+	local player, settings = state.context.player, state.settings
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if settings.on and settings.name and settings.hideGameNames then
+		if state.savedNameDistance == nil then
+			local distance = humanoid and humanoid.NameDisplayDistance or player.NameDisplayDistance
+			state.savedNameDistance = distance and distance > 0 and distance or 100
+		end
+		if player.NameDisplayDistance ~= 0 then pcall(function() player.NameDisplayDistance = 0 end) end
+		if humanoid and humanoid.NameDisplayDistance ~= 0 then pcall(function() humanoid.NameDisplayDistance = 0 end) end
+		return
+	end
+	EspLabel.restoreNames(state)
+end
+
+function EspLabel.restoreNames(state)
+	if state.savedNameDistance == nil then return end
+	local player, distance = state.context.player, state.savedNameDistance
+	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	pcall(function() player.NameDisplayDistance = distance end)
+	if humanoid then pcall(function() humanoid.NameDisplayDistance = distance end) end
+	state.savedNameDistance = nil
+end
+
+function EspLabel.hide(state, player)
+	local labels = state.labels[player]
+	if not labels then return end
+	labels.top.Visible, labels.bottom.Visible = false, false
+end
+
+function EspLabel.release(state, player)
+	local labels = state.labels[player]
+	if not labels then return end
+	pcall(function() labels.top:Destroy() end)
+	pcall(function() labels.bottom:Destroy() end)
+	state.labels[player] = nil
+end
+
+local EspLine = {}
+
+function EspLine.create(context, object, name, level)
+	local frame = object.frame(object.layer, name, level or 4)
+	frame.AnchorPoint = context.environment.Vector2.new(0.5, 0.5)
+	return {frame = frame, stroke = object.stroke(frame, 1)}
+end
+
+function EspLine.draw(context, line, options)
+	local environment, settings = context.environment, context.settings
+	local from, to = options.from, options.to
+	local dx, dy = to.X - from.X, to.Y - from.Y
+	local length = math.sqrt(dx * dx + dy * dy)
+	local precision = length < 60 and 1 or 4
+	line.frame.Position = environment.UDim2.fromOffset(math.floor((from.X + to.X) * 0.5 + 0.5), math.floor((from.Y + to.Y) * 0.5 + 0.5))
+	line.frame.Size = environment.UDim2.fromOffset(math.max(math.floor(length + 0.5), 1), math.max(1, math.floor(options.width + 0.5)))
+	line.frame.Rotation = math.floor(math.deg(math.atan2(dy, dx)) * precision + 0.5) / precision
+	line.frame.BackgroundColor3, line.frame.BackgroundTransparency = options.color, EspBox.quantize(1 - options.alpha)
+	line.stroke.Enabled, line.stroke.Transparency = not not options.outline, 1
+	if options.outline then
+		line.stroke.Color = settings.outlineCol or context.colors.black
+		line.stroke.Transparency = EspBox.quantize(1 - math.min(options.alpha * 1.15 * math.clamp((settings.outlineAlpha or 65) / 65, 0, 1.5), 1))
+	end
+	line.frame.Visible = true
+end
+
+local EspTracer = {}
+
+function EspTracer.create(context, box)
+	return EspLine.create(context, box, "Tracer")
+end
+
+function EspTracer.origin(state, camera)
+	local environment, settings = state.context.environment, state.settings
+	local viewport = camera.ViewportSize
+	if settings.tracerFrom == "Top" then return environment.Vector2.new(viewport.X * 0.5, 2) end
+	if settings.tracerFrom == "Middle" then return environment.Vector2.new(viewport.X * 0.5, viewport.Y * 0.5) end
+	if settings.tracerFrom == "Mouse" then return state.context.inputService:GetMouseLocation() end
+	if settings.tracerFrom == "Character" then
+		local character = state.context.player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if root then
+			local position = camera:WorldToViewportPoint(root.Position - environment.Vector3.new(0, 2.6, 0))
+			if position.Z > 0.08 then return environment.Vector2.new(position.X, position.Y) end
+		end
+	end
+	return environment.Vector2.new(viewport.X * 0.5, viewport.Y - 2)
+end
+
+function EspTracer.point(state, camera, position)
+	local environment, settings = state.context.environment, state.settings
+	local viewport = camera.ViewportSize
+	local point = camera.CFrame:PointToObjectSpace(position)
+	local magnitude = math.sqrt(point.X * point.X + point.Z * point.Z)
+	local x, y = 0, -1
+	if magnitude >= 0.001 then x, y = point.X / magnitude, point.Z / magnitude end
+	local avatar = settings.radarStyle == "Avatar"
+	local half = math.clamp(settings.arrowSize, 5, 26) * (avatar and 3 or 2) * 0.5 * (avatar and 1 or math.sqrt(2))
+	local marginX, marginY = math.max(half, settings.ringText and 36 or 0) + 4, half + (settings.ringText and 19 or 0) + 4
+	local available = math.max(0, math.min(viewport.X * 0.5 - marginX, viewport.Y * 0.5 - marginY))
+	local radius = math.clamp(settings.ringRadius, math.min(60, available), available)
+	if settings.markerPos == "Screen Edge" then
+		local width = math.max(20, viewport.X * 0.5 - marginX - 26)
+		local height = math.max(20, viewport.Y * 0.5 - marginY - 26)
+		radius = math.min(width / math.max(math.abs(x), 0.0001), height / math.max(math.abs(y), 0.0001))
+	end
+	return environment.Vector2.new(viewport.X * 0.5 + x * radius, viewport.Y * 0.5 + y * radius), math.deg(math.atan2(y, x)) + 90
+end
+
+function EspTracer.draw(state, object, origin, target, color, alpha, role)
+	local environment, settings, context = state.context.environment, state.settings, state.boxContext
+	local line = object.tracer
+	if settings.tracerMurderer and role ~= "Murderer" then line.frame.Visible = false; return end
+	local tint = settings.tracerRole and color or EspColor.tone(state.colors, settings.tracerColour)
+	local fade = settings.tracerStyle == "Fade"
+	local width = (tonumber(settings.tracerThickness) or 1) * (settings.lineScale or 100) / 100 * (context.lineWidthFactor or 1)
+	EspLine.draw(context, line, {from = origin, to = target, width = width, color = tint,
+		alpha = alpha * settings.tracerAlpha / 100, outline = settings.outline and not fade})
+	if not fade and not object.tracerGrad then return end
+	if not object.tracerGrad then
+		local keypoint = environment.NumberSequenceKeypoint
+		object.tracerGrad = object.make("UIGradient", {Transparency = environment.NumberSequence.new({keypoint.new(0, 0.95),
+			keypoint.new(0.6, 0.4), keypoint.new(1, 0)})}, line.frame)
+	end
+	object.tracerGrad.Enabled = fade
+end
+
+local EspSkeleton = {}
+local ESP_RIGS = {
+	R15 = {
+		points = {{"Head"}, {"UpperTorso", "NeckRigAttachment", joint = true}, {"UpperTorso", "WaistRigAttachment"},
+			{"LowerTorso", "LeftHipRigAttachment", "RightHipRigAttachment", joint = true},
+			{"LeftUpperArm", "LeftShoulderRigAttachment", joint = true}, {"LeftLowerArm", "LeftElbowRigAttachment", joint = true},
+			{"LeftHand", "LeftGripAttachment"}, {"RightUpperArm", "RightShoulderRigAttachment", joint = true},
+			{"RightLowerArm", "RightElbowRigAttachment", joint = true}, {"RightHand", "RightGripAttachment"},
+			{"LeftUpperLeg", "LeftHipRigAttachment", joint = true}, {"LeftLowerLeg", "LeftKneeRigAttachment", joint = true},
+			{"LeftFoot", "LeftFootAttachment"}, {"RightUpperLeg", "RightHipRigAttachment", joint = true},
+			{"RightLowerLeg", "RightKneeRigAttachment", joint = true}, {"RightFoot", "RightFootAttachment"}},
+		bones = {{1, 2}, {2, 3}, {3, 4}, {2, 5}, {5, 6}, {6, 7}, {2, 8}, {8, 9}, {9, 10}, {4, 11}, {11, 12}, {12, 13}, {4, 14}, {14, 15}, {15, 16}},
+	},
+	R6 = {
+		points = {{"Head"}, {"Torso", 0, 0.5, joint = true}, {"Torso", 0, -0.5, joint = true},
+			{"Left Arm", 0, 0.25, joint = true}, {"Left Arm", 0, -0.5}, {"Right Arm", 0, 0.25, joint = true},
+			{"Right Arm", 0, -0.5}, {"Left Leg", 0, 0.5, joint = true}, {"Left Leg", 0, -0.5},
+			{"Right Leg", 0, 0.5, joint = true}, {"Right Leg", 0, -0.5}},
+		bones = {{1, 2}, {2, 3}, {2, 4}, {4, 5}, {2, 6}, {6, 7}, {3, 8}, {8, 9}, {3, 10}, {10, 11}},
+	},
+}
+
+function EspSkeleton.references(character, rig)
+	local result = {}
+	for index, point in rig.points do
+		local part = character:FindFirstChild(point[1])
+		local reference = false
+		if part and part:IsA("BasePart") then
+			reference = {part = part}
+			if type(point[2]) == "number" then reference.x, reference.y = point[2], point[3] end
+			if type(point[2]) == "string" then
+				local attachment = part:FindFirstChild(point[2])
+				local other = point[3] and part:FindFirstChild(point[3])
+				if attachment and attachment:IsA("Attachment") then
+					reference = {att = attachment, att2 = other and other:IsA("Attachment") and other or nil}
+				end
+			end
+		end
+		result[index] = reference
+	end
+	return result
+end
+
+function EspSkeleton.position(environment, reference)
+	if reference.att then
+		if reference.att2 then return (reference.att.WorldPosition + reference.att2.WorldPosition) * 0.5 end
+		return reference.att.WorldPosition
+	end
+	local part = reference.part
+	if reference.x then
+		return part.CFrame:PointToWorldSpace(environment.Vector3.new(part.Size.X * reference.x, part.Size.Y * reference.y, 0))
+	end
+	return part.Position
+end
+
+function EspSkeleton.baseColor(state, object, color)
+	if object.seen == false then return EspColor.tone(state.colors, state.settings.boneHidden) end
+	if state.settings.boneRole then return color end
+	return EspColor.tone(state.colors, state.settings.boneColour)
+end
+
+function EspSkeleton.perf(state)
+	if state.settings.perfMode == false then return false end
+	if state.settings.perfMode == true then return true end
+	if state.touchPerf ~= nil then return state.touchPerf end
+	local isTouch = false
+	pcall(function()
+		local input, globals = state.context.inputService, state.context.environment.getgenv()
+		isTouch = input.TouchEnabled and not input.KeyboardEnabled or globals.NOVA_FORCE_TOUCH == true
+	end)
+	state.touchPerf = isTouch
+	return isTouch
+end
+
+function EspSkeleton.line(state, object, field, index)
+	object[field] = object[field] or {}
+	local line = object[field][index]
+	if line then return line end
+	local isGlow = field == "boneGlows"
+	local name = (isGlow and "BoneGlow" or "Bone") .. index
+	line = EspLine.create(state.context, object, name, isGlow and 3 or 4)
+	object.make("UICorner", {CornerRadius = state.context.environment.UDim.new(1, 0)}, line.frame)
+	object[field][index] = line
+	return line
+end
+
+function EspSkeleton.joint(state, object, index, position, color, alpha)
+	local environment, settings = state.context.environment, state.settings
+	object.joints = object.joints or {}
+	local joint = object.joints[index]
+	if not joint then
+		local frame = object.frame(object.layer, "Joint" .. index, 5)
+		frame.AnchorPoint = environment.Vector2.new(0.5, 0.5)
+		object.make("UICorner", {CornerRadius = environment.UDim.new(1, 0)}, frame)
+		joint = {frame = frame, stroke = object.stroke(frame, 1)}
+		object.joints[index] = joint
+	end
+	local width = (tonumber(settings.jointSize or 3) or 1) * (settings.lineScale or 100) / 100 * (state.boxContext.lineWidthFactor or 1)
+	local size = math.max(2, math.floor(width + 0.5))
+	joint.frame.Position = environment.UDim2.fromOffset(math.floor(position.X + 0.5), math.floor(position.Y + 0.5))
+	joint.frame.Size = environment.UDim2.fromOffset(size, size)
+	joint.frame.BackgroundColor3, joint.frame.BackgroundTransparency = color, EspBox.quantize(1 - alpha)
+	joint.stroke.Enabled, joint.stroke.Transparency = settings.outline == true, 1
+	if settings.outline then
+		joint.stroke.Color = settings.outlineCol or state.colors.black
+		joint.stroke.Transparency = EspBox.quantize(1 - alpha * 0.5)
+	end
+	joint.frame.Visible = true
+end
+
+function EspSkeleton.hide(object)
+	for _, field in {"bones", "boneGlows", "joints"} do
+		for _, item in object[field] or {} do item.frame.Visible = false end
+	end
+end
+
+function EspSkeleton.draw(state, object, character, rectangle, color, alpha, camera)
+	local settings, environment = state.settings, state.context.environment
+	if not settings.skeleton or object.skelOff then EspSkeleton.hide(object); return end
+	local rig = character:FindFirstChild("UpperTorso") and ESP_RIGS.R15 or ESP_RIGS.R6
+	local now, cache = environment.os.clock(), object.skeletonCache
+	if not cache or cache.character ~= character or cache.rig ~= rig or now - cache.at > 2 then
+		cache = {character = character, rig = rig, at = now, references = EspSkeleton.references(character, rig)}
+		object.skeletonCache = cache
+	end
+	local points = {}
+	for index, reference in cache.references do
+		if not reference then continue end
+		local point = EspProjection.point(state.projection, camera, EspSkeleton.position(environment, reference))
+		if point.Z > 0.08 then points[index] = point end
+	end
+	local base = EspSkeleton.baseColor(state, object, color)
+	local scale = (settings.lineScale or 100) / 100 * (state.boxContext.lineWidthFactor or 1)
+	local width = math.max(1, math.floor((tonumber(settings.boneThick) or 1) * scale + 0.5))
+	local opacity = alpha * math.clamp((settings.boneAlpha or 100) / 100, 0, 1)
+	local glow = settings.boneStyle == "Soft Glow" and not EspSkeleton.perf(state)
+	local glowWidth = math.floor(width * 2.6 + 1.5)
+	local trim = EspSkeleton.headTrim(state, rectangle, scale)
+	local count, glowCount = 0, 0
+	for _, bone in rig.bones do
+		local first, second = points[bone[1]], points[bone[2]]
+		if not first or not second then continue end
+		local dx, dy = second.X - first.X, second.Y - first.Y
+		local length = math.sqrt(dx * dx + dy * dy)
+		local headTrim = bone[1] == 1 and trim or 0
+		if length <= headTrim + 0.75 then continue end
+		local unitX, unitY = dx / length, dy / length
+		local startOffset = headTrim > 0 and headTrim or -width * 0.5
+		local from = {X = first.X + unitX * startOffset, Y = first.Y + unitY * startOffset}
+		local to = {X = second.X + unitX * width * 0.5, Y = second.Y + unitY * width * 0.5}
+		local tint = EspSkeleton.color(state, rectangle, base, (first.Y + second.Y) * 0.5)
+		count += 1
+		EspLine.draw(state.boxContext, EspSkeleton.line(state, object, "bones", count),
+			{from = from, to = to, color = tint, width = width, alpha = opacity, outline = settings.outline and not glow and width >= 2})
+		if not glow then continue end
+		glowCount += 1
+		local glowStart = headTrim > 0 and headTrim or -glowWidth * 0.5
+		EspLine.draw(state.boxContext, EspSkeleton.line(state, object, "boneGlows", glowCount), {
+			from = {X = first.X + unitX * glowStart, Y = first.Y + unitY * glowStart},
+			to = {X = second.X + unitX * glowWidth * 0.5, Y = second.Y + unitY * glowWidth * 0.5},
+			color = tint, width = glowWidth, alpha = opacity * 0.16, outline = false,
+		})
+	end
+	local jointCount = 0
+	if settings.joints then
+		for index, point in rig.points do
+			if not point.joint or not points[index] then continue end
+			jointCount += 1
+			local tint = EspSkeleton.color(state, rectangle, base, points[index].Y)
+			EspSkeleton.joint(state, object, jointCount, points[index], tint, opacity)
+		end
+	end
+	for _, entry in {{"bones", count}, {"boneGlows", glowCount}, {"joints", jointCount}} do
+		local items = object[entry[1]] or {}
+		for index = entry[2] + 1, #items do items[index].frame.Visible = false end
+	end
+end
+
+function EspSkeleton.headTrim(state, rectangle, scale)
+	local settings = state.settings
+	if not settings.headDot then return 0 end
+	local size = math.floor(math.clamp(rectangle.w * 0.28 * (settings.headScale or 100) / 100, 3, 120) + 0.5)
+	if settings.headStyle == "Dot" then size = math.max(4, math.floor(size * 0.35 + 0.5)) end
+	return size * 0.5 + (settings.headStyle == "Dot" and 0.5 or 1.5 * scale * 0.5)
+end
+
+function EspSkeleton.color(state, rectangle, base, y)
+	if not state.settings.boneGrad then return base end
+	local top, bottom = EspColor.tone(state.colors, state.settings.boneTop), EspColor.tone(state.colors, state.settings.boneBottom)
+	local cache = state.skeletonGradient
+	if not cache or cache.top ~= top or cache.bottom ~= bottom then
+		cache = {top = top, bottom = bottom, values = {}}
+		state.skeletonGradient = cache
+	end
+	local index = math.floor(math.clamp((y - rectangle.y) / math.max(rectangle.h, 1), 0, 1) * 40 + 0.5)
+	if not cache.values[index] then cache.values[index] = top:Lerp(bottom, index / 40) end
+	return cache.values[index]
+end
+
+local EspHead = {}
+
+function EspHead.create(state, object)
+	local environment = state.context.environment
+	local head = object.frame(object.layer, "Head", 4)
+	head.AnchorPoint = environment.Vector2.new(0.5, 0.5)
+	object.make("UICorner", {CornerRadius = environment.UDim.new(1, 0)}, head)
+	object.head, object.headStroke = head, object.stroke(head, 1.5)
+end
+
+function EspHead.draw(state, object, head, rectangle, color, alpha, camera)
+	local environment, settings = state.context.environment, state.settings
+	if not settings.headDot then
+		if object.head then object.head.Visible = false end
+		return
+	end
+	local point = EspProjection.point(state.projection, camera, head.Position)
+	if point.Z <= 0.08 then
+		if object.head then object.head.Visible = false end
+		return
+	end
+	if not object.head then EspHead.create(state, object) end
+	local style = settings.headStyle or "Ring"
+	local size = math.floor(math.clamp(rectangle.w * 0.28 * (settings.headScale or 100) / 100, 3, 120) + 0.5)
+	if style == "Dot" then size = math.max(4, math.floor(size * 0.35 + 0.5)) end
+	local base = settings.skeleton and EspSkeleton.baseColor(state, object, color) or color
+	local tint = EspColor.ink(state.colors, settings.headColMode, settings.headCol, base)
+	object.head.Position = environment.UDim2.fromOffset(math.floor(point.X + 0.5), math.floor(point.Y + 0.5))
+	object.head.Size = environment.UDim2.fromOffset(size, size)
+	object.head.BackgroundColor3 = tint
+	local fill = style == "Filled" and math.clamp((settings.headFill or 25) / 100, 0, 1) or (style == "Dot" and 1 or 0)
+	object.head.BackgroundTransparency = fill > 0 and EspBox.quantize(1 - alpha * fill) or 1
+	object.headStroke.Color = style == "Dot" and (settings.outlineCol or state.colors.black) or tint
+	object.headStroke.Thickness = style == "Dot" and 1 or 1.5 * (settings.lineScale or 100) / 100 * (state.boxContext.lineWidthFactor or 1)
+	object.headStroke.Transparency = style == "Dot" and (settings.outline and EspBox.quantize(1 - alpha * 0.5) or 1) or EspBox.quantize(1 - alpha)
+	object.head.Visible = true
+end
+
+function EspHead.look(state, object, head, color, alpha, camera)
+	local settings, environment = state.settings, state.context.environment
+	if not settings.lookLine then
+		if object.look then object.look.frame.Visible = false end
+		return
+	end
+	local from = EspProjection.point(state.projection, camera, head.Position)
+	local to = EspProjection.point(state.projection, camera, head.Position + head.CFrame.LookVector * settings.lookLength)
+	if from.Z <= 0.08 or to.Z <= 0.08 then
+		if object.look then object.look.frame.Visible = false end
+		return
+	end
+	if not object.look then object.look = EspLine.create(state.context, object, "Look") end
+	local width = (tonumber(settings.lookThick or 1.5) or 1) * (settings.lineScale or 100) / 100 * (state.boxContext.lineWidthFactor or 1)
+	local tint = EspColor.ink(state.colors, settings.lookColMode, settings.lookCol, color)
+	EspLine.draw(state.boxContext, object.look, {from = from, to = to, color = tint, width = width, alpha = alpha, outline = settings.outline})
+end
+
+local EspChams = {}
+
+function EspChams.materials(environment)
+	local material = environment.Enum.Material
+	return {
+		Shaded = {material.SmoothPlastic, 1.02, 0.95, 0}, Glow = {material.Neon, 1.02, 0.7, 0},
+		["Glow Outline"] = {material.Neon, 1.05, 0.3, 0}, Iridescent = {material.ForceField, 1.03, 0.9, 0},
+		["Water Flow"] = {material.ForceField, 1.03, 0.9, 0}, Glossy = {material.SmoothPlastic, 1.02, 0.95, 0.65},
+		Glass = {material.Glass, 1.03, 0.8, 0.25}, ForceField = {material.ForceField, 1.03, 0.95, 0},
+		Gradient = {material.SmoothPlastic, 1.02, 0.85, 0}, Ghost = {material.SmoothPlastic, 1.03, 0.4, 0.15},
+		Metallic = {material.Foil, 1.02, 0.95, 0.3}, Metal = {material.Metal, 1.02, 0.95, 0.15},
+		Chrome = {material.SmoothPlastic, 1.02, 0.95, 0.55}, Crystal = {material.Glass, 1.04, 0.7, 0.5},
+		Ice = {material.Ice, 1.03, 0.85, 0.25}, Lava = {material.CrackedLava, 1.02, 0.95, 0},
+		Wireframe = {material.SmoothPlastic, 1.01, 1, 0},
+	}
+end
+
+function EspChams.close(color, target)
+	if math.abs(color.R - target.R) + math.abs(color.G - target.G) + math.abs(color.B - target.B) < 0.004 then return target end
+	return color
+end
+
+function EspChams.targets(state, options)
+	local settings = state.settings
+	local role = EspColor.role(state.colors, options.role)
+	local darkness = math.clamp((tonumber(settings.chamsHiddenDark) or 30) / 100, 0, 0.9)
+	local fill = settings.chamsColour
+	if not options.seen then fill = settings.chamsHidden end
+	if settings.chamsRole then
+		fill = role
+		if not options.seen then fill = role:Lerp(state.colors.black, darkness) end
+	end
+	local edge = options.seen and settings.chamsEdge or settings.chamsEdgeHidden
+	if settings.chamsRole and settings.chamsEdgeRole ~= false then
+		edge = role:Lerp(state.colors.white, 0.25)
+		if not options.seen then edge = role:Lerp(state.colors.black, darkness * 0.6) end
+	end
+	return fill, edge
+end
+
+function EspChams.animate(state, options, previous)
+	local settings = state.settings
+	local now = state.context.environment.os.clock()
+	local fill, edge = EspChams.targets(state, options)
+	local saved = previous or {fill = fill, edge = edge, seen = options.seen, flash = 0, born = now, at = now}
+	local elapsed = math.clamp(now - saved.at, 0, 0.1)
+	saved.at = now
+	local blend = 1 - math.exp(-10 * elapsed)
+	saved.fill = EspChams.close(saved.fill:Lerp(fill, blend), fill)
+	saved.edge = EspChams.close(saved.edge:Lerp(edge, blend), edge)
+	if options.seen and not saved.seen and settings.chamsFlash then saved.flash = 1 end
+	saved.seen = options.seen
+	saved.flash = math.max(0, saved.flash - elapsed * 2.2)
+
+	local phase = settings.chamsAnim ~= "None" and 0.5 + 0.5 * math.sin(now * settings.chamsSpeed * math.pi * 2 + options.player.UserId % 89 * 0.41) or 0
+	local fillFactor, edgeFactor, color = 1, 1, saved.fill
+	if settings.chamsAnim == "Pulse" then fillFactor = 0.45 + 0.55 * phase end
+	if settings.chamsAnim == "Breathe" then edgeFactor = 0.3 + 0.7 * phase end
+	if settings.chamsAnim == "Flow" then color = color:Lerp(settings.chamsFlow, phase) end
+	if saved.flash > 0 then color = color:Lerp(state.colors.white, saved.flash * 0.55) end
+	color = EspColor.cham(state.colors, color)
+	return saved, {fill = color, edge = saved.edge, fillFactor = fillFactor, edgeFactor = edgeFactor,
+		born = math.clamp((now - saved.born) / 0.35, 0, 1), now = now}
+end
+
+function EspChams.material(state, role)
+	local settings = state.settings
+	local name = settings.chamsMaterial
+	if role == "Murderer" and settings.murdMat and settings.murdMat ~= "Same" then name = settings.murdMat end
+	if (role == "Sheriff" or role == "Hero") and settings.sheriffMat and settings.sheriffMat ~= "Same" then name = settings.sheriffMat end
+	local specification = state.chamsMaterials[name]
+	if settings.chamsStyle == "Glow" then
+		name = "Core"
+		specification = {state.context.environment.Enum.Material.Neon, 1.02, 0.85, 0}
+	end
+	if not specification then return nil, nil, nil end
+	local scale = math.clamp((settings.chamsShell or 100) / 100, 1, 1.4)
+	if scale ~= 1 then
+		return name .. "@" .. tostring(math.floor(scale * 100 + 0.5)),
+			{specification[1], specification[2] * scale, specification[3], specification[4]}, name
+	end
+	return name, specification, name
+end
+
+function EspChams.plan(state, options, saved)
+	local settings, environment = state.settings, state.context.environment
+	local through = settings.chamsThrough
+	if through and (settings.chamsRange or 60) < 300 then
+		local root = options.character:FindFirstChild("HumanoidRootPart")
+		through = root ~= nil and (root.Position - options.cameraPosition).Magnitude <= (settings.chamsRange or 60)
+	end
+	local animation
+	saved, animation = EspChams.animate(state, options, saved)
+	local opacity = math.clamp(settings.chamsAlpha / 100, 0, 1)
+	if settings.chamsStyle == "Outline" then opacity = 0 end
+	if settings.chamsStyle == "Soft" then opacity *= 0.65 end
+	local material, spec, kind = EspChams.material(state, options.role)
+	local isGlow = settings.chamsStyle == "Glow"
+	local showModel = (options.seen or through) and options.inView ~= false
+	local modelColor = animation.fill
+	if isGlow then modelColor = modelColor:Lerp(state.colors.white, 0.08) end
+	if not isGlow and (kind == "Glow" or kind == "Glow Outline") then modelColor = modelColor:Lerp(state.colors.black, 0.42) end
+	local modelAlpha = options.alpha * animation.born * animation.fillFactor
+	if isGlow then modelAlpha *= math.clamp((settings.glowCore or 85) / 100, 0, 1) end
+
+	local edge = animation.edge
+	local edgeTransparency = settings.chamsOutline and 1 - options.alpha * animation.born * settings.chamsEdgeAlpha / 100 * animation.edgeFactor or 1
+	if kind == "Glow Outline" then edge, edgeTransparency = animation.fill, 1 - options.alpha * animation.born * animation.edgeFactor end
+	if isGlow then
+		edge = animation.fill:Lerp(state.colors.white, 0.45)
+		edgeTransparency = 1 - options.alpha * animation.born * 0.55 * animation.edgeFactor
+	end
+	local fillTransparency = material and 1 or EspBox.quantize(1 - math.clamp(opacity * animation.fillFactor + saved.flash * 0.35, 0, 1) * options.alpha * animation.born)
+	edgeTransparency = EspBox.quantize(edgeTransparency)
+	local haloStrength = math.clamp(settings.glowHalo / 100, 0, 1)
+	local haloPulse = 0.8 + 0.2 * math.sin(animation.now * 2.2 + options.player.UserId % 89 * 0.41)
+	return saved, {
+		through = through, fill = animation.fill, edge = edge, fillTransparency = fillTransparency,
+		edgeTransparency = edgeTransparency, enabled = options.inView ~= false and not (fillTransparency >= 0.995 and edgeTransparency >= 0.995),
+		material = material, specification = spec, showModel = showModel, modelColor = modelColor, modelAlpha = modelAlpha,
+		showHalo = (isGlow or settings.chamsOverlay) and showModel and haloStrength * 0.44 >= 0.07 and (haloStrength >= 0.28 or (options.distance or 0) <= 110),
+		haloAlpha = options.alpha * animation.born * haloStrength * haloPulse * 2.2,
+	}
+end
+
+local EspChamModel = {}
+
+function EspChamModel.root(state)
+	local environment, camera = state.context.environment, state.context.workspace.CurrentCamera
+	if not camera then return nil end
+	if state.modelFolder and state.modelFolder.Parent == camera then return state.modelFolder end
+	if state.modelFolder then pcall(function() state.modelFolder:Destroy() end) end
+	for _, object in camera:GetChildren() do
+		if object.Name == "PulseESPModels" then pcall(function() object:Destroy() end) end
+	end
+	local folder = environment.Instance.new("Folder")
+	folder.Name, folder.Parent = "PulseESPModels", camera
+	state.modelFolder = folder
+	return folder
+end
+
+function EspChamModel.pool(state, store, player)
+	state.modelPool = state.modelPool or setmetatable({}, {__mode = "k"})
+	state.modelPool[store] = state.modelPool[store] or {}
+	local group = state.modelPool[store]
+	group[player] = group[player] or {at = state.context.environment.os.clock(), items = {}}
+	return group[player]
+end
+
+function EspChamModel.poolKey(part)
+	local size = part.Size
+	local key = part.Name .. "|" .. part.ClassName .. "|" .. string.format("%.3f,%.3f,%.3f", size.X, size.Y, size.Z)
+	if part.ClassName == "MeshPart" then return key .. "|" .. tostring(part.MeshId) end
+	local mesh = part:FindFirstChildWhichIsA("SpecialMesh")
+	if not mesh then return key end
+	local scale = mesh.Scale
+	return key .. "|" .. tostring(mesh.MeshId) .. "|" .. mesh.MeshType.Name .. "|" .. string.format("%.3f,%.3f,%.3f", scale.X, scale.Y, scale.Z)
+end
+
+function EspChamModel.purge(state, player)
+	for _, group in state.modelPool or {} do
+		for owner, pool in group do
+			if player and owner ~= player then continue end
+			for _, items in pool.items do
+				for _, item in items do pcall(function() item:Destroy() end) end
+			end
+			group[owner] = nil
+		end
+	end
+end
+
+function EspChamModel.sweep(state)
+	local now = state.context.environment.os.clock()
+	for _, group in state.modelPool or {} do
+		for player, pool in group do
+			if not (type(player) ~= "table" and player.Parent == nil or now - pool.at > 45) then continue end
+			for _, items in pool.items do
+				for _, item in items do pcall(function() item:Destroy() end) end
+			end
+			group[player] = nil
+		end
+	end
+end
+
+function EspChamModel.drop(state, store, player)
+	local model = store[player]
+	if not model then return end
+	for _, connection in model.connections do pcall(function() connection:Disconnect() end) end
+	local pool = model.kind ~= "Wireframe" and model.keys and EspChamModel.pool(state, store, player) or nil
+	for index, clone in model.clones do
+		local key = pool and model.keys[index]
+		if not key or not clone.Parent then pcall(function() clone:Destroy() end); continue end
+		pcall(function() clone.Transparency = 1 end)
+		pool.items[key] = pool.items[key] or {}
+		table.insert(pool.items[key], clone)
+	end
+	if pool then pool.at = state.context.environment.os.clock() end
+	store[player] = nil
+end
+
+function EspChamModel.cloneable(part)
+	if not part:IsA("BasePart") or part.Name == "HumanoidRootPart" then return false end
+	if part.Transparency >= 0.95 or part.LocalTransparencyModifier >= 0.95 then return false end
+	if part:FindFirstChildWhichIsA("WrapLayer") then return false end
+	local accessory = part:FindFirstAncestorWhichIsA("Accessory")
+	if accessory and accessory:FindFirstChildWhichIsA("WrapLayer", true) then return false end
+	return true
+end
+
+function EspChamModel.clone(state, source, specification, folder, pool)
+	local environment = state.context.environment
+	local key = pool and EspChamModel.poolKey(source)
+	local items = key and pool.items[key]
+	local clone = items and table.remove(items)
+	while clone and clone.Parent ~= folder do
+		pcall(function() clone:Destroy() end)
+		clone = table.remove(items)
+	end
+	local mesh, meshScale
+	if clone then
+		mesh = clone:FindFirstChildWhichIsA("SpecialMesh")
+		if mesh then
+			local sourceMesh = source:FindFirstChildWhichIsA("SpecialMesh")
+			meshScale = sourceMesh and sourceMesh.Scale or mesh.Scale
+		end
+	end
+	if not clone then
+		local archivable = source.Archivable
+		source.Archivable = true
+		local ok, result = pcall(function() return source:Clone() end)
+		source.Archivable = archivable
+		if not ok or not result then return nil end
+		clone = result
+		if clone:FindFirstChildWhichIsA("SpecialMesh") then
+			for _, child in clone:GetChildren() do
+				if child:IsA("SpecialMesh") then
+					child.TextureId = ""
+					mesh = child
+					continue
+				end
+				child:Destroy()
+			end
+		end
+		if not mesh then clone:ClearAllChildren() end
+		if mesh then meshScale = mesh.Scale end
+		if clone:IsA("MeshPart") then pcall(function() clone.TextureID = "" end) end
+		clone.Name = "M"
+	end
+
+	local scale, size
+	if mesh and mesh.MeshType == environment.Enum.MeshType.FileMesh then
+		scale = meshScale * specification[2]
+		mesh.Scale = scale
+	end
+	if not scale then
+		size = source.Size * specification[2]
+		clone.Size = size
+	end
+	clone.Anchored, clone.CanCollide, clone.CanQuery, clone.CanTouch, clone.CastShadow = true, false, false, false, false
+	clone.Material, clone.Reflectance, clone.Transparency = specification[1], specification[4], 1
+	if clone.Parent ~= folder then clone.Parent = folder end
+	return {clone = clone, mesh = mesh and scale and mesh or nil, scale = scale, size = size, key = key}
+end
+
+function EspChamModel.build(state, character, material, specification, folder, pool)
+	local environment = state.context.environment
+	local kind = tostring(material):match("^[^@]+")
+	local model = {material = material, kind = kind, specification = specification, character = character,
+		root = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso"),
+		sources = {}, clones = {}, sizes = {}, meshes = {}, scales = {}, cframes = {}, boxes = {}, keys = {}, scale = 1, connections = {}}
+	if kind == "Wireframe" then pool = nil end
+	for _, source in character:GetDescendants() do
+		if not EspChamModel.cloneable(source) then continue end
+		local result = EspChamModel.clone(state, source, specification, folder, pool)
+		if not result then continue end
+		local index = #model.clones + 1
+		model.sources[index], model.clones[index], model.keys[index] = source, result.clone, result.key
+		model.sizes[index], model.meshes[index], model.scales[index] = result.size, result.mesh, result.scale
+		if kind == "Wireframe" and source.Parent == character and source.Name ~= "HumanoidRootPart" then
+			local outline = environment.Instance.new("SelectionBox")
+			outline.Adornee, outline.LineThickness, outline.SurfaceTransparency, outline.Transparency = result.clone, 0.02, 1, 1
+			outline.Parent, model.boxes[index] = result.clone, outline
+		end
+	end
+	local function dirty(object)
+		if (object:IsA("BasePart") or object:IsA("Accessory") or object:IsA("WrapLayer") or object:IsA("SpecialMesh")) and not model.dirty then
+			model.dirty = environment.os.clock()
+		end
+	end
+	table.insert(model.connections, character.DescendantAdded:Connect(dirty))
+	table.insert(model.connections, character.DescendantRemoving:Connect(dirty))
+	return model
+end
+
+function EspChamModel.resize(model, scale)
+	model.scale = scale
+	for index, clone in model.clones do
+		local mesh = model.meshes[index]
+		if mesh then mesh.Scale = model.scales[index] * scale end
+		if not mesh then clone.Size = model.sizes[index] * scale end
+	end
+	for _, box in model.boxes do box.LineThickness = 0.02 * scale end
+end
+
+function EspChamModel.paint(state, model, color, transparency, now)
+	local settings, environment = state.settings, state.context.environment
+	local rootY = model.root and model.root.Parent and model.root.Position.Y or 0
+	local top, bottom
+	if model.kind == "Gradient" then
+		top = EspColor.cham(state.colors, EspColor.tone(state.colors, settings.chamsGradA))
+		bottom = EspColor.cham(state.colors, EspColor.tone(state.colors, settings.chamsGradB))
+	end
+	for index, clone in model.clones do
+		local tint = color
+		if model.kind == "Iridescent" then tint = environment.Color3.fromHSV((now * 0.12 * (settings.chamsSpeed or 1) + index * 0.012) % 1, 0.38, 1) end
+		if model.kind == "Gradient" then
+			local source = model.sources[index]
+			local fraction = source and source.Parent and math.clamp((source.Position.Y - (rootY - 3)) / 5.6, 0, 1) or 0.5
+			if settings.chamsGradScroll then fraction = math.abs((fraction + now * 0.2 * (settings.chamsSpeed or 1)) % 1 * 2 - 1) end
+			tint = bottom:Lerp(top, fraction)
+		end
+		clone.Color, clone.Transparency = tint, transparency
+	end
+end
+
+function EspChamModel.show(state, model, visible, color, alpha)
+	if not visible then
+		if model.shown == false then return end
+		for _, clone in model.clones do clone.Transparency = 1 end
+		for _, box in model.boxes do box.Transparency = 1 end
+		model.shown = false
+		return
+	end
+	local now, wasShown = state.context.environment.os.clock(), model.shown == true
+	if wasShown and now - (model.propertiesAt or 0) < 1 / 30 then return end
+	model.propertiesAt = now
+	local transparency = 1 - math.clamp(model.specification[3] * alpha, 0, 1)
+	if model.kind == "Wireframe" then
+		model.shown = true
+		if not wasShown or model.lastTint ~= color or math.abs((model.lastTransparency or -1) - transparency) >= 0.01 then
+			model.lastTint, model.lastTransparency = color, transparency
+			for _, box in model.boxes do box.Color3, box.Transparency = color, transparency end
+		end
+		return
+	end
+	if model.kind == "Iridescent" or model.kind == "Gradient" then
+		model.shown, model.lastTint, model.lastTransparency = true, nil, nil
+		EspChamModel.paint(state, model, color, transparency, now)
+		return
+	end
+	local colorChanged = not wasShown or model.lastTint ~= color
+	local transparencyChanged = not wasShown or math.abs((model.lastTransparency or -1) - transparency) >= 0.01
+	if not colorChanged and not transparencyChanged then return end
+	model.shown = true
+	if colorChanged then
+		model.lastTint = color
+		for _, clone in model.clones do clone.Color = color end
+	end
+	if transparencyChanged then
+		model.lastTransparency = transparency
+		for _, clone in model.clones do clone.Transparency = transparency end
+	end
+end
+
+function EspChamModel.step(state, options)
+	local store, player = options.store, options.player
+	local model, now = store[player], state.context.environment.os.clock()
+	local stale = not model or model.character ~= options.character or model.material ~= options.material or not model.character.Parent
+		or model.dirty ~= nil and now - model.dirty > 0.35
+	if stale then
+		if not options.visible then EspChamModel.drop(state, store, player); return end
+		if (state.modelBudget or 0) <= 0 then
+			if model and model.character == options.character then
+				model.view = options.inView
+				EspChamModel.show(state, model, options.visible, options.color, options.alpha)
+			end
+			return
+		end
+		state.modelBudget -= 1
+		EspChamModel.drop(state, store, player)
+		local folder = EspChamModel.root(state)
+		if not folder or not options.material or not options.specification then return end
+		model = EspChamModel.build(state, options.character, options.material, options.specification, folder, EspChamModel.pool(state, store, player))
+		store[player] = model
+		EspChamModel.bind(state)
+	end
+	model.view = options.inView
+	EspChamModel.show(state, model, options.visible, options.color, options.alpha)
+end
+
+function EspChamModel.placeStore(state, store, camera)
+	local environment, workspace = state.context.environment, state.context.workspace
+	local position, viewport = camera.CFrame.Position, camera.ViewportSize
+	for _, model in store do
+		local root = model.root
+		local parked = not (root and root.Parent)
+		if model.shown and not parked then
+			if model.view ~= nil then parked = model.view == false end
+			if model.view == nil and (root.Position - position).Magnitude > 12 then
+				local point = camera:WorldToViewportPoint(root.Position)
+				local marginX, marginY = viewport.X * 0.35, viewport.Y * 0.35
+				parked = point.Z < -6 or point.X < -marginX or point.X > viewport.X + marginX or point.Y < -marginY or point.Y > viewport.Y + marginY
+			end
+		end
+		if model.shown and parked and not model.parked then
+			model.parked = true
+			local frames, frame = {}, environment.CFrame.new(0, 30000, 0)
+			for index = 1, #model.clones do frames[index] = frame end
+			pcall(function() workspace:BulkMoveTo(model.clones, frames, environment.Enum.BulkMoveMode.FireCFrameChanged) end)
+		end
+		if not model.shown or parked then continue end
+		model.parked = nil
+		if state.settings.chamsThrough and root and root.Parent then
+			local distance = math.max((root.Position - position).Magnitude, 0.01)
+			local scale = math.min(1, 2.5 / distance)
+			if scale >= 1 and model.scale < 1 then EspChamModel.resize(model, 1) end
+			if scale < 1 and (model.scale >= 1 or distance * model.scale < 1.9 or distance * model.scale > 3.25) then EspChamModel.resize(model, scale) end
+		end
+		if not state.settings.chamsThrough and model.scale ~= 1 then EspChamModel.resize(model, 1) end
+		for index, source in model.sources do
+			local frame = source.CFrame
+			if model.scale < 1 then frame = frame.Rotation + (frame.Position * model.scale + position * (1 - model.scale)) end
+			model.cframes[index] = frame
+		end
+		pcall(workspace.BulkMoveTo, workspace, model.clones, model.cframes, environment.Enum.BulkMoveMode.FireCFrameChanged)
+	end
+end
+
+function EspChamModel.bind(state)
+	if state.modelsBound then return end
+	local runService, environment = state.context.runService, state.context.environment
+	local name = "PulseESP2ModelPlace"
+	state.modelsBound = name
+	pcall(function() runService:UnbindFromRenderStep(name) end)
+	runService:BindToRenderStep(name, environment.Enum.RenderPriority.Last.Value, function()
+		pcall(function()
+			local camera = state.context.workspace.CurrentCamera
+			if not camera then return end
+			EspChamModel.placeStore(state, state.models, camera)
+			EspChamModel.placeStore(state, state.halos, camera)
+		end)
+	end)
+end
+
+function EspChamModel.unbind(state)
+	if not state.modelsBound then return end
+	pcall(function() state.context.runService:UnbindFromRenderStep(state.modelsBound) end)
+	state.modelsBound = nil
+end
+
+function EspChams.drop(state, player)
+	local highlight = state.highlights[player]
+	if highlight then pcall(function() highlight:Destroy() end) end
+	state.highlights[player], state.chamStates[player] = nil, nil
+	EspChamModel.drop(state, state.models, player)
+	EspChamModel.drop(state, state.halos, player)
+end
+
+function EspChams.clear(state)
+	for player in state.highlights do EspChams.drop(state, player) end
+	for player in state.models do EspChamModel.drop(state, state.models, player) end
+	for player in state.halos do EspChamModel.drop(state, state.halos, player) end
+end
+
+function EspChams.apply(state, options)
+	if not state.settings.chams then EspChams.drop(state, options.player); return end
+	local context, environment = state.context, state.context.environment
+	local remote = environment.getgenv().__pulseRemoteSkin
+	local replacement = remote and remote.list[options.player] and remote.list[options.player].model
+	if replacement and replacement.Parent then options.character = replacement end
+	local highlight = state.highlights[options.player]
+	if not highlight or not highlight.Parent then
+		highlight = environment.Instance.new("Highlight")
+		highlight.Name, highlight.Enabled = "PulseESP2Cham", false
+		local holder = context.coreGui
+		if not holder or not holder.Parent then holder = context.player:FindFirstChildOfClass("PlayerGui") end
+		highlight.Parent = holder or options.character
+		state.highlights[options.player], state.chamStates[options.player] = highlight, nil
+	end
+	local previous = state.chamStates[options.player]
+	if options.inView == false and previous and previous.adorned == nil then
+		local model, halo = state.models[options.player], state.halos[options.player]
+		if not (model and model.shown or halo and halo.shown) then return end
+	end
+	local saved, plan = EspChams.plan(state, options, previous)
+	state.chamStates[options.player] = saved
+	if plan.material then
+		EspChamModel.step(state, {store = state.models, player = options.player, character = options.character,
+			visible = plan.showModel, color = plan.modelColor, alpha = plan.modelAlpha, material = plan.material,
+			specification = plan.specification, inView = options.inView})
+	end
+	if not plan.material and state.models[options.player] then EspChamModel.drop(state, state.models, options.player) end
+	if state.settings.chamsStyle == "Glow" or state.settings.chamsOverlay then
+		EspChamModel.step(state, {store = state.halos, player = options.player, character = options.character,
+			visible = plan.showHalo, color = plan.fill, alpha = plan.haloAlpha, material = "Halo",
+			specification = {environment.Enum.Material.Neon, 1.16, 0.2, 0}, inView = options.inView})
+	end
+	if state.settings.chamsStyle ~= "Glow" and not state.settings.chamsOverlay and state.halos[options.player] then
+		EspChamModel.drop(state, state.halos, options.player)
+	end
+	if not plan.enabled then
+		if saved.adorned ~= nil then highlight.Adornee, saved.adorned = nil, nil end
+		highlight.Enabled = false
+		return
+	end
+	if saved.adorned ~= options.character then highlight.Adornee, saved.adorned = options.character, options.character end
+	highlight.FillColor, highlight.OutlineColor = plan.fill, plan.edge
+	highlight.FillTransparency, highlight.OutlineTransparency = plan.fillTransparency, plan.edgeTransparency
+	highlight.DepthMode = plan.through and environment.Enum.HighlightDepthMode.AlwaysOnTop or environment.Enum.HighlightDepthMode.Occluded
+	highlight.Enabled = true
+end
+
+local EspRadar = {}
+local ESP_ARROW_ASSETS = {
+	fill = "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADKklEQVR42u3dL1BiURTHccexOAZng2OiSHEMjsGhSJHiUKRIkSJJihQpazKtZSmSSCQtmkgkGolEIrGJtImkxZmzj/Eyssif9+fee+6973dmvs2Z97yfDSy8g2tEtIb4wiEAAAAIAABAAAAAAgAAEAAAYFNbIgAwdScCAEMbXn9FGwDQX4W+pgIA/Q2nAIYA0FuZvk8ZAPoazAEYAEBPJVo8JQCor78EoA8AtRVp9RQBoK6eD4AeANRUIP9TAID8ugEAugCQW56CTx4A8uqEAOgAQE45Cj85AESvHQGgDYBoZSn6ZAEQvpYEgBYAwpUheZMBQPCaEgGaAAhWmuRPGgD+e1UA8AoAf6VI3aQAsLpnhQDPAFjeEamfIwAsrqEBoAGA+R2QvjkAwPfqGgHqAPi/JOmfJAC+qjEA1ADwWYL4JgEAoiojQDXuALteH4wAH+IeYgvwQPzzEFeAH15vBgC8iXuJHcA9mTP3cQMYL9aNDAIYcS37cS7XmTZ3cQGYLNeZNizLftzLdaZNJQ4AQ4MBhq4DlMn8KbsMMLAAYOAqQInsmZKLAH2LAPquARTJvim6BNCzEKDnCkCB7J2CCwBdiwG6tgPkyf7J2wzQcQCgYytAjtyZnI0AbQ0H8yhSPW3bALKk/vnO/anr7Wt4rjRrE0BL0SG8eB0vue6x+BkV07IFIKPolz8NcA+niv4RZGwAaEp+BXIe4V7OJb8Sa5oOkJb4NsClxPu6lPh2SNpkgKjLdX+8rhW+MrsW1yBTlv1MWa4bfyB+q/Gt8duIDwakTAQIs1z3Tp8PRW0yfDa9Ka79TozLfpzLdb+9dgx4OntH3AtxLPtxLNeN14P2DFyP3Qu4JtUwBcDvct2T16EF3090KO6VdCz76ViuG792PrHwC2JPfPyfps4NkFzxBtaZxd/OPulsxRuLSU6A2oJPkS4cOPjZLhZ8ulfjAkjMeZTjysGDn+1qziM2CQ6A6tTzlDcxOPjZbqaec63qBtgVSw0/vdZjePiT1sUZjMIu+4W98C+v7Rgf/Gzb4kzwh9wIfz8AAQAACAAAQAAAAAIAABAAAIAAYCjAP5FhtP24QRzDAAAAAElFTkSuQmCC",
+	rim = "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADhUlEQVR42u2dMUgbYRTHxaE4FIduxUEcxCFFCCgEh4AQEAJCwCEgBoSAICgOghBwEgoixaEgFBxKhpKhZChkKBFKhpKhZGkGS8DiUJxcdHMQXx/0Qdu06l3uu/ve+773h98SYu7d+ymGcP/LEAAMKfbQJagAFaCoABWgqIBQvEAOkBPigB5TAQmwDfdnWwXEywo8nhUVEB+9AAJ6KiAeyhA8ZRVgnm4IAV0VYJYShE9JBZijM4CAjgowQxEGT1EFRKcdQUBbBUSjANFTUAGD0zIgoKUCBiMP5pJXAeFpGhTQVAHhyIH55FRAcBoxCGiogGBkIb5kVcDj1GMUUFcBD5OB+JNRAfdTS0BATQX8nzQkl7QK+JdqggKqKuBvUpB8UirgN8cWBByrgF9Mgr1MqgCAI4sCjnwXMA72M+6zgEMGAg59FfAcuWMg4I5m8U7APvDJvm8CniE3jATc0EzeCNgDftnzRcBT5JqhgGuazXkBu8A3u64LeIJcMhZwSTM6K2AH+GfHZQEXAgRcuCpgC+Rky0UB54IEnLsmYB3kZd0lAT2BAnquCCiD3JRdENAVLKArXUAJ5KckWUDHAQEdqQKK4E6KEgW0HRLQliagAO6lIElAy0EBLSkC8uBu8hIENB0W0OQuIAfuJ8dZQMMDAQ2uArLgT7IcBdQ9ElDnJiAD/iXDSUDNQwE1LgLS4G/SHARUPRZQtS0gBZqUTQHHuv9oZT+p5TpumbQh4Ej3DpHLfpLLddwynqSAQyYn/YoAqWU/qeW6N8jEHzNN0GMgrewnrVz3Dpl+YLZpeg5IKftJKdd9QOZCzDlHPwPcy37cy3WfkIUI79QW6DWAa9mPa7nuC7Jk8KPyJXpN4Fb241au+4asxnit0iodA7iU/biU634gGwmWRTbomGC77Ge7XHeFVJBhC3XZYTr2FVgs+9kq190iL5FRBvcrGqVZbsFC2S/IgJuGB3uNjDG8YewYzWYymyYEmLrQ6i0yJeAbO6ZoVkjiQq4gA51GHOI9MiPwKxNnaPYoOTUhYNALbT8i8wIX3888nQvEcUFvkAEqIQ/6GVl0YPH9LNK5hUnFhIAR5CzAwb4iyw4uvp9lOtfHcka7M/I2dPYBCd+RNQ8W388anft9y581/VHECP1JteifSzPI2ywP2KRdnNJuKkF+8/UrzfXm3YoKUAGKLkEFqABFBfgr4CdsheUuxgSmnQAAAABJRU5ErkJggg==",
+	shade = "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAANZklEQVR42u2d93cV1RbHIXBJkAcmIaQAob8gwUcNQSCQUBRQihjKIzQpgjTBCNKbCAKBgEoXUBIFpBuQLlWKFEGk5P01vH3X+pz3zjrr3pt2Z+YE8sN3icOcvffs8/3OnX3mbKbaixcvqlUiVBfUEPgEkYIoEMmxGpxTaa6pMiW+pqC2oK4gRhAniAdxHKvLOTUry0RUhuRHwPB6ggaCxoIWghTBGyCFY405px5jIqomoGKoAaP97G4k+KegvSBdkCHIBBkca885jRhTGxtVE1BO5vvv77GCJoK2grcE/QSDBcMF/wbDOdaPc9oyJhYbEVUTUPZ7fi1BtCBZ8CYsHyTIEXwkmC3IBbM5lsM5GYxJxkYtW38TbL711BEkCtoIesDwCYK5gmWCtYI8sJZjczlnMGPaYKOOrbcim9nvv300F6QJBgjGw/YvBd8K9gkKwT6Ofck54xmTho1YW1VgM/uTBKmCXtzjZwq+EGwXHBAUCc6BIo5t55yZjOmFjSRbVWAr+2NgbmfBQMGHggWCfBj/q+C64A9wnWOFnLOAMQOx0Ryb1qnA9nu/yf5dgmOCK4L7gifgPseOcY6pAmt/C2ybAMX+ZjB3AD+qnws2wfAzgluCx4Ji8JhjZzhnE2MmYKMzNpUKqiYgyHO/zv6egmzBDBi9E4ZfhvFPBf8BTzl2mXN2MmYGNnoaKoiomoDA7I+GqZ20Jx/F/gKN/X/BfDUBxRxTKijQVKCeiDphO9omFdjE/tcECaztZGjsXwWjjwZhfyAVHGXMKk0FGdhOwFdE1QT8Hz6Y2RSm9oe58wUbYbT/KedmAPabKrjJuQWMnY+t/thuii9f1QQEZ/8HgumClYIdpWB/MBXswMZ0bFqnAtvY31HwjmCcxv79pWB/MBXs11QwDtsdbVKBTexvzfrNMI39/sr2iOA3wb0S2K+r4B5jjmBDqWAYPlrbogIb2P86S8c6++exyOZn8GmN/c9LMQHPNRWcxkYeNnUVNMG371WdgAhemMQb7P9YsKKc7A+lghXY1lUQTwwRr+IE6OzvIHhbMFbwmWCD4AcY/LvgUSnZr6vgEWNPY2sDtsfiq4MNKrCB/f73ud0F7wumwdRtgsOCSzD5SRmSr/CEsZewtQ3b0/DVHd+eqsBr9idr7B9jsP9UOdkfSAWnDBWM0VSQ7KUKvGR/A439Q2HmcoP9d8vJfl0Fdw0VLMfXUE0FDbxSgRcTUJNtI8nsYugHI/1vstYLvoexNyrAflMFN7D5PT5y8dmPGJKJqebLPgHVNfb7t490g4lTeae7VfCz4GIY2G+q4CK2t+JrKr67EYtSQfWXeQIU+xvDvL7sZPgUZu7j9WI42B9IBUX4WI/PHGJoT0yuq8Bt9kdp7Pfv3xnCdpJlvFQ/FGb2B1LBIXwtw/cQYlEqiHJTBV6xvx3MGw0T1xnsfxgm9usqeGioYB2+RxNLOy9U4Db7/ZtoWxnsX6qx/wIv2cPJfl0Ff+BDqWCpoYJWxOiaCtxkf12N/X1gnn8j1VeCvYJf2N0QbvabKriOr734nkssfTQV1HVLBV6wvys716YIlgi+ERzU2P93CUvO5UUxtpUKDuJ7CbEMJjZXVeAm+/07lv8F0/wbaue4yP6SVDCHmPoQYyO3VOAW++sLWsIw/+bZyQb7zzvM/kAqOG+oYDKxdSXW+m6owI2NVor9/t3KvTX2+zfU7hGcFFwT/Cl45mDyFZ7h6xq+9xCLUkFvYlUqqFFZJ6A6XSqK/eka+xcLvmY/p5+Jd1xgv6mCO/g+QCyLNRWkayqIdFIFTrP/H4KGGvtHCT4RrPGI/aFUsIbYRmkqaMg11KhsE6CzvwWMek8wCaZt8Yj9oVSwhdgmEWs6sTuqAjfY728XyhKM1Nj/neCE4KoH7DdVcJVYvtNUMJKY2zqtAifZHwuDumjsXwTTfmJfvxfsD6SCc8S0hRiVCrpwDbFOqcBJ9ifBoEwYNZsOlt0WsD+YCnYT42xizuQakpxSgRvsf1cwUbBQsFlj/21ti7lXE6C2tt/WVLCZWCcSu6MqcLq9yM+gEYJZGvuPw7gHHrNfV8EDYjquqWAWsWc62ebkdHOdai9S7P9RcNYS9gdSwVliVCpQbU6ONfu50VznZ9JqWoeO00pkC/tNFVwhxl3EPMvpZj83m+sU+29ZxH5TBbc0FbjS7OdFc51t7A+kAtea/bxsrrNtAjxp9vO6uc42uN7s53VznY0qcLXZz4bmOptV4Hiznw3NdbaqwJVmP1ua62xXgWPNfrY019muAsea/WxqrrNRBY43+9nUXGcbXGn2s625rjKoIKzNfrY119moAkeb/WxsrrMNjjb72dhcZ7MKwt7sZ2tznY0qcKTZz9bmOltVEPZmP5ub62xVQVib/WxurrNZBWFr9rO9ua6k5YJnoNgDFYSl2c/25rpQif+bTVV/8mc3JiLszX6VobnOTIBK/B12N1/jz2oinruggrA1+1WG5jqV+Cf4UP9U8Xm2lp/kz+qfMn7Iuc9dbnMqV7Of7c11KvGPuPdex98v+N4DDnLsAufcZYwTExHWZj9bm+uesxCmEn+DH74iZL+Xi14LvuHYIc65yBg1EU8davyucLOfbc11xSTrL9Zffqf6PMWzt/pOwDruu3PBUo6p7wr8zJhL2LiHzadhjDMszX62NNfpib/PGvxvrEAeZv1lK8/dy3jq+Ih77mj+/Cl/t55zf2DsaWzdxHa4JiIszX5eN9epR8rHJOcW72F/Zf19P2vwG1h7yaXyzOGJoy8YwrGpnLOcMduxcQSbl/FxH5/PKhh7hZv9vGqu0xP/gKRcYS/OUXYi7OAN1EpWHqex7jKUtZduPG2048/9+LsxnPsZY/OwVYDtM/i6he+KTESFm/3cbq4zi6jb7Ms/y060QvbhbGIvznzewY7lDdTbrDyq74U1Bur7Yt05ZxhjpmNjFTZ34uMYPq8SQ3mLuQo3+7nVXFccoIi6SlfKcXYj72JH8hfsRJvBPpwPeP/ag3X3FFYd1Rfz1Bf2kvm7Dpz7DmPHY+tzbOfj60d8nyMWs5grdqPZz43mOrOIugZbTmBvNw0Rq9kOPpPNsNlsgsrg5XdrXv3F8+JDfTNSfWPydf6uCed2ZGx/bE3A9gJ8bcb3T8RyntjKWsxVqNnPyea6QNXrBe6VB7hfboEti2iG+JCt4APZCNuJDVBN2f6hEu8zXnpEcExNRAJj3sBGT2wOx8csfK4hhj3EdFIr5soyEeVu9gu00aoZLTnlba4zq1dVRKnqdS9PC2u5V34CU0bisxf+2xBLInG9FiDxgd7a+Tg3mrHNsJWG7XfxNQnfi4nla2JTVbVZzIWaiNI0+6Vpm3p95gSo208c99EeyHYmci1Nc12xVr3qRVSRUUR9RcEyh8e1Ucg0C6mm0omSyD78OuxCjijj69NajI3BVnNsd8HXe/ieTCxLiE0v5oqMYu5RiBoiULPfanKYTU5TyPH/bkPmG6942JJJMZHLY1xBiOa6UNXrYV7fbTWq1ynYH8SjWjoSbYFMY8uZ+FATEYvtFvhKx/cgYpliVNVbif1wKatqs9mvgNzlYj+T3Mbrb8zMCUiAJb0pbObx1HCAe6O+0SpU9XqESnSbUUSp6nUw6yVdeU5uyVNCLPfIyDB+HVt9hTsS27H4aonvrsQyWKuq9WJuG9dypBRVtdrIdYGc5ZPDHHKaSo5DTkAbJDqaQDby7Kyefh7jSC+iVPV6VKte89g/YxZRfVkzb8eKYSOekcOd+JImoj6+WxHLW8RmFnMruBZVVR81quoHRk7U01Ahucsll1nkNugE6L8BqtFCNVir5//LOLiH1FT1ekyrXjdSgc5jC99YNjCp6lUvouJYJ4ly8XvwaiKi8B1nFHOqqn6f2D/mWlZybaqqPqZV1bfJyR1ypOoB1fCtGjuC/gaopyDVZmrWAPnM/glm9wL3Ob2IMqvXcUb1GqiIinrh3fff1Xfqo4IUc3pVPS5AVa0Xc2fJyTlytJ+cmbWAanP1haoD1BpQFq36M7gf5jOrhdzfCvilz9eKKL167c8vv15EqcTX9jDxwSaitjYRejHXg2vRq2pVzOWTgwJyUkiO8snZDHKYFWxNKNQ6UBrl/GgMLUJSG3GQRxALjSJqQIAiKj5EEWXTx+R8RlVtFnMDjGJuITnIIycbydEicjaaHKYFWw8KthaUiBTTMTACKc3iR2Ue/51JoTGCSrMXvbSqiEooQxFl20SoYi5BK+Y6c40DueaJ5EDPySxyNYLcpZPLxJLWgpQKfEgxiYFpWuGSzazm8GybTZWXyXmpWvUaU8kSH2oiYrSqOpVrzeTas8lFDrnJ1grLNHKYRE59Ja2G6v/uQz2ctuD+1YVf8iyeaTO5P6ZR2DTHUUyYiiibJkKvqpO41rZcew9y0ZvcZJCrN8ldIrmsVdoXMroS1PNyQ5ymIMVU/psCK5K0IqqWjZ8OfxGefw+jllbMJXHtgXLSnJyp+sZX1nfCgQqXGJ5hE0A8/x/tQhFl0yfX9ZxEk4N4LS9x5KpUOSmLUx8Ga2uI5PjLnnjHclIexyaqveKoUE6qVSXQ26+p/hcoIQAYkehx5QAAAABJRU5ErkJggg==",
+}
+
+function EspRadar.texture(state, name)
+	state.arrowTextures = state.arrowTextures or {}
+	local cached = state.arrowTextures[name]
+	if cached ~= nil then return cached or nil end
+	state.arrowTextures[name] = false
+	local environment, encoded = state.context.environment, ESP_ARROW_ASSETS[name]
+	if not encoded or type(environment.getcustomasset) ~= "function" or type(environment.writefile) ~= "function" then return nil end
+	local ok, asset = pcall(function()
+		local bytes = buffer.tostring(OfflineFiles._decodeBuffer(encoded))
+		if #bytes < 60 then return nil end
+		if type(environment.makefolder) == "function" then
+			if type(environment.isfolder) ~= "function" or not environment.isfolder("PulseHub") then pcall(environment.makefolder, "PulseHub") end
+		end
+		local path = "PulseHub/esp-arrow-" .. name .. "-" .. tostring(#bytes) .. ".png"
+		if type(environment.isfile) ~= "function" or not environment.isfile(path) then environment.writefile(path, bytes) end
+		return environment.getcustomasset(path)
+	end)
+	if ok and type(asset) == "string" and asset ~= "" then state.arrowTextures[name] = asset; return asset end
+	return nil
+end
+
+function EspRadar.layers(state, frame, create)
+	local environment = state.context.environment
+	local shade, rim, fill = EspRadar.texture(state, "shade"), EspRadar.texture(state, "rim"), EspRadar.texture(state, "fill")
+	if not shade or not rim or not fill then return nil end
+	local function image(name, asset, level, color)
+		return create("ImageLabel", {Name = name, BackgroundTransparency = 1, Image = asset, ImageColor3 = color,
+			AnchorPoint = environment.Vector2.new(0.5, 0.5), Position = environment.UDim2.fromScale(0.5, 0.5),
+			Size = environment.UDim2.fromScale(1.45, 1.45), ScaleType = environment.Enum.ScaleType.Stretch,
+			ZIndex = level, Visible = false}, frame)
+	end
+	local shadow = image("ArrowShade", shade, 11, state.colors.black)
+	shadow.Position = environment.UDim2.new(0.5, 0, 0.5, 1)
+	local outline, body = image("ArrowRim", rim, 12, state.colors.black), image("ArrowFill", fill, 13, state.colors.white)
+	create("UIGradient", {Rotation = 90, Color = environment.ColorSequence.new(state.colors.white, environment.Color3.fromRGB(184, 184, 184))}, body)
+	return {shade = shadow, rim = outline, fill = body}
+end
+
+function EspRadar.create(state, player)
+	local environment, parent = state.context.environment, state.createGui()
+	local function create(class, properties, owner)
+		local object = environment.Instance.new(class)
+		for key, value in properties do object[key] = value end
+		object.Parent = owner
+		return object
+	end
+	local function stroke(owner, thickness)
+		return create("UIStroke", {Thickness = thickness, Color = state.colors.black,
+			ApplyStrokeMode = environment.Enum.ApplyStrokeMode.Border, Transparency = 1}, owner)
+	end
+	local frame = create("Frame", {Name = "Radar_" .. tostring(player.UserId), BackgroundTransparency = 1,
+		BorderSizePixel = 0, Active = false, Visible = false, ZIndex = 10, AnchorPoint = environment.Vector2.new(0.5, 0.5),
+		BackgroundColor3 = environment.Color3.fromRGB(28, 30, 38)}, parent)
+	create("UICorner", {CornerRadius = environment.UDim.new(1, 0)}, frame)
+	local dotStroke = stroke(frame, 1)
+	local image = create("ImageLabel", {Name = "Avatar", BackgroundTransparency = 1, Size = environment.UDim2.fromScale(1, 1),
+		Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(player.UserId) .. "&w=60&h=60", ZIndex = 11}, frame)
+	create("UICorner", {CornerRadius = environment.UDim.new(1, 0)}, image)
+	local edge = stroke(image, 1.5)
+	local arrow = create("TextLabel", {BackgroundTransparency = 1, Size = environment.UDim2.fromScale(1, 1), Text = "в–І",
+		RichText = false, Font = environment.Enum.Font.GothamBlack, TextScaled = true, TextStrokeTransparency = 0, ZIndex = 11}, frame)
+	local text = create("TextLabel", {BackgroundTransparency = 1, AnchorPoint = environment.Vector2.new(0.5, 0),
+		Position = environment.UDim2.new(0.5, 0, 1, 3), Size = environment.UDim2.fromOffset(150, 16), TextSize = 11,
+		Font = environment.Enum.Font.GothamBold, RichText = false, TextStrokeTransparency = 0.3, ZIndex = 11}, frame)
+	local radar = {frame = frame, image = image, edge = edge, arrow = arrow, text = text, dotStroke = dotStroke,
+		layers = EspRadar.layers(state, frame, create)}
+	state.radars[player] = radar
+	return radar
+end
+
+function EspRadar.show(state, options)
+	local environment, settings = state.context.environment, state.settings
+	local radar = state.radars[options.player]
+	if not radar or not radar.frame.Parent then radar = EspRadar.create(state, options.player) end
+	local style = settings.radarStyle or "Arrow"
+	local isAvatar, isDot = style == "Avatar", style == "Dot"
+	local isArrow = not isAvatar and not isDot
+	local size = math.clamp(settings.arrowSize, 5, 26) * (isAvatar and 3 or 2)
+	if isDot then size *= 0.5 end
+	if settings.arrowPulse then size *= 1 + 0.12 * math.sin(environment.os.clock() * 4 + options.player.UserId % 89 * 0.4) end
+	size = math.max(4, math.floor(size + 0.5))
+	local opacity = EspBox.quantize(1 - options.alpha)
+	local rotation = math.floor(options.angle * 2 + 0.5) / 2
+	radar.frame.Position = environment.UDim2.fromOffset(math.floor(options.position.X + 0.5), math.floor(options.position.Y + 0.5))
+	radar.frame.Size = environment.UDim2.fromOffset(size, size)
+	radar.image.Visible, radar.arrow.Visible = isAvatar, isArrow and not radar.layers
+	if radar.layers then
+		local layers = radar.layers
+		layers.shade.Visible, layers.rim.Visible, layers.fill.Visible = isArrow, isArrow, isArrow
+		if isArrow then
+			layers.fill.ImageColor3, layers.fill.ImageTransparency = options.color, opacity
+			layers.rim.ImageTransparency = EspBox.quantize(1 - options.alpha * 0.85)
+			layers.shade.ImageTransparency = EspBox.quantize(1 - options.alpha * 0.5)
+			layers.shade.Rotation, layers.rim.Rotation, layers.fill.Rotation = rotation, rotation, rotation
+		end
+	end
+	radar.image.ImageTransparency = opacity
+	if isDot then
+		radar.frame.BackgroundColor3, radar.frame.BackgroundTransparency = options.color, opacity
+		radar.dotStroke.Color = settings.outlineCol or state.colors.black
+		radar.dotStroke.Transparency = EspBox.quantize(1 - options.alpha * 0.5)
+	end
+	if not isDot then
+		radar.frame.BackgroundColor3 = environment.Color3.fromRGB(28, 30, 38)
+		radar.frame.BackgroundTransparency = isAvatar and EspBox.quantize(1 - options.alpha * 0.92) or 1
+		radar.dotStroke.Transparency = 1
+	end
+	radar.edge.Color, radar.edge.Transparency = options.color, opacity
+	if isArrow and not radar.layers then
+		radar.arrow.TextColor3, radar.arrow.TextTransparency, radar.arrow.Rotation = options.color, opacity, rotation
+	end
+	radar.text.Visible = settings.ringText or settings.arrowName
+	if radar.text.Visible then
+		radar.text.TextColor3, radar.text.TextTransparency = options.color, opacity
+		local name = settings.arrowName and EspText.name(state.text, options.player, settings.nameMode) or ""
+		local distance = settings.ringText and EspText.distance(state.text, options.distance, settings.distUnit) or ""
+		radar.text.Text = name ~= "" and distance ~= "" and name .. "  " .. distance or name .. distance
+	end
+	radar.frame.Visible = true
+end
+
+function EspRadar.hide(state, player)
+	local radar = state.radars[player]
+	if radar then radar.frame.Visible = false end
+end
+
+function EspRadar.drop(state, player)
+	local radar = state.radars[player]
+	if radar then pcall(function() radar.frame:Destroy() end) end
+	state.radars[player] = nil
+end
+
+function EspRadar.clear(state)
+	for player in state.radars do EspRadar.drop(state, player) end
+end
+
+local EspGhost = {}
+
+function EspGhost.install(state)
+	local context, environment = state.context, state.context.environment
+	local ghost = {by = {}, last = {}, leak = {}, far = 1000000, keep = 20}
+	state.ghost = ghost
+	environment.getgenv().__pulseDesyncGhost = ghost
+	context.connect(context.runService.Heartbeat, function() EspGhost.update(state) end)
+	environment.task.spawn(function()
+		local storage = environment.game:GetService("ReplicatedStorage")
+		local services = storage:WaitForChild("ClientServices", 30)
+		local weapons = services and services:WaitForChild("WeaponService", 30)
+		local fired = weapons and weapons:WaitForChild("GunFired", 30)
+		if fired then context.connect(fired.OnClientEvent, function(...) EspGhost.fired(state, ...) end) end
+	end)
+end
+
+function EspGhost.invalid(position, far)
+	return position.X ~= position.X or position.Y ~= position.Y or position.Z ~= position.Z or position.Magnitude > far
+end
+
+function EspGhost.model(environment)
+	local model = environment.Instance.new("Model")
+	model.Name = "PulseGhost"
+	local function part(name, size, height)
+		local object = environment.Instance.new("Part")
+		object.Name, object.Size = name, size
+		object.Anchored, object.CanCollide, object.CanQuery, object.CanTouch, object.Transparency = true, false, false, false, 1
+		object.CFrame, object.Parent = environment.CFrame.new(0, height, 0), model
+		return object
+	end
+	local root = part("HumanoidRootPart", environment.Vector3.new(2, 2, 1), 0)
+	part("Head", environment.Vector3.new(1.2, 1.2, 1.2), 2.25)
+	part("Feet", environment.Vector3.new(2, 1, 1), -2.5)
+	local humanoid = environment.Instance.new("Humanoid")
+	humanoid.DisplayDistanceType = environment.Enum.HumanoidDisplayDistanceType.None
+	humanoid.HealthDisplayType = environment.Enum.HumanoidHealthDisplayType.AlwaysOff
+	humanoid.Parent = model
+	model.PrimaryPart = root
+	return model
+end
+
+function EspGhost.get(state, player)
+	local ghost = state.ghost
+	if ghost.by[player] then return ghost.by[player] end
+	local model = EspGhost.model(state.context.environment)
+	local record = {model = model, fake = {Name = player.Name, DisplayName = player.DisplayName, UserId = player.UserId,
+		Character = model, Ghost = true, FindFirstChild = function(_, name) return player:FindFirstChild(name) end}}
+	ghost.by[player] = record
+	return record
+end
+
+function EspGhost.drop(state, player)
+	local record = state.ghost.by[player]
+	if record then pcall(function() record.model:Destroy() end) end
+	state.ghost.by[player] = nil
+end
+
+function EspGhost.playerFrom(state, instance)
+	for _ = 1, 6 do
+		if not instance then return nil end
+		local player = state.context.players:GetPlayerFromCharacter(instance)
+		if player then return player, instance end
+		instance = instance.Parent
+	end
+	return nil
+end
+
+function EspGhost.fired(state, instance, start, finish)
+	local context, environment, ghost = state.context, state.context.environment, state.ghost
+	if environment.typeof(instance) ~= "Instance" then return end
+	if environment.typeof(start) == "CFrame" then start = start.Position end
+	if environment.typeof(finish) == "CFrame" then finish = finish.Position end
+	if environment.typeof(start) ~= "Vector3" or EspGhost.invalid(start, ghost.far) then return end
+	local player, character = EspGhost.playerFrom(state, instance)
+	if not player or player == context.player then return end
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root or not EspGhost.invalid(root.Position, ghost.far) then return end
+	local position = start - environment.Vector3.new(0, 1.25, 0)
+	if environment.typeof(finish) == "Vector3" then
+		local direction = environment.Vector3.new(finish.X - start.X, 0, finish.Z - start.Z)
+		if direction.Magnitude > 0.1 then
+			direction = direction.Unit
+			position = position - direction * 3.45 - direction:Cross(environment.Vector3.yAxis) * 1.4
+		end
+	end
+	ghost.leak[player] = {p = position, t = environment.os.clock(), ch = character}
+end
+
+function EspGhost.update(state)
+	local context, environment, ghost = state.context, state.context.environment, state.ghost
+	if not state.settings.on then state.settings.extraPlayers = nil; return end
+	local now, roles, extras, active = environment.os.clock(), nil, nil, nil
+	for _, player in context.players:GetPlayers() do
+		if player == context.player then continue end
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local humanoid = root and character:FindFirstChildOfClass("Humanoid")
+		if not root or not humanoid or humanoid.Health <= 0 then continue end
+		local position, last = root.Position, ghost.last[player]
+		if not EspGhost.invalid(position, ghost.far) then
+			last = last or {}
+			last.p, last.t, last.ch = position, now, character
+			ghost.last[player] = last
+			continue
+		end
+		local saved, savedAt
+		if last and last.ch == character then saved, savedAt = last.p, last.t end
+		local leak = ghost.leak[player]
+		if leak and leak.ch == character and (not savedAt or leak.t > savedAt) then saved, savedAt = leak.p, leak.t end
+		if not saved or now - savedAt >= ghost.keep then continue end
+		roles, extras, active = roles or context.roles() or {}, extras or {}, active or {}
+		local record = EspGhost.get(state, player)
+		local age = math.floor(now - savedAt)
+		record.fake.Name, record.fake.DisplayName = player.Name, player.DisplayName
+		record.fake.GhostTag = age >= 1 and "DESYNC " .. age .. "s" or "DESYNC"
+		record.fake.FakeRole = EspRole.of(state.role, player, roles)
+		if record.at ~= saved then
+			record.at = saved
+			pcall(function() record.model:PivotTo(environment.CFrame.new(saved)) end)
+		end
+		active[player] = true
+		table.insert(extras, record.fake)
+	end
+	for player in ghost.by do if not active or not active[player] then EspGhost.drop(state, player) end end
+	if now - (ghost.gcAt or 0) > 1 then
+		ghost.gcAt = now
+		for player in ghost.last do
+			if not player.Parent then ghost.last[player], ghost.leak[player] = nil, nil end
+		end
+	end
+	state.settings.extraPlayers = extras
+end
+
+function EspGhost.stop(state)
+	state.settings.extraPlayers = nil
+	for player in state.ghost.by do EspGhost.drop(state, player) end
+end
+
+local EspFeature = {}
+
+function EspFeature.create(context)
+	local environment, globals = context.environment, context.environment.getgenv()
+	if globals.__pulseESP2Stop then pcall(globals.__pulseESP2Stop) end
+	local settings = EspSettings.create(environment, context.configuration)
+	local state = {context = context, settings = settings, role = EspRole.create(environment.os.clock),
+		projection = EspProjection.create(environment), objects = {}, labels = {}, retryAt = {}, colorHandles = {}, text = EspText.create(),
+		highlights = {}, chamStates = {}, models = {}, halos = {}, radars = {}, skipDelta = setmetatable({}, {__mode = "k"}),
+		chamsMaterials = EspChams.materials(environment)}
+	state.createGui = function() return EspFeature.root(state) end
+	state.colors = EspColor.create(environment, settings)
+	state.boxContext = {environment = environment, settings = settings, colors = state.colors}
+	settings.I = state
+	settings.onChange = function(key)
+		if key == "on" and not settings.on then EspFeature.hideAll(state) end
+		if key == "offscreen" and not settings.offscreen or key == "radarStyle" then EspRadar.clear(state) end
+		if key == "chams" and not settings.chams or key == "chamsMaterial" or key == "chamsStyle" or key == "chamsShell" then
+			EspChams.clear(state)
+		end
+	end
+	settings.stop = function() EspFeature.stop(state) end
+	globals.__pulseESP2, globals.__pulseESP2Stop = settings, settings.stop
+
+	local event = context.runService.PreRender or context.runService.RenderStepped
+	state.connection = context.connect(event, function(delta)
+		local ok, raised = pcall(EspFeature.step, state, delta)
+		if not ok then state.lastError = tostring(raised) end
+	end)
+	context.connect(context.players.PlayerRemoving, function(player) EspFeature.release(state, player) end)
+	EspGhost.install(state)
+	return state
+end
+
+function EspFeature.root(state)
+	if state.gui and state.gui.Parent then return state.gui end
+	local context, environment = state.context, state.context.environment
+	local holder = context.coreGui
+	if not holder or not holder.Parent then holder = context.player:FindFirstChildOfClass("PlayerGui") end
+	local gui = environment.Instance.new("ScreenGui")
+	gui.Name, gui.ResetOnSpawn, gui.IgnoreGuiInset = "PulseESP2", false, true
+	gui.DisplayOrder, gui.ZIndexBehavior = 9, environment.Enum.ZIndexBehavior.Sibling
+	gui.Parent = holder
+	state.gui = gui
+	return gui
+end
+
+function EspFeature.release(state, player)
+	local object = state.objects[player]
+	if object then pcall(function() object.layer:Destroy() end) end
+	state.objects[player], state.retryAt[player] = nil, nil
+	EspChams.drop(state, player)
+	EspChamModel.purge(state, player)
+	EspRadar.drop(state, player)
+	EspLabel.release(state, player)
+end
+
+function EspFeature.hide(state, player)
+	local object = state.objects[player]
+	if not object then return end
+	object.layer.Visible = false
+	EspLabel.hide(state, player)
+	EspRadar.hide(state, player)
+	object.rect, object.rel, object.hpRatio, object.drawState = nil, nil, nil, nil
+end
+
+function EspFeature.hideAll(state)
+	EspChams.clear(state)
+	for player in state.objects do EspFeature.hide(state, player) end
+end
+
+function EspFeature.stop(state)
+	EspGhost.stop(state)
+	pcall(EspLabel.restoreNames, state)
+	EspChams.clear(state)
+	EspChamModel.purge(state)
+	EspChamModel.unbind(state)
+	EspRadar.clear(state)
+	if state.modelFolder then pcall(function() state.modelFolder:Destroy() end) end
+	if state.connection then pcall(function() state.connection:Disconnect() end) end
+	for player in state.objects do EspFeature.release(state, player) end
+	if state.gui then pcall(function() state.gui:Destroy() end) end
+	if state.labelGui then pcall(function() state.labelGui:Destroy() end) end
+	state.gui, state.labelGui = nil, nil
+end
+
+function EspFeature.prepareProjection(state, camera)
+	local frame, viewport = camera.CFrame, camera.ViewportSize
+	local centerX, centerY = viewport.X * 0.5, viewport.Y * 0.5
+	local focal = centerY / math.tan(math.rad(camera.FieldOfView) * 0.5)
+	local point = frame.Position + frame.LookVector * 20 + frame.RightVector * 3 + frame.UpVector * 2
+	local projected, localPoint = camera:WorldToViewportPoint(point), frame:PointToObjectSpace(point)
+	local depth = -localPoint.Z
+	local enabled = false
+	if depth > 0.08 then
+		local x, y = centerX + localPoint.X / depth * focal, centerY - localPoint.Y / depth * focal
+		enabled = math.abs(x - projected.X) < 0.5 and math.abs(y - projected.Y) < 0.5 and math.abs(depth - projected.Z) < 0.05
+	end
+	state.projection.projection = {frame = frame, centerX = centerX, centerY = centerY, focal = focal, enabled = enabled}
+end
+
+function EspFeature.update(state, player, roles, camera, delta)
+	local context, settings = state.context, state.settings
+	local character = player.Character
+	local parts = character and EspRole.partsOf(state.role, character)
+	local humanoid, root = parts and parts.hum, parts and parts.root
+	local role = EspRole.of(state.role, player, roles)
+	if not character or not root or not humanoid or humanoid.Health <= 0 or not EspRole.shown(settings, role) then
+		EspFeature.hide(state, player)
+		EspChams.drop(state, player)
+		return
+	end
+
+	local distance = (root.Position - camera.CFrame.Position).Magnitude
+	if distance > settings.maxDist then EspFeature.hide(state, player); EspChams.drop(state, player); return end
+	local object = state.objects[player]
+	if not object or not object.layer.Parent then
+		object = EspBox.create(state.boxContext, EspFeature.root(state), player.UserId)
+		object.tracer = EspTracer.create(state.context, object)
+		state.objects[player] = object
+	end
+	if object.character ~= character then
+		object.character, object.rect, object.rel, object.hpRatio = character, nil, nil, nil
+	end
+	local now = context.environment.os.clock()
+	local inView, viewPoint = EspProjection.inView(state.projection, camera, root.Position)
+	if (settings.visCheck or (settings.chams or settings.skeleton) and inView) and (not object.seenAt or now - object.seenAt > 0.12) then
+		object.seen = EspProjection.visible(context, camera.CFrame.Position, parts.head or root, character)
+		object.seenAt = now
+	end
+	local isVisible = not settings.visCheck or object.seen ~= false
+	local color = EspColor.select(state.colors, role, isVisible, distance)
+	local alpha = EspProjection.alpha(settings, distance, isVisible)
+	object.role = role
+	object.boxOff = settings.limits and (tonumber(settings.boxMaxDist) or 0) > 0 and distance > settings.boxMaxDist
+	object.skelOff = settings.limits and (tonumber(settings.skelMaxDist) or 0) > 0 and distance > settings.skelMaxDist
+	state.boxContext.lineWidthFactor = settings.distScale and math.clamp(90 / math.max(distance, 1), 0.55, 1.6) or 1
+	local isGhost = type(player) == "table" and player.Ghost == true
+	local exceedsChamLimit = settings.limits and (tonumber(settings.chamsMaxDist) or 0) > 0 and distance > settings.chamsMaxDist
+	if isGhost or exceedsChamLimit then EspChams.drop(state, player) end
+	if not isGhost and not exceedsChamLimit then
+		EspChams.apply(state, {player = player, character = character, role = role, seen = object.seen ~= false,
+			alpha = alpha, inView = inView, distance = distance, cameraPosition = camera.CFrame.Position})
+	end
+	local rectangle = EspProjection.project(state.projection, character, root, camera, settings.boxWidth)
+	if not rectangle then
+		EspLabel.hide(state, player)
+		object.rect, object.rel, object.drawState = nil, nil, nil
+		local target, angle = EspTracer.point(state, camera, root.Position)
+		if settings.offscreen then
+			EspRadar.show(state, {player = player, position = target, angle = angle, color = color, distance = distance, alpha = alpha})
+		end
+		if not settings.offscreen then EspRadar.hide(state, player) end
+		if not settings.tracer then
+			object.layer.Visible = false
+			return
+		end
+		object.box.Visible, object.glow.Visible, object.outer.Visible = false, false, false
+		if object.inner then object.inner.Visible = false end
+		if object.head then object.head.Visible = false end
+		if object.look then object.look.frame.Visible = false end
+		EspSkeleton.hide(object)
+		EspBox.hideSegments(object, 1)
+		state.boxContext.lineWidthFactor = settings.distScale and math.clamp(90 / math.max(distance, 1), 0.55, 1.6) or 1
+		EspTracer.draw(state, object, EspTracer.origin(state, camera), target, color, alpha, role)
+		object.layer.Visible = true
+		return
+	end
+	EspRadar.hide(state, player)
+	local point = viewPoint or EspProjection.point(state.projection, camera, root.Position)
+	local focus = settings.murdererFocus == true and role == "Murderer"
+	local frame = {character = character, rectangle = rectangle, point = point, color = color, alpha = alpha, focus = focus, delta = delta}
+	if EspFeature.shouldSkip(state, object, frame) then return end
+	local elapsed = EspFeature.rememberFrame(object, frame)
+	local center = point.Z > 0.08 and {X = point.X, Y = point.Y} or nil
+	rectangle = EspProjection.smooth(object, rectangle, camera.ViewportSize, settings.smooth, elapsed, center)
+	object.layer.Visible = true
+	EspBox.draw(state.boxContext, object, rectangle, color, alpha, player, focus)
+	if rectangle.h < (EspSkeleton.perf(state) and 48 or 26) then object.skelOff = true end
+	EspSkeleton.draw(state, object, character, rectangle, color, alpha, camera)
+	EspHead.draw(state, object, parts.head or root, rectangle, color, alpha, camera)
+	EspHead.look(state, object, parts.head or root, color, alpha, camera)
+	if settings.tracer then
+		local targetY = rectangle.y + rectangle.h
+		if settings.tracerTo == "Center" then targetY = rectangle.y + rectangle.h * 0.5 end
+		if settings.tracerTo == "Head" then targetY = rectangle.y end
+		local target = context.environment.Vector2.new(rectangle.x + rectangle.w * 0.5, targetY)
+		EspTracer.draw(state, object, EspTracer.origin(state, camera), target, color, alpha, role)
+	end
+	if not settings.tracer then object.tracer.frame.Visible = false end
+	local exceedsNameLimit = settings.limits and (tonumber(settings.nameMaxDist) or 0) > 0 and distance > settings.nameMaxDist
+	if exceedsNameLimit then EspLabel.hide(state, player); return end
+	local weapon, equipped = EspRole.weaponOf(state.role, player, role)
+	EspLabel.update(state, player, rectangle, {alpha = alpha, color = color, role = role,
+		roleColor = EspColor.role(state.colors, role), weapon = weapon, equipped = equipped, distance = distance, focus = focus,
+		ghostTag = isGhost and player.GhostTag or nil})
+end
+
+function EspFeature.shouldSkip(state, object, options)
+	local previous = object.drawState
+	if not previous or state.settings.skipFrames == false or previous.n >= 1 or previous.character ~= options.character then return false end
+	if options.rectangle.h >= 160 or previous.color ~= options.color or previous.alpha ~= options.alpha or previous.focus ~= options.focus then return false end
+	if math.abs(options.point.X - previous.x) >= 1 or math.abs(options.point.Y - previous.y) >= 1 then return false end
+	if math.abs(options.rectangle.h - previous.height) >= 1 or math.abs(options.rectangle.w - previous.width) >= 1 then return false end
+	previous.n, previous.delta = previous.n + 1, previous.delta + options.delta
+	return true
+end
+
+function EspFeature.rememberFrame(object, options)
+	local previous = object.drawState
+	local elapsed = options.delta + (previous and previous.delta or 0)
+	object.drawState = {n = 0, delta = 0, character = options.character, x = options.point.X, y = options.point.Y,
+		height = options.rectangle.h, width = options.rectangle.w, color = options.color, alpha = options.alpha, focus = options.focus}
+	return elapsed
+end
+
+function EspFeature.step(state, delta)
+	pcall(EspLabel.gameNames, state)
+	if not state.settings.on then EspFeature.hideAll(state); return end
+	local context = state.context
+	local camera = context.workspace.CurrentCamera
+	if not camera then EspFeature.hideAll(state); return end
+	state.viewport = camera.ViewportSize
+	state.projection.projection = nil
+	pcall(EspFeature.prepareProjection, state, camera)
+
+	local roles, present, now = context.roles(), {}, context.environment.os.clock()
+	state.modelBudget = 1
+	if not state.poolSweepAt or now >= state.poolSweepAt then
+		state.poolSweepAt = now + 5
+		pcall(EspChamModel.sweep, state)
+	end
+	state.frameNumber = (state.frameNumber or 0) + 1
+	local index, performance = 0, EspSkeleton.perf(state)
+	for _, player in context.players:GetPlayers() do
+		if player == context.player then continue end
+		present[player] = true
+		index += 1
+		if performance and (index + state.frameNumber) % 2 == 1 and state.objects[player] then
+			state.skipDelta[player] = (state.skipDelta[player] or 0) + delta
+			continue
+		end
+		if state.retryAt[player] and now < state.retryAt[player] then continue end
+		local elapsed = delta + (state.skipDelta[player] or 0)
+		state.skipDelta[player] = nil
+		local ok, raised = pcall(EspFeature.update, state, player, roles, camera, elapsed)
+		if not ok then
+			state.lastError, state.retryAt[player] = tostring(raised), now + 0.5
+			EspFeature.hide(state, player)
+			EspChams.drop(state, player)
+		end
+		if ok then state.retryAt[player] = nil end
+	end
+	for _, player in state.settings.extraPlayers or {} do
+		present[player] = true
+		local ok, raised = pcall(EspFeature.update, state, player, roles, camera, delta)
+		if not ok then state.lastError = tostring(raised) end
+	end
+	for player in state.objects do if not present[player] then EspFeature.release(state, player) end end
+end
+
+function EspFeature.toggle(state, field, text, children)
+	local section, settings = state.context.section, state.settings
+	section:Toggle({Text = text, Default = settings[field] == true, Settings = children, Callback = function(value)
+		settings[field] = not not value
+		settings.onChange(field)
+	end})
+end
+
+function EspFeature.slider(state, options)
+	local section, settings, field = state.context.section, state.settings, options.field
+	section:Slider({Text = options.text, Min = options.min, Max = options.max, Default = settings[field],
+		Decimals = options.decimals or 0, Suffix = options.suffix or "", Callback = function(value)
+			settings[field] = value
+			settings.onChange(field)
+		end})
+end
+
+function EspFeature.dropdown(state, field, text, values)
+	local section, settings, options = state.context.section, state.settings, {}
+	for _, value in values do table.insert(options, {code = value, label = value}) end
+	section:Dropdown({Text = text, Options = options, Default = settings[field], Callback = function(value)
+		if value == nil then return end
+		settings[field] = value
+		settings.onChange(field)
+	end})
+end
+
+function EspFeature.colorpicker(state, field, text)
+	local section, settings = state.context.section, state.settings
+	state.colorHandles[field] = section:Colorpicker({Text = text, Default = settings[field], Callback = function(value)
+		if state.context.environment.typeof(value) == "Color3" then settings[field] = value end
+	end})
+end
+
+function EspFeature.mainControls(state)
+	local section = state.context.section
+	section:Group({Title = "ESP", Side = "Left"})
+	EspFeature.toggle(state, "on", "Enable ESP")
+	for _, option in {{"murderer", "Show Murderer"}, {"sheriff", "Show Sheriff"}, {"hero", "Show Hero"},
+		{"innocent", "Show Innocent"}, {"noRole", "Show No Role"}} do
+		EspFeature.toggle(state, option[1], option[2])
+	end
+	EspFeature.slider(state, {field = "maxDist", text = "Max Distance", min = 50, max = 2000, decimals = 0, suffix = " st"})
+	EspFeature.toggle(state, "visCheck", "Visibility Check", function()
+		EspFeature.toggle(state, "dimHidden", "Dim Hidden")
+		EspFeature.dropdown(state, "hiddenStyle", "Hidden Style", {"Fade", "Grey"})
+	end)
+end
+
+function EspFeature.boxControls(state)
+	local section = state.context.section
+	local sources = {"ESP", "Custom", "White", "Light", "Dark"}
+	local styles = {"Corners", "Full", "Rounded", "Double", "Brackets"}
+	section:Group({Title = "ESP Box", Side = "Right"})
+	EspFeature.toggle(state, "box", "Player Box", function()
+		EspFeature.dropdown(state, "boxStyle", "Frame Style", styles)
+		EspFeature.slider(state, {field = "boxThickness", text = "Line Thickness", min = 0.5, max = 5, decimals = 1})
+		EspFeature.slider(state, {field = "cornerSize", text = "Corner Length", min = 8, max = 50, decimals = 0, suffix = "%"})
+		EspFeature.slider(state, {field = "boxRound", text = "Corner Radius", min = 0, max = 20, decimals = 0})
+		EspFeature.slider(state, {field = "boxWidth", text = "Box Width", min = 30, max = 90, decimals = 0, suffix = "%"})
+		EspFeature.slider(state, {field = "boxPad", text = "Box Padding", min = -6, max = 20, decimals = 0})
+		EspFeature.dropdown(state, "boxColMode", "Box Color Source", sources)
+		EspFeature.colorpicker(state, "boxCol", "Box Custom Color")
+		EspFeature.dropdown(state, "boxAnim", "Box Animation", {"None", "Pulse", "Breathe"})
+		EspFeature.slider(state, {field = "boxAnimSpeed", text = "Box Animation Speed", min = 0.2, max = 4, decimals = 1})
+		EspFeature.dropdown(state, "murdBox", "Murderer Box Style", {"Same", "Corners", "Full", "Rounded", "Double", "Brackets"})
+	end)
+	EspFeature.toggle(state, "outline", "Dark Outline", function()
+		EspFeature.toggle(state, "outlineInner", "Inner Outline")
+		EspFeature.colorpicker(state, "outlineCol", "Outline Color")
+		EspFeature.slider(state, {field = "outlineAlpha", text = "Outline Opacity", min = 0, max = 100, decimals = 0, suffix = "%"})
+		EspFeature.slider(state, {field = "outlineSize", text = "Outline Size", min = 1, max = 6, decimals = 0})
+	end)
+	EspFeature.toggle(state, "boxFill", "Filled Box", function()
+		EspFeature.slider(state, {field = "boxFillAlpha", text = "Fill Strength", min = 0, max = 100, decimals = 0, suffix = "%"})
+		EspFeature.dropdown(state, "fillStyle", "Fill Style", {"Solid", "Fade Down", "Fade Up"})
+		EspFeature.dropdown(state, "fillColMode", "Fill Color Source", sources)
+		EspFeature.colorpicker(state, "fillCol", "Fill Custom Color")
+	end)
+	EspFeature.toggle(state, "boxGlow", "Soft Glow", function()
+		EspFeature.slider(state, {field = "glowStrength", text = "Glow Strength", min = 0, max = 60, decimals = 0, suffix = "%"})
+		EspFeature.slider(state, {field = "glowSize", text = "Glow Size", min = 2, max = 20, decimals = 0})
+		EspFeature.toggle(state, "pulse", "Gentle Pulse")
+		EspFeature.slider(state, {field = "pulseSpeed", text = "Pulse Speed", min = 0.2, max = 4, decimals = 1})
+		EspFeature.dropdown(state, "glowColMode", "Glow Color Source", sources)
+		EspFeature.colorpicker(state, "glowCol", "Glow Custom Color")
+	end)
+	EspFeature.toggle(state, "gradient", "Gradient", function()
+		EspFeature.colorpicker(state, "gradientColour", "Second Color")
+		EspFeature.dropdown(state, "boxGradStyle", "Box Gradient Style", {"Two Color", "Role Fade"})
+		EspFeature.slider(state, {field = "boxGradAngle", text = "Box Gradient Angle", min = 0, max = 360, decimals = 0, suffix = "В°"})
+	end)
+end
+
+function EspFeature.colorControls(state)
+	local section, environment = state.context.section, state.context.environment
+	section:Group({Title = "ESP Colors", Side = "Left"})
+	EspFeature.dropdown(state, "colorMode", "Color Mode", {"Role", "Rainbow", "Custom", "Distance", "Visibility"})
+	local palettes = {
+		Classic = {{255, 64, 64}, {80, 150, 255}, {255, 210, 60}, {90, 230, 130}, {176, 182, 204}},
+		Soft = {{255, 107, 107}, {116, 170, 255}, {255, 205, 112}, {125, 222, 170}, {190, 196, 212}},
+		Muted = {{224, 102, 102}, {110, 150, 210}, {214, 180, 106}, {120, 190, 150}, {168, 172, 184}},
+		Pastel = {{255, 150, 160}, {160, 196, 255}, {255, 226, 160}, {170, 234, 196}, {210, 212, 224}},
+		Mono = {{255, 92, 92}, {232, 232, 236}, {232, 232, 236}, {190, 192, 200}, {150, 152, 160}},
+		Ocean = {{255, 110, 120}, {90, 170, 255}, {120, 220, 230}, {150, 205, 255}, {170, 185, 205}},
+	}
+	local options, ready = {}, false
+	for _, name in {"Classic", "Soft", "Muted", "Pastel", "Mono", "Ocean"} do table.insert(options, {code = name, label = name}) end
+	section:Dropdown({Text = "Role Palette", NoSave = true, Options = options, Default = "Classic", Callback = function(name)
+		if not ready or not palettes[name] then return end
+		for index, field in {"murdererColour", "sheriffColour", "heroColour", "innocentColour", "noRoleColour"} do
+			local rgb = palettes[name][index]
+			local color = environment.Color3.fromRGB(rgb[1], rgb[2], rgb[3])
+			state.settings[field] = color
+			local handle = state.colorHandles[field]
+			if handle and handle.Set then pcall(handle.Set, color) end
+		end
+	end})
+	ready = true
+	for _, option in {{"murdererColour", "Murderer Color"}, {"sheriffColour", "Sheriff Color"},
+		{"heroColour", "Hero Color"}, {"innocentColour", "Innocent Color"}, {"noRoleColour", "No Role Color"},
+		{"nameColour", "Name Color"}, {"infoColour", "Detail Color"}, {"customColour", "Custom Color"},
+		{"nearColour", "Near Color"}, {"farColour", "Far Color"}, {"seenColour", "Seen Color"}, {"hiddenColour", "Hidden Color"}} do
+		EspFeature.colorpicker(state, option[1], option[2])
+	end
+end
+
+function EspFeature.lookControls(state)
+	state.context.section:Group({Title = "ESP Look", Side = "Right"})
+	for _, option in {{"brightness", "ESP Brightness", 20, 200}, {"saturation", "ESP Saturation", 0, 200},
+		{"opacity", "ESP Opacity", 10, 100}, {"lineScale", "Line Scale", 50, 300}, {"smooth", "Smoothing", 0, 90}} do
+		EspFeature.slider(state, {field = option[1], text = option[2], min = option[3], max = option[4], suffix = "%"})
+	end
+	EspFeature.toggle(state, "fade", "Distance Fade", function()
+		EspFeature.slider(state, {field = "fadeFrom", text = "Fade Start", min = 10, max = 95, suffix = "%"})
+	end)
+	EspFeature.toggle(state, "distScale", "Scale Lines With Distance")
+	EspFeature.toggle(state, "limits", "Element Limits", function()
+		EspFeature.slider(state, {field = "boxMaxDist", text = "Box Max Distance", min = 0, max = 2000, suffix = " st"})
+		EspFeature.slider(state, {field = "nameMaxDist", text = "Name Max Distance", min = 0, max = 2000, suffix = " st"})
+		EspFeature.slider(state, {field = "chamsMaxDist", text = "Chams Max Distance", min = 0, max = 2000, suffix = " st"})
+		EspFeature.slider(state, {field = "skelMaxDist", text = "Skeleton Max Distance", min = 0, max = 2000, suffix = " st"})
+	end)
+	EspFeature.toggle(state, "murdererFocus", "Murderer Focus", function()
+		EspFeature.slider(state, {field = "focusScale", text = "Focus Thickness", min = 100, max = 300, suffix = "%"})
+	end)
+end
+
+function EspFeature.textControls(state)
+	state.context.section:Group({Title = "ESP Text", Side = "Left"})
+	EspFeature.toggle(state, "name", "Player Name", function()
+		EspFeature.dropdown(state, "nameMode", "Name Format", {"Display name", "Username", "Both"})
+		EspFeature.slider(state, {field = "textSize", text = "Name Size", min = 9, max = 22})
+		EspFeature.dropdown(state, "nameWeight", "Name Weight", {"Regular", "Medium", "SemiBold", "Bold", "Heavy"})
+		EspFeature.dropdown(state, "nameCase", "Name Case", {"Normal", "UPPER", "lower"})
+		EspFeature.dropdown(state, "namePos", "Name Position", {"Above", "Below"})
+		EspFeature.toggle(state, "textMatch", "Colored Name")
+		EspFeature.toggle(state, "hideGameNames", "Hide Game Names")
+	end)
+	EspFeature.toggle(state, "roleText", "Role Text", function()
+		EspFeature.dropdown(state, "roleStyle", "Role Style", {"Full", "Short", "Upper"})
+	end)
+	EspFeature.toggle(state, "weaponIcon", "Weapon Icon", function()
+		EspFeature.dropdown(state, "weaponStyle", "Weapon Display", {"Icon", "Text", "Both"})
+	end)
+	EspFeature.toggle(state, "distance", "Distance", function()
+		EspFeature.dropdown(state, "distUnit", "Distance Unit", {"Studs", "Meters"})
+	end)
+	EspFeature.dropdown(state, "textFont", "Font", {"GothamSSm", "Gotham", "Montserrat", "Code", "Source Sans", "Fredoka",
+		"Luckiest Guy", "Bangers", "Cartoon", "Arcade", "Sci-Fi", "Michroma", "Jura", "Sarpanch", "Oswald", "Ubuntu", "Nunito",
+		"Roboto", "Roboto Condensed", "Titillium", "Builder Sans", "Arimo", "Highway", "Denk One", "Creepster", "Permanent Marker",
+		"Kalam", "Indie Flower", "Patrick Hand", "Amatic", "Special Elite", "Grenze Gotisch", "Bodoni", "Merriweather", "Garamond",
+		"Antique", "Fantasy"})
+	EspFeature.slider(state, {field = "infoSize", text = "Detail Size", min = 9, max = 20})
+	EspFeature.dropdown(state, "infoCase", "Detail Case", {"Normal", "UPPER"})
+	EspFeature.toggle(state, "textOutline", "Text Outline", function()
+		EspFeature.slider(state, {field = "textOutlineAlpha", text = "Text Outline Opacity", min = 0, max = 100, suffix = "%"})
+	end)
+end
+
+function EspFeature.tracerControls(state)
+	state.context.section:Group({Title = "ESP Extras", Side = "Right"})
+	EspFeature.toggle(state, "skeleton", "Skeleton", function()
+		EspFeature.slider(state, {field = "boneThick", text = "Bone Thickness", min = 0.5, max = 6, decimals = 1})
+		EspFeature.dropdown(state, "boneStyle", "Bone Style", {"Line", "Soft Glow"})
+		EspFeature.slider(state, {field = "boneAlpha", text = "Bone Opacity", min = 10, max = 100, suffix = "%"})
+		EspFeature.toggle(state, "boneRole", "Role Bones")
+		EspFeature.colorpicker(state, "boneColour", "Bone Color")
+		EspFeature.colorpicker(state, "boneHidden", "Hidden Bones")
+		EspFeature.toggle(state, "joints", "Joints")
+		EspFeature.slider(state, {field = "jointSize", text = "Joint Size", min = 2, max = 12})
+		EspFeature.toggle(state, "boneGrad", "Bone Gradient")
+		EspFeature.colorpicker(state, "boneTop", "Bone Top Color")
+		EspFeature.colorpicker(state, "boneBottom", "Bone Bottom Color")
+	end)
+	EspFeature.toggle(state, "headDot", "Head Circle", function()
+		EspFeature.dropdown(state, "headStyle", "Head Style", {"Ring", "Filled", "Dot"})
+		EspFeature.slider(state, {field = "headScale", text = "Head Size", min = 40, max = 250, suffix = "%"})
+		EspFeature.slider(state, {field = "headFill", text = "Head Fill", min = 0, max = 100, suffix = "%"})
+		EspFeature.dropdown(state, "headColMode", "Head Color Source", {"ESP", "Custom", "White", "Light", "Dark"})
+		EspFeature.colorpicker(state, "headCol", "Head Custom Color")
+	end)
+	EspFeature.toggle(state, "lookLine", "View Direction", function()
+		EspFeature.slider(state, {field = "lookLength", text = "Line Length", min = 3, max = 40})
+		EspFeature.slider(state, {field = "lookThick", text = "View Line Width", min = 0.5, max = 5, decimals = 1})
+		EspFeature.dropdown(state, "lookColMode", "View Line Color Source", {"ESP", "Custom", "White", "Light", "Dark"})
+		EspFeature.colorpicker(state, "lookCol", "View Line Color")
+	end)
+	EspFeature.toggle(state, "tracer", "Tracers", function()
+		EspFeature.dropdown(state, "tracerFrom", "Tracer Origin", {"Bottom", "Middle", "Top", "Mouse", "Character"})
+		EspFeature.dropdown(state, "tracerTo", "Tracer Target", {"Feet", "Center", "Head"})
+		EspFeature.dropdown(state, "tracerStyle", "Tracer Style", {"Line", "Fade"})
+		EspFeature.slider(state, {field = "tracerThickness", text = "Tracer Width", min = 0.5, max = 4, decimals = 1})
+		EspFeature.slider(state, {field = "tracerAlpha", text = "Tracer Opacity", min = 0, max = 100, suffix = "%"})
+		EspFeature.toggle(state, "tracerRole", "Role Tracers")
+		EspFeature.colorpicker(state, "tracerColour", "Tracer Color")
+		EspFeature.toggle(state, "tracerMurderer", "Murderer Tracer Only")
+	end)
+	EspFeature.toggle(state, "offscreen", "Offscreen Arrows", function()
+		EspFeature.dropdown(state, "radarStyle", "Marker Style", {"Arrow", "Avatar", "Dot"})
+		EspFeature.dropdown(state, "markerPos", "Marker Position", {"Around Center", "Screen Edge"})
+		EspFeature.slider(state, {field = "ringRadius", text = "Radar Spread", min = 60, max = 420})
+		EspFeature.slider(state, {field = "arrowSize", text = "Marker Size", min = 5, max = 26})
+		EspFeature.toggle(state, "ringText", "Marker Distance")
+		EspFeature.toggle(state, "arrowPulse", "Marker Pulse")
+		EspFeature.toggle(state, "arrowName", "Marker Name")
+	end)
+end
+
+function EspFeature.chamsControls(state)
+	local section = state.context.section
+	local materials = {"Flat", "Shaded", "Metallic", "Metal", "Chrome", "Glossy", "Glass", "Crystal", "Ice", "Lava", "Glow",
+		"Glow Outline", "Iridescent", "Water Flow", "ForceField", "Gradient", "Ghost", "Wireframe"}
+	local overrides = {"Same"}
+	for _, material in materials do table.insert(overrides, material) end
+	section:Group({Title = "ESP Chams", Side = "Left"})
+	EspFeature.toggle(state, "chams", "Chams", function()
+		EspFeature.toggle(state, "chamsThrough", "Through Walls")
+		EspFeature.slider(state, {field = "chamsRange", text = "Through Range", min = 20, max = 300})
+		EspFeature.slider(state, {field = "chamsHiddenDark", text = "Hidden Darkness", min = 0, max = 80, suffix = "%"})
+		EspFeature.slider(state, {field = "chamsAlpha", text = "Fill Strength", min = 0, max = 100, suffix = "%"})
+		EspFeature.slider(state, {field = "glowCore", text = "Glow Core", min = 20, max = 100, suffix = "%"})
+		EspFeature.slider(state, {field = "glowHalo", text = "Glow Halo", min = 0, max = 100, suffix = "%"})
+		EspFeature.slider(state, {field = "chamsBright", text = "Chams Brightness", min = 30, max = 200, suffix = "%"})
+		EspFeature.slider(state, {field = "chamsShell", text = "Shell Size", min = 100, max = 130, suffix = "%"})
+		EspFeature.slider(state, {field = "chamsSpeed", text = "Animation Speed", min = 0.2, max = 3, decimals = 1})
+		EspFeature.colorpicker(state, "chamsFlow", "Flow Color")
+		EspFeature.colorpicker(state, "chamsGradA", "Body Gradient Top")
+		EspFeature.colorpicker(state, "chamsGradB", "Body Gradient Bottom")
+		EspFeature.toggle(state, "chamsGradScroll", "Scroll Body Gradient")
+		EspFeature.dropdown(state, "murdMat", "Murderer Material", overrides)
+		EspFeature.dropdown(state, "sheriffMat", "Sheriff Material", overrides)
+	end)
+	EspFeature.dropdown(state, "chamsStyle", "Chams Style", {"Soft", "Outline", "Solid", "Glow"})
+	EspFeature.dropdown(state, "chamsMaterial", "Material", materials)
+	EspFeature.toggle(state, "chamsOutline", "Chams Outline", function()
+		EspFeature.slider(state, {field = "chamsEdgeAlpha", text = "Edge Strength", min = 0, max = 100, suffix = "%"})
+		EspFeature.toggle(state, "chamsEdgeRole", "Role Edge")
+		EspFeature.colorpicker(state, "chamsEdge", "Visible Edge")
+		EspFeature.colorpicker(state, "chamsEdgeHidden", "Hidden Edge")
+	end)
+	EspFeature.toggle(state, "chamsRole", "Role Colors", function()
+		EspFeature.colorpicker(state, "chamsColour", "Visible Fill")
+		EspFeature.colorpicker(state, "chamsHidden", "Hidden Fill")
+	end)
+	EspFeature.toggle(state, "chamsOverlay", "Glow Overlay")
+	EspFeature.dropdown(state, "chamsAnim", "Animation", {"None", "Pulse", "Breathe", "Flow"})
+	EspFeature.toggle(state, "chamsFlash", "Flash On Sight")
+end
+
+local MurderFeature = {}
+        -- facade: maps the pulsehub section API onto Noir groupboxes
+        local currentBox
+        local espFacade = {}
+        function espFacade:Group(opts)
+            currentBox = (opts and opts.Side == "Right")
+                and tab:AddRightGroupbox({ Name = tostring(opts.Title or "ESP"), Icon = "eye" })
+                or tab:AddLeftGroupbox({ Name = tostring(opts.Title or "ESP"), Icon = "eye" })
+            return currentBox
+        end
+        local function decimalsIncrement(decimals)
+            decimals = tonumber(decimals) or 0
+            if decimals <= 0 then return 1 end
+            return 1 / (10 ^ decimals)
+        end
+        function espFacade:Toggle(opts)
+            currentBox:CreateToggle({ Name = tostring(opts.Text or "Toggle"), Default = opts.Default == true,
+                Callback = function(v) if opts.Callback then pcall(opts.Callback, v == true) end end })
+            if type(opts.Settings) == "function" then pcall(opts.Settings) end -- nested controls build right away
+        end
+        function espFacade:Slider(opts)
+            currentBox:CreateSlider({ Name = tostring(opts.Text or "Slider"), Min = opts.Min or 0, Max = opts.Max or 100,
+                Default = opts.Default or opts.Min or 0, Increment = decimalsIncrement(opts.Decimals),
+                Suffix = tostring(opts.Suffix or ""),
+                Callback = function(v) if opts.Callback then pcall(opts.Callback, v) end end })
+        end
+        function espFacade:Dropdown(opts)
+            local codes, labels = {}, {}
+            for _, option in ipairs(opts.Options or {}) do
+                local code = type(option) == "table" and option.code or option
+                local label = type(option) == "table" and (option.label or option.code) or tostring(option)
+                codes[#codes + 1] = code; labels[#labels + 1] = tostring(label)
+            end
+            local defaultLabel = labels[1]
+            for index, code in ipairs(codes) do if code == opts.Default then defaultLabel = labels[index] end end
+            currentBox:CreateDropdown({ Name = tostring(opts.Text or "Dropdown"), Options = labels,
+                Default = defaultLabel,
+                Callback = function(label)
+                    for index, text in ipairs(labels) do
+                        if text == label and opts.Callback then pcall(opts.Callback, codes[index]) return end
+                    end
+                end })
+        end
+        function espFacade:Colorpicker(opts)
+            local handle
+            handle = currentBox:CreateColorPicker({ Name = tostring(opts.Text or "Color"), Default = opts.Default,
+                Callback = function(color) if opts.Callback and typeof(color) == "Color3" then pcall(opts.Callback, color) end end })
+            return { Set = function(_, color) pcall(function() handle:Set(color) end) end }
+        end
+
+        -- roles provider: feed the transplanted __R1 role cache to the ESP
+        local function espRoles()
+            local roles = {}
+            for _, player in ipairs(Players:GetPlayers()) do
+                local role = __R1.roleCache[player.UserId]
+                local capitalized = role and (role:gsub("^%l", string.upper)) or "Innocent"
+                roles[player.Name] = {
+                    Role = capitalized,
+                    Dead = not validTarget(player),
+                }
+            end
+            return roles
+        end
+
+        local environmentProxy = setmetatable({}, { __index = _G })
+        environmentProxy.getgenv = function() return genv end
+        local espConfiguration = { rolesp = { on = false } }
+        local espState = EspFeature.create({
+            environment = environmentProxy,
+            runService = RunService,
+            connect = function(event, callback) return event:Connect(callback) end,
+            players = Players,
+            player = LocalPlayer,
+            workspace = Workspace,
+            coreGui = CoreGui,
+            textService = game:GetService("TextService"),
+            inputService = UIS,
+            translation = { tr = function(value) return value end },
+            configuration = espConfiguration,
+            section = espFacade,
+            roles = espRoles,
+        })
+        EspFeature.mainControls(espState)
+        EspFeature.boxControls(espState)
+        EspFeature.textControls(espState)
+        EspFeature.chamsControls(espState)
+        EspFeature.tracerControls(espState)
+        EspFeature.colorControls(espState)
+        EspFeature.lookControls(espState)
+        if espState and espState.settings and espState.settings.stop then
+            genv.__NoirMenuESPStop = espState.settings.stop
+        end
+
+    end
+    -- ═══════════════════ /VISUALS ESP ENGINE ═════════════════════════════
 
     -- ═════════════════════════════════════════════════════════════════════
     --  ВКЛАДКА 2: SETTINGS — темы, конфиги, погода, масштаб, выгрузка
