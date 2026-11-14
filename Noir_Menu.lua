@@ -23137,10 +23137,12 @@ end
                 end })
         end
 
-        -- ── SHOOT MURDER BUTTON v4 — круглый Noir-кристалл ─────────────────
-        -- 9-slice корпус + гало-пульс под ним, градиентный sweep по ободу,
-        -- вращающийся ретикл (х4 быстрее при удержании), sonar-кольца за
-        -- пределами кристалла, вспышка FIRE с красным прицелом. Drag + память.
+        -- ── SHOOT MURDER BUTTON v5 — круглый Noir-кристалл ─────────────────
+        -- Без квадрата (прозрачный фон + corner 999) и без красного гало.
+        -- Чёрный прицел-акцент; sonar/sweep/подпись следуют теме UI
+        -- (bindColors перекрашивает при смене дизайна). Мини-погода на кнопке
+        -- повторяет погоду фона меню (Matrix/Rain/Snow/Sakura/Ember/Fireflies).
+        -- Ретикл х4 быстрее при удержании, кольца за пределами кристалла.
         function createShootButton()
             if __R1.shootButton then return end
             local parent = guiParent
@@ -23159,6 +23161,7 @@ end
             button.Position = NoirPersistence.GetPosition("shoot_v2", UDim2.new(1, -132, 1, -124))
             button.Size = UDim2.fromOffset(110, 110)
             button.BackgroundColor3 = Theme.Background
+            button.BackgroundTransparency = 1 -- никакого квадрата за кристаллом
             button.BorderSizePixel = 0
             button.AutoButtonColor = false
             button.Image = ""
@@ -23166,40 +23169,9 @@ end
             button.ZIndex = 5
             button.Parent = gui
             __R1.shootButton = button
-            -- гало-свечение ПОД корпусом: живой пульс вокруг кристалла
-            local halo = Instance.new("Frame")
-            halo.Name = "NoirHalo"
-            halo.AnchorPoint = Vector2.new(0.5, 0.5)
-            halo.Position = UDim2.fromScale(0.5, 0.5)
-            halo.Size = UDim2.fromScale(1.32, 1.32)
-            halo.BackgroundColor3 = Theme.Accent
-            halo.BackgroundTransparency = 0.9
-            halo.BorderSizePixel = 0
-            halo.ZIndex = 1
-            halo.Parent = button
-            local haloCorner = Instance.new("UICorner")
-            haloCorner.CornerRadius = UDim.new(1, 0)
-            haloCorner.Parent = halo
-            task.spawn(function()
-                local haloScale = Instance.new("UIScale")
-                haloScale.Parent = halo
-                while button.Parent do
-                    pcall(function()
-                        TweenService:Create(halo, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                            { BackgroundTransparency = 0.84 }):Play()
-                        TweenService:Create(haloScale, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                            { Scale = 1.05 }):Play()
-                    end)
-                    task.wait(1.6)
-                    pcall(function()
-                        TweenService:Create(halo, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                            { BackgroundTransparency = 0.93 }):Play()
-                        TweenService:Create(haloScale, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                            { Scale = 1 }):Play()
-                    end)
-                    task.wait(1.6)
-                end
-            end)
+            local buttonCorner = Instance.new("UICorner")
+            buttonCorner.CornerRadius = UDim.new(1, 0) -- даже fallback-фон круглый
+            buttonCorner.Parent = button
             local novaFx = noirNovaButton(button, { round = true, thickness = 2, pressScale = 1.08 })
             -- центральный прицел + подпись
             local iconHolder = Instance.new("Frame")
@@ -23214,7 +23186,7 @@ end
             icon.Name = "Crosshair"
             icon.Size = UDim2.fromScale(1, 1)
             icon.BackgroundTransparency = 1
-            icon.ImageColor3 = Theme.Accent
+            icon.ImageColor3 = Color3.fromRGB(10, 10, 12) -- чёрный акцент
             icon.ScaleType = Enum.ScaleType.Fit
             icon.ZIndex = 8
             icon.Parent = iconHolder
@@ -23227,10 +23199,11 @@ end
             label.BackgroundTransparency = 1
             label.Font = Enum.Font.GothamBold
             label.Text = "SHOOT"
-            label.TextColor3 = Theme.Text
+            label.TextColor3 = Library.Theme.Text
             label.TextSize = 12
             label.ZIndex = 8
             label.Parent = button
+            pcall(bindColors, label, { TextColor3 = Library.Theme.Text }) -- перекраска со сменой темы UI
             -- sonar-кольца: расходящийся круг из центра (двойной на нажатие,
             -- одиночный пульс каждые 0.6s, пока кнопка удерживается)
             local function sonar(delay)
@@ -23250,10 +23223,11 @@ end
                     ringCorner.CornerRadius = UDim.new(1, 0)
                     ringCorner.Parent = ring
                     local ringStroke = Instance.new("UIStroke")
-                    ringStroke.Color = Theme.Accent
+                    ringStroke.Color = Library.Theme.Accent -- следует теме UI
                     ringStroke.Thickness = 2.5
                     ringStroke.Transparency = 0.1
                     ringStroke.Parent = ring
+                    pcall(bindColors, ringStroke, { Color = Library.Theme.Accent })
                     TweenService:Create(ring, TweenInfo.new(0.55, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
                         { Size = UDim2.fromScale(2.1, 2.1) }):Play()
                     TweenService:Create(ringStroke, TweenInfo.new(0.55, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
@@ -23295,16 +23269,13 @@ end
             sweepCorner.CornerRadius = UDim.new(1, 0)
             sweepCorner.Parent = sweep
             local sweepStroke = Instance.new("UIStroke")
-            sweepStroke.Color = Color3.new(1, 1, 1)
+            sweepStroke.Color = Library.Theme.Accent -- следует теме UI
             sweepStroke.Thickness = 2
             sweepStroke.Transparency = 0.2
             sweepStroke.Parent = sweep
+            pcall(bindColors, sweepStroke, { Color = Library.Theme.Accent })
             local sweepGradient = Instance.new("UIGradient")
-            sweepGradient.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Theme.Accent),
-                ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
-                ColorSequenceKeypoint.new(1, Theme.Accent),
-            })
+            sweepGradient.Color = ColorSequence.new(Color3.new(1, 1, 1))
             sweepGradient.Transparency = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 0),
                 NumberSequenceKeypoint.new(0.42, 0.92),
@@ -23320,6 +23291,116 @@ end
                     end)
                     task.wait(3.4)
                     if sweepGradient then sweepGradient.Rotation = 0 end
+                end
+            end)
+            -- мини-погода на кристалле: повторяет погоду фона меню (window.Weather)
+            -- Matrix — падающий код, Rain — струи, Snow/Sakura — падающие точки,
+            -- Ember/Fireflies — поднимающиеся искры; None — чисто
+            local weatherLayer = Instance.new("Frame")
+            weatherLayer.Name = "NoirWeather"
+            weatherLayer.AnchorPoint = Vector2.new(0.5, 0.5)
+            weatherLayer.Position = UDim2.fromScale(0.5, 0.5)
+            weatherLayer.Size = UDim2.fromScale(0.86, 0.86)
+            weatherLayer.BackgroundTransparency = 1
+            weatherLayer.BorderSizePixel = 0
+            weatherLayer.ClipsDescendants = true
+            weatherLayer.ZIndex = 6
+            weatherLayer.Parent = button
+            local weatherCorner = Instance.new("UICorner")
+            weatherCorner.CornerRadius = UDim.new(1, 0)
+            weatherCorner.Parent = weatherLayer
+            local GLYPHS = { "0", "1", "X", "λ", "Δ", "Σ", "01", "10", "μ" }
+            local function spawnGlyph()
+                local glyph = Instance.new("TextLabel")
+                glyph.BackgroundTransparency = 1
+                glyph.Font = Enum.Font.Code
+                glyph.TextSize = math.random(7, 11)
+                glyph.TextColor3 = Library.Theme.Accent
+                glyph.TextTransparency = 0.2
+                glyph.Text = GLYPHS[math.random(#GLYPHS)]
+                glyph.Size = UDim2.fromOffset(14, 12)
+                glyph.Position = UDim2.new(math.random() * 0.86 + 0.07, 0, -0.12, 0)
+                glyph.Rotation = math.random(-24, 24)
+                glyph.ZIndex = 6
+                glyph.Parent = weatherLayer
+                local dur = 0.9 + math.random() * 0.9
+                TweenService:Create(glyph, TweenInfo.new(dur, Enum.EasingStyle.Linear),
+                    { Position = UDim2.new(glyph.Position.X.Scale, 0, 1.12, 0), TextTransparency = 1 }):Play()
+                task.delay(dur + 0.05, function() pcall(function() glyph:Destroy() end) end)
+            end
+            local function spawnStreak()
+                local streak = Instance.new("Frame")
+                streak.BackgroundColor3 = Library.Theme.Accent
+                streak.BackgroundTransparency = 0.55
+                streak.BorderSizePixel = 0
+                streak.Size = UDim2.fromOffset(1, math.random(9, 15))
+                streak.Position = UDim2.new(math.random() * 0.9 + 0.05, 0, -0.18, 0)
+                streak.ZIndex = 6
+                streak.Parent = weatherLayer
+                local dur = 0.45 + math.random() * 0.4
+                TweenService:Create(streak, TweenInfo.new(dur, Enum.EasingStyle.Linear),
+                    { Position = UDim2.new(streak.Position.X.Scale, 0, 1.18, 0), BackgroundTransparency = 1 }):Play()
+                task.delay(dur + 0.05, function() pcall(function() streak:Destroy() end) end)
+            end
+            local function spawnDot(rising, tint)
+                local dot = Instance.new("Frame")
+                dot.BackgroundColor3 = tint
+                dot.BackgroundTransparency = 0.35
+                dot.BorderSizePixel = 0
+                local size = math.random(2, 4)
+                dot.Size = UDim2.fromOffset(size, size)
+                dot.Position = UDim2.new(math.random() * 0.88 + 0.06, 0, rising and 1.12 or -0.12, 0)
+                dot.ZIndex = 6
+                dot.Parent = weatherLayer
+                local dotCorner = Instance.new("UICorner")
+                dotCorner.CornerRadius = UDim.new(1, 0)
+                dotCorner.Parent = dot
+                local dur = 1.2 + math.random() * 1.2
+                TweenService:Create(dot, TweenInfo.new(dur, Enum.EasingStyle.Sine, rising and Enum.EasingDirection.Out or Enum.EasingDirection.In),
+                    { Position = UDim2.new(math.random() * 0.88 + 0.06, 0, rising and -0.12 or 1.12, 0), BackgroundTransparency = 1 }):Play()
+                task.delay(dur + 0.05, function() pcall(function() dot:Destroy() end) end)
+            end
+            local weatherKind = ""
+            local function runWeatherLoop(kind)
+                weatherKind = kind
+                task.spawn(function()
+                    while button.Parent and weatherKind == kind do
+                        if kind == "Matrix" then
+                            spawnGlyph()
+                            if math.random() < 0.6 then spawnGlyph() end
+                            task.wait(0.15)
+                        elseif kind == "Rain" then
+                            spawnStreak()
+                            if math.random() < 0.6 then spawnStreak() end
+                            task.wait(0.1)
+                        elseif kind == "Snow" then
+                            spawnDot(false, Color3.new(1, 1, 1))
+                            task.wait(0.3)
+                        elseif kind == "Sakura" then
+                            spawnDot(false, Color3.fromRGB(255, 168, 190))
+                            task.wait(0.26)
+                        elseif kind == "Ember" then
+                            spawnDot(true, Color3.fromRGB(255, 150, 70))
+                            task.wait(0.2)
+                        elseif kind == "Fireflies" then
+                            spawnDot(true, Color3.fromRGB(196, 255, 130))
+                            task.wait(0.24)
+                        else
+                            task.wait(0.5)
+                        end
+                    end
+                end)
+            end
+            task.spawn(function()
+                while button.Parent do
+                    local kind = nil
+                    pcall(function() kind = window and window.Weather or nil end)
+                    if kind ~= weatherKind then
+                        weatherKind = kind
+                        weatherLayer:ClearAllChildren()
+                        if kind and kind ~= "None" then runWeatherLoop(kind) end
+                    end
+                    task.wait(1)
                 end
             end)
             -- дыхание прицела
@@ -23347,7 +23428,7 @@ end
                     firing = true
                     spinDuration = 1.3
                     label.Text = "FIRE"
-                    icon.ImageColor3 = Theme.Error
+                    icon.ImageColor3 = Color3.new(1, 1, 1) -- белая вспышка, без красного
                     sonar(); sonar(0.14)
                     task.spawn(function()
                         while firing and button.Parent do
@@ -23375,7 +23456,7 @@ end
                     spinDuration = 9
                     NoirPersistence.SetPosition("shoot_v2", button.Position)
                     label.Text = "SHOOT"
-                    icon.ImageColor3 = Theme.Accent
+                    icon.ImageColor3 = Color3.fromRGB(10, 10, 12)
                 end
             end)
             button.Activated:Connect(function() if not moved then task.spawn(shootTarget) end end)
@@ -23404,6 +23485,13 @@ end
         })
         combatAim:CreateToggle({ Name = "Wall Check", Default = false, Flag = "SA_WallCheck",
             Callback = function(v) cfg.wallCheck = v == true end })
+        combatAim:CreateToggle({
+            Name = "Wallbang (сквозь стены)", Desc = "Piercer Bullet: хук пуль + подмена точки выстрела — цель за стеной тоже достаётся",
+            Default = false, Flag = "SA_Wallbang",
+            Callback = function(v)
+                pcall(setPiercerBullet, v == true)
+                Notify("Silent Aim", v and "Wallbang: ON — пули прошивают стены" or "Wallbang: OFF")
+            end })
         combatAim:CreateDropdown({
             Name = "Target Mode", Options = { "Murderer", "Sheriff", "Hero", "Nearest", "Crosshair", "Lowest Health", "Random" },
             Default = "Murderer", Flag = "SA_TargetMode",
@@ -23440,8 +23528,9 @@ end
         local shootBox = tab:AddLeftGroupbox({ Name = "SHOOT MURDER BUTTON", Icon = "mouse-pointer-click" })
         shootBox:CreateParagraph({
             Title = "Shoot Murder Button",
-            Content = "Плавающая кнопка в стиле меню: primary-карточка темы, crosshair-иконка, "
-                .. "ripple и press-scale. Перетаскивается, позиция запоминается. Клик — выстрел в убийцу.",
+            Content = "Плавающий круглый Noir-кристалл: чёрный прицел-акцент, sonar/sweep следуют теме UI, "
+                .. "мини-погода повторяет фон меню (Matrix/Rain/Snow и т.д.). Ретикл разгоняется при удержании, "
+                .. "кольца вылетают за пределы кристалла. Перетаскивается, позиция запоминается. Клик — выстрел в убийцу.",
         })
         shootBox:CreateToggle({ Name = "Show Shoot Murder Button", Default = false, Flag = "SA_ShootBtn",
             Callback = function(v) cfg.showShootButton = v == true; if v then pcall(createShootButton) else pcall(removeShootButton) end end })
@@ -24512,7 +24601,9 @@ local function objectType(instance)
     local owner = instance:FindFirstAncestorOfClass("Model")
     if owner and V.players:GetPlayerFromCharacter(owner) then return nil end
     local name = string.lower(instance.Name)
-    if name == "gundrop" or name == "gun" or string.find(name,"droppedgun",1,true) or string.find(name,"gun_drop",1,true) then return "gun" end
+    -- MM2: дропнутый пистолет — строго BasePart с именем "GunDrop" (фильтр
+    -- как в Pulse): loose-матч "gun" подсвечивал декор и чужое оружие.
+    if name == "gundrop" then return "gun" end
     if string.find(name,"throw",1,true) and string.find(name,"knife",1,true) then return "knife" end
 end
 local function clearObject(instance)
