@@ -21401,6 +21401,15 @@ function consumeData(data, fullSnapshot)
     else
         __R1.murderer, __R1.sheriff, __R1.hero = foundMurderer or __R1.murderer, foundSheriff or __R1.sheriff, foundHero or __R1.hero
     end
+    -- NOIR v1.5 (Pulse ESP state): раунд жив, пока роль пришла из данных MM2;
+    -- полный снапшот без убийцы/шерифа = лобби
+    if received then
+        if fullSnapshot then
+            __R1.roundState = (foundMurderer or foundSheriff) and "\x70laying" or "\x77aiting"
+        elseif foundMurderer or foundSheriff then
+            __R1.roundState = "\x70laying"
+        end
+    end
     if foundMurderer then setTarget(foundMurderer) end
     if previousMurderer ~= __R1.murderer or previousSheriff ~= __R1.sheriff or previousHero ~= __R1.hero then changed = true end
     if changed then
@@ -21611,6 +21620,18 @@ function knifeTargetPart()
     return getAimPart(player) or character:FindFirstChild("\x48umanoidRootPart") or character.PrimaryPart
 end
 
+-- NOIR v1.5 (Adaptive Engine): кривая PingProfiles теперь реально подключена —
+-- при Adaptive Engine ползунки Horizontal/VerticalMultiplier масштабируются
+-- под живой пинг (профиль интерполируется между узлами кривой)
+function adaptiveHV(profile, axis)
+    local user = (axis == "\x56") and (profile.verticalMultiplier or 100)
+        or (profile.horizontalMultiplier or 100)
+    if not (profile and profile.adaptive) then return user / 100 end
+    local ping = math.clamp(math.floor(((__R1.cachedPing or 0.05) * 1000) + 0.5), 20, 300)
+    local ok, row = pcall(interpolateProfile, ping)
+    local curve = ok and type(row) == "table" and (axis == "\x56" and row.V or row.H) or 100
+    return (user * ((tonumber(curve) or 100) / 100)) / 100
+end
       __R1.PingProfiles = {
     { Ping = 20, Sim = 48, Interval = 70, H = 154, V = 144, X = -5, Y = -14, Z = 0 },
     { Ping = 50, Sim = 54, Interval = 66, H = 162, V = 152, X = -6, Y = -14, Z = 0 },
@@ -21747,6 +21768,25 @@ end
 function calculateAim(part)
     local root = motionRoot(part)
     sampleMotion(root)
+    -- ═══ Pulse Predict (полный): кинематические гипотезы пульса ═══
+    if __R1.config.pulsePredict ~= false and pulseAimReady() then
+        local okAim, pulseAim = pcall(pulseAimPredict, root,
+            leadTime() * math.clamp((tonumber(__R1.config.leadScale) or 100) / 100, 0.25, 2.5))
+        if okAim and pulseAim then
+            local displacement = pulseAim - root.Position
+            local horizontal = adaptiveHV(__R1.config, "\x48")
+            local vertical = adaptiveHV(__R1.config, "\x56")
+            displacement = Vector3.new(displacement.X * horizontal, displacement.Y * vertical, displacement.Z * horizontal)
+            local flat = Vector3.new(displacement.X, 0, displacement.Z)
+            if flat.Magnitude > 60 then
+                flat = flat.Unit * 60
+                displacement = Vector3.new(flat.X, displacement.Y, displacement.Z)
+            end
+            local offset = Vector3.new(part.Size.X * __R1.config.offsetX / 100,
+                part.Size.Y * __R1.config.offsetY / 100, part.Size.Z * __R1.config.offsetZ / 100)
+            return root.Position + displacement + offset
+        end
+    end
     local assembly = root.AssemblyLinearVelocity
     local velocity = assembly
     local acceleration = Vector3.zero
@@ -21759,8 +21799,8 @@ function calculateAim(part)
         velocity = assembly:Lerp(__R1.measuredVelocity, measuredWeight)
         acceleration = __R1.estimatedAcceleration
     end
-    local horizontal = __R1.config.horizontalMultiplier / 100
-    local vertical = __R1.config.verticalMultiplier / 100
+    local horizontal = adaptiveHV(__R1.config, "\x48")
+    local vertical = adaptiveHV(__R1.config, "\x56")
     local time = leadTime() * math.clamp((tonumber(__R1.config.leadScale) or 100) / 100, 0.25, 2.5)
     time = math.clamp(time, 0.02, 0.60)
     local displacement = Vector3.new(velocity.X * horizontal * time, 0, velocity.Z * horizontal * time)
@@ -21791,6 +21831,23 @@ function calculateKnifeAim(part, origin)
     local settings = __R1.config.knifeAim
     local root = motionRoot(part)
     sampleMotion(root, settings)
+    -- ═══ Pulse Predict (полный) для ножа: latency = lead + travel ═══
+    if settings.pulsePredict ~= false and pulseAimReady() then
+        local distance0 = (part.Position - origin).Magnitude
+        local latency = math.clamp(leadTime("knife")
+            * math.clamp((tonumber(settings.leadScale) or 100) / 100, 0.25, 2.5)
+            + math.clamp(distance0 / 125, 0, 0.55), 0.03, 0.90)
+        local okAim, pulseAim = pcall(pulseAimPredict, root, latency)
+        if okAim and pulseAim then
+            local displacement = pulseAim - root.Position
+            local horizontal = adaptiveHV(settings, "\x48")
+            local vertical = adaptiveHV(settings, "\x56")
+            displacement = Vector3.new(displacement.X * horizontal, displacement.Y * vertical, displacement.Z * horizontal)
+            local offset = Vector3.new(part.Size.X * settings.offsetX / 100,
+                part.Size.Y * settings.offsetY / 100, part.Size.Z * settings.offsetZ / 100)
+            return root.Position + displacement + offset
+        end
+    end
     local assembly = root.AssemblyLinearVelocity
     local velocity = assembly
     if settings.predictLag and __R1.motionPart == root and #__R1.motionSamples >= 2 then
@@ -21798,8 +21855,8 @@ function calculateKnifeAim(part, origin)
         if assembly.X * __R1.measuredVelocity.X + assembly.Z * __R1.measuredVelocity.Z < 0 then weight = 0.15 end
         velocity = assembly:Lerp(__R1.measuredVelocity, weight)
     end
-    local horizontal = settings.horizontalMultiplier / 100
-    local vertical = settings.verticalMultiplier / 100
+    local horizontal = adaptiveHV(settings, "\x48")
+    local vertical = adaptiveHV(settings, "\x56")
     local predictedVelocity = Vector3.new(velocity.X * horizontal, settings.predictJump and velocity.Y * vertical or 0, velocity.Z * horizontal)
     local distance = (part.Position - origin).Magnitude
     local travelTime = math.clamp(distance / 125, 0, 0.55)
@@ -21825,6 +21882,11 @@ end
  
  
 local function piercerShotOrigin(origin, aim, part, enabled)
+    -- NOIR v1.5 (Pulse wallbang): старт выстрела не переносим — сервер MM2
+    -- доверяет точке попадания, а перенос origin за стену отбрасывал выстрелы
+    -- (срабатывал через раз, с задержкой/промахом). Сквозь стену бьёт сам
+    -- redirect точки попадания (args[2] = aim), как в пульсе.
+    return origin
     if not enabled or not origin or not aim or not part then return origin end
     local direction = aim - origin
     local distance = direction.Magnitude
@@ -22829,7 +22891,8 @@ task.spawn(function()
             local player = selectTarget()
             if player and inFOV(player) then
                 local part = getAimPart(player)
-                if part and (__R1.config.piercerBullet or not __R1.config.wallCheck or targetVisible(part)) then fireGunAt(player) end
+                if part and (__R1.config.piercerBullet or not __R1.config.wallCheck or targetVisible(part))
+                    and (not __R1.config.autoFireWallCheck or targetVisible(part)) then fireGunAt(player) end
             end
             task.wait(0.03)
         else
@@ -22968,6 +23031,2914 @@ function showMurdererChance()
         notify("\x47etChance remote not found", 4)
     end
 end
+-- ═══ PULSE AIM PREDICTION (full module port) ═══
+local AimCalibration = {}
+
+function AimCalibration.create()
+	local state = {alive = true, conns = {}, D = 0.18, J = 0.12, L = 0.15, Lsd = 0.045, Lnr = 0.14, Lnrsd = 0.05,
+		pingCal = 0.05, echo = 0.07, k = 1, cooldown = 3.2, cdFloor = 2.6, hist = {}, others = {},
+		err = {md = 0.6, cv = 1.2, mdE = 0.8, mdL = 0.8, fly = 1.4, mdv = 1.4, arc = 1.4, stop = 2,
+			half = 1.5, res = 0.25, arc3 = 0.8, airStop = 0.6, airRev = 0.6},
+		log = {}, stats = {fired = 0, hit = 0, miss = 0}, file = "PulseHub/aimx_state.json",
+		lastAccepted = 0, minAuto = 0.9, minManual = 0.2, pca3 = true, lagRef = 0.12, lagDB = {}, lagPool = {},
+		shift = 0, useLagJ = true, useLagL = false, airV2 = true, colFirst = true, airLag = true, airT = 0.07,
+		tauGridMin = -0.05, tauGridStep = 0.01, tauGridN = 51}
+	state.shiftJ = function() return state.useLagJ and state.shift or 0 end
+	state.shiftL = function() return state.useLagL and state.shift or 0 end
+	return state
+end
+
+function AimCalibration.load(context, state)
+	pcall(function()
+		local environment = context.environment
+		if not environment.isfile or not environment.isfile(state.file) then return end
+		local saved = context.http:JSONDecode(environment.readfile(state.file))
+		if type(saved) ~= "table" then return end
+		local calibrated = tonumber(saved.pingCal) ~= nil
+		if calibrated and tonumber(saved.L) then state.L = math.clamp(tonumber(saved.L), -0.1, 0.45) end
+		if calibrated and tonumber(saved.Lsd) then state.Lsd = math.clamp(tonumber(saved.Lsd), 0.035, 0.12) end
+		if tonumber(saved.D) then state.D = math.clamp(tonumber(saved.D), 0.06, 0.32) end
+		if tonumber(saved.vsLock) == 1 or tonumber(saved.vsLock) == -1 then state.vsLock = tonumber(saved.vsLock) end
+		if tonumber(saved.cooldown) then state.cooldown = math.min(math.clamp(tonumber(saved.cooldown), state.cdFloor, 6), 3.2) end
+		if calibrated and tonumber(saved.hits) then state.calib = tonumber(saved.hits) end
+		if tonumber(saved.Lnr) then state.Lnr = math.clamp(tonumber(saved.Lnr), 0, 0.5) end
+		if tonumber(saved.Lnrsd) then state.Lnrsd = math.clamp(tonumber(saved.Lnrsd), 0.03, 0.12) end
+		if tonumber(saved.nrHits) then state.nrCalib = tonumber(saved.nrHits) end
+		if type(saved.skipT) == "boolean" then state.skipTransparent = saved.skipT end
+		if type(saved.backpack) == "boolean" then state.backpackOk = saved.backpack end
+		if tonumber(saved.pingCal) then state.pingCal = math.clamp(tonumber(saved.pingCal), 0, 1) end
+		if tonumber(saved.lag) then state.lagPrior = math.clamp(tonumber(saved.lag), 0.04, 0.45) end
+		if calibrated and type(saved.tauLog) == "table" and #saved.tauLog == state.tauGridN then
+			state.tauLog = {}
+			for index, value in saved.tauLog do state.tauLog[index] = (tonumber(value) or 0) * 0.5 end
+			state.tauShots = tonumber(saved.tauShots) or 0
+		end
+	end)
+end
+
+function AimCalibration.save(context, state)
+	pcall(function()
+		local environment = context.environment
+		if not environment.writefile then return end
+		if environment.isfolder and environment.makefolder and not environment.isfolder("PulseHub") then environment.makefolder("PulseHub") end
+		local data = {vsLock = state.vsLock, L = state.L, Lsd = state.Lsd, D = state.D, cooldown = state.cooldown,
+			hits = state.calib or 0, skipT = state.skipTransparent, backpack = state.backpackOk, Lnr = state.Lnr,
+			Lnrsd = state.Lnrsd, nrHits = state.nrCalib or 0, pingCal = state.pingCal, lag = state.lagPrior,
+			tauLog = state.tauLog, tauShots = state.tauShots}
+		environment.writefile(state.file, context.http:JSONEncode(data))
+	end)
+end
+
+function AimCalibration.median(values)
+	if #values == 0 then return nil end
+	local sorted = table.clone(values)
+	table.sort(sorted)
+	local count = #sorted
+	if count % 2 == 1 then return sorted[(count + 1) / 2] end
+	return (sorted[count / 2] + sorted[count / 2 + 1]) * 0.5
+end
+
+function AimCalibration.watchLag(context, state, options)
+	local player, character, root, humanoid, now = options.player, options.character, options.root, options.humanoid, options.time
+	local entry = state.lagDB[player.UserId] or {js = {}}
+	state.lagDB[player.UserId] = entry
+	if entry.c ~= character then entry.c, entry.py, entry.ev = character, nil, nil end
+	local status, height = humanoid:GetState(), root.Position.Y
+	if entry.py then
+		local event = entry.ev
+		if event then
+			if height <= event.ymin + 0.05 then
+				if height < event.ymin then event.ymin = height end
+				event.tmin = now
+			end
+			if height > event.ymin + 0.3 and height - entry.py > 0.25 then
+				local lag = event.tmin - event.t0 + 0.008
+				if lag > 0.04 and lag < 0.5 then
+					table.insert(entry.js, lag)
+					if #entry.js > 7 then table.remove(entry.js, 1) end
+					table.insert(state.lagPool, lag)
+					if #state.lagPool > 40 then table.remove(state.lagPool, 1) end
+					state.lagVer, state.lagCount = (state.lagVer or 0) + 1, (state.lagCount or 0) + 1
+					if state.lagCount % 8 == 0 and #state.lagPool >= 8 then
+						state.lagPrior = AimCalibration.median(state.lagPool)
+						AimCalibration.save(context, state)
+					end
+				end
+				entry.ev = nil
+			end
+			if entry.ev and now - event.t0 > 0.6 then entry.ev = nil end
+		end
+		if not event and status == context.environment.Enum.HumanoidStateType.Jumping
+			and entry.pst ~= context.environment.Enum.HumanoidStateType.Jumping then
+			entry.ev = {t0 = now, ymin = height, tmin = now}
+		end
+	end
+	entry.py, entry.pst = height, status
+end
+
+function AimCalibration.lagOf(context, state, character)
+	local player
+	if character then
+		local cached = state.lagCP
+		if cached and state.lagCC == character and cached.Character == character and cached.Parent then player = cached end
+		if not player then
+			player = context.players:GetPlayerFromCharacter(character)
+			state.lagCC, state.lagCP = character, player
+		end
+	end
+	local entry, version = player and state.lagDB[player.UserId], state.lagVer or 0
+	local median
+	if entry and #entry.js > 0 then
+		if entry.medVer ~= version or entry.medN ~= #entry.js then
+			entry.medVer, entry.medN, entry.med = version, #entry.js, AimCalibration.median(entry.js)
+		end
+		median = entry.med
+	end
+	local poolMedian
+	if #state.lagPool >= 4 then
+		if state.poolMedVer ~= version or state.poolMedN ~= #state.lagPool or state.poolMedT ~= state.lagPool then
+			state.poolMedVer, state.poolMedN, state.poolMedT = version, #state.lagPool, state.lagPool
+			state.poolMed = AimCalibration.median(state.lagPool)
+		end
+		poolMedian = state.poolMed
+	end
+	poolMedian = poolMedian or state.lagPrior
+	local result
+	if median and poolMedian then result = (median * #entry.js + poolMedian * 3) / (#entry.js + 3) end
+	if not result then result = poolMedian or median and #entry.js >= 2 and median or nil end
+	if not result then return 0 end
+	return math.clamp(result - state.lagRef, -0.07, 0.25)
+end
+
+function AimCalibration.pingShift(context, state)
+	if not state.pingCal then return 0 end
+	local ok, ping = pcall(context.player.GetNetworkPing, context.player)
+	if not ok or type(ping) ~= "number" then return 0 end
+	return math.clamp(ping - state.pingCal, -0.06, 0.25)
+end
+
+function AimCalibration.taus(context, state, mode, airborne, scale)
+	local mean, deviation = state.L, state.Lsd
+	if mode == "nr" then mean, deviation = state.Lnr, state.Lnrsd end
+	mean += AimCalibration.pingShift(context, state) + (state.useLagL and state.shift or 0)
+	deviation *= scale or (airborne and (state.tauSdKAir or 2.5) or (state.tauSdK or 4))
+	local count, step, samples, total = state.tauN or 3, state.tauStep or 0.75, {}, 0
+	for index = -count, count do
+		local time = mean + index * deviation * step
+		if state.tauClamp == true and time <= -0.15 then time = -0.149 + (index + count) * 0.001 end
+		if time <= -0.15 then continue end
+		local weight = math.exp(-0.5 * (index * step) ^ 2)
+		table.insert(samples, {tau = time, w = weight})
+		if index == 0 then samples.mid = #samples end
+		total += weight
+	end
+	for _, sample in ipairs(samples) do sample.w /= total end
+	return samples
+end
+
+function AimCalibration.shotTrajectory(shot)
+	local samples = {}
+	for _, sample in shot.pre or {} do table.insert(samples, sample) end
+	local last = samples[#samples] and samples[#samples].t or -math.huge
+	for _, sample in shot.post or {} do
+		if sample.t <= last then continue end
+		table.insert(samples, sample)
+		last = sample.t
+	end
+	return samples
+end
+
+function AimCalibration.tauInit(state)
+	if type(state.tauLog) == "table" and #state.tauLog == state.tauGridN then return end
+	state.tauLog = {}
+	local mean, deviation = state.L, math.max(state.Lsd * 1.5, 0.05)
+	for index = 1, state.tauGridN do
+		local tau = state.tauGridMin + (index - 1) * state.tauGridStep
+		state.tauLog[index] = -0.5 * ((tau - mean) / deviation) ^ 2
+	end
+end
+
+function AimCalibration.tauApply(state)
+	local prior, weighted, maximum = 0.12 + (state.pingCal or 0.05), {}, -math.huge
+	for index, value in state.tauLog do
+		local tau = state.tauGridMin + (index - 1) * state.tauGridStep
+		weighted[index] = value - 0.5 * ((tau - prior) / 0.05) ^ 2
+		maximum = math.max(maximum, weighted[index])
+	end
+	local probabilities, total = {}, 0
+	for index, value in weighted do
+		probabilities[index] = math.exp(value - maximum)
+		total += probabilities[index]
+	end
+	local mean, cumulative, median = 0, 0, nil
+	for index = 1, state.tauGridN do
+		local tau = state.tauGridMin + (index - 1) * state.tauGridStep
+		mean += tau * probabilities[index] / total
+		cumulative += probabilities[index] / total
+		if not median and cumulative >= 0.5 then median = tau end
+	end
+	local variance = 0
+	for index = 1, state.tauGridN do
+		local tau = state.tauGridMin + (index - 1) * state.tauGridStep
+		variance += (tau - mean) ^ 2 * probabilities[index] / total
+	end
+	state.L = math.clamp(median or mean, -0.05, 0.45)
+	state.Lsd = math.clamp(math.sqrt(variance), 0.035, 0.09)
+end
+
+function AimCalibration.tauEvidence(context, state, shot, hit, endpoint)
+	if shot.mode == "nr" or not shot.body or shot.offLine then return nil end
+	local trajectory = AimCalibration.shotTrajectory(shot)
+	if #trajectory < 6 then return nil end
+	AimCalibration.tauInit(state)
+	local path = shot.e - shot.o
+	local direction, rayLength, limit = path.Unit, path.Magnitude + 400, math.huge
+	if not hit and context.environment.typeof(endpoint) == "Vector3" then limit = (endpoint - shot.o).Magnitude + 0.5 end
+	local first, last = trajectory[1].t, trajectory[#trajectory].t
+	local shift = (shot.pingS or 0) + (shot.shift or 0)
+	local low, high
+	for index = 1, state.tauGridN do
+		local tau = state.tauGridMin + (index - 1) * state.tauGridStep
+		local time, probability = shot.t + tau + shift, nil
+		if time < first or time > last then probability = hit and 0.6 or 1 end
+		if time >= first and time <= last then
+			local position = state.posAt(trajectory, time)
+			local collision, core = state.hitsBody(shot.body, position, shot.o, direction, rayLength)
+			local beforeLimit = collision ~= nil and collision < limit
+			if hit then probability = beforeLimit and 1 or 0.1 end
+			if not hit then probability = core and core < limit and (state.missCoreLike or 0.3) or (beforeLimit and (state.missLike or 0.7) or 1) end
+			if beforeLimit then low, high = low or tau, tau end
+		end
+		state.tauLog[index] = state.tauLog[index] * 0.97 + math.log(probability)
+	end
+	AimCalibration.tauApply(state)
+	state.tauShots = (state.tauShots or 0) + 1
+	return low, high
+end
+
+local AimGeometry = {}
+local AIM_AXES = {"X", "Y", "Z"}
+
+function AimGeometry.at(samples, time)
+	local count = #samples
+	if count == 0 then return nil end
+	if time >= samples[count].t then return samples[count], count end
+	if time <= samples[1].t then return samples[1], 1 end
+	local low, high = 1, count
+	while low < high do
+		local middle = math.floor((low + high + 1) / 2)
+		if samples[middle].t <= time then low = middle end
+		if samples[middle].t > time then high = middle - 1 end
+	end
+	return samples[low], low
+end
+
+function AimGeometry.posAt(samples, time)
+	local sample, index = AimGeometry.at(samples, time)
+	if not sample then return nil end
+	local nextSample = samples[index + 1]
+	if not nextSample or time <= sample.t then return sample.p end
+	local alpha = math.clamp((time - sample.t) / math.max(0.0001, nextSample.t - sample.t), 0, 1)
+	return sample.p:Lerp(nextSample.p, alpha)
+end
+
+function AimGeometry.kinVelocity(environment, samples, time, period)
+	period = period or 0.1
+	if #samples < 2 or time - period < samples[1].t then return nil end
+	local current, previous = AimGeometry.posAt(samples, time), AimGeometry.posAt(samples, time - period)
+	if not current or not previous then return nil end
+	local average = (current - previous) / period
+	local midpoint = AimGeometry.posAt(samples, time - period * 0.5)
+	local recent = midpoint and (current - midpoint) / (period * 0.5) or average
+	if (average - recent).Magnitude < 0.35 * math.max(average.Magnitude, recent.Magnitude) + 3 then
+		return recent.Magnitude < 400 and recent or environment.Vector3.zero
+	end
+	local point = AimGeometry.posAt(samples, time - 0.025)
+	local velocity = point and (current - point) / 0.025 or environment.Vector3.zero
+	if velocity.Magnitude > 300 then return environment.Vector3.zero end
+	return velocity
+end
+
+function AimGeometry.slab(options)
+	local near, far = -math.huge, options.distance
+	local origin, direction, half = options.origin, options.direction, options.half
+	for _, axis in AIM_AXES do
+		local position, velocity, radius = origin[axis], direction[axis], half[axis]
+		if math.abs(velocity) < 1e-9 then
+			if math.abs(position) > radius then return nil end
+			continue
+		end
+		local first, last = (-radius - position) / velocity, (radius - position) / velocity
+		if first > last then first, last = last, first end
+		near, far = math.max(near, first), math.min(far, last)
+		if near > far then return nil end
+	end
+	if near <= 0 then return nil end
+	return near
+end
+
+function AimGeometry.rayBox(options)
+	return AimGeometry.slab({origin = options.frame:PointToObjectSpace(options.origin),
+		direction = options.frame:VectorToObjectSpace(options.direction), half = options.half, distance = options.distance})
+end
+
+function AimGeometry.bodyModel(environment, character, fullSize)
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root then return nil end
+	local candidates = {}
+	for _, child in character:GetChildren() do
+		if child:IsA("BasePart") then table.insert(candidates, child); continue end
+		if not (child:IsA("Accessory") or child:IsA("Tool")) then continue end
+		local handle = child:FindFirstChild("Handle")
+		if handle and handle:IsA("BasePart") and handle.Size.Magnitude < 7 then table.insert(candidates, handle) end
+	end
+	local vector, frame = environment.Vector3, environment.CFrame
+	local parts, detached, radius = {}, {}, 0
+	local low = vector.new(math.huge, math.huge, math.huge)
+	local high = vector.new(-math.huge, -math.huge, -math.huge)
+	for _, part in candidates do
+		if not part.CanQuery then continue end
+		local relative = root.CFrame:ToObjectSpace(part.CFrame)
+		local core = part == root or part.Name == "UpperTorso" or part.Name == "LowerTorso" or part.Name == "Torso" or part.Name == "Head"
+		local half = part.Size * ((core or fullSize) and 0.5 or 0.43)
+		if relative.Position.Magnitude > 7 then
+			table.insert(detached, {cf = part.CFrame, half = half})
+			continue
+		end
+		table.insert(parts, {rel = relative, half = half, core = core})
+		for _, x in {-1, 1} do
+			for _, y in {-1, 1} do
+				for _, z in {-1, 1} do
+					local point = relative * vector.new(half.X * x, half.Y * y, half.Z * z)
+					low = vector.new(math.min(low.X, point.X), math.min(low.Y, point.Y), math.min(low.Z, point.Z))
+					high = vector.new(math.max(high.X, point.X), math.max(high.Y, point.Y), math.max(high.Z, point.Z))
+					radius = math.max(radius, point.Magnitude)
+				end
+			end
+		end
+	end
+	if #parts == 0 and #detached == 0 then return nil end
+	table.sort(parts, function(first, second) return first.core and not second.core end)
+	local coreCount = 0
+	for _, part in parts do if part.core then coreCount += 1 end end
+	local body = {parts = parts, detached = detached, rot = root.CFrame - root.CFrame.Position, rad = radius + 0.05, nCore = coreCount}
+	if #parts > 0 then body.bcf, body.bhalf = frame.new((low + high) * 0.5), (high - low) * 0.5 end
+	return body
+end
+
+function AimGeometry.hitsBody(environment, options)
+	local body, position, origin, direction, distance = options.body, options.position, options.origin, options.direction, options.distance
+	local parts = body.parts
+	if #parts == 0 then return nil end
+	local dx, dy, dz = origin.X - position.X, origin.Y - position.Y, origin.Z - position.Z
+	if body.rad then
+		local along = -(dx * direction.X + dy * direction.Y + dz * direction.Z)
+		if along < -body.rad or along > distance + body.rad then return nil end
+		if dx * dx + dy * dy + dz * dz - along * along > body.rad * body.rad then return nil end
+	end
+	if body.cd ~= direction then
+		body.cd = direction
+		body.cld = body.rot:VectorToObjectSpace(direction)
+		for _, part in parts do part.ld = part.rel:VectorToObjectSpace(body.cld) end
+	end
+	local localOrigin = body.rot:VectorToObjectSpace(environment.Vector3.new(dx, dy, dz))
+	if body.bcf then
+		local center, half = body.bcf.Position, body.bhalf
+		local relative = environment.Vector3.new(localOrigin.X - center.X, localOrigin.Y - center.Y, localOrigin.Z - center.Z)
+		local padded = environment.Vector3.new(half.X + 0.01, half.Y + 0.01, half.Z + 0.01)
+		local hit = AimGeometry.slab({origin = relative, direction = body.cld, half = padded, distance = distance})
+		if not hit and (math.abs(relative.X) > half.X or math.abs(relative.Y) > half.Y or math.abs(relative.Z) > half.Z) then return nil end
+	end
+	local coreHit, nearest
+	for index, part in parts do
+		if index == (body.nCore or 0) + 1 and coreHit then return coreHit, coreHit end
+		local point = part.rel:PointToObjectSpace(localOrigin)
+		local hit = AimGeometry.slab({origin = point, direction = part.ld, half = part.half, distance = distance})
+		if hit then
+			nearest = nearest and math.min(nearest, hit) or hit
+			if part.core then coreHit = coreHit and math.min(coreHit, hit) or hit end
+		end
+	end
+	return nearest, coreHit
+end
+
+function AimGeometry.hitsDetached(body, origin, direction, distance)
+	local nearest
+	for _, part in body.detached do
+		local hit = AimGeometry.rayBox({frame = part.cf, half = part.half, origin = origin, direction = direction, distance = distance})
+		if hit then nearest = nearest and math.min(nearest, hit) or hit end
+	end
+	return nearest
+end
+
+local AimMotion = {}
+
+function AimMotion.velocityFit(environment, state, samples, time)
+	local cache = state.vfCache
+	if cache and cache.h == samples and cache.t == time and cache.n == #samples then return cache.deg, cache.mag end
+	local lag, window = state.velLagFit or 0.16, state.velFitWin or 0.6
+	local angles, speeds = {}, {}
+	for index = #samples, 2, -2 do
+		local sample = samples[index]
+		if time - sample.t > window then break end
+		if sample.t > time + 1e-6 or environment.typeof(sample.v) ~= "Vector3" then continue end
+		local x, z = sample.v.X, sample.v.Z
+		local speed = math.sqrt(x * x + z * z)
+		if speed <= (state.velFitMinV or 30) or speed >= 400 then continue end
+		local previous = AimGeometry.at(samples, sample.t - lag)
+		local direction = previous and previous.md
+		if not direction or direction.X * direction.X + direction.Z * direction.Z <= 0.25 then continue end
+		local angle = (math.atan2(z, x) - math.atan2(direction.Z, direction.X) + math.pi) % (2 * math.pi) - math.pi
+		table.insert(angles, math.abs(angle))
+		table.insert(speeds, speed / math.max(1, previous.ws or 16))
+	end
+	local degrees, magnitude
+	if #angles >= (state.velFitNeed or 8) then
+		degrees, magnitude = math.deg(AimCalibration.median(angles)), AimCalibration.median(speeds)
+	end
+	state.vfCache = {h = samples, t = time, n = #samples, deg = degrees, mag = magnitude}
+	return degrees, magnitude
+end
+
+function AimMotion.speedFactor(environment, state, samples)
+	if #samples < 10 then return 1 end
+	local time, ratios = samples[#samples].t, {}
+	for index = #samples, 2, -3 do
+		local sample = samples[index]
+		if time - sample.t >= 1.5 then break end
+		local past = sample.t - 0.2 >= samples[1].t and AimGeometry.posAt(samples, sample.t - 0.2) or nil
+		local direction = AimGeometry.at(samples, sample.t - state.D)
+		local previous = AimGeometry.at(samples, sample.t - state.D - 0.2)
+		if not past or not direction or not previous or sample.air then continue end
+		if direction.md.Magnitude <= 0.9 or previous.md.Magnitude <= 0.9 or direction.md:Dot(previous.md) <= 0.95 then continue end
+		local velocity = (sample.p - past) / 0.2
+		local speed = math.sqrt(velocity.X * velocity.X + velocity.Z * velocity.Z)
+		local expected = direction.ws * direction.md.Magnitude
+		if expected > 4 and speed > 2 then table.insert(ratios, speed / expected) end
+	end
+	local factor = #ratios >= 5 and math.clamp(AimCalibration.median(ratios), 0.4, 8) or 1
+	if state.kFit == true then
+		local degrees, magnitude = AimMotion.velocityFit(environment, state, samples, time)
+		if degrees and magnitude and degrees < (state.velFitDeg or 25) and magnitude > math.max(state.kFitMin or 1.6, factor * 1.4) then
+			factor = math.clamp(magnitude, 0.4, 8)
+		end
+	end
+	return factor
+end
+
+function AimMotion.currentFactor(state, samples, time, factor)
+	local weight = state.kLocW or 0
+	if weight <= 0 then return factor end
+	local window = state.kLocWin or 0.25
+	local current, previous = AimGeometry.posAt(samples, time), AimGeometry.posAt(samples, time - window)
+	if not current or not previous then return factor end
+	local x, z = 0, 0
+	for index = 0, 4 do
+		local sample = AimGeometry.at(samples, time - window + (index + 0.5) * window / 5 - state.D)
+		if not sample or sample.air then return factor end
+		x += sample.md.X * sample.ws * window / 5
+		z += sample.md.Z * sample.ws * window / 5
+	end
+	local expected = math.sqrt(x * x + z * z)
+	if expected < (state.kLocMin or 1.5) then return factor end
+	local actual = current - previous
+	local ratio = math.sqrt(actual.X * actual.X + actual.Z * actual.Z) / expected
+	if ratio >= factor * (state.kLocThr or 0.6) then return factor end
+	return factor + (math.max(ratio, 0.15) - factor) * weight
+end
+
+function AimMotion.jumpTime(environment, state, samples, time)
+	local types, lead = environment.Enum.HumanoidStateType, state.jFlagLead or 0
+	local flagged
+	for index = #samples, 2, -1 do
+		local sample, previous = samples[index], samples[index - 1]
+		if time - sample.t >= 0.4 + state.shiftJ() then break end
+		if flagged and flagged - sample.t > (state.jFlagWin or 0.15) then break end
+		if sample.t > time then continue end
+		if sample.jump and not previous.jump and not flagged then
+			if lead <= 0 then return sample.t + state.J + state.shiftJ() - time end
+			flagged = sample.t
+		end
+		if sample.st == types.Jumping and previous.st ~= types.Jumping and not previous.air then
+			return sample.t + state.J + state.shiftJ() - time
+		end
+		if sample.st == types.Freefall and sample.jump and not previous.air
+			and previous.st ~= types.Jumping and previous.st ~= types.Freefall then
+			return sample.t + state.J + state.shiftJ() - time
+		end
+		if state.ffJump == true and sample.st == types.Freefall and not sample.air and not previous.air
+			and (previous.st == types.Running or previous.st == types.RunningNoPhysics or previous.st == types.Landed) then
+			return sample.t + state.J + state.shiftJ() - time
+		end
+	end
+	if flagged then return flagged + state.J + state.shiftJ() - lead - time end
+	return nil
+end
+
+function AimMotion.averageDirection(environment, samples, time, window)
+	local x, z, count = 0, 0, 0
+	for index = #samples, 1, -1 do
+		local sample = samples[index]
+		if sample.t > time then continue end
+		if time - sample.t > window then break end
+		x, z, count = x + sample.md.X, z + sample.md.Z, count + 1
+	end
+	if count == 0 then return nil end
+	return environment.Vector3.new(x / count, 0, z / count)
+end
+
+function AimMotion.directionTrust(environment, state, samples, time)
+	local total, count = 0, 0
+	local vector, types = environment.Vector3, environment.Enum.HumanoidStateType
+	for index = #samples, 2, -3 do
+		local sample = samples[index]
+		if time - sample.t > 0.6 then break end
+		local before, after = AimGeometry.posAt(samples, sample.t - 0.3), AimGeometry.posAt(samples, sample.t)
+		local expected = AimGeometry.at(samples, sample.t - state.D)
+		if not before or not after or not expected or sample.t - 0.3 < samples[1].t then continue end
+		local velocity = (after - before) / 0.3
+		local actual = vector.new(velocity.X, 0, velocity.Z)
+		local direction = vector.new(expected.md.X, 0, expected.md.Z)
+		local speed, magnitude, score = actual.Magnitude, direction.Magnitude, nil
+		if speed > 6 and magnitude > 0.5 then score = actual.Unit:Dot(direction.Unit) end
+		if speed > 6 and magnitude <= 0.1 and not sample.air then score = -0.3 end
+		if speed > 6 and magnitude <= 0.1 and sample.air and (sample.st == types.PlatformStanding or sample.st == types.Physics) then score = -0.5 end
+		if speed < 1 and magnitude > 0.5 and not sample.air then score = -0.3 end
+		if speed < 1 and magnitude <= 0.5 then score = 1 end
+		if score then total, count = total + score, count + 1 end
+	end
+	if count < 6 then return 1 end
+	return math.clamp((total / count - 0.15) / 0.6, 0, 1)
+end
+
+function AimMotion.estimateDelay(environment, state, samples, time)
+	if #samples < 30 or time - samples[1].t < 1.5 then return nil end
+	local vector = environment.Vector3
+	local velocities, times, moving = {}, {}, 0
+	local cursor = math.max(samples[1].t + 0.45, time - 2)
+	while cursor <= time - 0.05 do
+		local before, after = AimGeometry.posAt(samples, cursor - 0.05), AimGeometry.posAt(samples, cursor + 0.05)
+		if before and after then
+			local velocity = (after - before) / 0.1
+			velocity = vector.new(velocity.X, 0, velocity.Z)
+			table.insert(velocities, velocity)
+			table.insert(times, cursor)
+			if velocity.Magnitude > 3 then moving += 1 end
+		end
+		cursor += 0.05
+	end
+	if moving < 6 then return nil end
+	local factor, current = state.k or 1, state.D
+	local best, bestError, currentError
+	for index = 0, 17 do
+		local delay, error = 0.05 + index * 0.02, 0
+		for sampleIndex, at in times do
+			local sample = AimGeometry.at(samples, at - delay)
+			if not sample then continue end
+			local expected = vector.new(sample.md.X, 0, sample.md.Z) * (sample.ws * factor)
+			error += math.min((velocities[sampleIndex] - expected).Magnitude, 20) ^ 2
+		end
+		if not bestError or error < bestError then best, bestError = delay, error end
+		if math.abs(delay - current) < 0.011 then currentError = error end
+	end
+	return best, bestError, currentError
+end
+
+function AimMotion.clusters(environment, state, samples, time)
+	local positions = {}
+	for index = #samples, 1, -1 do
+		if time - samples[index].t > 0.6 then break end
+		table.insert(positions, samples[index].p)
+	end
+	if #positions < 8 then return nil end
+	local jumps, reversals, previous = 0, 0, nil
+	for index = 2, #positions do
+		local delta = positions[index] - positions[index - 1]
+		if delta.Magnitude <= 8 then continue end
+		jumps += 1
+		if previous and delta:Dot(previous) < -0.3 * delta.Magnitude * previous.Magnitude then reversals += 1 end
+		previous = delta
+	end
+	if jumps < 3 or state.clusterRev and reversals < state.clusterRev then return nil end
+	local first, second = positions[1], positions[1]
+	for _, position in positions do
+		if (position - first).Magnitude > (second - first).Magnitude then second = position end
+	end
+	for _ = 1, 6 do
+		local sumFirst, countFirst, sumSecond, countSecond = environment.Vector3.zero, 0, environment.Vector3.zero, 0
+		for _, position in positions do
+			if (position - first).Magnitude <= (position - second).Magnitude then
+				sumFirst, countFirst = sumFirst + position, countFirst + 1
+				continue
+			end
+			sumSecond, countSecond = sumSecond + position, countSecond + 1
+		end
+		if countFirst > 0 then first = sumFirst / countFirst end
+		if countSecond > 0 then second = sumSecond / countSecond end
+		state.clusterW = {countFirst / #positions, countSecond / #positions}
+	end
+	return {{p = first, w = state.clusterW[1]}, {p = second, w = state.clusterW[2]}}
+end
+
+function AimMotion.oscillation(environment, state, samples, time)
+	local positions = {}
+	for index = #samples, 1, -1 do
+		local sample = samples[index]
+		if sample.t > time then continue end
+		if time - sample.t > 0.45 then break end
+		table.insert(positions, sample.p)
+	end
+	if #positions < 8 then return nil end
+	local vector, horizontal = environment.Vector3, state.oscXZ ~= false
+	local length, low, high = 0, positions[1], positions[1]
+	for index = 2, #positions do
+		local delta, position = positions[index] - positions[index - 1], positions[index]
+		if horizontal then delta = vector.new(delta.X, 0, delta.Z) end
+		length += delta.Magnitude
+		low = vector.new(math.min(low.X, position.X), math.min(low.Y, position.Y), math.min(low.Z, position.Z))
+		high = vector.new(math.max(high.X, position.X), math.max(high.Y, position.Y), math.max(high.Z, position.Z))
+	end
+	local displacement, range = positions[1] - positions[#positions], high - low
+	if horizontal then displacement, range = vector.new(displacement.X, 0, displacement.Z), vector.new(range.X, 0, range.Z) end
+	if length <= displacement.Magnitude * 3 + 6 or range.Magnitude <= 2.5 or range.Magnitude >= 12 then return nil end
+	if state.oscMinRev then
+		local segment, previous, reversals = state.oscSeg or 3, nil, 0
+		for index = 1, #positions - segment, segment do
+			local delta = positions[index] - positions[index + segment]
+			if horizontal then delta = vector.new(delta.X, 0, delta.Z) end
+			if delta.Magnitude <= 0.3 then continue end
+			if previous and delta:Dot(previous) < -0.3 * delta.Magnitude * previous.Magnitude then reversals += 1 end
+			previous = delta
+		end
+		if reversals < state.oscMinRev then return nil end
+	end
+	local result = {}
+	for index = 1, #positions, math.max(1, math.floor(#positions / 8)) do table.insert(result, positions[index]) end
+	return result
+end
+
+function AimMotion.repeatTrajectory(samples, time, period, duration)
+	local current, previous = AimGeometry.posAt(samples, time), AimGeometry.posAt(samples, time - period)
+	if not current or not previous or time - period < samples[1].t then return nil end
+	local offset, trajectory, count = current - previous, {}, math.max(2, math.ceil(duration * 60))
+	for index = 0, count do
+		local elapsed = duration * index / count
+		local at = time + elapsed - period
+		while at > time do at -= period end
+		table.insert(trajectory, {tau = elapsed, p = AimGeometry.posAt(samples, at) + offset})
+	end
+	return trajectory
+end
+
+function AimMotion.findRepeat(environment, state, samples, time)
+	if #samples < 30 then return nil end
+	local window, minimum = state.repWin or 1, state.repTMin or 0.25
+	local maximum = math.min(state.repTMax or 1.6, time - samples[1].t - window)
+	if maximum < minimum + 0.05 then return nil end
+	local positions, mean = {}, environment.Vector3.zero
+	for index = 0, 15 do
+		positions[index] = AimGeometry.posAt(samples, time - index * window / 16)
+		mean += positions[index]
+	end
+	mean /= 16
+	local variance = 0
+	for index = 0, 15 do
+		local delta = positions[index] - mean
+		variance += delta.X * delta.X + delta.Z * delta.Z
+	end
+	local amplitude = math.sqrt(variance / 16)
+	if amplitude < (state.repAmp or 1.5) then return nil end
+	local function errorFor(period)
+		local error = 0
+		for index = 0, 15 do
+			local delta = positions[index] - AimGeometry.posAt(samples, time - index * window / 16 - period)
+			error += delta.X * delta.X + delta.Z * delta.Z + delta.Y * delta.Y * 0.2
+		end
+		return math.sqrt(error / 16)
+	end
+	local periods, cursor = {}, minimum
+	while cursor <= maximum do table.insert(periods, cursor); cursor += 1 / 30 end
+	local best, bestError
+	for _, period in periods do
+		local error = errorFor(period)
+		if not bestError or error < bestError then best, bestError = period, error end
+	end
+	for _, offset in {-1 / 60, 1 / 60} do
+		local period = best + offset
+		if period < minimum or period > maximum then continue end
+		local error = errorFor(period)
+		if error < bestError then best, bestError = period, error end
+	end
+	return best, bestError, amplitude
+end
+
+function AimMotion.accelerationFit(environment, state, samples, time, window)
+	local sums = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}
+	local count, sumT, sumHalfT2, sumT2, sumT3, sumT4 = 0, 0, 0, 0, 0, 0
+	for index = #samples, 1, -1 do
+		local sample = samples[index]
+		if sample.t > time then continue end
+		local t = sample.t - time
+		if t < -window then break end
+		local halfT2 = 0.5 * t * t
+		count, sumT, sumHalfT2 = count + 1, sumT + t, sumHalfT2 + halfT2
+		sumT2, sumT3, sumT4 = sumT2 + t * t, sumT3 + t * halfT2, sumT4 + halfT2 * halfT2
+		for axis, value in {sample.p.X, sample.p.Y, sample.p.Z} do
+			sums[axis][1] += value
+			sums[axis][2] += value * t
+			sums[axis][3] += value * halfT2
+		end
+	end
+	if count < (state.caMinN or 6) then return nil end
+	local determinant = count * (sumT2 * sumT4 - sumT3 * sumT3)
+		- sumT * (sumT * sumT4 - sumT3 * sumHalfT2) + sumHalfT2 * (sumT * sumT3 - sumT2 * sumHalfT2)
+	if math.abs(determinant) < 1e-12 then return nil end
+	local function solve(values)
+		local a, b, c = values[1], values[2], values[3]
+		local position = a * (sumT2 * sumT4 - sumT3 * sumT3) - sumT * (b * sumT4 - sumT3 * c)
+			+ sumHalfT2 * (b * sumT3 - sumT2 * c)
+		local velocity = count * (b * sumT4 - sumT3 * c) - a * (sumT * sumT4 - sumT3 * sumHalfT2)
+			+ sumHalfT2 * (sumT * c - b * sumHalfT2)
+		local acceleration = count * (sumT2 * c - b * sumT3) - sumT * (sumT * c - b * sumHalfT2)
+			+ a * (sumT * sumT3 - sumT2 * sumHalfT2)
+		return position / determinant, velocity / determinant, acceleration / determinant
+	end
+	local px, vx, ax = solve(sums[1])
+	local py, vy, ay = solve(sums[2])
+	local pz, vz, az = solve(sums[3])
+	local vector = environment.Vector3
+	local acceleration = vector.new(ax, ay, az)
+	if acceleration.Magnitude > (state.caAmax or 900) then acceleration = acceleration.Unit * (state.caAmax or 900) end
+	return vector.new(px, py, pz), vector.new(vx, vy, vz), acceleration
+end
+
+function AimMotion.accelerationTrajectory(context, state, samples, time, duration)
+	local position, velocity, acceleration = AimMotion.accelerationFit(context.environment, state, samples, time, state.caWin or 0.17)
+	if not position then return nil end
+	local trajectory, elapsed = {{tau = 0, p = position}}, 0
+	while elapsed < duration do
+		elapsed += 1 / 60
+		table.insert(trajectory, {tau = elapsed, p = position + velocity * elapsed + acceleration * (0.5 * elapsed * elapsed)})
+	end
+	return trajectory
+end
+
+function AimMotion.arcTrajectory(environment, samples, time, duration)
+	local current, previous = AimGeometry.kinVelocity(environment, samples, time, 0.06), AimGeometry.kinVelocity(environment, samples, time - 0.07, 0.06)
+	if not current or not previous or current.Magnitude < 8 or previous.Magnitude < 8 then return nil end
+	local cross = previous:Cross(current)
+	local sine = cross.Magnitude / (previous.Magnitude * current.Magnitude)
+	local cosine = previous.Unit:Dot(current.Unit)
+	local turn = math.clamp(math.atan2(sine, cosine) / 0.07, -8, 8)
+	local position = AimGeometry.posAt(samples, time) or samples[#samples].p
+	local trajectory, speed, direction = {{tau = 0, p = position}}, current.Magnitude, current.Unit
+	local axis = cross.Magnitude > 1e-6 and cross.Unit or environment.Vector3.yAxis
+	local step, elapsed = 1 / 60, 0
+	cosine, sine = math.cos(turn * step), math.sin(turn * step)
+	while elapsed < duration do
+		elapsed += step
+		direction = (direction * cosine + axis:Cross(direction) * sine + axis * axis:Dot(direction) * (1 - cosine)).Unit
+		position += direction * speed * step
+		table.insert(trajectory, {tau = elapsed, p = position})
+	end
+	return trajectory
+end
+
+function AimMotion.anomaly(state, samples, time)
+	if state.anomDetect == false then return nil end
+	local last, first = #samples, #samples
+	while first > 1 and time - samples[first - 1].t <= 0.6 do first -= 1 end
+	if last - first + 1 < 12 then return nil end
+	local held, totalHeld = 0, 0
+	for index = first + 1, last do
+		local elapsed = samples[index].t - samples[index - 1].t
+		if elapsed <= 0 then continue end
+		local distance = (samples[index].p - samples[index - 1].p).Magnitude
+		if distance < 0.001 then held += elapsed; continue end
+		if held >= 0.04 and distance > math.max(0.5, held * 8) and distance < held * 60 + 3 then totalHeld += held end
+		held = 0
+	end
+	local cursor, prior, previous, jumps = samples[first].t, nil, nil, 0
+	while cursor <= time do
+		local current = AimGeometry.posAt(samples, cursor)
+		if prior then
+			local change = (current - previous - (previous - prior)).Magnitude
+			if change > 1.3 and change < 25 then jumps += 1 end
+		end
+		cursor, prior, previous = cursor + 1 / 60, previous, current
+	end
+	local duration = samples[last].t - samples[first].t
+	if duration <= 0.2 then return nil end
+	local average, fraction = (samples[last].p - samples[first].p).Magnitude / duration, totalHeld / duration
+	if jumps >= 5 or average > 4 and fraction > 0.35 then return {jumps = jumps, holdFrac = fraction, avg = average} end
+	return nil
+end
+
+function AimMotion.orbitFit(environment, state, samples, time, duration)
+	if state.orbit ~= true or #samples < 8 or time - samples[1].t < 0.65 then return nil end
+	local times, xs, zs, previous, distance = {}, {}, {}, nil, 0
+	for index = 0, 36 do
+		local elapsed = -0.6 + index / 60
+		local position = AimGeometry.posAt(samples, time + elapsed)
+		if not position then return nil end
+		table.insert(times, elapsed)
+		table.insert(xs, position.X)
+		table.insert(zs, position.Z)
+		if previous then distance += math.sqrt((position.X - previous.X) ^ 2 + (position.Z - previous.Z) ^ 2) end
+		previous = position
+	end
+	if distance / 0.6 < 22 then return nil end
+	local count, sumT, sumTT, sumX, sumZ, sumTX, sumTZ = #times, 0, 0, 0, 0, 0, 0
+	for index, elapsed in times do
+		sumT, sumTT, sumX, sumZ = sumT + elapsed, sumTT + elapsed * elapsed, sumX + xs[index], sumZ + zs[index]
+		sumTX, sumTZ = sumTX + elapsed * xs[index], sumTZ + elapsed * zs[index]
+	end
+	local determinant = count * sumTT - sumT * sumT
+	if math.abs(determinant) < 1e-9 then return nil end
+	local velocityX, velocityZ = (count * sumTX - sumT * sumX) / determinant, (count * sumTZ - sumT * sumZ) / determinant
+	local originX, originZ, linearError = (sumX - velocityX * sumT) / count, (sumZ - velocityZ * sumT) / count, 0
+	for index, elapsed in times do
+		linearError += (originX + velocityX * elapsed - xs[index]) ^ 2 + (originZ + velocityZ * elapsed - zs[index]) ^ 2
+	end
+	local function fit(turn)
+		local matrix = {}
+		for row = 1, 6 do matrix[row] = {0, 0, 0, 0, 0, 0, 0} end
+		for index, elapsed in times do
+			local cosine, sine = math.cos(turn * elapsed), math.sin(turn * elapsed)
+			local x, z = {1, elapsed, 0, 0, cosine, -sine}, {0, 0, 1, elapsed, sine, cosine}
+			for row = 1, 6 do
+				for column = 1, 6 do matrix[row][column] += x[row] * x[column] + z[row] * z[column] end
+				matrix[row][7] += x[row] * xs[index] + z[row] * zs[index]
+			end
+		end
+		for column = 1, 6 do
+			local pivot = column
+			for row = column + 1, 6 do if math.abs(matrix[row][column]) > math.abs(matrix[pivot][column]) then pivot = row end end
+			if math.abs(matrix[pivot][column]) < 1e-9 then return nil end
+			matrix[column], matrix[pivot] = matrix[pivot], matrix[column]
+			for row = 1, 6 do
+				if row == column then continue end
+				local factor = matrix[row][column] / matrix[column][column]
+				if factor == 0 then continue end
+				for index = column, 7 do matrix[row][index] -= factor * matrix[column][index] end
+			end
+		end
+		local values, error = {}, 0
+		for row = 1, 6 do values[row] = matrix[row][7] / matrix[row][row] end
+		for index, elapsed in times do
+			local cosine, sine = math.cos(turn * elapsed), math.sin(turn * elapsed)
+			local dx = values[1] + values[2] * elapsed + values[5] * cosine - values[6] * sine - xs[index]
+			local dz = values[3] + values[4] * elapsed + values[5] * sine + values[6] * cosine - zs[index]
+			error += dx * dx + dz * dz
+		end
+		return values, error
+	end
+	local best, bestError, bestTurn
+	for _, turn in {4.5, 6, 7.5, 9, 11, 13, 16, -4.5, -6, -7.5, -9, -11, -13, -16} do
+		local values, error = fit(turn)
+		if values and (not bestError or error < bestError) then best, bestError, bestTurn = values, error, turn end
+	end
+	if not best then return nil end
+	local radius, deviation = math.sqrt(best[5] ^ 2 + best[6] ^ 2), math.sqrt(bestError / count)
+	if radius < 1.2 or radius > 15 or deviation > 0.6 or bestError > linearError * 0.3 then return nil end
+	local height, trajectory = (AimGeometry.posAt(samples, time) or samples[#samples].p).Y, {}
+	for index = 0, math.ceil(duration * 60) do
+		local elapsed = index / 60
+		local cosine, sine = math.cos(bestTurn * elapsed), math.sin(bestTurn * elapsed)
+		local position = environment.Vector3.new(best[1] + best[2] * elapsed + best[5] * cosine - best[6] * sine,
+			height, best[3] + best[4] * elapsed + best[5] * sine + best[6] * cosine)
+		table.insert(trajectory, {tau = elapsed, p = position})
+	end
+	return trajectory, radius, bestTurn, deviation
+end
+
+function AimMotion.jitterAxis(context, state, samples, time, duration)
+	local recent = {}
+	for index = #samples, 1, -1 do
+		local sample = samples[index]
+		if sample.t > time then continue end
+		if time - sample.t > (state.jitWin or 0.25) then break end
+		table.insert(recent, sample)
+	end
+	local count = #recent
+	if count < (state.jitMinN or 8) then return nil end
+	local x, z = 0, 0
+	for _, sample in recent do x, z = x + sample.p.X, z + sample.p.Z end
+	x, z = x / count, z / count
+	local xx, xz, zz = 0, 0, 0
+	for _, sample in recent do
+		local dx, dz = sample.p.X - x, sample.p.Z - z
+		xx, xz, zz = xx + dx * dx, xz + dx * dz, zz + dz * dz
+	end
+	xx, xz, zz = xx / count, xz / count, zz / count
+	local sum, determinant = xx + zz, xx * zz - xz * xz
+	local root = math.sqrt(math.max(0, sum * sum / 4 - determinant))
+	local maximum, minimum = sum / 2 + root, math.max(sum / 2 - root, 0)
+	if maximum < (state.jitMinVar or 9) or maximum < minimum * (state.jitRatio or 9) then return nil end
+	local vector = context.environment.Vector3
+	local axis = math.abs(xz) > 1e-6 and vector.new(maximum - zz, 0, xz) or (xx >= zz and vector.new(1, 0, 0) or vector.new(0, 0, 1))
+	axis = axis.Unit
+	local previous, sign, reversals = count, 0, 0
+	for index = count - 1, 1, -1 do
+		local before, after = recent[previous], recent[index]
+		local elapsed = after.t - before.t
+		if elapsed < 0.02 then continue end
+		local velocity = ((after.p.X - before.p.X) * axis.X + (after.p.Z - before.p.Z) * axis.Z) / elapsed
+		if math.abs(velocity) > (state.jitMinV or 50) then
+			local nextSign = velocity > 0 and 1 or -1
+			if sign ~= 0 and nextSign ~= sign then reversals += 1 end
+			sign = nextSign
+		end
+		previous = index
+	end
+	if reversals < (state.jitMinRev or 2) then return nil end
+	local projections = {}
+	for _, sample in recent do table.insert(projections, (sample.p.X - x) * axis.X + (sample.p.Z - z) * axis.Z) end
+	table.sort(projections)
+	local low, high = projections[math.max(1, math.floor(count * 0.05))], projections[math.min(count, math.ceil(count * 0.95))]
+	local half = (high - low) / 2
+	if half < (state.jitMinHalf or 3) or half > (state.jitMaxHalf or 45) then return nil end
+	local center, latest = (low + high) / 2, recent[1]
+	local normal = vector.new(-axis.Z, 0, axis.X)
+	local perpendicular, floor = (latest.p.X - x) * normal.X + (latest.p.Z - z) * normal.Z, latest.p.Y
+	for index = #samples, 1, -1 do
+		if time - samples[index].t > (state.jitFloorWin or 1) then break end
+		floor = math.min(floor, samples[index].p.Y)
+	end
+	local velocity = context.environment.typeof(latest.v) == "Vector3" and latest.v.Y or 0
+	local height = latest.p.Y
+	if state.jitBall ~= false then
+		local elapsed = duration or 0.16
+		height = math.max(height + velocity * elapsed - 0.5 * (state.G or context.workspace.Gravity) * elapsed * elapsed, floor)
+	end
+	return {c = vector.new(x + axis.X * center + normal.X * perpendicular, height, z + axis.Z * center + normal.Z * perpendicular),
+		u = axis, nv = normal, half = half, rev = reversals, sdPerp = math.sqrt(minimum)}
+end
+
+function AimMotion.clampTrajectory(workspace, state, trajectory, parameters)
+	if state.kinClamp ~= true or not trajectory or #trajectory < 3 or not parameters then return trajectory end
+	local index = 1
+	while index < #trajectory do
+		local nextIndex = math.min(index + 2, #trajectory)
+		local origin = trajectory[index].p
+		local direction = trajectory[nextIndex].p - origin
+		if direction.Magnitude > 0.001 then
+			local hit = workspace:Raycast(origin, direction, parameters)
+			if hit then
+				local position = hit.Position - direction / direction.Magnitude * (state.kinStandoff or 0.6)
+				for rest = index + 1, #trajectory do trajectory[rest].p = position end
+				break
+			end
+		end
+		index = nextIndex
+	end
+	return trajectory
+end
+
+function AimMotion.recentSpeed(environment, samples, time, window)
+	local maximum = 0
+	for index = #samples, 2, -1 do
+		local sample = samples[index]
+		if time - sample.t > window then break end
+		if sample.t > time + 1e-6 then continue end
+		local speed
+		if environment.typeof(sample.v) == "Vector3" then
+			speed = math.sqrt(sample.v.X * sample.v.X + sample.v.Z * sample.v.Z)
+		end
+		if not speed and sample.t - 0.1 >= samples[1].t then
+			local previous = AimGeometry.posAt(samples, sample.t - 0.1)
+			if previous then speed = math.sqrt((sample.p.X - previous.X) ^ 2 + (sample.p.Z - previous.Z) ^ 2) / 0.1 end
+		end
+		if speed and speed < 400 and speed > maximum then maximum = speed end
+	end
+	return maximum
+end
+
+function AimMotion.mode(environment, samples)
+	local sample = samples and samples[#samples]
+	if not sample then return "std" end
+	local types = environment.Enum.HumanoidStateType
+	if sample.st == types.PlatformStanding or sample.st == types.Physics or sample.st == types.Seated or sample.st == types.Ragdoll then
+		return "nr"
+	end
+	return "std"
+end
+
+function AimMotion.flightLike(context, state, samples, time)
+	local sample = samples[#samples]
+	if not sample then return false end
+	local types = context.environment.Enum.HumanoidStateType
+	local function airborne(status)
+		return status == types.Freefall or status == types.Jumping or status == types.Flying
+			or status == types.PlatformStanding or status == types.Physics
+	end
+	if not airborne(sample.st) then return false end
+	local duration = 0
+	for index = #samples, 1, -1 do
+		if not airborne(samples[index].st) then break end
+		duration = time - samples[index].t
+	end
+	if duration < (state.caAirT or 0.6) then return false end
+	local past, current = AimGeometry.posAt(samples, time - 0.3), AimGeometry.posAt(samples, time)
+	if not past or not current or (current - past).Magnitude / 0.3 < (state.caMinSpd or 28) then return false end
+	local gravity, count, ballistic = state.G or context.workspace.Gravity, 0, 0
+	for index = 0, 10 do
+		local at = time - 0.05 - index * 0.05
+		if at - 0.05 < time - duration then break end
+		local before, middle, after = AimGeometry.posAt(samples, at - 0.05), AimGeometry.posAt(samples, at), AimGeometry.posAt(samples, at + 0.05)
+		if not before or not middle or not after then continue end
+		local acceleration = (after.Y - 2 * middle.Y + before.Y) / 0.0025000000000000005
+		count += 1
+		if math.abs(acceleration + gravity) < gravity * (state.caBallTol or 0.35) then ballistic += 1 end
+	end
+	return count >= 6 and ballistic / count < (state.caBallFrac or 0.35)
+end
+
+function AimMotion.trajectoryAt(trajectory, time)
+	if time <= 0 then return trajectory[1].p end
+	for index = 2, #trajectory do
+		local current, previous = trajectory[index], trajectory[index - 1]
+		if current.tau < time then continue end
+		return previous.p:Lerp(current.p, (time - previous.tau) / math.max(1e-6, current.tau - previous.tau))
+	end
+	return trajectory[#trajectory].p
+end
+
+function AimMotion.despike(environment, state, samples)
+	if state.spikeOn ~= true or #samples < 4 then return samples end
+	local cache = state.spikeCache
+	if cache and cache.src == samples and cache.n == #samples and cache.t == samples[#samples].t then return cache.view end
+	local threshold, duration, slack = state.spikeJump or 6, state.spikeDur or 0.1, state.spikeSlack or 40
+	local spikes, view, segment, index, changed = {}, {samples[1]}, 1, 2, false
+	while index <= #samples do
+		local sample, count = samples[index], #view
+		local previous, anchor = view[count], view[math.max(segment, count - 6)]
+		local velocity = previous.t - anchor.t > 0.001 and (previous.p - anchor.p) / (previous.t - anchor.t) or environment.Vector3.zero
+		local delta = math.max(sample.t - previous.t, 1 / 240)
+		if (sample.p - (previous.p + velocity * delta)).Magnitude <= threshold + slack * delta then
+			table.insert(view, sample)
+			index += 1
+			continue
+		end
+		local recovery, nextIndex = nil, index + 1
+		while nextIndex <= #samples and samples[nextIndex].t - sample.t <= duration do
+			local elapsed = math.max(samples[nextIndex].t - previous.t, 1 / 240)
+			if (samples[nextIndex].p - (previous.p + velocity * elapsed)).Magnitude <= threshold + slack * elapsed then
+				recovery = nextIndex
+				break
+			end
+			nextIndex += 1
+		end
+		if recovery then
+			table.insert(spikes, sample.t)
+			index, changed = recovery, true
+			continue
+		end
+		if nextIndex > #samples then
+			local recent = 0
+			for _, time in spikes do if samples[#samples].t - time < (state.spikeMem or 2) then recent += 1 end end
+			if recent >= (state.spikeNeed or 1) then changed = true; break end
+			if (sample.p - previous.p).Magnitude > 60 then view, changed = {}, true end
+			segment = #view + 1
+			for rest = index, #samples do table.insert(view, samples[rest]) end
+			break
+		end
+		if (sample.p - previous.p).Magnitude > 60 then view, changed = {}, true end
+		segment = #view + 1
+		table.insert(view, sample)
+		index += 1
+	end
+	local result = changed and view or samples
+	if #result < 2 then result = samples end
+	state.spikeCache = {src = samples, n = #samples, t = samples[#samples].t, view = result}
+	return result
+end
+
+function AimMotion.velocityTrajectory(context, state, samples, time, duration, parameters, fit)
+	local environment, workspace = context.environment, context.workspace
+	local vector, types = environment.Vector3, environment.Enum.HumanoidStateType
+	local sample = AimGeometry.at(samples, time) or samples[#samples]
+	local position = AimGeometry.posAt(samples, time) or sample.p
+	local velocity = environment.typeof(sample.v) == "Vector3" and sample.v
+		or AimGeometry.kinVelocity(environment, samples, time, 0.08) or vector.zero
+	local x, y, z = velocity.X, velocity.Y, velocity.Z
+	local speed = math.sqrt(x * x + z * z)
+	local turn, lag, accelerationWeight = state.velOm or 1.2, state.velLag or 0.17, state.velAcc or 0.5
+	if fit then
+		turn, lag, accelerationWeight = state.velOmFit or 20, state.velLagFit or 0.16, state.velAccFit or 0
+		if state.velKinScale == true and speed > 1 then
+			local _, index = AimGeometry.at(samples, time)
+			local distance, expected = 0, 0
+			index = index or #samples
+			while index > 1 and time - samples[index - 1].t <= (state.velKinWin or 0.3) do
+				local previous, current = samples[index - 1], samples[index]
+				local dx, dz = current.p.X - previous.p.X, current.p.Z - previous.p.Z
+				distance += math.sqrt(dx * dx + dz * dz)
+				if environment.typeof(previous.v) == "Vector3" then
+					expected += math.sqrt(previous.v.X ^ 2 + previous.v.Z ^ 2) * (current.t - previous.t)
+				end
+				index -= 1
+			end
+			if expected > 5 then
+				local scale = math.clamp(distance / expected, state.velKinLo or 0.6, state.velKinHi or 1.15)
+				x, z, speed = x * scale, z * scale, speed * scale
+			end
+		end
+	end
+	local acceleration, previous = 0, AimGeometry.at(samples, time - 0.05)
+	if accelerationWeight ~= 0 and previous and previous ~= sample and sample.t > previous.t + 0.01 then
+		local prior = environment.typeof(previous.v) == "Vector3" and previous.v
+			or AimGeometry.kinVelocity(environment, samples, previous.t, 0.08)
+		if prior then
+			acceleration = math.clamp((speed - math.sqrt(prior.X ^ 2 + prior.Z ^ 2)) / (sample.t - previous.t), -300, 300)
+				* accelerationWeight
+		end
+	end
+	local flying = AimMotion.mode(environment, samples) == "nr" or AimMotion.flightLike(context, state, samples, time)
+	local airborne = not flying and (sample.st == types.Freefall or sample.st == types.Jumping or sample.air or math.abs(y) > 8)
+	local floor
+	local function findFloor()
+		local hit = workspace:Raycast(position, vector.new(0, -60, 0), parameters)
+		floor = hit and hit.Position.Y + (sample.hh or 2) + 1 or nil
+	end
+	if airborne then findFloor() end
+	local hop
+	if state.velHop ~= false and not flying and environment.typeof(sample.v) == "Vector3" then
+		local _, last = AimGeometry.at(samples, time)
+		last = last or #samples
+		for index = last, 2, -1 do
+			local landed = samples[index]
+			if time - landed.t > (state.velHopWin or 0.35) then break end
+			if landed.st ~= types.Landed or samples[index - 1].st == types.Landed then continue end
+			local jumped, flagged = false, state.velHopFlag == false
+			for nextIndex = index, last do
+				local currentVelocity = samples[nextIndex].v
+				if environment.typeof(currentVelocity) == "Vector3" and currentVelocity.Y > 20 then jumped = true; break end
+			end
+			if not flagged then
+				for previousIndex = last, 1, -1 do
+					local current = samples[previousIndex]
+					if current.t < landed.t - 0.3 then break end
+					if current.jump then flagged = true; break end
+				end
+			end
+			if not jumped and flagged then hop = landed.t + (state.velHopLag or 0.2) - time end
+			break
+		end
+	end
+	local gravity, angularSpeed, direction = state.G or workspace.Gravity, 0, nil
+	if fit and state.velExtK and state.velExtK > 0 then
+		local window = state.velExtWin or 0.1
+		local current, past = AimGeometry.at(samples, time), AimGeometry.at(samples, time - window)
+		if current and past and current.md.X ^ 2 + current.md.Z ^ 2 > 0.25 and past.md.X ^ 2 + past.md.Z ^ 2 > 0.25 then
+			direction = math.atan2(current.md.Z, current.md.X)
+			local difference = (direction - math.atan2(past.md.Z, past.md.X) + math.pi) % (2 * math.pi) - math.pi
+			angularSpeed = math.clamp(difference / window, -(state.velExtMax or 15), state.velExtMax or 15) * state.velExtK
+		end
+	end
+	local trajectory, elapsed, px, py, pz = {{tau = 0, p = position}}, 0, position.X, position.Y, position.Z
+	local step = 1 / 60
+	while elapsed < duration do
+		elapsed += step
+		if turn > 0 and speed > 1 then
+			local history = AimGeometry.at(samples, math.min(time + elapsed - lag, time))
+			local movement = history and history.md
+			if movement and movement.X ^ 2 + movement.Z ^ 2 > 0.01 then
+				local angle, target = math.atan2(z, x), math.atan2(movement.Z, movement.X)
+				if direction and elapsed > lag then target = direction + angularSpeed * (elapsed - lag) end
+				local difference = (target - angle + math.pi) % (2 * math.pi) - math.pi
+				angle += math.clamp(difference, -turn * step, turn * step)
+				x, z = math.cos(angle) * speed, math.sin(angle) * speed
+			end
+		end
+		if acceleration ~= 0 and speed > 1 then
+			local nextSpeed = math.max(0, speed + acceleration * step)
+			x, z, speed = x / speed * nextSpeed, z / speed * nextSpeed, nextSpeed
+		end
+		if hop and elapsed >= hop then
+			y, hop = state.velHopV or 46, nil
+			if not airborne then findFloor(); airborne = true end
+		end
+		if airborne then y -= gravity * step end
+		px, py, pz = px + x * step, py + y * step, pz + z * step
+		if floor and py < floor then py, y = floor, 0 end
+		table.insert(trajectory, {tau = elapsed, p = vector.new(px, py, pz)})
+	end
+	if flying then return trajectory end
+	return AimMotion.clampTrajectory(workspace, state, trajectory, parameters)
+end
+
+function AimMotion.arcVelocity(environment, samples, time, position, velocity)
+	local vector = environment.Vector3
+	local horizontal = vector.new(velocity.X, 0, velocity.Z)
+	local before, middle = AimGeometry.posAt(samples, time - 0.07), AimGeometry.posAt(samples, time - 0.035)
+	if not before or not middle or time - 0.07 < samples[1].t then return horizontal, horizontal.Magnitude, 0 end
+	local ax, az, bx, bz, cx, cz = before.X, before.Z, middle.X, middle.Z, position.X, position.Z
+	local denominator = 2 * (ax * (bz - cz) + bx * (cz - az) + cx * (az - bz))
+	if math.abs(denominator) <= 1e-4 then return horizontal, horizontal.Magnitude, 0 end
+	local centerX = ((ax * ax + az * az) * (bz - cz) + (bx * bx + bz * bz) * (cz - az)
+		+ (cx * cx + cz * cz) * (az - bz)) / denominator
+	local centerZ = ((ax * ax + az * az) * (cx - bx) + (bx * bx + bz * bz) * (ax - cx)
+		+ (cx * cx + cz * cz) * (bx - ax)) / denominator
+	local radius = math.sqrt((cx - centerX) ^ 2 + (cz - centerZ) ^ 2)
+	if radius <= 0.5 or radius >= 150 then return horizontal, horizontal.Magnitude, 0 end
+	local angle = math.atan2(cz - centerZ, cx - centerX) - math.atan2(bz - centerZ, bx - centerX)
+	if angle > math.pi then angle -= 2 * math.pi end
+	if angle < -math.pi then angle += 2 * math.pi end
+	local turn = math.clamp(angle / 0.035, -40, 40)
+	local tangent = vector.new(-(cz - centerZ), 0, cx - centerX) * turn
+	return tangent, tangent.Magnitude, turn
+end
+
+function AimMotion.simulate(context, state, samples, options)
+	local environment, workspace = context.environment, context.workspace
+	local vector, types = environment.Vector3, environment.Enum.HumanoidStateType
+	local time, delay, kind, duration = options.time, options.delay, options.kind, options.duration
+	local factor, parameters, jumps = options.factor, options.parameters, options.jumps
+	if kind == "vel" or kind == "velf" then
+		return AimMotion.velocityTrajectory(context, state, samples, time, duration, parameters, kind == "velf")
+	end
+	local sample = AimGeometry.at(samples, time) or samples[#samples]
+	local position = AimGeometry.posAt(samples, time) or sample.p
+	local velocity = AimGeometry.kinVelocity(environment, samples, time, 0.08) or vector.zero
+	local step = 1 / 60
+	if kind == "fly" or kind == "mdv" or kind == "arc" then
+		local trajectory, elapsed = {{tau = 0, p = position}}, 0
+		local horizontal = vector.new(velocity.X, 0, velocity.Z)
+		local speed, turn = horizontal.Magnitude, 0
+		if kind == "arc" then horizontal, speed, turn = AimMotion.arcVelocity(environment, samples, time, position, velocity) end
+		while elapsed < duration do
+			elapsed += step
+			if kind == "fly" then
+				table.insert(trajectory, {tau = elapsed, p = position + velocity * elapsed})
+				continue
+			end
+			if kind == "mdv" then
+				local history = AimGeometry.at(samples, math.min(time + elapsed - delay, time))
+				local direction = history and vector.new(history.md.X, 0, history.md.Z)
+				if direction and direction.Magnitude > 0.1 then horizontal = direction.Unit * speed end
+			end
+			if kind == "arc" then
+				local cosine, sine = math.cos(turn * step), math.sin(turn * step)
+				horizontal = vector.new(horizontal.X * cosine - horizontal.Z * sine, 0, horizontal.X * sine + horizontal.Z * cosine)
+			end
+			position += horizontal * step + vector.new(0, velocity.Y * step, 0)
+			table.insert(trajectory, {tau = elapsed, p = position})
+		end
+		if AimMotion.mode(environment, samples) == "nr" then return trajectory end
+		return AimMotion.clampTrajectory(workspace, state, trajectory, parameters)
+	end
+	local horizontal, vertical, gravity = vector.new(velocity.X, 0, velocity.Z), velocity.Y, state.G or workspace.Gravity
+	local height, climbing = sample.hh or 2, sample.st == types.Climbing
+	local floor = workspace:Raycast(position, vector.new(0, -(height + 6), 0), parameters)
+	local groundDistance = floor and position.Y - floor.Position.Y or nil
+	if state.riseFix == true and not climbing and vertical > 4 and (sample.st == types.Freefall or sample.st == types.Jumping) then
+		local minimum, minimumTime = math.huge, nil
+		for index = #samples, 1, -1 do
+			local history = samples[index]
+			if history.t > time then continue end
+			if time - history.t > 0.4 then break end
+			minimum = math.min(minimum, history.p.Y)
+		end
+		for index = #samples, 1, -1 do
+			local history = samples[index]
+			if history.t > time then continue end
+			if time - history.t > 0.4 then break end
+			if history.p.Y <= minimum + 0.15 then minimumTime = history.t; break end
+		end
+		local elapsed = minimumTime and time - minimumTime or 1
+		if elapsed < 0.35 and position.Y - minimum > 0.3 then vertical = math.max(vertical, (sample.jp or 50) - gravity * elapsed) end
+	end
+	local airborne = (sample.air or math.abs(vertical) > 8 or not floor) and not climbing
+	if groundDistance and groundDistance > height + 2.2 then airborne = true end
+	if state.jForceTmp and not sample.air and not climbing and floor then vertical, airborne = 0, false end
+	if airborne and state.airFix ~= false and sample.air and floor and groundDistance and groundDistance <= height + 2.2
+		and math.abs(vertical) < (state.airFixVy or 2.5)
+		and (sample.st == types.Running or sample.st == types.RunningNoPhysics or sample.st == types.Landed) then airborne = false end
+	if airborne and not climbing then
+		local valid, count, sumT, sumTT, sumY, sumTY = true, 0, 0, 0, 0, 0
+		for index = #samples, 1, -1 do
+			local history = samples[index]
+			if history.t > time then continue end
+			local elapsed = history.t - time
+			if elapsed < -0.12 then break end
+			if not history.air and math.abs(elapsed) > 0.02 then valid = false; break end
+			local adjusted = history.p.Y + 0.5 * gravity * elapsed * elapsed
+			count, sumT, sumTT = count + 1, sumT + elapsed, sumTT + elapsed * elapsed
+			sumY, sumTY = sumY + adjusted, sumTY + elapsed * adjusted
+		end
+		local denominator = count * sumTT - sumT * sumT
+		if valid and count >= 4 and math.abs(denominator) > 1e-9 then
+			local fittedVelocity = (count * sumTY - sumT * sumY) / denominator
+			local fittedHeight = (sumY - fittedVelocity * sumT) / count
+			if math.abs(fittedVelocity) < 120 and math.abs(fittedHeight - position.Y) < 3 then
+				position, vertical = vector.new(position.X, fittedHeight, position.Z), fittedVelocity
+			end
+		end
+	end
+	local groundOffset = groundDistance and not airborne and groundDistance or height + 1
+	local jumpAt, landAt, reJumpAt, suppressFalling
+	if state.airV2 and jumps and kind ~= "cv" and not climbing and airborne then
+		local jumpDelay, landExtra = state.J + state.shiftJ(), state.landExtra or 0
+		local start = time - jumpDelay - 0.03 - landExtra
+		local first, found = #samples, false
+		while first > 2 and samples[first - 1].t >= start do first -= 1 end
+		for index = math.max(first, 2), #samples do
+			local current, previous = samples[index], samples[index - 1]
+			if current.t > time then break end
+			local eventTime = math.max(0, current.t + jumpDelay - time)
+			if (current.st == types.Landed or current.st == types.Running or current.st == types.RunningNoPhysics)
+				and (previous.st == types.Freefall or previous.st == types.Jumping) then
+				if not landAt and not reJumpAt then landAt = math.max(0, current.t + jumpDelay + landExtra - time) end
+				found = true
+				continue
+			end
+			if current.st == types.Jumping and previous.st ~= types.Jumping and not reJumpAt and vertical < 15 then
+				found, reJumpAt = true, math.max(eventTime, landAt and landAt + step or 0)
+			end
+		end
+		if not found and (sample.st == types.Running or sample.st == types.RunningNoPhysics or sample.st == types.Landed)
+			and math.abs(vertical) < 6 then vertical, airborne, suppressFalling = 0, false, true end
+	end
+	if jumps and kind ~= "cv" and not climbing then
+		local jump = AimMotion.jumpTime(environment, state, samples, time)
+		if jump and state.jShiftTmp then jump += state.jShiftTmp end
+		jump = jump or state.jForceTmp
+		if jump and jump >= 0 and not airborne then jumpAt = jump end
+		if jump and jump < 0 and jump > -0.22 then
+			local predicted = (sample.jp or 50) - gravity * -jump
+			if vertical < predicted then vertical, airborne = predicted, true end
+		end
+	end
+	local trajectory, directionCache = {{tau = 0, p = position}}, kind == "mds" and {} or nil
+	local climbFix, elapsed, stepIndex = climbing and state.climbFix == true, 0, 0
+	if climbFix then horizontal *= 0.2 end
+	while elapsed < duration do
+		elapsed, stepIndex = elapsed + step, stepIndex + 1
+		if climbFix then
+			local history = AimGeometry.at(samples, math.min(time + elapsed - delay, time))
+			if history and history.md.Magnitude < 0.1 then vertical = 0 end
+		end
+		if kind ~= "cv" and not climbing then
+			local historyTime = math.min(time + elapsed - delay, time)
+			local history = AimGeometry.at(samples, historyTime)
+			if history then
+				local direction = history.md
+				if directionCache then
+					local key = math.floor(historyTime * 60 + 0.5)
+					direction = directionCache[key] or AimMotion.averageDirection(environment, samples, historyTime, state.mdsW or 0.35) or direction
+					directionCache[key] = direction
+				end
+				local target = vector.new(direction.X, 0, direction.Z) * (history.ws * factor)
+				local blend = 1
+				if state.gndLag == true then blend = math.min(1, step / (state.gndT or 0.06)) end
+				if airborne and state.airLag then blend = math.min(1, step / state.airT) end
+				if blend == 1 then horizontal = target end
+				if blend ~= 1 then horizontal += (target - horizontal) * blend end
+			end
+		end
+		if landAt and airborne and elapsed >= landAt and vertical <= 0 then
+			if state.rehopTmp then vertical, airborne, suppressFalling = sample.jp or 50, true, false
+			else vertical, airborne, suppressFalling = 0, false, true end
+			landAt = nil
+		end
+		if reJumpAt and elapsed >= reJumpAt then vertical, airborne, suppressFalling, reJumpAt, jumpAt = sample.jp or 50, true, false, nil, nil end
+		if jumpAt and not airborne and elapsed >= jumpAt then vertical, airborne, jumpAt = sample.jp or 50, true, nil end
+		local displacement = horizontal * step
+		if displacement.Magnitude > 1e-4 and stepIndex % 2 == 0 then
+			local hit = workspace:Raycast(position + vector.new(0, -0.5, 0), displacement.Unit * (displacement.Magnitude * 2 + 1.2), parameters)
+			if hit and math.abs(hit.Normal.Y) < 0.5 then
+				local normal = vector.new(hit.Normal.X, 0, hit.Normal.Z)
+				if normal.Magnitude > 0.001 then
+					normal = normal.Unit
+					local into = horizontal:Dot(normal)
+					if into < 0 then horizontal -= normal * into; displacement = horizontal * step end
+				end
+			end
+		end
+		local nextY = position.Y
+		local wasAirborne = airborne
+		if climbing then nextY += vertical * step end
+		if not climbing and airborne then
+			vertical -= gravity * step
+			nextY += vertical * step
+			if vertical < 0 then
+				local hit = workspace:Raycast(vector.new(position.X + displacement.X, position.Y, position.Z + displacement.Z),
+					vector.new(0, nextY - position.Y - groundOffset - 0.3, 0), parameters)
+				if hit then
+					nextY, airborne, vertical = hit.Position.Y + groundOffset, false, 0
+					if state.rehopTmp then vertical, airborne = sample.jp or 50, true end
+				end
+			end
+		end
+		if not climbing and not wasAirborne and stepIndex % 3 == 0 then
+			local hit = workspace:Raycast(vector.new(position.X + displacement.X, position.Y + 1.5, position.Z + displacement.Z),
+				vector.new(0, -(groundOffset + 4), 0), parameters)
+			if hit then nextY = position.Y + math.clamp(hit.Position.Y + groundOffset - position.Y, -1.5, 1.5) end
+			if not hit and not suppressFalling then vertical, airborne = 0, true end
+		end
+		position = vector.new(position.X + displacement.X, nextY, position.Z + displacement.Z)
+		table.insert(trajectory, {tau = elapsed, p = position})
+	end
+	return trajectory
+end
+
+function AimMotion.hypotheses(context, state, samples, options)
+	local environment = context.environment
+	local vector, time, duration, parameters = environment.Vector3, options.time, options.duration, options.parameters
+	state.jShiftTmp, state.jForceTmp = nil, nil
+	local delay, untrusted = state.D, false
+	if state.trustScale ~= false and state.useTrust ~= false then
+		untrusted = AimMotion.directionTrust(environment, state, samples, time) < (state.trustScaleT or 0.6)
+	end
+	if state.estDOn == true then
+		local estimated, error, current = AimMotion.estimateDelay(environment, state, samples, time)
+		if estimated and current and error < current * (state.estDGain or 0.8) then delay = estimated end
+		state.lastDD = delay
+	end
+	delay = state.dFix or delay
+	if state.pdUse == true and state.pdOverride then delay = state.pdOverride end
+	local function errorFor(kind, fallback)
+		local value = state.err[kind]
+		if state.airV2 then value = state.err["W" .. kind] or value end
+		return value or fallback
+	end
+	local trajectories = {}
+	local factor = AimMotion.currentFactor(state, samples, time, state.k or 1)
+	local function add(kind, sampleDelay, error, weight, jumps)
+		local scale = state.modern == false and 0.8 or (state.hpScale or 1.6)
+		if state.modern ~= false and samples[#samples].air then scale = state.hpScaleAir or 0.8 end
+		if untrusted then scale = state.hpScaleLie or 0.8 end
+		local model = kind == "cv" and "cv" or kind == "mdS" and "mds" or "md"
+		local trajectory = AimMotion.simulate(context, state, samples, {time = time, delay = sampleDelay, kind = model,
+			duration = duration, factor = factor, parameters = parameters, jumps = jumps})
+		table.insert(trajectories, {kind = kind, w = weight * math.exp(-(error * error) / scale), traj = trajectory})
+	end
+	add("md", delay, errorFor("md"), state.hpMd or 1.2, true)
+	add("mdE", delay - 0.05, errorFor("mdE"), state.hpEL or 0.8, true)
+	add("mdL", delay + 0.05, errorFor("mdL"), state.hpEL or 0.8, true)
+	if state.hpMdS and state.hpMdS > 0 then add("mdS", delay, errorFor("mdS", 0.8), state.hpMdS, true) end
+	add("cv", 0, errorFor("cv"), state.hpCv or 0.7, false)
+	if state.dWide ~= false and state.modern ~= false and not untrusted then
+		add("mdL", delay + 0.12, errorFor("mdL"), state.dWideW1 or 0.3, true)
+		add("mdL", delay + 0.25, errorFor("mdL"), state.dWideW2 or 0.15, true)
+	end
+	if state.dEarly ~= false and state.modern ~= false and delay > 0.11 and not untrusted then
+		add("mdE", delay - 0.1, errorFor("mdE"), state.dEarlyW or 0.15, true)
+	end
+	if state.rehopW then
+		local jumps, jumping = 0, environment.Enum.HumanoidStateType.Jumping
+		for index = #samples, 2, -1 do
+			if time - samples[index].t > (state.rehopT or 2.5) then break end
+			if samples[index].st == jumping and samples[index - 1].st ~= jumping then jumps += 1 end
+		end
+		state.lastJumps = jumps
+		if jumps >= (state.rehopN or 2) then
+			state.rehopTmp = true
+			pcall(add, "mdH", delay, errorFor("md"), state.rehopW, true)
+			state.rehopTmp = nil
+		end
+	end
+	local airDuration = 0
+	for index = #samples, 1, -1 do
+		if not samples[index].air then break end
+		airDuration = time - samples[index].t
+	end
+	local scale = state.hpScale2 or 0.8
+	local function addModel(kind, sampleDelay, weight, error, better)
+		local trajectory = AimMotion.simulate(context, state, samples, {time = time, delay = sampleDelay, kind = kind,
+			duration = duration, factor = 1, parameters = parameters, jumps = false})
+		table.insert(trajectories, {kind = kind, w = weight * math.exp(-(error * error) / scale), traj = trajectory, better = better})
+	end
+	addModel("fly", 0, airDuration > 1.2 and 1.4 or 0.35, errorFor("fly", 1.4))
+	local velocity = AimGeometry.kinVelocity(environment, samples, time, 0.08) or vector.zero
+	local fast = vector.new(velocity.X, 0, velocity.Z).Magnitude > 22
+	addModel("mdv", delay, fast and 1 or 0.3, errorFor("mdv", 1.4))
+	addModel("arc", 0, fast and 1 or 0.3, errorFor("arc", 1.4))
+	if state.velOn ~= false then
+		local sample = AimGeometry.at(samples, time) or samples[#samples]
+		local current = environment.typeof(sample.v) == "Vector3" and sample.v or velocity
+		local speed = vector.new(current.X, 0, current.Z).Magnitude
+		if state.fastWin then speed = math.max(speed, AimMotion.recentSpeed(environment, samples, time, state.fastWin)) end
+		if speed > (state.velMin or 30) then
+			addModel("vel", 0, state.hpVel or 1.2, errorFor("vel", 1.4))
+			if state.velF ~= false then
+				addModel("velf", 0, state.hpVelF or 1.2, errorFor("velf", 1.4), errorFor("velf", 9) < errorFor("vel", 9))
+			end
+		end
+	end
+	local position = AimGeometry.posAt(samples, time) or samples[#samples].p
+	if fast or state.stopAll == true and vector.new(velocity.X, 0, velocity.Z).Magnitude > 6 and not samples[#samples].air then
+		local stopWeight, halfWeight
+		if fast then
+			stopWeight = 0.8 * math.exp(-errorFor("stop", 2) ^ 2 / scale)
+			halfWeight = 0.8 * math.exp(-errorFor("half", 1.5) ^ 2 / scale)
+		end
+		if not fast then
+			stopWeight = 1.2 * math.exp(-(errorFor("md") ^ 2) / 0.8) * (state.stopW or 0.1)
+			halfWeight = stopWeight
+		end
+		table.insert(trajectories, {kind = "stop", w = stopWeight, traj = {{tau = 0, p = position}, {tau = duration, p = position}}})
+		local half = {}
+		for index = 0, math.ceil(duration * 60) do
+			local elapsed = index / 60
+			table.insert(half, {tau = elapsed, p = position + velocity * (elapsed * 0.5)})
+		end
+		table.insert(trajectories, {kind = "half", w = halfWeight, traj = half})
+	end
+	local last, types = samples[#samples], environment.Enum.HumanoidStateType
+	local jump = AimMotion.jumpTime(environment, state, samples, time)
+	if state.ffgJump == true and last.st == types.Freefall and not last.air and not jump then
+		local index = #samples
+		while index > 1 and samples[index - 1].st == types.Freefall and not samples[index - 1].air do index -= 1 end
+		if time - samples[index].t < (state.ffgMax or 0.3) then
+			for _, variant in {{0, 0.5}, {0.05, 0.45}, {0.1, 0.35}, {0.2, 0.2}} do
+				state.jForceTmp = variant[1]
+				add("mdJa", delay, errorFor("md"), variant[2] * (state.ffgW or 1), true)
+			end
+			state.jForceTmp = nil
+		end
+	end
+	if state.jumpAny == true and not jump and not last.air and last.st ~= types.Climbing then
+		local weight = state.jumpAnyW or 0.1
+		state.jForceTmp = 0.02
+		add("mdJa", delay, errorFor("md"), weight, true)
+		state.jForceTmp = 0.1
+		add("mdJa", delay, errorFor("md"), weight * 0.7, true)
+		state.jForceTmp = nil
+	end
+	if jump then
+		add("mdNJ", delay, errorFor("md"), state.njW or 0.4, false)
+		if state.jVar ~= false and not last.air then
+			local variants = {{-0.1, "mdJe", 0.6}, {0.1, "mdJl", 0.45}}
+			if state.jVarW ~= false then
+				local multiplier = state.jvMul or 1
+				variants = {{-0.18, "mdJe", 0.35 * multiplier * (state.jvEarly or 1)},
+					{-0.09, "mdJe", 0.55 * multiplier * (state.jvEarly or 1)},
+					{0.09, "mdJl", 0.45 * multiplier}, {0.18, "mdJl", 0.25 * multiplier}}
+			end
+			for _, variant in variants do
+				state.jShiftTmp = variant[1]
+				add(variant[2], delay, errorFor("md"), variant[3], true)
+			end
+			state.jShiftTmp = nil
+		end
+	end
+	if state.airV2 and AimMotion.mode(environment, samples) ~= "nr" then
+		local base = trajectories[1].traj
+		for _, hypothesis in trajectories do
+			if hypothesis.kind ~= "mdv" and hypothesis.kind ~= "arc" and hypothesis.kind ~= "stop" and hypothesis.kind ~= "half" then continue end
+			local combined = {}
+			for index = 0, math.ceil(duration * 60) do
+				local elapsed = index / 60
+				local point = AimMotion.trajectoryAt(hypothesis.traj, elapsed)
+				table.insert(combined, {tau = elapsed, p = vector.new(point.X, AimMotion.trajectoryAt(base, elapsed).Y, point.Z)})
+			end
+			hypothesis.traj = combined
+		end
+	end
+	local clusters = AimMotion.clusters(environment, state, samples, time)
+	for index, cluster in clusters or {} do
+		table.insert(trajectories, {kind = "cl" .. index, w = 1.5 * cluster.w,
+			traj = {{tau = 0, p = cluster.p}, {tau = duration, p = cluster.p}}})
+	end
+	local oscillation = AimMotion.oscillation(environment, state, samples, time)
+	if oscillation then
+		state.oscMode = environment.os.clock()
+		for index, point in oscillation do
+			table.insert(trajectories, {kind = "osc" .. index, w = 1.6 / #oscillation,
+				traj = {{tau = 0, p = point}, {tau = duration, p = point}}})
+		end
+	end
+	local repeated = state.repInfo
+	if state.repOn ~= false and repeated and math.abs(time - repeated.tEnd) < 0.35 and repeated.fit < (state.repFitMax or 1.2) then
+		local trajectory = AimMotion.repeatTrajectory(samples, time, repeated.T, duration)
+		if trajectory then
+			local error = errorFor("rep", 3)
+			table.insert(trajectories, {kind = "rep", w = (state.repW or 1.2) * math.exp(-(error * error) / scale), traj = trajectory})
+		end
+	end
+	local total, kept, keptWeight = 0, {}, 0
+	for _, hypothesis in trajectories do total += hypothesis.w end
+	for _, hypothesis in trajectories do
+		hypothesis.w /= math.max(total, 1e-6)
+		if hypothesis.w < 0.03 then continue end
+		table.insert(kept, hypothesis)
+		keptWeight += hypothesis.w
+	end
+	for _, hypothesis in kept do hypothesis.w /= math.max(keptWeight, 1e-6) end
+	return kept
+end
+
+function AimMotion.backtest(context, state, history, parameters)
+	local environment = context.environment
+	local samples = AimMotion.despike(environment, state, history)
+	if #samples < 20 then return end
+	local time, mode = samples[#samples].t, AimMotion.mode(environment, samples)
+	local latency = math.clamp((mode == "nr" and state.Lnr or state.L) + state.shiftL(), 0.08, 0.45)
+	local start = time - latency
+	if start - 0.2 < samples[1].t then return end
+	local actual = AimGeometry.posAt(samples, time)
+	local previous = AimGeometry.posAt(samples, start)
+	local velocity = AimGeometry.kinVelocity(environment, samples, start, 0.08) or environment.Vector3.zero
+	local airborne = false
+	for index = #samples, 1, -1 do
+		if samples[index].t < start - 0.1 then break end
+		if samples[index].air then airborne = true; break end
+	end
+	local factor = AimMotion.currentFactor(state, samples, start, state.k or 1)
+	local kinds = {"md", "cv", "mdE", "mdL", "fly", "mdv", "arc", "stop", "half", "mdS"}
+	if state.velOn ~= false then table.insert(kinds, "vel"); table.insert(kinds, "velf") end
+	local errors, movementHeight = {}, nil
+	local function yieldIfNeeded()
+		if state.btSlice and coroutine.isyieldable() and environment.os.clock() - (state.btT or 0) > (state.btBudget or 0.0006) then coroutine.yield() end
+	end
+	for _, kind in kinds do
+		local delay = (kind == "md" or kind == "mdv" or kind == "mdS") and state.D
+			or kind == "mdE" and state.D - 0.05 or kind == "mdL" and state.D + 0.05 or 0
+		local prediction
+		if kind == "stop" then prediction = previous end
+		if kind == "half" then prediction = previous + velocity * (latency * 0.5) end
+		if not prediction then
+			local model = (kind == "cv" or kind == "fly" or kind == "mdv" or kind == "arc" or kind == "vel" or kind == "velf") and kind
+				or kind == "mdS" and "mds" or "md"
+			local trajectory = AimMotion.simulate(context, state, samples, {time = start, delay = delay, kind = model,
+				duration = latency, factor = factor, parameters = parameters, jumps = true})
+			prediction = AimMotion.trajectoryAt(trajectory, latency)
+		end
+		if kind == "md" then movementHeight = prediction.Y end
+		local error = environment.Vector3.new(prediction.X - actual.X, 0, prediction.Z - actual.Z).Magnitude
+		errors[kind] = error
+		state.err[kind] = (state.err[kind] or 0.8) + (math.min(error, 6) - (state.err[kind] or 0.8)) * 0.08
+		if state.airV2 then
+			local height = prediction.Y
+			if movementHeight and mode ~= "nr" and (kind == "mdv" or kind == "arc" or kind == "stop" or kind == "half") then height = movementHeight end
+			local vertical = airborne and (height - actual.Y) * 0.45 or 0
+			local combined = math.sqrt(error * error + vertical * vertical)
+			local key, old = "W" .. kind, state.err["W" .. kind] or state.err[kind]
+			state.err[key] = old + (math.min(combined, 6) - old) * 0.08
+		end
+		yieldIfNeeded()
+	end
+	if state.repOn ~= false then
+		local repeated = state.repInfo
+		if repeated and repeated.tEnd <= start + 0.001 and time - repeated.tEnd < 0.5 and repeated.fit < (state.repFitMax or 1.2) then
+			local trajectory = AimMotion.repeatTrajectory(samples, start, repeated.T, latency)
+			if trajectory then
+				local point = AimMotion.trajectoryAt(trajectory, latency)
+				local error = environment.Vector3.new(point.X - actual.X, 0, point.Z - actual.Z).Magnitude
+				local vertical, old = airborne and (point.Y - actual.Y) * 0.45 or 0, state.err.rep or 3
+				state.err.rep = old + (math.min(error, 6) - old) * 0.08
+				local weighted = state.err.Wrep or old
+				state.err.Wrep = weighted + (math.min(math.sqrt(error * error + vertical * vertical), 6) - weighted) * 0.08
+			end
+		end
+		if not repeated or repeated.tEnd > start + 0.001 or time - repeated.tEnd >= 0.5 or repeated.fit >= (state.repFitMax or 1.2) then
+			local old = state.err.rep or 3
+			state.err.rep = old + (4 - old) * 0.08
+			state.err.Wrep = state.err.rep
+		end
+		yieldIfNeeded()
+		local period, error, amplitude = AimMotion.findRepeat(environment, state, samples, time)
+		state.repInfo = period and {T = period, fit = error, amp = amplitude, tEnd = time} or nil
+	end
+	if (actual - AimGeometry.posAt(samples, start)).Magnitude > latency * 4 then
+		if errors.mdE + 0.05 < errors.md and errors.mdE <= errors.mdL then state.D = math.clamp(state.D - 0.002, 0.06, 0.32) end
+		if not (errors.mdE + 0.05 < errors.md and errors.mdE <= errors.mdL) and errors.mdL + 0.05 < errors.md and errors.mdL < errors.mdE then
+			state.D = math.clamp(state.D + 0.002, 0.06, 0.32)
+		end
+	end
+	if state.dPrior ~= false and state.modern ~= false then state.D = math.clamp(state.D + ((state.dCenter or 0.158) - state.D) * 0.01, 0.1, 0.24) end
+end
+
+local AimPlan = {}
+local AIM_AIR_MIX = {{0.8, 0.15}, {-0.8, 0.15}, {2.4, 0.1}, {-2.4, 0.1}, {4.5, 0.05}, {-4.5, 0.05}, {7, 0.025}, {-7, 0.025}}
+local AIM_TAKEOFF_MIX = {{-1, 0.08}, {1.5, 0.17}, {3, 0.22}, {4.5, 0.15}, {6.5, 0.13}}
+
+function AimPlan.points(context, state, options)
+	local environment, samples = context.environment, options.samples
+	local vector, types = environment.Vector3, environment.Enum.HumanoidStateType
+	local time, mode, hypotheses, taus = options.time, options.mode, options.hypotheses, options.taus
+	local latest = samples[#samples]
+	local shift = state.useLagL and state.shift or 0
+	local latency = math.clamp((mode == "nr" and state.Lnr or state.L) + shift, 0.08, 0.45)
+	local jumpWeight, jumpDelay = 0, 0
+	if mode == "std" and not latest.air and latest.st ~= types.Climbing and not AimMotion.jumpTime(environment, state, samples, time) then
+		local jumps = 0
+		for index = #samples, 2, -1 do
+			if time - samples[index].t > 3 then break end
+			if samples[index].air and not samples[index - 1].air then jumps += 1 end
+		end
+		jumpWeight = latest.jump and 0.6 or (jumps >= 2 and 0.35 or 0.1)
+		if latest.st == types.Freefall then
+			for index = #samples, 2, -1 do
+				local current, previous = samples[index], samples[index - 1]
+				if time - current.t > 0.3 then break end
+				if current.st == types.Freefall and previous.st ~= types.Freefall and not previous.air then
+					jumpWeight, jumpDelay = 0.75, math.max(0, current.t + state.J + state.shiftJ() - time)
+					break
+				end
+			end
+		end
+	end
+	local function heightSpan(window)
+		local minimum, maximum = math.huge, -math.huge
+		for index = #samples, 1, -1 do
+			local sample = samples[index]
+			if time - sample.t > window then break end
+			minimum, maximum = math.min(minimum, sample.p.Y), math.max(maximum, sample.p.Y)
+		end
+		return maximum - minimum
+	end
+	local stuck = false
+	if state.stuckFix ~= false and latest.st == types.Freefall and not latest.air then
+		local index = #samples
+		while index > 1 and samples[index].st == types.Freefall and not samples[index].air do index -= 1 end
+		stuck = time - samples[index].t >= 0.2 and heightSpan(0.5) < (state.stuckSpan or 1.2)
+	end
+	local falseAir = false
+	if state.airFix ~= false and latest.air and (latest.st == types.Running or latest.st == types.RunningNoPhysics or latest.st == types.Landed) then
+		local velocity = AimGeometry.kinVelocity(environment, samples, time, 0.15)
+		falseAir = velocity and math.abs(velocity.Y) < (state.airFixVy or 2.5) or false
+	end
+	local kineticAir = false
+	if state.kinAir ~= false and mode == "std" and not stuck and not latest.air and latest.st ~= types.Climbing then
+		local velocity = AimGeometry.kinVelocity(environment, samples, time, 0.1)
+		kineticAir = velocity and math.abs(velocity.Y) > (state.kinAirVy or 12) and heightSpan(0.4) > (state.kinAirSpan or 2) or false
+	end
+	state.lastKinAir = kineticAir
+	local airborne = mode == "std" and not stuck and not falseAir
+		and (latest.air or kineticAir or latest.st == types.Freefall or latest.st == types.Jumping or latest.st == types.Climbing)
+	local points, indexed = {}, {}
+	local function add(position, weight)
+		local key = math.floor(position.X * 4 + 0.5) .. ":" .. math.floor(position.Y * 4 + 0.5) .. ":" .. math.floor(position.Z * 4 + 0.5)
+		local point = indexed[key]
+		if point then point.w += weight; return end
+		point = {p = position, w = weight}
+		indexed[key] = point
+		table.insert(points, point)
+	end
+	for _, hypothesis in hypotheses do
+		local error = state.err[hypothesis.kind] or state.err.md
+		for index, tau in ipairs(taus) do
+			local position = tau.tau >= 0 and AimMotion.trajectoryAt(hypothesis.traj, tau.tau)
+				or (AimGeometry.posAt(samples, time + tau.tau) or AimMotion.trajectoryAt(hypothesis.traj, 0))
+			local spread = tau.tau > 0 and math.min(error * (tau.tau / latency), 6) * 0.8 * (state.spreadK or 1) or 0
+			local weight = hypothesis.w * tau.w
+			local jump = jumpWeight > 0 and tau.tau > 0.005 and jumpWeight or 0
+			local remaining = weight * (1 - jump)
+			if jump > 0 then
+				local elapsed = math.max(0, tau.tau - jumpDelay)
+				local height = math.max(0, (latest.jp or 50) * elapsed - 0.5 * (state.G or context.workspace.Gravity) * elapsed * elapsed)
+				add(position + vector.new(0, height, 0), weight * jump)
+			end
+			if airborne and tau.tau > 0.005 then
+				local scale = math.clamp(tau.tau / 0.15, 0.3, 1.5)
+				local actualAir = latest.air or latest.st == types.Climbing
+				local mix = actualAir and (state.airMix or AIM_AIR_MIX) or (state.takeoffMix or AIM_TAKEOFF_MIX)
+				local distance = actualAir and (state.airMixK or 1) or (state.takeMixK or 1)
+				local multiplier = actualAir and (state.airMixW or 1) or (state.takeMixW or 1)
+				local left = 1
+				for _, entry in mix do
+					add(position + vector.new(0, entry[1] * scale * distance, 0), remaining * entry[2] * multiplier)
+					left -= entry[2] * multiplier
+				end
+				remaining *= left
+			end
+			if spread > 0.6 and hypothesis.w > 0.12 and math.abs(index - (#taus + 1) / 2) <= 1 then
+				local previous = tau.tau >= 0.01 and AimMotion.trajectoryAt(hypothesis.traj, tau.tau - 0.01) or position
+				local direction = vector.new(position.X - previous.X, 0, position.Z - previous.Z)
+				direction = direction.Magnitude > 0.001 and direction.Unit or vector.new(1, 0, 0)
+				local side = vector.new(-direction.Z, 0, direction.X)
+				add(position, remaining * 0.4)
+				add(position + side * spread, remaining * 0.15)
+				add(position - side * spread, remaining * 0.15)
+				add(position + direction * spread, remaining * 0.15)
+				add(position - direction * spread, remaining * 0.15)
+				continue
+			end
+			add(position, remaining)
+		end
+	end
+	local raw = state.histRaw or samples
+	local jitter = state.jitOn ~= false and AimMotion.jitterAxis(context, state, raw, raw[#raw].t, latency + (options.planDelay or 0)) or nil
+	state.lastJit = jitter
+	if jitter then
+		local share = state.jitShare or 0.85
+		for _, point in points do point.w *= 1 - share end
+		local along = state.jitAlong or {-2.9, -1.5, -0.45, 0.45, 1.5, 2.9}
+		local across = state.jitPerp or {{0, 0.46}, {4, 0.14}, {-4, 0.14}, {11, 0.13}, {-11, 0.13}}
+		local heights = state.jitDy or {-1.25, 0.57, 4.2}
+		local weight = share / (#along * #heights)
+		for _, distance in along do
+			local center = jitter.c + jitter.u * (distance * jitter.half)
+			for _, offset in across do
+				local position = center + jitter.nv * offset[1]
+				for _, height in heights do add(position + vector.new(0, height, 0), weight * offset[2]) end
+			end
+		end
+	end
+	local total = 0
+	for _, point in points do total += point.w end
+	local kept, center, weight = {}, vector.zero, 0
+	for _, point in points do
+		if point.w < total * 0.0015 then continue end
+		table.insert(kept, point)
+		center, weight = center + point.p * point.w, weight + point.w
+	end
+	center /= math.max(weight, 1e-6)
+	return {points = kept, center = center, weight = weight, airborne = airborne, stuck = stuck, jitter = jitter, latency = latency}
+end
+
+local AimTarget = {}
+
+function AimTarget.murderer(context, roles)
+	local globals = context.environment.getgenv and context.environment.getgenv()
+	local duel = globals and rawget(globals, "__pulseDuel")
+	if duel and duel.on and duel.pick then return duel.pick() end
+	for _, player in context.players:GetPlayers() do
+		local role = roles[player.Name]
+		if player == context.player or not role or role.Role ~= "Murderer" or role.Dead == true or role.Killed == true then continue end
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if humanoid and humanoid.Health > 0 and character:FindFirstChild("HumanoidRootPart") then return player, character end
+	end
+	return nil
+end
+
+function AimTarget.sample(context, state, character)
+	local root = character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not root or not humanoid then return nil end
+	local jumpPower = humanoid.UseJumpPower and humanoid.JumpPower or math.sqrt(2 * (state.G or context.workspace.Gravity) * humanoid.JumpHeight)
+	return {t = context.environment.os.clock(), p = root.Position, cf = root.CFrame, md = humanoid.MoveDirection,
+		ws = humanoid.WalkSpeed, v = root.AssemblyLinearVelocity, st = humanoid:GetState(),
+		air = humanoid.FloorMaterial == context.environment.Enum.Material.Air, jump = humanoid.Jump, hh = humanoid.HipHeight, jp = jumpPower}
+end
+
+function AimTarget.moveParams(context)
+	local environment = context.environment
+	local parameters = environment.RaycastParams.new()
+	parameters.FilterType, parameters.IgnoreWater, parameters.RespectCanCollide = environment.Enum.RaycastFilterType.Exclude, true, true
+	local characters = {}
+	for _, player in context.players:GetPlayers() do if player.Character then table.insert(characters, player.Character) end end
+	parameters.FilterDescendantsInstances = characters
+	return parameters
+end
+
+function AimTarget.serverRay(context, state, origin, direction, extra, includePassthrough)
+	local environment = context.environment
+	local ignored = {}
+	if includePassthrough then
+		pcall(function() for _, object in context.collection:GetTagged("WeaponPassthrough") do table.insert(ignored, object) end end)
+	end
+	if context.player.Character then table.insert(ignored, context.player.Character) end
+	for _, object in extra or {} do table.insert(ignored, object) end
+	local parameters = environment.RaycastParams.new()
+	parameters.FilterType, parameters.IgnoreWater = environment.Enum.RaycastFilterType.Exclude, true
+	for _ = 1, 12 do
+		parameters.FilterDescendantsInstances = ignored
+		local hit = context.workspace:Raycast(origin, direction, parameters)
+		if not hit then return nil end
+		if not state.skipTransparent or hit.Instance.Transparency < 1 then return hit end
+		table.insert(ignored, hit.Instance)
+	end
+	return nil
+end
+
+function AimTarget.insideSolid(context, state, position, collisionGroup)
+	local environment = context.environment
+	local probe = state.probePart
+	if not probe then
+		probe = environment.Instance.new("Part")
+		probe.Size, probe.Anchored, probe.CanCollide, probe.CanQuery, probe.CanTouch = environment.Vector3.new(0.6, 0.6, 0.6), true, false, false, false
+		state.probePart = probe
+	end
+	probe.CFrame = environment.CFrame.new(position)
+	local parameters = environment.OverlapParams.new()
+	parameters.FilterType, parameters.RespectCanCollide = environment.Enum.RaycastFilterType.Exclude, true
+	local characters = {}
+	for _, player in context.players:GetPlayers() do if player.Character then table.insert(characters, player.Character) end end
+	parameters.FilterDescendantsInstances = characters
+	if collisionGroup then pcall(function() parameters.CollisionGroup = collisionGroup end) end
+	local ok, parts = pcall(context.workspace.GetPartsInPart, context.workspace, probe, parameters)
+	if not ok then return nil end
+	for _, part in parts do
+		if not part.CanQuery or not part.CanCollide then continue end
+		local model = part:FindFirstAncestorOfClass("Model")
+		if not model or not model:FindFirstChildOfClass("Humanoid") then return part end
+	end
+	return nil
+end
+
+function AimTarget.track(context, state, roles)
+	local environment = context.environment
+	local globals = environment.getgenv and environment.getgenv()
+	local world = globals and rawget(globals, "__pulseWorldBase")
+	state.G = type(world) == "table" and tonumber(world.Gravity) or context.workspace.Gravity
+	local _, target = AimTarget.murderer(context, roles)
+	if state.forced and state.forced.Parent then target = state.forced end
+	if state.queued and state.queued.c and state.queued.c.Parent then target = state.queued.c end
+	if target ~= state.target then state.target, state.hist = target, {} end
+	local now = environment.os.clock()
+	for _, player in context.players:GetPlayers() do
+		if player == context.player then continue end
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if root and humanoid then
+			AimCalibration.watchLag(context, state, {player = player, character = character, root = root, humanoid = humanoid, time = now})
+		end
+	end
+	state.shift = target and AimCalibration.lagOf(context, state, target) or 0
+	if target then
+		local sample = AimTarget.sample(context, state, target)
+		local position = sample and sample.p
+		local far = position and (position.X ~= position.X or position.Y ~= position.Y or position.Z ~= position.Z
+			or position.Magnitude > (state.dsFar or 1000000))
+		if far then
+			local desync = state.ds
+			if not desync or desync.c ~= target then desync = {c = target}; state.ds = desync end
+			if not desync.farAt or desync.backAt then
+				table.clear(state.hist)
+				state.hcut, desync.since = environment.os.clock(), sample.t
+			end
+			desync.farAt, desync.backAt, sample = sample.t, nil, nil
+		end
+		if sample and state.ds and state.ds.c == target and state.ds.farAt and not state.ds.backAt then
+			state.ds.backAt = sample.t
+			table.clear(state.hist)
+			if state.say then state.say(string.format("DESYNC back %s after %.2fs", target.Name, sample.t - (state.ds.since or state.ds.farAt))) end
+		end
+		if sample then
+			local history, previous = state.hist, state.hist[#state.hist]
+			if not previous or sample.t - previous.t >= 1 / 240 then
+				if previous and (sample.p - previous.p).Magnitude > 8 then state.jumps = (state.jumps or 0) + 1 end
+				if previous and (sample.p - previous.p).Magnitude > 60 and state.spikeOn ~= true then
+					table.clear(history)
+					state.hcut = environment.os.clock()
+				end
+				table.insert(history, sample)
+				if state.spoofOn ~= false and environment.typeof(sample.v) == "Vector3" and previous
+					and sample.v.Magnitude >= (state.spoofMin or 400) then
+					local ok, estimated = pcall(AimGeometry.kinVelocity, environment, history, sample.t, 0.1)
+					if not ok or environment.typeof(estimated) ~= "Vector3" then
+						estimated = (sample.p - previous.p) / math.max(sample.t - previous.t, 1 / 240)
+					end
+					if estimated.Magnitude < sample.v.Magnitude * (state.spoofK or 0.25) then sample.vr, sample.v = sample.v, estimated end
+				end
+				while #history > 2 and sample.t - history[1].t > 3 do table.remove(history, 1) end
+			end
+		end
+	end
+	state.othersC, state.othersData, state.othersDirty = target, roles, true
+end
+
+function AimTarget.others(context, state)
+	if not state.othersDirty then return state.others or {} end
+	state.othersDirty = false
+	local globals = context.environment.getgenv and context.environment.getgenv()
+	local duel = globals and rawget(globals, "__pulseDuel")
+	if not duel or not duel.on or not duel.pick then duel = nil end
+	local others = {}
+	for _, player in context.players:GetPlayers() do
+		local character = player.Character
+		if player == context.player or character == state.othersC or duel and duel.foes[player.Name] then continue end
+		local role = (state.othersData or {})[player.Name]
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if not root or not humanoid or not (humanoid.Health > 0) or role and (role.Dead or role.Killed) then continue end
+		table.insert(others, {c = character, p = root.Position, md = humanoid.MoveDirection, ws = humanoid.WalkSpeed})
+	end
+	state.others = others
+	return others
+end
+
+function AimTarget.innocentRisk(context, state, options)
+	local vector = context.environment.Vector3
+	for _, other in AimTarget.others(context, state) do
+		if other.c == options.character then continue end
+		local predicted = other.p + vector.new(other.md.X, 0, other.md.Z) * (other.ws * math.max(state.L, 0.15))
+		for _, position in {other.p, predicted, (other.p + predicted) * 0.5} do
+			local closest = options.origin + options.direction * math.clamp((position - options.origin):Dot(options.direction), 0, options.distance)
+			local height = position.Y - closest.Y
+			if vector.new(position.X - closest.X, 0, position.Z - closest.Z).Magnitude < (state.innocentMargin or 3.5)
+				and height > -3.8 and height < 4.8 then return true end
+		end
+	end
+	return false
+end
+
+function AimTarget.selfShift(context, state)
+	local environment = context.environment
+	local globals = environment.getgenv and environment.getgenv()
+	local invisible = globals and rawget(globals, "__pulseInvis")
+	if type(invisible) ~= "table" or not invisible.active or environment.typeof(invisible.real) ~= "CFrame" then return environment.Vector3.zero end
+	if environment.os.clock() - (tonumber(invisible.realAt) or 0) > (state.shiftFresh or 0.3) then return environment.Vector3.zero end
+	local character = context.player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not root then return environment.Vector3.zero end
+	local shift = invisible.real.Position - root.Position
+	if shift.Magnitude < 190000 or shift.Magnitude > 210000 then return environment.Vector3.zero end
+	return shift
+end
+
+function AimTarget.visible(context, state, character)
+	local own = context.player.Character
+	local head = own and own:FindFirstChild("Head")
+	if not head then return false end
+	local origin = head.Position + AimTarget.selfShift(context, state)
+	for _, name in {"HumanoidRootPart", "Head", "UpperTorso", "Torso"} do
+		local part = character:FindFirstChild(name)
+		if part and not AimTarget.serverRay(context, state, origin, part.Position - origin, {character}) then return true end
+	end
+	return false
+end
+
+function AimTarget.gun(context, state)
+	local character = context.player.Character
+	local gun = character and character:FindFirstChild("Gun")
+	if gun then return gun end
+	local backpack = context.player:FindFirstChild("Backpack")
+	return state.backpackOk and backpack and backpack:FindFirstChild("Gun") or nil
+end
+
+function AimTarget.muzzleState(context, state)
+	local character = context.player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local head = character and character:FindFirstChild("Head")
+	local attachment = root and root:FindFirstChild("GunRaycastAttachment")
+	if not root or not head or not attachment then return false end
+	local parameters = context.environment.RaycastParams.new()
+	parameters.FilterDescendantsInstances = {character}
+	local blocked = context.workspace:Raycast(head.Position + AimTarget.selfShift(context, state), attachment.WorldPosition - head.Position, parameters) ~= nil
+	return blocked, root, head, attachment, parameters
+end
+
+function AimTarget.guardInfo(context)
+	local environment = context.environment
+	local globals = environment.getgenv and environment.getgenv()
+	local guard = globals and rawget(globals, "__pulseMuzzle")
+	if type(guard) ~= "table" or not guard.alive or not guard.at or environment.os.clock() - guard.at > 0.15 then return nil end
+	return guard
+end
+
+function AimTarget.clearMuzzle(context, state)
+	if state.mzGate == false then return true end
+	local guard = AimTarget.guardInfo(context)
+	if not guard then return true end
+	local now = context.environment.os.clock()
+	local margin = math.clamp((state.mzBase or 0.21) + context.player:GetNetworkPing() * (state.mzPingK or 0.5), 0.1, 0.35)
+	if not guard.blocked and now - (guard.clearSince or 0) >= margin then return true end
+	if guard.request then guard.request(state.mzHoldFor or 0.3) end
+	if state.mzSaidAt == nil or now - state.mzSaidAt > 1 then
+		state.mzSaidAt = now
+		if state.say then
+			state.say(string.format("muzzle %s, stepping out (clear %.0fms, need %.0fms)", guard.blocked and "blocked" or "fresh",
+				guard.blocked and 0 or (now - (guard.clearSince or now)) * 1000, margin * 1000))
+		end
+	end
+	if guard.blocked then return false, now + 0.02 end
+	return false, guard.clearSince + margin
+end
+
+function AimPlan.scoreLine(context, state, options)
+	local line, body, points = options.line, options.body, options.points
+	local detachedWeight = options.detachedWeight
+	local path = line.e - line.o
+	line.len, line.d = path.Magnitude, path / path.Magnitude
+	local hits, score = {}, 0
+	if detachedWeight < 1 then
+		for index, point in points do
+			local hit, core = AimGeometry.hitsBody(context.environment, {body = body, position = point.p,
+				origin = line.o, direction = line.d, distance = line.len + 400})
+			if not hit then continue end
+			hits[index] = {hit, core}
+			score += core and point.w or point.w * 0.3
+		end
+		score *= 1 - detachedWeight
+	end
+	local detached
+	if detachedWeight > 0 then
+		detached = AimGeometry.hitsDetached(body, line.o, line.d, line.len + 400)
+		if detached then score += detachedWeight end
+	end
+	if options.threshold and score <= options.threshold then
+		line.score, line.pruned = score, true
+		return score
+	end
+	local obstruction = AimTarget.serverRay(context, state, line.o, line.d * (line.len + 0.1), {options.character})
+	local distance = obstruction and (obstruction.Position - line.o).Magnitude or math.huge
+	local function between(near, far)
+		local result = 0
+		if detachedWeight < 1 then
+			for index, point in points do
+				local hit = hits[index]
+				if not hit then continue end
+				if hit[2] and hit[2] < far and hit[2] > near then result += point.w; continue end
+				if hit[1] < far and hit[1] > near then result += point.w * 0.3 end
+			end
+			result *= 1 - detachedWeight
+		end
+		if detached and detached < far and detached > near then result += detachedWeight end
+		return result
+	end
+	score = between(0, distance)
+	if obstruction and state.wallStart == true and not line.o2 then
+		local origin = obstruction.Position + line.d * 0.08
+		local traveled = (origin - line.o).Magnitude
+		local remaining = line.len + 0.1 - traveled
+		if remaining > 0.5 then
+			local second = AimTarget.serverRay(context, state, origin, line.d * remaining, {options.character})
+			local secondDistance = second and (second.Position - line.o).Magnitude or math.huge
+			if secondDistance > distance + 0.3 then
+				local afterWall = between(traveled, secondDistance)
+				if afterWall > score + 0.001 then line.o2, score = origin, afterWall end
+			end
+		end
+	end
+	line.score = score
+	return score
+end
+
+function AimPlan.candidates(context, state, options)
+	local environment, samples, cloud = context.environment, options.samples, options.cloud
+	local vector, types = environment.Vector3, environment.Enum.HumanoidStateType
+	local time, mode, hypotheses, taus = options.time, options.mode, options.hypotheses, options.taus
+	local points, center, weight = cloud.points, cloud.center, cloud.weight
+	local latest, jitter, anomaly = samples[#samples], cloud.jitter, options.anomaly
+	local detachedWeight = #options.body.detached > 0 and (#options.body.parts == 0 and 1 or 0.5) or 0
+	local targetCenter = center
+	if detachedWeight >= 1 then
+		targetCenter = vector.zero
+		for _, part in options.body.detached do targetCenter += part.cf.Position end
+		targetCenter /= #options.body.detached
+	end
+	local candidates = {}
+	local function add(origin, endpoint, kind)
+		if (endpoint - origin).Magnitude >= 0.5 then table.insert(candidates, {o = origin, e = endpoint, kind = kind}) end
+	end
+	local firstTau, lastTau = taus[1].tau, taus[#taus].tau
+	local sorted = table.clone(hypotheses)
+	table.sort(sorted, function(first, second) return first.w > second.w end)
+	local best = {}
+	for index = 1, math.min(3, #sorted) do if sorted[index].w > 0.07 then table.insert(best, sorted[index]) end end
+	local velocity = AimGeometry.kinVelocity(environment, samples, time, 0.08) or vector.zero
+	local fast = mode == "nr" or vector.new(velocity.X, 0, velocity.Z).Magnitude > 22
+	local speed = vector.new(velocity.X, 0, velocity.Z).Magnitude
+	if state.fastWin then speed = math.max(speed, AimMotion.recentSpeed(environment, samples, time, state.fastWin)) end
+	local preferVelocityFit = false
+	if state.velfPref == true and speed > (state.velfPrefV or 60) then
+		for _, hypothesis in hypotheses do
+			if hypothesis.kind ~= "velf" or not hypothesis.better then continue end
+			preferVelocityFit = true
+			if not table.find(best, hypothesis) then table.insert(best, hypothesis) end
+			break
+		end
+	end
+	state.lastVelfMode = preferVelocityFit
+	local function endpoints(hypothesis)
+		local first = firstTau >= 0 and AimMotion.trajectoryAt(hypothesis.traj, firstTau)
+			or (AimGeometry.posAt(samples, time + firstTau) or AimMotion.trajectoryAt(hypothesis.traj, 0))
+		return first, AimMotion.trajectoryAt(hypothesis.traj, lastTau)
+	end
+	if fast then
+		for _, hypothesis in best do
+			local first, last = endpoints(hypothesis)
+			local delta = last - first
+			if delta.Magnitude <= 1 or math.abs(delta.Unit.Y) <= 0.25 then continue end
+			local direction = delta.Unit
+			for _, height in {0.35, 0.9} do
+				local offset = vector.new(0, height, 0)
+				add(first + offset - direction * 2.5, last + offset + direction * 1.5, "chord:" .. hypothesis.kind .. ":" .. height)
+			end
+		end
+	end
+	local takeoff = cloud.airborne and not (latest.air or latest.st == types.Climbing)
+	if takeoff and state.pca3 then
+		local xx, xy, xz, yy, yz, zz = 0, 0, 0, 0, 0, 0
+		for _, point in points do
+			local dx, dy, dz = point.p.X - center.X, point.p.Y - center.Y, point.p.Z - center.Z
+			xx, xy, xz = xx + point.w * dx * dx, xy + point.w * dx * dy, xz + point.w * dx * dz
+			yy, yz, zz = yy + point.w * dy * dy, yz + point.w * dy * dz, zz + point.w * dz * dz
+		end
+		xx, xy, xz, yy, yz, zz = xx / weight, xy / weight, xz / weight, yy / weight, yz / weight, zz / weight
+		local function multiply(axis)
+			return vector.new(xx * axis.X + xy * axis.Y + xz * axis.Z,
+				xy * axis.X + yy * axis.Y + yz * axis.Z, xz * axis.X + yz * axis.Y + zz * axis.Z)
+		end
+		local axis = vector.new(0.3, 1, 0.2)
+		for _ = 1, 24 do
+			local nextAxis = multiply(axis)
+			if nextAxis.Magnitude < 1e-9 then break end
+			axis = nextAxis.Unit
+		end
+		local extent = math.sqrt(math.max(axis:Dot(multiply(axis)), 0)) * 2.2 + 2
+		for _, height in {0.35, 0.9} do
+			for _, sign in {1, -1} do
+				local direction, middle = axis * sign, center + vector.new(0, height, 0)
+				add(middle - direction * (extent + 1.5), middle + direction * (extent + 1), "pca3:" .. height)
+			end
+		end
+	end
+	local slopes = takeoff and state.pca3 and {0, 0.35, 0.7, -0.35, -0.7, 1.4, -1.4} or {0, 0.35, 0.7}
+	for _, hypothesis in best do
+		local first, last = endpoints(hypothesis)
+		local delta = vector.new(last.X - first.X, 0, last.Z - first.Z)
+		if delta.Magnitude <= 0.6 then continue end
+		local direction, middle, half = delta.Unit, (first + last) * 0.5, delta.Magnitude * 0.5 + 1.2
+		for _, height in {0.35, 0.9} do
+			for _, slope in slopes do
+				local centerAtHeight = middle + vector.new(0, height, 0)
+				local axis = (direction + vector.new(0, -slope, 0)).Unit
+				local extent = half / math.max(0.35, axis:Dot(direction))
+				add(centerAtHeight - axis * (extent + 1.5), centerAtHeight + axis * (extent + 1),
+					"rail:" .. hypothesis.kind .. ":" .. height .. ":" .. slope)
+			end
+		end
+	end
+	if not (takeoff and state.noPcaTake == true) then
+		local xx, xz, zz = 0, 0, 0
+		for _, point in points do
+			local dx, dz = point.p.X - center.X, point.p.Z - center.Z
+			xx, xz, zz = xx + point.w * dx * dx, xz + point.w * dx * dz, zz + point.w * dz * dz
+		end
+		local sum, determinant = xx + zz, xx * zz - xz * xz
+		local eigenvalue = sum / 2 + math.sqrt(math.max(0, sum * sum / 4 - determinant))
+		local axis = math.abs(xz) > 1e-6 and vector.new(eigenvalue - zz, 0, xz)
+			or (xx >= zz and vector.new(1, 0, 0) or vector.new(0, 0, 1))
+		if axis.Magnitude > 1e-6 then
+			axis = axis.Unit
+			local extent = math.sqrt(math.max(eigenvalue, 0)) * 2 + 1.5
+			for _, height in state.pcaOffs or {0, 0.5, 0.9} do
+				for _, slope in {0, 0.2, 0.55} do
+					for _, sign in {1, -1} do
+						local direction, middle = (axis * sign + vector.new(0, -slope, 0)).Unit, center + vector.new(0, height, 0)
+						add(middle - direction * (extent + 1.5), middle + direction * (extent + 1), "pca")
+					end
+				end
+			end
+		end
+	end
+	local clusters = AimMotion.clusters(environment, state, samples, time)
+	if clusters then
+		local first, second = clusters[1].p + vector.new(0, 0.5, 0), clusters[2].p + vector.new(0, 0.5, 0)
+		if (second - first).Magnitude > 1 then
+			local direction = (second - first).Unit
+			add(first - direction * 2.5, second + direction * 2, "cluster")
+			add(second + direction * 2.5, first - direction * 2, "clusterR")
+		end
+	end
+	local oscillation = AimMotion.oscillation(environment, state, samples, time)
+	if oscillation and #oscillation >= 2 then
+		local largest, first, second = -1, oscillation[1], oscillation[2]
+		for left = 1, #oscillation do
+			for right = left + 1, #oscillation do
+				local distance = (oscillation[left] - oscillation[right]).Magnitude
+				if distance > largest then largest, first, second = distance, oscillation[left], oscillation[right] end
+			end
+		end
+		if largest > 1 then
+			local direction = (second - first).Unit
+			for _, height in {0.35, 0.9} do
+				local offset = vector.new(0, height, 0)
+				add(first + offset - direction * 2.5, second + offset + direction * 2, "osc")
+				add(second + offset + direction * 2.5, first + offset - direction * 2, "oscR")
+			end
+		end
+	end
+	if jitter then
+		local extent = jitter.half * (state.jitExtK or 3.2) + (state.jitExt or 6)
+		for _, height in state.jitOffs or {0, 0.8, 1.6, 2.4} do
+			local middle = jitter.c + vector.new(0, height, 0)
+			add(middle - jitter.u * extent, middle + jitter.u * extent, "jit")
+			add(middle + jitter.u * extent, middle - jitter.u * extent, "jitR")
+		end
+	end
+	if anomaly and anomaly.holdFrac > 0.2 and state.holdLines ~= false then
+		local direction
+		for _, hypothesis in hypotheses do
+			if hypothesis.kind ~= "md" then continue end
+			local first, last = AimMotion.trajectoryAt(hypothesis.traj, 0), AimMotion.trajectoryAt(hypothesis.traj, math.min(options.duration, 0.3))
+			local delta = vector.new(last.X - first.X, 0, last.Z - first.Z)
+			if delta.Magnitude > 0.5 and (state.lastTrust or 1) >= 0.6 then direction = delta.Unit end
+		end
+		local movement = anomaly.vel and vector.new(anomaly.vel.X, 0, anomaly.vel.Z)
+		if not direction and movement and movement.Magnitude > 2 then direction = movement.Unit end
+		if direction then
+			local extent = (movement and movement.Magnitude or 16) * (lastTau + 0.25) + 2
+			for _, height in {0.35, 0.9} do
+				local middle = latest.p + vector.new(0, height, 0)
+				add(middle - direction * 4, middle + direction * extent, "hold")
+				add(middle + direction * (extent + 3), middle - direction * 3, "holdR")
+			end
+		end
+	end
+	local frozen = options.frozen
+	if frozen then
+		local extent = frozen.ws * (state.k or 1) * (frozen.T + lastTau + 0.3) + 4
+		for _, height in {0.35, 0.9} do
+			local middle = frozen.p + vector.new(0, height, 0)
+			add(middle - frozen.dir * 4, middle + frozen.dir * extent, "frz")
+		end
+	end
+	local middleTau = taus[state.tMidL == true and taus.mid or math.ceil(#taus / 2)].tau
+	if anomaly and (state.reslAll == true or (anomaly.jumps or 0) >= 5) then
+		local positions = {}
+		for _, hypothesis in hypotheses do
+			if hypothesis.kind == "res" then table.insert(positions, AimMotion.trajectoryAt(hypothesis.traj, middleTau)) end
+		end
+		local count = 0
+		for left = 1, #positions do
+			for right = left + 1, #positions do
+				if count >= 18 then break end
+				local first, last = positions[left], positions[right]
+				if vector.new(last.X - first.X, 0, last.Z - first.Z).Magnitude <= 1.2 or (left + right) % 3 ~= 0 then continue end
+				local direction = (last - first).Unit
+				for _, height in {0.35, 0.9} do
+					local offset = vector.new(0, height, 0)
+					add(first + offset - direction * 3, last + offset + direction * 3, "resl")
+				end
+				count += 1
+			end
+		end
+	end
+	local function clearance(position, height)
+		local hit = AimTarget.serverRay(context, state, position, vector.new(0, height, 0), {options.character})
+		if hit then return math.max(1.5, (hit.Position - position).Magnitude - 0.3) end
+		return height
+	end
+	if not (state.colFastMax and state.fastWin and speed > state.colFastMax) then
+		add(targetCenter + vector.new(0.02, clearance(targetCenter, 9), 0.02), targetCenter + vector.new(0, -5, 0), "column")
+	end
+	if cloud.airborne then
+		for _, hypothesis in best do
+			local position = middleTau >= 0 and AimMotion.trajectoryAt(hypothesis.traj, middleTau) or targetCenter
+			local height = clearance(position, 10)
+			if not (state.colFastMax and speed > state.colFastMax) then
+				add(position + vector.new(0.02, height, 0.02), position + vector.new(0, -7, 0), "colH:" .. hypothesis.kind)
+			end
+			if state.tiltCols ~= false and mode ~= "nr" and not (state.tiltFastMax and speed > state.tiltFastMax) then
+				local before = AimMotion.trajectoryAt(hypothesis.traj, math.max(0, middleTau - 0.05))
+				local after = AimMotion.trajectoryAt(hypothesis.traj, middleTau + 0.05)
+				local movement = vector.new(after.X - before.X, 0, after.Z - before.Z)
+				if movement.Magnitude > 0.2 then
+					for _, degrees in {30, 55} do
+						local angle = math.rad(degrees)
+						for _, sign in {1, -1} do
+							local direction = (movement.Unit * (math.sin(angle) * sign) + vector.new(0, math.cos(angle), 0)).Unit
+							add(position + direction * 8, position - direction * 7, "tilt:" .. degrees)
+						end
+					end
+				end
+			end
+		end
+	end
+	local character = context.player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local attachment = root and root:FindFirstChild("GunRaycastAttachment")
+	local muzzle = attachment and attachment.WorldPosition or root and root.Position
+	if muzzle then
+		muzzle += AimTarget.selfShift(context, state)
+		local endpoint = targetCenter + vector.new(0, 0.5, 0)
+		local delta = endpoint - muzzle
+		if delta.Magnitude > 1 then
+			if delta.Magnitude < (state.losMax or 900) then add(muzzle, endpoint + delta.Unit * 3, "los") end
+			add(endpoint - delta.Unit * 6, endpoint + delta.Unit * 3, "losNear")
+		end
+	end
+	return {lines = candidates, detachedWeight = detachedWeight, targetCenter = targetCenter, speed = speed, muzzle = muzzle,
+		preferVelocityFit = preferVelocityFit}
+end
+
+function AimPlan.select(context, state, options)
+	local environment, samples, cloud, candidates = context.environment, options.samples, options.cloud, options.candidates
+	local vector, latest = environment.Vector3, samples[#samples]
+	local velocity = AimGeometry.kinVelocity(environment, samples, options.time, 0.08) or vector.zero
+	local groundMoving = not cloud.airborne and vector.new(velocity.X, 0, velocity.Z).Magnitude > (state.gmSpeed or 6)
+	local bouncy = false
+	if state.bounceK then
+		local low, high = math.huge, -math.huge
+		for index = #samples, 1, -1 do
+			if options.time - samples[index].t > (state.bounceT or 1.5) then break end
+			low, high = math.min(low, samples[index].p.Y), math.max(high, samples[index].p.Y)
+		end
+		bouncy = high - low > (state.bounceY or 4)
+	end
+	state.lastBouncy = bouncy
+	local best
+	local function consider(line)
+		local column = line.kind:find("^column") or line.kind:find("^colH")
+		local tilt = line.kind:find("^tilt")
+		local airPenalty = (latest.air or latest.st == environment.Enum.HumanoidStateType.Climbing) and (state.airPen or 0.8) or (state.takePen or 0.65)
+		local threshold = best and best.score + 0.001 or nil
+		if threshold and cloud.airborne and not column and not tilt then threshold /= airPenalty end
+		local score = AimPlan.scoreLine(context, state, {line = line, body = options.body, points = cloud.points,
+			detachedWeight = candidates.detachedWeight, character = options.character, threshold = threshold})
+		if line.pruned then return end
+		local skipPenalty = cloud.jitter and state.jitNoPen and line.kind:find("^jit") ~= nil
+		if line.o2 then line.o, line.len, line.kind = line.o2, (line.e - line.o2).Magnitude, line.kind .. "+w" end
+		if bouncy and not skipPenalty and not column then score *= state.bounceK end
+		if state.tiltK and tilt then score *= state.tiltK end
+		if cloud.airborne and state.airNonColK and not skipPenalty and not column and not tilt then score *= state.airNonColK end
+		if groundMoving and state.railPref ~= false and column then score *= state.railK or 0.72 end
+		if candidates.preferVelocityFit and not skipPenalty and not line.kind:find("^rail:velf") and not line.kind:find("^chord:velf") then
+			score *= state.velfOtherK or 0.75
+		end
+		if cloud.airborne and not skipPenalty and not column and not tilt then score *= airPenalty end
+		line.score = score
+		if score <= 0.02 then return end
+		local hit = AimTarget.serverRay(context, state, line.o, line.d * 600, {options.character}, true)
+		line.reach = hit and (hit.Position - line.o).Magnitude or 600
+		if AimTarget.innocentRisk(context, state, {origin = line.o, direction = line.d, distance = line.reach, character = options.character}) then
+			line.risky, state.riskyN = true, (state.riskyN or 0) + 1
+			return
+		end
+		if not best or score > best.score + 0.001 then best = line end
+	end
+	local lines = candidates.lines
+	for _, line in lines do if line.kind == "los" or line.kind == "losNear" then consider(line) end end
+	if cloud.jitter and state.jitOnly then
+		local filtered = {}
+		for _, line in lines do
+			if line.kind:find("^jit") or line.kind == "los" or line.kind == "losNear" then table.insert(filtered, line) end
+		end
+		lines = filtered
+	end
+	if cloud.jitter and state.jitFirst ~= false then
+		for _, line in lines do
+			if not line.kind:find("^jit") then continue end
+			consider(line)
+			line.done = true
+		end
+	end
+	if state.colFirst then
+		local order = {column = 1, colH = 2, tilt = 2, hold = 2, holdR = 2, resl = 3, pca3 = 3, chord = 4, rail = 5, pca = 6}
+		for index, line in lines do line.ord = (order[line.kind:match("^[^:+]+") ] or 7) * 1000 + index end
+		table.sort(lines, function(first, second) return first.ord < second.ord end)
+	end
+	state.riskyN = 0
+	local deadline, evaluated = environment.os.clock() + (state.candBudget or 0.012), 0
+	for _, line in lines do
+		if line.kind == "los" or line.kind == "losNear" or line.done then continue end
+		consider(line)
+		evaluated += 1
+		if best and (best.score > 0.995 or environment.os.clock() > deadline) then break end
+	end
+	state.lastEval = evaluated .. "/" .. #lines
+	if best and best.score < 0.995 then
+		local direction = best.d
+		local vertical = math.abs(direction.Y) > 0.9 and vector.new(1, 0, 0) or vector.new(0, 1, 0)
+		local first = direction:Cross(vertical).Unit
+		local second, original = direction:Cross(first).Unit, best
+		local column = original.kind:find("^column") or original.kind:find("^colH")
+		local skip = column and state.colRefine ~= true or state.rRefine ~= true
+		local multiplier = column and state.colRefineK or 1
+		for _, offset in {first * 0.3, -first * 0.3, second * 0.3, -second * 0.3, first * 0.6, -first * 0.6} do
+			if skip or environment.os.clock() > deadline + 0.003 then break end
+			consider({o = original.o + offset * multiplier, e = original.e + offset * multiplier, kind = original.kind .. "+r"})
+		end
+		if state.refineRot == true and best and best.score < 0.995 then
+			local original = best
+			local axis = original.d or (original.e - original.o).Unit
+			local pivot = original.o + axis * (candidates.targetCenter - original.o):Dot(axis)
+			local backward, forward = (pivot - original.o).Magnitude, (original.e - pivot).Magnitude
+			local basis = axis:Cross(math.abs(axis.Y) > 0.9 and vector.new(1, 0, 0) or vector.new(0, 1, 0)).Unit
+			for _, rotationAxis in {basis, axis:Cross(basis).Unit} do
+				for _, degrees in {6, -6, 12, -12} do
+					if environment.os.clock() > deadline + 0.006 then break end
+					local angle = math.rad(degrees)
+					local rotated = (axis * math.cos(angle) + rotationAxis:Cross(axis) * math.sin(angle)
+						+ rotationAxis * rotationAxis:Dot(axis) * (1 - math.cos(angle))).Unit
+					consider({o = pivot - rotated * backward, e = pivot + rotated * forward, kind = original.kind .. "+a"})
+				end
+			end
+		end
+	end
+	if (not best or best.score < (state.pbBelow or 0.3)) and state.pbFallback ~= false then
+		for _, direction in {vector.new(0, 1, 0), vector.new(0, -1, 0), vector.new(1, 0, 0), vector.new(-1, 0, 0),
+			vector.new(0, 0, 1), vector.new(0, 0, -1), vector.new(0.7, 0.7, 0), vector.new(-0.7, 0.7, 0),
+			vector.new(0, 0.7, 0.7), vector.new(0, 0.7, -0.7)} do
+			direction = direction.Unit
+			consider({o = candidates.targetCenter - direction * (state.pbBack or 2.2),
+				e = candidates.targetCenter + direction * (state.pbFwd or 3), kind = "pb"})
+		end
+	end
+	if best then
+		for _, kind in {"los", "losNear"} do
+			if kind == "losNear" and best.kind == "los" then break end
+			for _, line in lines do
+				if line.kind == kind and line.score and not line.risky and line.reach and line.score >= 0.985 and line.score >= best.score - 0.005 then
+					best = line
+					break
+				end
+			end
+		end
+	end
+	if state.inWall ~= false and vector.new(velocity.X, 0, velocity.Z).Magnitude < 4 then
+		local root = options.character:FindFirstChild("HumanoidRootPart")
+		local wall = root and AimTarget.insideSolid(context, state, root.Position, root.CollisionGroup)
+		if wall then
+			if state.lastInWall ~= wall then
+				state.lastInWall = wall
+				if state.say then state.say("target inside " .. wall:GetFullName()) end
+			end
+			local center = candidates.targetCenter
+			local muzzle = candidates.muzzle or center + vector.new(0, 0, 5)
+			local direction = vector.new(center.X - muzzle.X, 0, center.Z - muzzle.Z)
+			direction = direction.Magnitude > 0.1 and direction.Unit or vector.new(0, 0, 1)
+			local height = vector.new(0, 0.5, 0)
+			local inside = {{o = center + height - direction * 2.2, e = center + height + direction * 3, kind = "inW"},
+				{o = center + vector.new(0.02, 3.3, 0.02), e = center - vector.new(0, 4, 0), kind = "inWc"}}
+			if state.inWallInside ~= false then
+				local half, frame = wall.Size * 0.5, wall.CFrame
+				local function contains(position)
+					local point = frame:PointToObjectSpace(position)
+					return math.abs(point.X) < half.X - 0.05 and math.abs(point.Y) < half.Y - 0.05 and math.abs(point.Z) < half.Z - 0.05
+				end
+				local side = vector.new(-direction.Z, 0, direction.X)
+				for _, axis in {direction, side, -side, -direction} do
+					for _, distance in {0.5, 1, 1.6, 2.4} do
+						local origin = center + height - axis * distance
+						if not contains(origin) then continue end
+						table.insert(inside, {o = origin, e = center + height + axis * 3, kind = "inWi"})
+						break
+					end
+				end
+				for _, distance in {1.2, 2.2, 3.2} do
+					local origin = center + vector.new(0.02, distance, 0.02)
+					if not contains(origin) then continue end
+					table.insert(inside, {o = origin, e = center - vector.new(0, 4, 0), kind = "inWci"})
+					break
+				end
+			end
+			for _, line in inside do
+				local previous = best
+				best = nil
+				consider(line)
+				local found = best
+				best = previous
+				if found and (not best or found.score >= best.score - 0.02) then best = found end
+			end
+		end
+	end
+	return best, lines
+end
+
+function AimPlan.resolve(environment, state, samples, options)
+	local time, duration, hypotheses, anomaly = options.time, options.duration, options.hypotheses, options.anomaly
+	local vector = environment.Vector3
+	local function recent(window)
+		local first, indices = #samples, {}
+		while first > 1 and time - samples[first - 1].t <= window do first -= 1 end
+		for index = first, #samples do table.insert(indices, index) end
+		return indices
+	end
+	local function fit(indices)
+		local sum, weighted, sumTime, sumSquared = vector.zero, vector.zero, 0, 0
+		for _, index in indices do
+			local sample, elapsed = samples[index], samples[index].t - time
+			sumTime, sumSquared = sumTime + elapsed, sumSquared + elapsed * elapsed
+			sum, weighted = sum + sample.p, weighted + sample.p * elapsed
+		end
+		local count = #indices
+		local denominator = count * sumSquared - sumTime * sumTime
+		local velocity = denominator > 1e-9 and (weighted * count - sum * sumTime) / denominator or vector.zero
+		return (sum - velocity * sumTime) / count, velocity
+	end
+	local indices = recent(anomaly.jumps >= 6 and 1 or 0.7)
+	if #indices < 6 then return hypotheses end
+	local base, velocity = fit(indices)
+	local errors = {}
+	for _, index in indices do table.insert(errors, (samples[index].p - (base + velocity * (samples[index].t - time))).Magnitude) end
+	local median, filtered = AimCalibration.median(errors) or 0, {}
+	for index, sampleIndex in indices do if errors[index] <= median * 3 + 3 then table.insert(filtered, sampleIndex) end end
+	if #filtered >= 6 then base, velocity = fit(filtered) end
+	local horizontal = vector.new(velocity.X, 0, velocity.Z)
+	if horizontal.Magnitude > 150 then horizontal = horizontal.Unit * 150 end
+	local movement = vector.new(horizontal.X, samples[#samples].air and math.clamp(velocity.Y, -60, 60) or 0, horizontal.Z)
+	local offsets = {}
+	for _, index in recent(0.6) do
+		local offset = samples[index].p - (base + velocity * (samples[index].t - time))
+		if offset.Magnitude <= 25 then table.insert(offsets, offset) end
+	end
+	if #offsets == 0 then offsets[1] = vector.zero end
+	local motion
+	for _, hypothesis in hypotheses do if hypothesis.kind == "md" then motion = hypothesis end end
+	local models = {}
+	if motion and (state.lastTrust or 1) >= 0.6 and anomaly.holdFrac > 0.2 and state.resMd ~= false then
+		local start = AimMotion.trajectoryAt(motion.traj, 0)
+		table.insert(models, {w = 0.6, at = function(elapsed) return AimMotion.trajectoryAt(motion.traj, elapsed) - start + base end})
+		table.insert(models, {w = 0.4, at = function(elapsed) return base + movement * elapsed end})
+	end
+	if #models == 0 then table.insert(models, {w = 1, at = function(elapsed) return base + movement * elapsed end}) end
+	local result = {}
+	for _, hypothesis in hypotheses do hypothesis.w *= 0.25; table.insert(result, hypothesis) end
+	local count = math.min(10, #offsets)
+	for _, model in models do
+		local steps, trajectory = math.max(2, math.ceil(duration * 30)), {}
+		for index = 0, steps do
+			local elapsed = duration * index / steps
+			table.insert(trajectory, {tau = elapsed, p = model.at(elapsed)})
+		end
+		for index = 1, count do
+			local offset = offsets[math.clamp(math.floor((index - 0.5) / count * #offsets) + 1, 1, #offsets)]
+			local shifted = {}
+			for _, point in trajectory do table.insert(shifted, {tau = point.tau, p = point.p + offset}) end
+			table.insert(result, {kind = "res", w = 0.75 * model.w / count, traj = shifted})
+		end
+	end
+	anomaly.vel, anomaly.base = movement, base
+	return result
+end
+
+function AimPlan.prepare(context, state, options)
+	local samples, time, duration, parameters = options.samples, options.time, options.duration, options.parameters
+	local environment, mode = context.environment, options.mode
+	local vector = environment.Vector3
+	local hypotheses = AimMotion.hypotheses(context, state, samples, {time = time, duration = duration, parameters = parameters})
+	local anomaly = AimMotion.anomaly(state, samples, time)
+	local trust = state.useTrust == false and 1 or AimMotion.directionTrust(environment, state, samples, time)
+	state.lastTrust = trust
+	if trust < 0.98 then
+		local affected = {md = true, mdE = true, mdL = true, mdNJ = true, mdv = true, mdJe = true, mdJl = true, mdJa = true}
+		for _, hypothesis in hypotheses do if affected[hypothesis.kind] then hypothesis.w *= math.max(trust, 0.03) end end
+	end
+	local velocity = AimGeometry.kinVelocity(environment, samples, time, 0.08) or vector.zero
+	if mode == "nr" or velocity.Magnitude > 28 then
+		local trajectory = AimMotion.arcTrajectory(environment, samples, time, duration)
+		if mode ~= "nr" and not AimMotion.flightLike(context, state, samples, time) then
+			trajectory = AimMotion.clampTrajectory(context.workspace, state, trajectory, parameters)
+		end
+		if trajectory then
+			local maximum, hasVelocity, betterFit = 0, false, false
+			for _, hypothesis in hypotheses do
+				maximum = math.max(maximum, hypothesis.w)
+				if hypothesis.kind == "vel" or hypothesis.kind == "velf" then hasVelocity = true end
+				if hypothesis.kind == "velf" and hypothesis.better then betterFit = true end
+			end
+			local factor = hasVelocity and state.arc3VelK or 0.8
+			if betterFit and state.arc3VelfK then factor = state.arc3VelfK end
+			local floor = betterFit and state.arc3FloorF ~= false and 0 or 0.15
+			table.insert(hypotheses, {kind = "arc3", w = math.max(maximum * factor, floor), traj = trajectory})
+		end
+	end
+	local accelerated = false
+	if (state.caW or 0) > 0 and (mode == "nr" or AimMotion.flightLike(context, state, samples, time)) then
+		local trajectory = AimMotion.accelerationTrajectory(context, state, samples, time, duration)
+		if trajectory then
+			local maximum = 0
+			for _, hypothesis in hypotheses do
+				maximum = math.max(maximum, hypothesis.w)
+				if hypothesis.kind ~= "arc3" then hypothesis.w *= state.caOthers or 1 end
+			end
+			table.insert(hypotheses, {kind = "ca", w = math.max(maximum * state.caW, 0.15), traj = trajectory})
+			state.lastCA, accelerated = environment.os.clock(), true
+		end
+	end
+	local canOrbit = not accelerated and mode ~= "nr" and not samples[#samples].air
+	if canOrbit and state.orbitFastMax and AimMotion.recentSpeed(environment, samples, time, state.fastWin or 1) > state.orbitFastMax then canOrbit = false end
+	local orbit = canOrbit and AimMotion.orbitFit(environment, state, samples, time, duration) or nil
+	if orbit then
+		local maximum = 0
+		for _, hypothesis in hypotheses do
+			maximum = math.max(maximum, hypothesis.w)
+			hypothesis.w *= 0.35
+		end
+		table.insert(hypotheses, {kind = "orbit", w = math.max(maximum, 0.3) * 1.5, traj = orbit})
+		state.lastOrbit = environment.os.clock()
+	end
+	local frozen
+	if state.frz == true then
+		local last, index = samples[#samples], #samples
+		while index > 1 and (samples[index - 1].p - last.p).Magnitude < 0.001 do index -= 1 end
+		local elapsed, movement = time - samples[index].t, vector.new(last.md.X, 0, last.md.Z)
+		if elapsed >= (state.frzMin or 0.04) and elapsed < 1.5 and movement.Magnitude > 0.5 and not last.air then
+			local direction, speed = movement.Unit, (last.ws or 16) * (state.k or 1)
+			local maximum, moving, stationary = 0, {}, {}
+			for _, hypothesis in hypotheses do maximum = math.max(maximum, hypothesis.w) end
+			for step = 0, math.ceil(duration * 60) do
+				local offset = step / 60
+				table.insert(moving, {tau = offset, p = last.p + direction * (speed * (elapsed + offset))})
+				table.insert(stationary, {tau = offset, p = last.p})
+			end
+			table.insert(hypotheses, {kind = "frzGo", w = math.max(maximum, 0.2) * (state.frzW or 1), traj = moving})
+			table.insert(hypotheses, {kind = "frzStay", w = math.max(maximum, 0.2) * (state.frzStayW or 0.5), traj = stationary})
+			state.lastFrz = environment.os.clock()
+			frozen = {T = elapsed, dir = direction, p = last.p, ws = last.ws or 16}
+		end
+	end
+	if state.airRev == true and mode == "std" and samples[#samples].air then
+		local movement
+		for _, hypothesis in hypotheses do if hypothesis.kind == "md" then movement = hypothesis end end
+		if movement and #movement.traj >= 3 then
+			local stop, reverse = {}, {}
+			local pivot = AimMotion.trajectoryAt(movement.traj, 0.05)
+			for _, point in movement.traj do
+				if point.tau <= 0.05 then table.insert(stop, point); table.insert(reverse, point); continue end
+				local position = AimMotion.trajectoryAt(movement.traj, point.tau)
+				local dx, dz = position.X - pivot.X, position.Z - pivot.Z
+				table.insert(stop, {tau = point.tau, p = vector.new(pivot.X, position.Y, pivot.Z)})
+				table.insert(reverse, {tau = point.tau, p = vector.new(pivot.X - dx, position.Y, pivot.Z - dz)})
+			end
+			local total = 0
+			for _, hypothesis in hypotheses do total += hypothesis.w end
+			table.insert(hypotheses, {kind = "airStop", w = total * 0.06, traj = stop})
+			table.insert(hypotheses, {kind = "airRev", w = total * 0.06, traj = reverse})
+		end
+	end
+	if anomaly and state.resolver == true and not (state.resSpikeOff == true and (anomaly.jumps or 0) >= 5) then
+		hypotheses = AimPlan.resolve(environment, state, samples,
+			{time = time, duration = duration, hypotheses = hypotheses, anomaly = anomaly})
+	end
+	state.lastAnom = anomaly
+	local total = 0
+	for _, hypothesis in hypotheses do total += hypothesis.w end
+	if total > 0 then for _, hypothesis in hypotheses do hypothesis.w /= total end end
+	return {hypotheses = hypotheses, anomaly = anomaly, frozen = frozen}
+end
+
+function AimPlan.raw(context, state, character, requireSight)
+	local samples, environment = state.hist, context.environment
+	if #samples < 8 or not character or not character.Parent then return nil end
+	if requireSight and not AimTarget.visible(context, state, character) then return nil, nil, "no line of sight" end
+	state.shift = AimCalibration.lagOf(context, state, character)
+	local body = AimGeometry.bodyModel(environment, character)
+	if not body then return nil end
+	local parameters, time = AimTarget.moveParams(context), samples[#samples].t
+	local latest, mode = samples[#samples], AimMotion.mode(environment, samples)
+	local types, vector = environment.Enum.HumanoidStateType, environment.Vector3
+	local airborne = latest.air or latest.st == types.Freefall or latest.st == types.Jumping
+	local scale = airborne and not latest.air and state.tauSdKTake or nil
+	if state.tauFastK then
+		local speed = environment.typeof(latest.v) == "Vector3" and vector.new(latest.v.X, 0, latest.v.Z).Magnitude or 0
+		local velocity = AimGeometry.kinVelocity(environment, samples, time, 0.08)
+		if velocity then speed = math.max(speed, vector.new(velocity.X, 0, velocity.Z).Magnitude) end
+		if speed > (state.tauFastV or 60) then scale = state.tauFastK end
+	end
+	local taus, started = AimCalibration.taus(context, state, mode, airborne, scale), environment.os.clock()
+	local planDelay = math.clamp(started - time + (state.planDur or 0.01), 0, 0.15)
+	for _, tau in ipairs(taus) do tau.tau += planDelay end
+	local duration = taus[#taus].tau + 0.05
+	local prepared = AimPlan.prepare(context, state, {samples = samples, time = time, duration = duration, parameters = parameters, mode = mode})
+	local cloud = AimPlan.points(context, state, {samples = samples, time = time, mode = mode, hypotheses = prepared.hypotheses,
+		taus = taus, planDelay = planDelay})
+	local candidates = AimPlan.candidates(context, state, {samples = samples, time = time, mode = mode, hypotheses = prepared.hypotheses,
+		taus = taus, cloud = cloud, body = body, anomaly = prepared.anomaly, frozen = prepared.frozen, duration = duration, character = character})
+	local best, lines = AimPlan.select(context, state, {samples = samples, time = time, body = body, cloud = cloud,
+		candidates = candidates, character = character})
+	state.planDur = (state.planDur or 0.01) + (math.clamp(environment.os.clock() - started, 0, 0.1) - (state.planDur or 0.01)) * 0.3
+	if not best then return nil, lines end
+	best.hyps, best.samples, best.tNow, best.mode, best.anom = prepared.hypotheses, #cloud.points, time, mode, prepared.anomaly ~= nil
+	best.spike = prepared.anomaly ~= nil and (prepared.anomaly.jumps or 0) >= 5
+	local velocity = AimGeometry.kinVelocity(environment, samples, time, 0.08) or vector.zero
+	local flatSpeed = 0
+	if state.fastFlat ~= false and time - samples[1].t >= 0.3 then
+		local previous = AimGeometry.posAt(samples, time - 0.3)
+		for index = 1, 18 do
+			local position = AimGeometry.posAt(samples, time - 0.3 + index / 60)
+			if position and previous then flatSpeed += vector.new(position.X - previous.X, 0, position.Z - previous.Z).Magnitude end
+			previous = position
+		end
+		flatSpeed /= 0.3
+	end
+	best.fast = mode == "nr" or velocity.Magnitude > 60 or flatSpeed > 26
+	best.fresh = #samples < 2 or samples[#samples].t - samples[1].t < (state.freshSpan or 2.5)
+	best.lowTrust = (state.lastTrust or 1) < (state.trustScaleT or 0.6)
+	local index = #samples
+	while index > 1 and (samples[index - 1].p - latest.p).Magnitude < 0.001 do index -= 1 end
+	local frozen = time - samples[index].t
+	if frozen >= 0.04 and frozen < 1.5 and vector.new(latest.md.X, 0, latest.md.Z).Magnitude > 0.5 then best.frozenT = frozen end
+	best.air = (cloud.airborne or latest.st == types.Jumping or AimMotion.jumpTime(environment, state, samples, time) ~= nil) and not cloud.stuck
+	best.takeoff = best.air and not (latest.air or latest.st == types.Climbing)
+	-- Noir adapter: expose the highest-weight predicted body position
+	if cloud and cloud.points and #cloud.points > 0 then
+		local top = cloud.points[1]
+		for _, point in cloud.points do if point.w > top.w then top = point end end
+		best.aimPoint = top.p
+	end
+	return best, lines
+end
+
+function AimPlan.plan(context, state, character, requireSight)
+	local original = state.hist
+	local filtered = AimMotion.despike(context.environment, state, original)
+	if filtered == original then return AimPlan.raw(context, state, character, requireSight) end
+	if state.jitNoDespike ~= false and state.jitOn ~= false and #original > 0
+		and AimMotion.jitterAxis(context, state, original, original[#original].t, state.L) then
+		return AimPlan.raw(context, state, character, requireSight)
+	end
+	state.hist, state.histRaw = filtered, original
+	local ok, result = pcall(AimPlan.raw, context, state, character, requireSight)
+	state.hist, state.histRaw = original, nil
+	if not ok then error(result, 0) end
+	return result
+end
+
+
+-- ═══════════════════════════════════════════════════════════════════════
+--  NOIR ADAPTER: полная предикт-система Pulse (AimCalibration/AimGeometry/
+--  AimMotion/AimTarget/AimPlan) → движок Noir Silent Aim.
+--  environment-песочницу пульса заменяют реальные сервисы; файловые
+--  функции не даются — AimCalibration.load/save корректно но-op'ятся
+--  на nil-полях (pcall-guard внутри модуля).
+-- ═══════════════════════════════════════════════════════════════════════
+local pulseEnvironment = {
+    Vector3 = Vector3, CFrame = CFrame, Enum = Enum, typeof = typeof, os = os,
+    RaycastParams = RaycastParams,
+}
+local pulseContext = {
+    environment = pulseEnvironment,
+    workspace = Workspace,
+    players = Players,
+    player = LocalPlayer,
+    collection = game:GetService("CollectionService"),
+}
+local pulseState = AimCalibration.create()
+-- дефолты AimTiming.configure: набор полей, который ждёт AimPlan/AimMotion
+pulseState.window, pulseState.airPatT2, pulseState.maxThink = 0.95, 0.9, 0.1
+pulseState.quick100, pulseState.q100Need, pulseState.q100Floor = true, 0, 0
+pulseState.hpMdS, pulseState.mdsW, pulseState.jFlagLead, pulseState.landExtra = 0.6, 0.2, 0.05, 0.06
+pulseState.spikeOn, pulseState.spikeNeed, pulseState.caW, pulseState.caOthers = true, 2, 1, 0.25
+pulseState.orbit, pulseState.kinClamp, pulseState.colFastMax, pulseState.tiltFastMax = true, true, 40, 40
+pulseState.fastWin, pulseState.arc3VelK, pulseState.tauFastK, pulseState.oscMinRev = 1, 0.3, 0.75, 2
+pulseState.jitOn, pulseState.jitNoDespike, pulseState.autoCalmV, pulseState.autoCalmMax = true, false, 40, 4
+pulseState.orbitFastMax, pulseState.clusterRev = 60, 1
+pulseState.G = Workspace.Gravity
+pulseState.skipTransparent = true
+pulseState.railPref, pulseState.bounceK, pulseState.tiltK = true, 0.35, 0.7
+-- истории движения по корням персонажей: сэмплы формата пульса
+-- {t, p, cf, md, ws, v, st, air, jump, hh, jp}
+local pulseHistories = {}
+local PULSE_HORIZON, PULSE_STEP = 2.6, 0.034
+local function pulsePush(root)
+    local character = root.Parent
+    if not character or not character.Parent then return end
+    local ok, record = pcall(AimTarget.sample, pulseContext, pulseState, character)
+    if not ok or type(record) ~= "table" then return end
+    local entry = pulseHistories[root]
+    if not entry then entry = {}; pulseHistories[root] = entry end
+    table.insert(entry, record)
+    while #entry > 1 and record.t - entry[1].t > PULSE_HORIZON do table.remove(entry, 1) end
+end
+local function pulseSweep(now)
+    for root in pairs(pulseHistories) do
+        local entry = pulseHistories[root]
+        local alive = root:IsDescendantOf(Workspace) and entry and #entry > 0
+            and now - entry[#entry].t < 0.6
+        if not alive then pulseHistories[root] = nil end
+    end
+end
+local function pulseTargets()
+    local roots = {}
+    pcall(function()
+        local chosen = {}
+        local player = selectTarget and selectTarget()
+        if player then chosen[#chosen + 1] = player end
+        if knifeTargetPlayer then
+            local kp = knifeTargetPlayer()
+            if kp then chosen[#chosen + 1] = kp end
+        end
+        for _, candidate in ipairs(chosen) do
+            local character = candidate and candidate.Character
+            local root = character and character:FindFirstChild("HumanoidRootPart")
+            if root then roots[root] = true end
+        end
+    end)
+    return roots
+end
+task.spawn(function()
+    while __R1.running ~= false do
+        local now = os.clock()
+        pcall(pulseSweep, now)
+        for root in pairs(pulseTargets()) do pcall(pulsePush, root) end
+        task.wait(PULSE_STEP)
+    end
+end)
+function pulseAimReady()
+    return pulseState ~= nil and AimPlan ~= nil and AimPlan.plan ~= nil
+end
+-- latency = полное время от выстрела до попадания (упреждение движка Noir)
+function pulseAimPredict(root, latency)
+    local entry = pulseHistories[root]
+    if not entry or #entry < 8 then return nil end
+    local character = root.Parent
+    if not character or not character.Parent then return nil end
+    pulseState.hist = entry
+    pulseState.L = math.clamp(tonumber(latency) or 0.15, 0.08, 0.45)
+    local requireSight = __R1.config.wallCheck == true and __R1.config.piercerBullet ~= true
+    local okPlan, best = pcall(AimPlan.plan, pulseContext, pulseState, character, requireSight)
+    pulseState.hist = nil
+    if not okPlan then return nil end
+    if type(best) ~= "table" or typeof(best.aimPoint) ~= "Vector3" then return nil end
+    return best.aimPoint
+end
+-- предикт пульса встроен в движок и работает всегда (без UI-тумблера:
+-- улучшение silent aim без новых функций); при недоступности плана
+-- calculateAim автоматически возвращается к базовой математике
+__R1.config.pulsePredict = true
+__R1.config.knifeAim.pulsePredict = true
+
 
     -- ═══════ engine background loops, keys, role remotes, FOV circle ═══════
     do
@@ -23579,28 +26550,6 @@ end
                 pcall(setPiercerBullet, v == true)
                 Notify("Silent Aim", v and "Wallbang: ON — пули прошивают стены" or "Wallbang: OFF")
             end })
-        combatAim:CreateDropdown({
-            Name = "Target Mode", Options = { "Murderer", "Sheriff", "Hero", "Nearest", "Crosshair", "Lowest Health", "Random" },
-            Default = "Murderer", Flag = "SA_TargetMode",
-            Callback = function(v) cfg.targetMode = tostring(v) end,
-        })
-        combatAim:CreateDropdown({
-            Name = "Hit Part", Options = { "HumanoidRootPart", "Head", "Torso", "UpperTorso", "LowerTorso", "Random" },
-            Default = "HumanoidRootPart", Flag = "SA_HitPart",
-            Callback = function(v) cfg.hitPart = tostring(v) end,
-        })
-        combatAim:CreateDropdown({
-            Name = "Shot Method", Options = { "Remote", "CFrame" },
-            Desc = "Remote — редирект FireServer; CFrame — только аргументы-позиции",
-            Default = tostring(cfg.shotMethod or "Remote"), Flag = "SA_ShotMethod",
-            Callback = function(v) cfg.shotMethod = tostring(v) end,
-        })
-        combatAim:CreateToggle({ Name = "Ignore Friends", Default = cfg.ignoreFriends == true, Flag = "SA_IgnoreFriends",
-            Callback = function(v) cfg.ignoreFriends = v == true end })
-        combatAim:CreateSlider({ Name = "Max Distance", Min = 0, Max = 500, Default = cfg.maxDistance or 0,
-            Suffix = "st", Callback = function(v) cfg.maxDistance = v end })
-        combatAim:CreateSlider({ Name = "FOV Size", Min = 0, Max = 600, Default = cfg.fovSize or 0,
-            Suffix = "px", Callback = function(v) cfg.fovSize = v end })
 
         -- ── KNIFE SILENT AIM (right) ────────────────────────────────────────
         local combatKnife = tab:AddRightGroupbox({ Name = "KNIFE SILENT AIM", Icon = "sword" })
@@ -23626,43 +26575,12 @@ end
                 cfg.autoFire = v == true
                 Notify("Silent Aim", v and "Auto Fire: ON" or "Auto Fire: OFF")
             end })
-        combatFire:CreateKeybind({ Name = "Auto Fire Key", Desc = "Auto Fire активен только пока зажата клавиша",
-            Default = tostring(cfg.autoFireKey or "None"),
-            OnChanged = function(key)
-                cfg.autoFireKey = typeof(key) == "EnumItem" and key.Name or tostring(key or "None")
-                if cfg.autoFireKey ~= "None" then __R1.autoFireHeld = false end
-                Notify("Silent Aim", "Auto Fire Key: " .. cfg.autoFireKey)
+        combatFire:CreateToggle({ Name = "Auto Fire WallCheck", Desc = "Auto Fire стреляет только по цели в прямой видимости",
+            Default = cfg.autoFireWallCheck == true, Flag = "SA_AFWallCheck",
+            Callback = function(v)
+                cfg.autoFireWallCheck = v == true
+                Notify("Silent Aim", v and "Auto Fire WallCheck: ON" or "Auto Fire WallCheck: OFF")
             end })
-        combatFire:CreateKeybind({ Name = "Aim Key (hold)", Desc = "Silent Aim срабатывает только пока зажата клавиша",
-            Default = tostring(cfg.aimKey or "None"),
-            OnChanged = function(key)
-                cfg.aimKey = typeof(key) == "EnumItem" and key.Name or tostring(key or "None")
-                if cfg.aimKey ~= "None" then __R1.aimHeld = false end
-                Notify("Silent Aim", "Aim Key: " .. cfg.aimKey)
-            end })
-        combatFire:CreateToggle({ Name = "Align Direction", Desc = "Поворот выстрела точно на цель",
-            Default = cfg.alignDirection == true,
-            Callback = function(v) cfg.alignDirection = v == true end })
-
-        -- проводка клавиш: движок читает __R1.aimHeld / __R1.autoFireHeld
-        pcall(function()
-            local keyName = function(input)
-                if input.KeyCode and input.KeyCode ~= Enum.KeyCode.Unknown then return input.KeyCode.Name end
-                return nil
-            end
-            UIS.InputBegan:Connect(function(input, processed)
-                local name = not processed and keyName(input) or nil
-                if not name then return end
-                if cfg.aimKey ~= "None" and name == cfg.aimKey then __R1.aimHeld = true end
-                if cfg.autoFireKey ~= "None" and name == cfg.autoFireKey then __R1.autoFireHeld = true end
-            end)
-            UIS.InputEnded:Connect(function(input)
-                local name = keyName(input)
-                if not name then return end
-                if cfg.aimKey ~= "None" and name == cfg.aimKey then __R1.aimHeld = false end
-                if cfg.autoFireKey ~= "None" and name == cfg.autoFireKey then __R1.autoFireHeld = false end
-            end)
-        end)
 
         -- ── PREDICTION профили (движок читает их на каждый выстрел) ────────
         local predAim = tab:AddLeftGroupbox({ Name = "SILENT AIM PREDICTION", Icon = "gauge" })
@@ -24449,8 +27367,8 @@ end
             localPlayer = LocalPlayer, roleCache = __R1.roleCache,
             getPlayers = function() return Players:GetPlayers() end,
             refreshRoles = function() end, -- сканер ролей движка обновляет кэш сам
-            getRoundState = function() return "playing" end, -- лобби фильтруют команды/атрибуты
-            isRoleRevealActive = function() return false end,
+            getRoundState = function() return __R1.roundState or "waiting" end, -- NOIR v1.5: реальный стейт раунда из consumeData
+            isRoleRevealActive = function() return (__R1.roundState or "waiting") == "playing" end,
             getMurderer = function() return __R1.murderer end,
             getSheriff = function() return __R1.sheriff end,
             getHero = function() return __R1.hero end,
@@ -24501,14 +27419,15 @@ local function color(role)
     if role == "sheriff" then return Color3.fromRGB(72,158,255) end
     if role == "hero" then return Color3.fromRGB(255,206,72) end
     if role == "dead" then return Color3.fromRGB(150,150,158) end
+    -- NOIR v1.5 (Pulse ESP state): лобби — единый нейтральный сланец для всех
+    if role == "lobby" then return Color3.fromRGB(135,141,152) end
     if role == 'zombie' then return Color3.fromRGB(120,235,72) end
     if role == 'survivor' then return Color3.fromRGB(72,220,255) end
     return Color3.fromRGB(86,230,145)
 end
 local function isInactive(player, character, cached)
     if cached == "dead" or joinedLobby[player] then return true end
-    local round = V.getRoundState and V.getRoundState() or "waiting"
-    if round == "waiting" and not (V.isRoleRevealActive and V.isRoleRevealActive()) then return true end
+    -- (NOIR v1.5: раунд больше не гасит роль здесь — лобби/живые разделает roleOf)
     local teamName = player.Team and string.lower(tostring(player.Team.Name)) or ""
     if string.find(teamName,"lobby",1,true) or string.find(teamName,"spectat",1,true) or string.find(teamName,"waiting",1,true) or string.find(teamName,"observer",1,true) then return true end
     for _, container in ipairs({player, character}) do
@@ -24583,7 +27502,12 @@ end
 local function roleOf(player, character)
     local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
     local cached = V.roleCache and V.roleCache[player.UserId]
-    if not humanoid or humanoid.Health <= 0 or isInactive(player, character, cached) then return "dead" end
+    if not humanoid or humanoid.Health <= 0 or isInactive(player, character, cached) then return "dead"
+    end
+    -- NOIR v1.5 (Pulse ESP state): вне раунда все живые — лобби (единый цвет),
+    -- роли прошлого раунда не красим; в игре — роль или серый мёртвым
+    local round = V.getRoundState and V.getRoundState() or "waiting"
+    if round ~= "playing" then return "lobby" end
     local ztag = infectionTagOf(player, character)
     if ztag then return ztag end
     if player == V.getMurderer() or cached == "murderer" then return "murderer" end
@@ -24593,6 +27517,8 @@ local function roleOf(player, character)
 end
 local function wanted(kind, role)
     local filters = state.feature[kind]
+    -- NOIR v1.5: лобби показывается тумблером Dead (отдельной кнопки нет)
+    if role == "lobby" then role = "dead" end
     return filters and (filters.everyone or filters[role]) or false
 end
 local function anyPlayerVisual()
