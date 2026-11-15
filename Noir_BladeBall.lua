@@ -247,22 +247,30 @@ local function update_divisor()
     System.__properties.__divisor_multiplier = 0.7 + (System.__properties.__accuracy - 1) * (0.9/99)  
 end  
   
-local function update_randomized_accuracy()  
-    if not System.__properties.__randomized_accuracy_enabled then return end  
-    local ping_str = Stats.Network.ServerStatsItem["Data Ping"]:GetValueString()  
-    local ping = tonumber(ping_str:match("%d+")) or 0  
-    local new_accuracy  
-    if ping >= 90 then new_accuracy = 4  
-    elseif ping <= 50 then new_accuracy = math.random(70, 100)  
-    else new_accuracy = System.__properties.__accuracy end  
-    if new_accuracy then
-        System.__properties.__accuracy = new_accuracy
-        update_divisor()
-        -- NOIR: обновляем слайдер Accuracy в меню, чтобы подстановку было видно
-        local syncHook = getgenv().__NoirAccuracySync
-        if type(syncHook) == "function" then pcall(syncHook, new_accuracy, ping) end
-    end  
-end  
+local function update_randomized_accuracy()
+    if not System.__properties.__randomized_accuracy_enabled then return end
+    local okP, ping = pcall(function()
+        return tonumber(Stats.Network.ServerStatsItem["Data Ping"]:GetValueString():match("%d+")) or 0
+    end)
+    if not okP then ping = 0 end
+    -- NOIR fix (Random Accuracy): старый код при пинге >= 90ms прибивал Accuracy
+    -- к 4 — парри уходил на ~0.5с раньше контакта и сервер его не засчитывал.
+    -- Теперь Accuracy рандомизируется human-like В РАЗУМНОМ БАНДЕ вокруг якоря
+    -- (значения слайдера пользователя, без дрейфа), а пинг компенсируется
+    -- ping-порогом дистанции и ping-aware окном ретрая — не через Accuracy.
+    local base = System.__properties.__accuracy_user or System.__properties.__accuracy or 50
+    local lo, hi
+    if ping >= 120 then lo, hi = math.max(42, base - 12), math.min(88, base + 6)
+    elseif ping <= 50 then lo, hi = math.max(45, base - 10), math.min(92, base + 10)
+    else lo, hi = math.max(40, base - 12), math.min(90, base + 8) end
+    if lo > hi then lo, hi = hi, lo end
+    local new_accuracy = math.random(lo, hi)
+    System.__properties.__accuracy = new_accuracy
+    update_divisor()
+    -- NOIR: обновляем слайдер Accuracy в меню, чтобы подстановку было видно
+    local syncHook = getgenv().__NoirAccuracySync
+    if type(syncHook) == "function" then pcall(syncHook, new_accuracy, ping) end
+end
   
 task.spawn(function()  
     while task.wait(1) do  
@@ -1147,8 +1155,13 @@ function System.autoparry.start()
             if System.__config.__detections.__infinity and System.__properties.__infinity_active then continue end  
             if System.__config.__detections.__deathslash and System.__properties.__deathslash_active then continue end  
             if System.__config.__detections.__timehole and System.__properties.__timehole_active then continue end  
-            if System.__config.__detections.__slashesoffury and System.__properties.__slashesoffury_active then continue end  
-            if ball_target==LocalPlayer.Name and distance <= parry_accuracy then  
+            if System.__config.__detections.__slashesoffury and System.__properties.__slashesoffury_active then continue end
+            -- NOIR (Nova-style inbound check): паррим только мяч, реально
+            -- сближающийся с нами (проекция скорости на направление к нам > 0).
+            -- Отбитые/outbound/устаревшие из-за пинга мячи отсекаются — меньше
+            -- лишних нажатий, абилки и двойных парри.
+            local inbound = rootPart and velocity:Dot((rootPart.Position - ball.Position).Unit) > 0 or false
+            if ball_target==LocalPlayer.Name and inbound and distance <= parry_accuracy then
                 if genvFlags.AutoAbility then
                     -- NOIR perf: Hotbar/Ability кэшируются на 0.5с
                     if os.clock() >= (abilityScanAt or 0) then
@@ -1185,7 +1198,7 @@ function System.autoparry.start()
                     end  
                 end  
             end  
-            if ball_target==LocalPlayer.Name and distance <= parry_accuracy then
+            if ball_target==LocalPlayer.Name and inbound and distance <= parry_accuracy then
                 local sent
                 if genvFlags.AutoParryMode=="Keypress" then sent = System.parry.keypress()
                 else sent = System.parry.execute_action() end
@@ -1220,8 +1233,12 @@ function System.autoparry.start()
                     local ping_threshold=math.clamp(ping/10,5,40)
                     local capped_speed_diff=math.min(math.max(speed-9.5,0),650)  
                     local speed_divisor=(2.4+capped_speed_diff*0.002)*System.__properties.__divisor_multiplier  
-                    local parry_accuracy=ping_threshold+math.max(speed/speed_divisor,9.5)  
-                    if ball_target==LocalPlayer.Name and distance <= parry_accuracy then  
+                    local parry_accuracy=ping_threshold+math.max(speed/speed_divisor,9.5)
+                    -- NOIR (Nova-style inbound): тренировочный мяч паррим тоже
+                    -- только на сближении (отсечения outbound)
+                    local rootPart = LocalPlayer.Character and LocalPlayer.Character.PrimaryPart
+                    local inbound = rootPart and velocity:Dot((rootPart.Position - training_ball.Position).Unit) > 0 or false
+                    if ball_target==LocalPlayer.Name and inbound and distance <= parry_accuracy then
                         local sent
                         if genvFlags.AutoParryMode=="Keypress" then sent = System.parry.keypress()
                         else sent = System.parry.execute_action() end
@@ -12639,7 +12656,12 @@ do
     local TweenService = game:GetService("TweenService")
 
     local function prop(k) return System.__properties[k] end
-    local function setProp(k, v) pcall(function() System.__properties[k] = v end) end
+    local function setProp(k, v) pcall(function()
+        System.__properties[k] = v
+        -- NOIR: якорь пользовательского Accuracy — Random Accuracy рандомит
+        -- вокруг него, а не дрейфует от собственных прошлых подстановок
+        if k == "__accuracy" then System.__properties.__accuracy_user = v end
+    end) end
     local function gget(k, d)
         local ok, v = pcall(function() return genv[k] end)
         if ok and v ~= nil then return v end
