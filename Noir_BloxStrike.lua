@@ -22,8 +22,15 @@
     не портирована — работает штатный "не-hooked" путь оригинала.
   • Shitaro Legit (Combat → "Shitaro Legit"): авто-стрельба h.auto и весь её
     граф — 25 модулей оригинала дословно (поиск цели D.an.find, форс-выстрелы
-    D.Z с подменой луча пули _performRaycast, револьвер, трекеры целей,
-    no-recoil / no-spread детуры). Тогглы мостом SetLegit → опции модуля ag.
+    D.Z с подменой луча пули _performRaycast, револьвер, трекеры целей),
+    плюс insta reload (детур reload из aq) и auto reload (v.reload из D._).
+    Аимбот-тоггла нет: конвейер включается вместе с авто-стрельбой;
+    no-recoil / no-spread убраны по запросу (флаги жёстко false).
+  • Автосохранение: фабрики элементов AirFlow берут состояние из opts.Default,
+    а сохранённое значение пускают только на рендер — поэтому тумблер после
+    перезахода показывал выключенное, а функция продолжала работать. Врапперы
+    теперь синхронизируют состояние через Element:Set(saved, true), и Bind /
+    Feed применяют сохранённое значение к опциям при старте.
   • Delta (Android): проба Gc совместима — Silent Aim и No Spread включаются;
     сканирование getgc терпит «дыры» в хипе и падение getgc(true).
 
@@ -22470,7 +22477,7 @@ end
 -- (auto_scope); флаги в xDTaraZ.Shitaro.misc, сохраняются авто-сейвом.
 -- ═══════════════════════════════════════════════════════════════════════════
 xDTaraZ.Shitaro = {
-    misc = { auto_plant = false, auto_defuse = false },
+    misc = { auto_plant = false, auto_defuse = false, auto_reload = false, auto_reload_min = 1 },
     Ready = false,
     Stop = nil,
 }
@@ -22479,11 +22486,17 @@ xDTaraZ.Shitaro = {
 xDTaraZ.Shitaro.legitStage = {
     on = false, auto_shoot = false, rapid = false, auto_scope = false,
     auto_revolver = false, auto_switch = false, team_check = true,
-    no_recoil = false, no_spread = false, fov = 8,
+    insta_reload = false, fov = 8,
 }
 function xDTaraZ.Shitaro.SetLegit(key, value)
     local s = xDTaraZ.Shitaro
     s.legitStage[key] = value
+    -- авто-стрельба тянет за собой включение конвейера (t.on гейтит find
+    -- и подмену луча пули; отдельного аимбот-тоггла больше нет)
+    if key == "auto_shoot" and value == true then
+        s.legitStage.on = true
+        if s.legitOptions then s.legitOptions.on = true end
+    end
     if s.legitOptions then s.legitOptions[key] = value end
 end
 
@@ -23054,9 +23067,66 @@ function xDTaraZ.Shitaro.Start()
                 pcall(Q.Defused.Send);
             end;
         end;
-        -- v.step (D._ дословно, ветки knife/zeus/reload/buy опущены — берём
-        -- только три запрошенные функции)
-        local step = function() if Y.auto_plant then
+        -- ── Auto Reload (Shitaro D._ v.reload 20814 дословно) ───────────────
+        local last_reload = 0
+        -- форс-модуль D.Z достаётся лениво и один раз: каскад загрузки не должен
+        -- ронять auto reload, если легит-кластер не поднялся
+        local forceRef, forceTried = nil, false
+        local function getForce()
+            if forceTried then return forceRef end
+            forceTried = true
+            local mods = xDTaraZ.Shitaro.mods
+            if mods and mods.load then
+                local ok, mod = pcall(mods.load, "Z")
+                if ok then forceRef = mod end
+            end
+            return forceRef
+        end
+        local reloadOnce = function()
+            local u = E()
+            local props = u and u.Properties
+            if props then
+                if props.Class ~= "Weapon" then return end
+            else
+                return
+            end
+            if u.IsReloading then return
+            elseif u.IsShooting then return
+            elseif u.IsAdjustingSuppressor then return
+            end
+            local force = getForce()
+            if force then
+                if force.forcing[u] then return
+                elseif force.manual[u] then return
+                elseif force.has_pending(u) then return
+                end
+            end
+            local rounds, mag = tonumber(u.Rounds), tonumber(props.Rounds) or 30
+            if rounds then
+                if rounds >= mag then return
+                elseif rounds >= Y.auto_reload_min then return
+                end
+            else
+                return
+            end
+            local now = tick()
+            if now - last_reload < 0.8 then return end
+            if force then
+                if force.held() then return end
+            else
+                -- без кластера — прямой эквивалент t.held() (D.Z held)
+                if env.input:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then return end
+            end
+            last_reload = now
+            env.plain(u.reload, u)
+        end
+        -- v.step (D._ дословно: plant/defuse + оригинальная ветка auto_reload
+        -- 21132; ветки knife/zeus/buy опущены — их не запрашивали)
+        local step = function()
+            if Y.auto_reload then
+                pcall(reloadOnce)
+            end
+            if Y.auto_plant then
                 pcall(v.plant);
             end;
             if Y.auto_defuse then
@@ -23076,6 +23146,7 @@ function xDTaraZ.Shitaro.Start()
         -- внутренности наружу для тестов и ручного контроля
         self._internal = {
             step = step,
+            reload = reloadOnce,
             plant = v.plant, defuse = v.defuse,
             stop_defuse = v.stop_defuse, state = g, move = i,
             peek = E, charAlive = H, bomb = B, defusing = x,
@@ -23092,6 +23163,8 @@ function xDTaraZ.Shitaro.Start()
         end)
     end)
 end
+
+-- ═══════════════════════════════════════════════════════════════════════
 
 -- ═══════════════════════════════════════════════════════════════════════
 
@@ -29056,16 +29129,21 @@ end
 ---@param info table  { Name, Desc, Default }
 function xDTaraZ.UI.Toggle(group, idx, info)
     local widget = xDTaraZ.UI.Widget(idx, info.Name)
+    local saved = xDTaraZ.AutoSave.get("toggle", idx, info.Default == true)
     widget.Element = group:CreateToggle({
         Name = info.Name,
         Desc = info.Desc,
-        CurrentValue = xDTaraZ.AutoSave.get("toggle", idx, info.Default == true),
+        CurrentValue = saved,
         Flag = idx,
         Callback = function(value)
             widget:Dispatch(value)
             xDTaraZ.AutoSave.record(idx, value)
         end,
     })
+    -- фабрика AirFlow берёт состояние из opts.Default, а CurrentValue пускает
+    -- только на рендер: без Set(saved) Get() вернёт дефолт и Bind включит
+    -- функцию при выключенном тумблере
+    pcall(widget.Element.Set, widget.Element, saved, true)
     widget.Value = widget.Element:Get()
     return widget
 end
@@ -29073,12 +29151,13 @@ end
 ---@param info table  { Name, Desc, Min, Max, Default, Increment, Suffix }
 function xDTaraZ.UI.Slider(group, idx, info)
     local widget = xDTaraZ.UI.Widget(idx, info.Name)
+    local saved = xDTaraZ.AutoSave.get("slider", idx, info.Default)
     widget.Element = group:CreateSlider({
         Name = info.Name,
         Range = { info.Min, info.Max },
         Increment = info.Increment or 1,
         Suffix = info.Suffix,
-        CurrentValue = xDTaraZ.AutoSave.get("slider", idx, info.Default),
+        CurrentValue = saved,
         Tooltip = info.Desc,
         Flag = idx,
         Callback = function(value)
@@ -29086,6 +29165,7 @@ function xDTaraZ.UI.Slider(group, idx, info)
             xDTaraZ.AutoSave.record(idx, value)
         end,
     })
+    pcall(widget.Element.Set, widget.Element, saved, true)
     widget.Value = widget.Element:Get()
     return widget
 end
@@ -29093,10 +29173,11 @@ end
 ---@param info table  { Name, Desc, Options, Default, Searchable, NoSave }
 function xDTaraZ.UI.Dropdown(group, idx, info)
     local widget = xDTaraZ.UI.Widget(idx, info.Name)
+    local saved = xDTaraZ.AutoSave.get("dropdown", idx, info.Default)
     widget.Element = group:CreateDropdown({
         Name = info.Name,
         Options = info.Options,
-        CurrentOption = xDTaraZ.AutoSave.get("dropdown", idx, info.Default),
+        CurrentOption = saved,
         AllowNone = false,
         Searchable = info.Searchable == true,
         Tooltip = info.Desc,
@@ -29106,21 +29187,24 @@ function xDTaraZ.UI.Dropdown(group, idx, info)
             if not info.NoSave then xDTaraZ.AutoSave.record(idx, value) end
         end,
     })
+    pcall(widget.Element.Set, widget.Element, saved, true)
     widget.Value = widget.Element:Get()
     return widget
 end
 
 function xDTaraZ.UI.Color(group, idx, info)
     local widget = xDTaraZ.UI.Widget(idx, info.Name)
+    local saved = xDTaraZ.AutoSave.get("color", idx, info.Default)
     widget.Element = group:CreateColorPicker({
         Name = info.Name,
-        Color = xDTaraZ.AutoSave.get("color", idx, info.Default),
+        Color = saved,
         Flag = idx,
         Callback = function(value)
             widget:Dispatch(value)
             xDTaraZ.AutoSave.record(idx, value)
         end,
     })
+    pcall(widget.Element.Set, widget.Element, saved, true)
     widget.Value = widget.Element:Get()
     return widget
 end
@@ -29292,16 +29376,22 @@ function xDTaraZ.UI.BuildSilent(tab)
     xDTaraZ.UI.Toggle(target, "SilentPredict", { Name = T("Lead moving targets", "ยิงดักคนที่วิ่ง") })
 
     -- Shitaro legit (порт из шитароbloxstrike.txt дословно): тогглы через мост
-    -- SetLegit попадают в оригинальную таблицу опций модуля ag после загрузки
+    -- SetLegit попадают в оригинальную таблицу опций модуля ag после загрузки.
+    -- Аимбот-тоггла нет: конвейер включается вместе с авто-стрельбой
+    -- (SetLegit сам ставит on), no_recoil / no_spread убраны по запросу.
     local shitaro = tab:AddLeftGroupbox({ Name = T("Shitaro Legit", "Шитаро Легит"), Icon = "target" })
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.LegitOn", { Name = T("Aimbot (Shitaro)", "Аимбот (Шитаро)"), Desc = T("Enables the Shitaro legit pipeline: target search and bullet redirection", "Включает конвейер Shitaro: поиск цели и подмена луча пули"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("on", value) end)
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.AutoShoot", { Name = T("Auto shoot", "Авто-стрельба"), Desc = T("Fires automatically at the picked target (needs the Shitaro aimbot above)", "Стреляет сам по выбранной цели (нужен включённый аимбот выше)"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_shoot", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.AutoShoot", { Name = T("Auto shoot", "Авто-стрельба"), Desc = T("Fires automatically at the picked target", "Стреляет сам по выбранной цели (поиск цели и подмена луча пули Shitaro)"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_shoot", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.Rapid", { Name = T("Rapid fire", "Форс-очередь"), Desc = T("Uses Shitaro's forced-shot pipeline for rapid weapons", "Форс-выстрелы для автоматического оружия"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("rapid", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.AutoRevolver", { Name = T("Auto revolver", "Авто-револьвер"), Desc = T("Handles revolver charge and shots automatically", "Сам управляет взведением и выстрелами револьвера"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_revolver", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.InstaReload", { Name = T("Insta reload", "Мгновенная перезарядка"), Desc = T("Shitaro's reload detour: skips the normal reload flow (original t.insta_reload)", "Детур reload из Shitaro: пропускает обычную перезарядку (оригинальный t.insta_reload)"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("insta_reload", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.TeamCheck", { Name = T("Team check", "Проверка команды"), Desc = T("Ignore teammates when picking a target", "Игнорировать тиммейтов при выборе цели"), Default = true }), function(value) xDTaraZ.Shitaro.SetLegit("team_check", value) end)
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.NoRecoil", { Name = T("No recoil (Shitaro)", "Без отдачи (Shitaro)"), Desc = T("Shitaro's recoil detour on the weapon controller", "Детур отдачи на контроллере оружия из Shitaro"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("no_recoil", value) end)
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.NoSpread", { Name = T("No spread (Shitaro)", "Без разброса (Shitaro)"), Desc = T("Shitaro's spread detour on the bullet class", "Детур разброса на классе пули из Shitaro"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("no_spread", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.AutoScope", { Name = T("Auto scope", "Авто-прицел"), Desc = T("Scopes in before firing scoped weapons", "Наводит прицел перед выстрелом из снайперки"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_scope", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(shitaro, "Shitaro.Fov", { Name = T("Targeting FOV", "Радиус поиска цели"), Desc = T("Shitaro legit target search radius", "Радиус поиска цели конвейером Shitaro"), Min = 1, Max = 60, Default = 8, Suffix = "°" }), function(value) xDTaraZ.Shitaro.SetLegit("fov", value) end)
+
+    -- Auto reload — оригинальный v.reload из D._ Shitaro (гейты форс-модуля,
+    -- кулдаун 0.8с, plain-вызов reload на identity 2)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(shitaro, "Shitaro.AutoReload", { Name = T("Auto reload", "Авто-перезарядка"), Desc = T("Reloads automatically when the mag runs low (original Shitaro v.reload)", "Перезаряжает сам, когда магазин пустеет (оригинальный v.reload из Shitaro)"), Default = false }), function(value) xDTaraZ.Shitaro.misc.auto_reload = value end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(shitaro, "Shitaro.AutoReloadMin", { Name = T("Reload below rounds", "Перезарядка при патронах ниже"), Desc = T("Reload when the mag has fewer rounds than this", "Перезарядить, если в магазине меньше этого числа патронов"), Min = 1, Max = 30, Default = 1, Suffix = "" }), function(value) xDTaraZ.Shitaro.misc.auto_reload_min = value end)
 end
 
 function xDTaraZ.UI.BuildTrigger(tab)
