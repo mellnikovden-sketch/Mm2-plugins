@@ -7,12 +7,15 @@
 
   • Меню: Noir — тема Noir, погода Rain, клавиша RightControl,
     плавающая кнопка на ПК и телефоне (Delta/Synapse/Wave/...).
-  • Сохранение настроек: ConfigurationSaving (папка Noir/Configs),
-    автозагрузка последнего конфига при старте (window:LoadAutoload),
-    менеджер конфигов и тем на вкладке Settings (Save/Load/Delete/
-    Rename/Autoload/Export/Import). Погода, масштаб UI, клавиша меню,
-    кнопка на экране — тоже флаги и сохраняются вместе с конфигом.
+  • Сохранение настроек: автоматическое — каждый тоггл/слайдер/дропдаун/цвет
+    записывается в Noir/settings.json (с дебаунсом) и восстанавливается при
+    следующем запуске; погода, масштаб UI и фон окна тоже сохраняются.
+    Плюс ручной менеджер конфигов и тем на вкладке Settings (Save/Load/
+    Delete/Rename/Autoload/Export/Import) и автозагрузка последнего
+    конфига (window:LoadAutoload).
   • Скины хранятся в Noir/skins.json.
+  • Delta (Android): проба Gc совместима — Silent Aim и No Spread включаются;
+    сканирование getgc терпит «дыры» в хипе и падение getgc(true).
 
   Запуск: выполнить целиком в исполнителе на игре Blox Strike.
 ═══════════════════════════════════════════════════════════════════════════════
@@ -20031,6 +20034,7 @@ xDTaraZ.Config = {
     HopGap = 0.05,
     HookSettle = 1,
     SkinFile = "Noir/skins.json",
+    SettingsFile = "Noir/settings.json",
     SkinWears = { "Factory New", "Minimal Wear", "Field-Tested", "Well-Worn", "Battle-Scarred" },
     SkinKinds = { Melee = "Knives", Glove = "Gloves", Grenade = "Grenades", C4 = "Gear", ["Zeus x27"] = "Gear" },
     SkinOrder = { "Pistol", "SMG", "Rifle", "Sniper", "Heavy", "Shotgun", "Machine Gun", "Knives", "Gloves", "Grenades", "Gear" },
@@ -20192,14 +20196,24 @@ function xDTaraZ.Compat.Probes.HookFunction()
     return works
 end
 
+-- Delta's getgc(false) hides freshly created closures and can be sparse, so
+-- probe what the features actually scan: getgc(true), hole-tolerant. A heap
+-- that exposes tables is enough — every Gc-gated feature scans for tables.
 function xDTaraZ.Compat.Probes.Gc()
     local getGc = xDTaraZ.Compat.Api.GetGc
     if not getGc then return false end
-    local function Marker() return "gc" end
-    for _, value in ipairs(getGc(false)) do
-        if value == Marker then return true end
+    local marker = { NoirGcProbe = true }
+    local ok, heap = pcall(getGc, true)
+    if not ok or type(heap) ~= "table" then
+        ok, heap = pcall(getGc, false)
+        if not ok or type(heap) ~= "table" then return false end
     end
-    return false
+    local sawTable = false
+    for _, value in pairs(heap) do
+        if value == marker then return true end
+        if type(value) == "table" then sawTable = true end
+    end
+    return sawTable
 end
 
 function xDTaraZ.Compat.Probes.Upvalues()
@@ -21180,7 +21194,9 @@ end
 
 function xDTaraZ.Guns.FindClass()
     if not xDTaraZ.Caps.Gc or not xDTaraZ.Caps.HookFunction then return nil end
-    for _, entry in ipairs(getgc(true)) do
+    local ok, heap = pcall(getgc, true)
+    if not ok or type(heap) ~= "table" then return nil end
+    for _, entry in pairs(heap) do
         if type(entry) == "table" and rawget(entry, "getSpread") and rawget(entry, "shoot") and rawget(entry, "setupRecoil") then return entry end
     end
     return nil
@@ -21189,7 +21205,9 @@ end
 ---@return table?  the bullet class that rolls spread for every shot
 function xDTaraZ.Guns.FindBullet()
     if not xDTaraZ.Caps.Gc or not xDTaraZ.Caps.HookFunction then return nil end
-    for _, entry in ipairs(getgc(true)) do
+    local ok, heap = pcall(getgc, true)
+    if not ok or type(heap) ~= "table" then return nil end
+    for _, entry in pairs(heap) do
         if type(entry) == "table" and rawget(entry, "getTrueSpread") and rawget(entry, "getSpreadForConfig") then return entry end
     end
     return nil
@@ -22422,6 +22440,99 @@ function xDTaraZ.Visuals.Destroy()
     visuals.Radar = { Dots = {} }
 end
 
+-- ── auto-persistence of settings ─────────────────────────────────────────────
+-- Every feature widget change (and the window look) is written to
+-- Config.SettingsFile (debounced) and restored on the next launch, so
+-- toggles/sliders/dropdowns/colors survive re-executing without touching the
+-- manual config manager on the Settings tab.
+xDTaraZ.AutoSave = (function()
+    local HttpService = game:GetService("HttpService")
+    local file = xDTaraZ.Config.SettingsFile
+    local saved = {}
+    local saveJob = nil
+
+    do
+        local ok, text = pcall(function()
+            if type(isfile) == "function" and isfile(file) then return readfile(file) end
+            return nil
+        end)
+        if ok and type(text) == "string" and text ~= "" then
+            local okDecode, decoded = pcall(HttpService.JSONDecode, HttpService, text)
+            if okDecode and type(decoded) == "table" then saved = decoded end
+        end
+    end
+
+    local function normalize(value)
+        if typeof(value) == "EnumItem" then return value.Name end
+        if type(value) == "boolean" or type(value) == "number" or type(value) == "string" then
+            return value
+        end
+        if typeof(value) == "Color3" then return { r = value.R, g = value.G, b = value.B } end
+        return nil
+    end
+
+    local function flush()
+        saveJob = nil
+        pcall(function()
+            if type(isfolder) == "function" and type(makefolder) == "function"
+                and not isfolder(xDTaraZ.Config.SaveFolder) then
+                makefolder(xDTaraZ.Config.SaveFolder)
+            end
+        end)
+        pcall(function() writefile(file, HttpService:JSONEncode(saved)) end)
+    end
+
+    local function schedule()
+        if saveJob then task.cancel(saveJob) end
+        saveJob = task.delay(0.75, flush)
+    end
+
+    -- kind-checked read: a stale file must never feed a widget the wrong type
+    local function get(kind, idx, default)
+        local value = saved[idx]
+        if kind == "toggle" and type(value) == "boolean" then return value end
+        if kind == "slider" and type(value) == "number" then return value end
+        if kind == "dropdown" and type(value) == "string" then return value end
+        if kind == "color" and type(value) == "table" and type(value.r) == "number" then
+            return Color3.new(value.r, value.g, value.b)
+        end
+        return default
+    end
+
+    local function record(idx, value)
+        local norm = normalize(value)
+        if norm == nil or idx == nil then return end
+        saved[idx] = norm
+        schedule()
+    end
+
+    local function recordLook(key, value)
+        local norm = normalize(value)
+        if norm == nil then return end
+        local look = saved["_window"]
+        if type(look) ~= "table" then look = {} saved["_window"] = look end
+        look[key] = norm
+        schedule()
+    end
+
+    local function applyWindowLook(window)
+        if type(window) ~= "table" then return end
+        local look = saved["_window"]
+        if type(look) ~= "table" then return end
+        if type(look.Weather) == "string" and type(window.SetWeather) == "function" then
+            pcall(window.SetWeather, window, look.Weather)
+        end
+        if type(look.Scale) == "number" and type(window.SetUIScale) == "function" then
+            pcall(window.SetUIScale, window, math.clamp(look.Scale / 100, 0.6, 1.5))
+        end
+        if type(look.Backdrop) == "boolean" and type(window.SetBackdrop) == "function" then
+            pcall(window.SetBackdrop, window, look.Backdrop)
+        end
+    end
+
+    return { get = get, record = record, recordLook = recordLook, applyWindowLook = applyWindowLook }
+end)()
+
 xDTaraZ.UI = { Labels = {}, Widgets = {}, Binds = {}, Window = nil }
 
 ---Thai when the Roblox locale is Thai, else English (the old library's Language = "Auto").
@@ -22500,9 +22611,12 @@ function xDTaraZ.UI.Toggle(group, idx, info)
     widget.Element = group:CreateToggle({
         Name = info.Name,
         Desc = info.Desc,
-        CurrentValue = info.Default == true,
+        CurrentValue = xDTaraZ.AutoSave.get("toggle", idx, info.Default == true),
         Flag = idx,
-        Callback = function(value) widget:Dispatch(value) end,
+        Callback = function(value)
+            widget:Dispatch(value)
+            xDTaraZ.AutoSave.record(idx, value)
+        end,
     })
     widget.Value = widget.Element:Get()
     return widget
@@ -22516,10 +22630,13 @@ function xDTaraZ.UI.Slider(group, idx, info)
         Range = { info.Min, info.Max },
         Increment = info.Increment or 1,
         Suffix = info.Suffix,
-        CurrentValue = info.Default,
+        CurrentValue = xDTaraZ.AutoSave.get("slider", idx, info.Default),
         Tooltip = info.Desc,
         Flag = idx,
-        Callback = function(value) widget:Dispatch(value) end,
+        Callback = function(value)
+            widget:Dispatch(value)
+            xDTaraZ.AutoSave.record(idx, value)
+        end,
     })
     widget.Value = widget.Element:Get()
     return widget
@@ -22531,12 +22648,15 @@ function xDTaraZ.UI.Dropdown(group, idx, info)
     widget.Element = group:CreateDropdown({
         Name = info.Name,
         Options = info.Options,
-        CurrentOption = info.Default,
+        CurrentOption = xDTaraZ.AutoSave.get("dropdown", idx, info.Default),
         AllowNone = false,
         Searchable = info.Searchable == true,
         Tooltip = info.Desc,
         Flag = not info.NoSave and idx or nil,
-        Callback = function(value) widget:Dispatch(value) end,
+        Callback = function(value)
+            widget:Dispatch(value)
+            if not info.NoSave then xDTaraZ.AutoSave.record(idx, value) end
+        end,
     })
     widget.Value = widget.Element:Get()
     return widget
@@ -22546,9 +22666,12 @@ function xDTaraZ.UI.Color(group, idx, info)
     local widget = xDTaraZ.UI.Widget(idx, info.Name)
     widget.Element = group:CreateColorPicker({
         Name = info.Name,
-        Color = info.Default,
+        Color = xDTaraZ.AutoSave.get("color", idx, info.Default),
         Flag = idx,
-        Callback = function(value) widget:Dispatch(value) end,
+        Callback = function(value)
+            widget:Dispatch(value)
+            xDTaraZ.AutoSave.record(idx, value)
+        end,
     })
     widget.Value = widget.Element:Get()
     return widget
@@ -22974,7 +23097,10 @@ function xDTaraZ.UI.BuildSettings(window)
         Name = T("Backdrop", "พื้นหลังมืด"),
         CurrentValue = true,
         Flag = "Backdrop",
-        Callback = function(value) window:SetBackdrop(value) end,
+        Callback = function(value)
+            window:SetBackdrop(value)
+            xDTaraZ.AutoSave.recordLook("Backdrop", value)
+        end,
     })
     interface:CreateDropdown({
         Name = T("Weather", "สภาพอากาศ"),
@@ -22984,6 +23110,7 @@ function xDTaraZ.UI.BuildSettings(window)
         Flag = "WeatherMode",
         Callback = function(option)
             window:SetWeather(tostring(option))
+            xDTaraZ.AutoSave.recordLook("Weather", tostring(option))
         end,
     })
     interface:CreateSlider({
@@ -22995,6 +23122,7 @@ function xDTaraZ.UI.BuildSettings(window)
         Flag = "UIScale",
         Callback = function(value)
             window:SetUIScale(value / 100)
+            xDTaraZ.AutoSave.recordLook("Scale", value)
         end,
     })
     interface:CreateButton({
@@ -23558,6 +23686,7 @@ local function BuildInterface()
         return false
     end
     xDTaraZ.UI.Window = window
+    pcall(function() xDTaraZ.AutoSave.applyWindowLook(window) end)
 
     -- The window can also close itself (Exit on the executor warning); unload the features with it.
     if typeof(window.Gui) == "Instance" then
