@@ -14,6 +14,12 @@
     Delete/Rename/Autoload/Export/Import) и автозагрузка последнего
     конфига (window:LoadAutoload).
   • Скины хранятся в Noir/skins.json.
+  • Порт из Shitaro (шитароbloxstrike.txt, дословно): Auto Plant / Auto
+    Defuse ( Misc → "Bomb" ) и Auto Scope ( Combat → Aimbot ). Дефьюз —
+    полная state-машина оригинала: SessionId через getupvalues/setupvalue,
+    ack/orphan/fail-обработка, CancelDefuse/Defused remotes, атрибуты
+    IsLocallyDefusingBomb/HasDefuseKit; ходьба к бомбе (хук движения D.W)
+    не портирована — работает штатный "не-hooked" путь оригинала.
   • Delta (Android): проба Gc совместима — Silent Aim и No Spread включаются;
     сканирование getgc терпит «дыры» в хипе и падение getgc(true).
 
@@ -22440,6 +22446,651 @@ function xDTaraZ.Visuals.Destroy()
     visuals.Radar = { Dots = {} }
 end
 
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SHITARO FEATURE PORT — Auto Plant / Auto Defuse / Auto Scope
+-- Источник: шитароbloxstrike.txt (деобфусцированный исходник чита Shitaro).
+-- Три функции взяты дословно:
+--   • Auto Plant   — D._ → v.plant (строка 20322 исходника)
+--   • Auto Defuse  — D._ → v.defuse / v.stop_defuse / state-машина g (20327+)
+--   • Auto Scope   — D.an → h.auto, блок t.auto_scope (25938): наводит прицел
+--                    (weapon.scope, plain-вызов на identity 2) перед выстрелом
+--                    из оружия со снайперским прицелом; у Noir нет своего
+--                    auto-shoot-цикла, поэтому триггер здесь — кнопка огня.
+-- Инфраструктура заменена компактными эквивалентами с теми же интерфейсами:
+--   • окружение D.b → подмножество (lp/workspace/collection/input/plain/getups/setup)
+--   • компоненты игры D.j → тот же WaitForChild(5с)+require по ReplicatedStorage
+--   • игроки+боты D.h/D.g → Players + модели workspace.Characters (Bot=true)
+--     в прокси с .Character, как в оригинальном D.g
+--   • trim (D.f) и держатель состояния движения (D.T) — дословно
+-- Порядок локалов и пере-объявлений (шэдоуинг h/o/E/b/A/Z/x) сохранён 1:1 с
+-- оригиналом — от него зависит, какая версия имени попадает в каждое замыкание.
+-- Тогглы: Misc → группа "Bomb" (auto_plant / auto_defuse), Combat → Aimbot
+-- (auto_scope); флаги в xDTaraZ.Shitaro.misc, сохраняются авто-сейвом.
+-- ═══════════════════════════════════════════════════════════════════════════
+xDTaraZ.Shitaro = {
+    misc = { auto_plant = false, auto_defuse = false, auto_scope = false },
+    Ready = false,
+    Stop = nil,
+}
+
+function xDTaraZ.Shitaro.Start()
+    local self = xDTaraZ.Shitaro
+    if self._started then return end
+    self._started = true
+    task.spawn(function()
+        -- ── окружение (эквивалент подмножества D.b) ─────────────────────────
+        local clonerefFn = cloneref or function(h) return h end
+        local env = {}
+        env.players = clonerefFn(game:GetService("Players"))
+        env.workspace = clonerefFn(game:GetService("Workspace"))
+        env.collection = clonerefFn(game:GetService("CollectionService"))
+        env.input = clonerefFn(game:GetService("UserInputService"))
+        env.lp = env.players.LocalPlayer
+        env.getups = getupvalues or (debug and debug.getupvalues)
+        env.setup = setupvalue or (debug and debug.setupvalue)
+        local getIdentity = getthreadidentity or getidentity
+        local setIdentity = setthreadidentity or setidentity
+        env.identity = (function()
+            if type(getIdentity) ~= "function" then return nil end
+            local o, t = pcall(getIdentity)
+            if o then
+                if type(t) == "number" then return t end
+            end
+            return nil
+        end)()
+        -- b.plain (D.b дословно): вызов на identity 2
+        env.plain = function(o, ...)
+            if type(setIdentity) ~= "function" then return pcall(o, ...) end
+            local t = env.identity
+            if type(getIdentity) == "function" then
+                local G, i = pcall(getIdentity)
+                t = if G then if type(i) == "number" then i else t else t
+            end
+            pcall(setIdentity, 2)
+            local K = table.pack(pcall(o, ...))
+            if t then pcall(setIdentity, t) end
+            return table.unpack(K, 1, K.n)
+        end
+
+        -- ── компоненты игры (D.j дословно: WaitForChild 5с + require) ───────
+        local comp = {}
+        do
+            local storage = clonerefFn(game:GetService("ReplicatedStorage"))
+            local function find(...)
+                local b = storage
+                for j = 1, select("#", ...), 1 do
+                    local K, S = pcall(b.WaitForChild, b, select(j, ...), 5)
+                    if K then
+                        if not S then return nil end
+                    else
+                        return nil
+                    end
+                    b = S
+                end
+                local j, K = pcall(require, b)
+                if j then return K end
+                return nil
+            end
+            comp.inventory = find("Controllers", "InventoryController")
+            comp.kinematics = find("MovementV2", "RuntimeKinematics")
+            comp.remotes = find("Database", "Security", "Remotes")
+            comp.defuse_ui = find("Interface", "Screens", "Gameplay", "Middle", "DefuseBomb")
+        end
+
+        if xDTaraZ.State.Alive == false then return end
+
+        -- ── trim (D.f дословно) ─────────────────────────────────────────────
+        local function trim(S, o)
+            for t = #S, o + 1, -1 do
+                S[t] = nil
+            end
+            return S
+        end
+
+        -- ── игроки + боты (функциональный эквивалент D.h.all + D.g) ────────
+        local S
+        do
+            local proxy = {}
+            proxy.__index = function(o, a)
+                if a == "Character" then return rawget(o, "model") end
+                if a == "GetAttribute" then
+                    return function(_, attr) return rawget(o, "model"):GetAttribute(attr) end
+                end
+                if a == "Name" or a == "DisplayName" then
+                    local model = rawget(o, "model")
+                    local name = model:GetAttribute("DisplayName")
+                    return type(name) == "string" and name or model.Name
+                end
+                return nil
+            end
+            local function all()
+                local list = table.create(64)
+                local n = 0
+                for _, plr in ipairs(env.players:GetPlayers()) do
+                    n += 1
+                    list[n] = plr
+                end
+                local chars = env.workspace:FindFirstChild("Characters")
+                if chars then
+                    for _, model in ipairs(chars:GetChildren()) do
+                        if model:IsA("Model") and model:GetAttribute("Bot") == true then
+                            n += 1
+                            list[n] = setmetatable({ model = model }, proxy)
+                        end
+                    end
+                end
+                return trim(list, n), n
+            end
+            S = { all = all }
+        end
+
+        -- ── держатель состояния движения (D.T дословно) ─────────────────────
+        -- Без хука движения Shitaro (D.W) поля still/samples/ground/input_at не
+        -- обновляются, и state-машина дефьюза идёт по своему штатному
+        -- "не-hooked" пути: фаза J шлёт StartDefuse сразу (i.hooked=false).
+        local i do
+            local j = os.clock
+            i = { hooked = false, on = false, fresh = false, broke = false, target = nil, beat = 0, samples = 0, still = 0, ground = false, bx = 0, by = 0, bj = false, input_at = 0 }
+            i.engage = function(b)
+                if not (i.on) then
+                    i.on = true
+                    i.fresh = true
+                    i.broke = false
+                    i.samples = 0
+                    i.still = 0
+                    i.ground = false
+                end
+                i.target = b
+                i.beat = j()
+            end
+            i.release = function()
+                i.on = false
+                i.fresh = false
+                i.broke = false
+                i.target = nil
+                i.samples = 0
+                i.still = 0
+                i.ground = false
+            end
+            i.active = function(j)
+                if not (i.on) then
+                    return false
+                end
+                if j - i.beat > 0.5 then
+                    i.release()
+                    return false
+                end
+                return true
+            end
+        end
+
+        -- ── модуль фич (D._ подмножество plant/defuse, дословно) ────────────
+        local h = { misc = self.misc };
+        local Y = h.misc;
+        local M = os.clock;
+        local O, T, x = env.lp, env.workspace, env.collection;
+        local a, B, N = comp.inventory, comp.kinematics, comp.remotes;
+        local p = trim;
+        local b = env.getups;
+        local A = env.setup;
+        local E, d = comp.defuse_ui, math.clamp;
+        local w = math.floor;
+        local P = math.deg;
+        local r = math.acos;
+        local L, L = math.abs, math.max;
+        local plain = env.plain;
+        local o = nil;
+        local U = {};
+        local Zp = RaycastParams.new();
+        Zp.FilterType = Enum.RaycastFilterType.Exclude;
+        Zp.IgnoreWater = true;
+        local z, J, y, f, k = Vector3.new(0, -5, 0), 0, 1, 2, 3;
+        local g = { phase = J, session = 0, since = 0, sent = 0, sent_at = 0, acked = 0, final = 0, total = 10, bomb = nil, retry = 0, fails = 0, spot = nil, out = false, orphan = 0 };
+        local Q, c = type(E) == "table" and rawget(E, "StartDefuse") or nil;
+        if type(Q) == "function" and type(b) == "function" then h, E = pcall(b, Q);
+            if h and type(E) == "table" then o = 0;
+                for h, H in E, nil, nil do
+                    if type(H) == "number" then o += 1;
+                        c = h;
+                    else
+                    end;
+                end;
+                if o ~= 1 then
+                    c = nil;
+                else
+                end;
+            else
+            end;
+        else
+        end;
+        local h, o = { pending = {}, tried = {}, last = 0, wait_until = 0, was_open = false, was_inside = false, team = "", generation = -1, game_state = "" }, 0;
+        if O:GetAttribute("IsLocallyDefusingBomb") == true then
+            if O:GetAttribute("IsDefusingBomb") ~= true then
+                O:SetAttribute("IsLocallyDefusingBomb", nil);
+            end;
+        end;
+        local function E() if a then
+                if type(a.peekCurrentEquippedForMovement) ~= "function" then return nil;
+                end;
+            else
+                return nil;
+            end;
+            local H, _ = pcall(a.peekCurrentEquippedForMovement);
+            if H then
+                if _ then
+                    if _.IsDestroyed then
+                        return nil;
+                    end;
+                else
+                    return nil;
+                end;
+            else
+                return nil;
+            end;
+            return _;
+        end;
+        local function H() local _ = O.Character;
+            if _ then
+                if not (_:IsDescendantOf(T)) then
+                    return nil;
+                end;
+            else
+                return nil;
+            end;
+            if _:GetAttribute("Dead") ~= false then
+                return nil;
+            end;
+            local s = _:GetAttribute("Health");
+            if typeof(s) ~= "number" then return nil;
+            elseif s <= 0 then
+                return nil;
+            end;
+            return _;
+        end;
+        local function F(v, u, V) local e = 0;
+            if v then
+                e = 1;
+                U[e] = v;
+            else
+            end;
+            if u then
+                e += 1;
+                U[e] = u;
+            else
+            end;
+            v = T:FindFirstChild("Debris");
+            if v then
+                e += 1;
+                U[e] = v;
+            else
+            end;
+            v, u = S.all();
+            for l = 1, u, 1 do
+                local u = v[l].Character;
+                if u then
+                    if u ~= V then
+                        l = e + 1;
+                        U[l] = u;
+                        e = l;
+                    else
+                    end;
+                else
+                end;
+            end;
+            return p(U, e);
+        end;
+        local v = { plant = function() local u = E();
+            local V = u and u.Properties;
+            if V then
+                if V.Class ~= "C4" then return;
+                elseif type(u.shoot) ~= "function" then return;
+                end;
+            else
+                return;
+            end;
+            V = H();
+            if V then
+                if u.IsPlanting then
+                    return;
+                end;
+            else
+                return;
+            end;
+            if tick() - (u.PlantStartedTick or 0) < 0.55 then
+                return;
+            end;
+            local e = V.PrimaryPart;
+            if not (e) then
+                return;
+            end;
+            if B then
+                if type(B.isOnGround) == "function" then if not (B.isOnGround(V)) then
+                        return;
+                    end;
+                end;
+            end;
+            Zp.FilterDescendantsInstances = F(V, T.CurrentCamera);
+            V = T:Raycast(e.Position, z, Zp);
+            if V then
+                if not (V.Instance) then
+                    return;
+                end;
+            else
+                return;
+            end;
+            if V.Instance:HasTag("PlantArea") then
+                if V.Instance:GetAttribute("Site") == nil then
+                    return;
+                end;
+            else
+                return;
+            end;
+            plain(u.shoot, u);
+        end
+        };
+        local function B() local Z = x:GetTagged("Bomb");
+            for x = 1, #Z, 1 do
+                local z = Z[x];
+                if z:IsDescendantOf(T) then
+                    if z:GetAttribute("Defused") ~= true then
+                        if z:GetAttribute("Exploded") ~= true then
+                            if z:GetAttribute("Exploding") ~= true then
+                                if z:GetAttribute("BombPlanted") ~= nil then
+                                    return z;
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+            return nil;
+        end;
+        local function x() local Z, z = S.all();
+            for u = 1, z, 1 do
+                local z = Z[u];
+                if z ~= O then
+                    if z:GetAttribute("IsDefusingBomb") == true then
+                        return z;
+                    end;
+                end;
+            end;
+            return nil;
+        end;
+        local function Z() local z = g.session;
+            if c then
+                local u, V = pcall(b, Q);
+                local b = u and type(V) == "table" and V[c] or nil;
+                z = if type(b) == "number" then if b > z then
+                        b
+                    else
+                        z
+                else
+                    z;
+            else
+            end;
+            return w(z);
+        end;
+        local function b() local w = Z() % 4294967295 + 1;
+            g.session = w;
+            if c then
+                if type(A) == "function" then pcall(A, Q, c, w);
+                end;
+            end;
+            return w;
+        end;
+        local function A() local w = tonumber(O:GetAttribute("Ping"));
+            if not (w) then
+                return 0.15;
+            end;
+            return d(w / 1000, 0, 1);
+        end;
+        v.stop_defuse = function(w) local z = g.phase;
+            if z == J then
+                if not (i.on) then
+                    return;
+                end;
+            end;
+            g.phase = J;
+            g.bomb = nil;
+            g.final = 0;
+            i.release();
+            if z ~= f then
+                if z ~= k then
+                    return;
+                end;
+            end;
+            if O:GetAttribute("IsLocallyDefusingBomb") ~= nil then
+                O:SetAttribute("IsLocallyDefusingBomb", nil);
+            end;
+            z = w and N and N.C4 and N.C4.CancelDefuse;
+            if z then
+                pcall(z.Send, { SessionId = g.session });
+            end;
+        end;
+        local function w(z, Q) g.fails = g.fails + 1;
+            g.spot = Q;
+            g.retry = z + (g.fails >= 2 and 1.5 or 0.6);
+        end;
+        local function z(Q) local c = b();
+            g.phase = f;
+            g.sent = Q;
+            g.sent_at = T:GetServerTimeNow();
+            g.acked = 0;
+            g.final = 0;
+            g.total = O:GetAttribute("HasDefuseKit") == true and 5 or 10;
+            O:SetAttribute("IsLocallyDefusingBomb", true);
+            if not (pcall(N.C4.StartDefuse.Send, { SessionId = c })) then
+                v.stop_defuse(false);
+                g.retry = Q + 0.5;
+            end;
+        end;
+        local function b(Q, c) g.session = Z();
+            g.phase = k;
+            g.bomb = c;
+            g.since = Q;
+            g.sent = Q;
+            g.sent_at = T:GetServerTimeNow() - 12;
+            g.acked = Q;
+            g.final = 0;
+            g.orphan = 0;
+            g.total = O:GetAttribute("HasDefuseKit") == true and 5 or 10;
+            O:SetAttribute("IsLocallyDefusingBomb", true);
+        end;
+        v.defuse = function() local Z, Q, c = M(), N and N.C4, H();
+            local M, N = c and c.PrimaryPart, B();
+            c = N and N.PrimaryPart;
+            if (if Q then
+                    not M
+                else
+                    not Q) or not c or O:GetAttribute("Team") ~= "Counter-Terrorists" then v.stop_defuse(c ~= nil);
+                g.out = false;
+                g.fails = 0;
+                g.spot = nil;
+                return;
+            end;
+            local B = M.Position;
+            local u, V = (B - c.Position).Magnitude, O:GetAttribute("IsDefusingBomb") == true;
+            if i.broke then
+                v.stop_defuse(true);
+                g.out = true;
+                return;
+            end;
+            if g.phase ~= J then
+                if g.bomb ~= N then
+                    v.stop_defuse(true);
+                    return;
+                end;
+            end;
+            if g.spot then
+                if (B - g.spot).Magnitude > 0.75 then
+                    g.fails = 0;
+                    g.spot = nil;
+                end;
+            end;
+            local e, l = x(), O:GetAttribute("IsLocallyDefusingBomb") == true;
+            if g.phase <= y then
+                if V then
+                    if l then
+                        g.orphan = 0;
+                    elseif e then
+                        g.orphan = 0;
+                    elseif g.out then
+                        g.orphan = 0;
+                    elseif u <= 10 then
+                        if g.orphan == 0 then
+                            g.orphan = Z;
+                        elseif Z - g.orphan > 1 then
+                            i.release();
+                            b(Z, N);
+                        end;
+                    else
+                        g.orphan = 0;
+                    end;
+                else
+                    g.orphan = 0;
+                end;
+            else
+                g.orphan = 0;
+            end;
+            if g.phase <= y then
+                if V or e or l or N:GetAttribute("IsGettingDefused") == true then
+                    v.stop_defuse(false);
+                    g.retry = L(g.retry, Z + 0.5);
+                    return;
+                end;
+            elseif e then
+                if not (V) then
+                    v.stop_defuse(true);
+                    g.retry = Z + 0.5;
+                    return;
+                end;
+            end;
+            if g.out then
+                if u <= 5.5 then
+                    if Z - i.input_at < 0.5 then
+                        return;
+                    end;
+                end;
+                g.out = false;
+            end;
+            if g.phase == J then
+                if u > 5 then
+                    return;
+                elseif Z < g.retry then
+                    return;
+                elseif g.fails >= 3 then
+                    return;
+                end;
+                g.phase = y;
+                g.since = Z;
+                g.bomb = N;
+                i.engage(c.Position);
+                if not (i.hooked) then
+                    z(Z);
+                end;
+                return;
+            end;
+            i.engage(c.Position);
+            if g.phase == y then
+                c = i.still >= 6 or i.ground and Z - g.since > 0.75;
+                if u > 5.25 or c and u > 5 then
+                    v.stop_defuse(false);
+                    return;
+                end;
+                if Z - g.since > 2 then
+                    v.stop_defuse(false);
+                    w(Z, B);
+                    return;
+                end;
+                if c then
+                    if i.samples >= 10 then
+                        z(Z);
+                    end;
+                end;
+                return;
+            end;
+            if g.phase == f then
+                if not (V) then
+                    if Z - g.sent > 1 + A() * 2 then
+                        v.stop_defuse(true);
+                        w(Z, B);
+                    end;
+                    return;
+                end;
+                g.phase = k;
+                g.acked = Z;
+                g.final = 0;
+            end;
+            if not (V) then
+                v.stop_defuse(false);
+                w(Z, B);
+                return;
+            end;
+            B, e, M = Z - g.acked, O:GetAttribute("DefuseStartTime"), T:GetServerTimeNow();
+            if (if typeof(e) == "number" then if e >= g.sent_at - 1 then
+                        if e <= M then
+                            M - e
+                        else
+                            B
+                        else
+                            B
+                    else
+                        B) >= g.total + 0.05 and (g.final == 0 or Z - g.final >= 0.5) then
+                g.final = Z;
+                pcall(Q.Defused.Send);
+            end;
+        end;
+        -- v.step (D._ дословно, ветки knife/zeus/reload/buy опущены — берём
+        -- только три запрошенные функции)
+        local step = function() if Y.auto_plant then
+                pcall(v.plant);
+            end;
+            if Y.auto_defuse then
+                pcall(v.defuse);
+            else
+                v.stop_defuse(true);
+            end;
+        end;
+        -- ── Auto Scope (Shitaro D.an h.auto, блок t.auto_scope дословно) ────
+        local scopeStep = function()
+            if not Y.auto_scope then return end
+            local u = E()
+            local props = u and u.Properties
+            if not props or props.Class ~= "Weapon" then return end
+            if not props.HasScope or u.IsAiming then return end
+            if type(u.scope) ~= "function" then return end
+            if not env.input:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then return end
+            plain(u.scope, u, true)
+        end
+        local charConn = O.CharacterAdded:Connect(function()
+            v.stop_defuse(true);
+            g.retry = 0;
+            g.fails = 0;
+            g.spot = nil;
+            g.out = false;
+        end)
+        self.Ready = true
+        -- внутренности наружу для тестов и ручного контроля
+        self._internal = {
+            step = step, scopeStep = scopeStep,
+            plant = v.plant, defuse = v.defuse,
+            stop_defuse = v.stop_defuse, state = g, move = i,
+            peek = E, charAlive = H, bomb = B, defusing = x,
+        }
+        self.Stop = function()
+            pcall(v.stop_defuse, true)
+            pcall(function() charConn:Disconnect() end)
+            table.clear(h.pending)
+            table.clear(h.tried)
+            trim(U, 0)
+        end
+        xDTaraZ:Connect(RunService.Heartbeat, function()
+            pcall(step)
+            pcall(scopeStep)
+        end)
+    end)
+end
+
 -- ── auto-persistence of settings ─────────────────────────────────────────────
 -- Every feature widget change (and the window look) is written to
 -- Config.SettingsFile (debounced) and restored on the next launch, so
@@ -22816,6 +23467,7 @@ function xDTaraZ.UI.BuildAimbot(tab)
     xDTaraZ.UI.KeyBind(main, "Aimbot", "AimbotKey", "E", "Toggle")
     xDTaraZ.UI.Slider(main, "AimbotSmooth", { Name = T("Smoothness", "ความนุ่ม"), Desc = T("1 = instant snap", "1 = หันทันที"), Min = 1, Max = 20, Default = 1 })
     xDTaraZ.UI.Toggle(main, "AimbotSticky", { Name = T("Sticky target", "ล็อคเป้าเดิม"), Desc = T("Keeps the same enemy until it is lost", "ไม่สลับเป้าจนกว่าเป้าเดิมจะหลุด"), Default = true })
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(main, "Shitaro.AutoScope", { Name = T("Auto scope", "Авто-прицел"), Desc = T("Scopes in when you fire a scoped weapon (Shitaro)", "Наводит прицел при выстреле из снайперки (Shitaro)"), Default = false }), function(value) xDTaraZ.Shitaro.misc.auto_scope = value end)
 
     local target = tab:AddRightGroupbox({ Name = T("Aimbot Targeting", "การเลือกเป้า (เล็ง)"), Icon = "target" })
     xDTaraZ.UI.Dropdown(target, "AimbotBone", { Name = T("Aim part", "จุดที่เล็ง"), Options = { "Head", "Torso" }, Default = "Head" })
@@ -23053,6 +23705,10 @@ function xDTaraZ.UI.BuildMisc(window)
         local sent = xDTaraZ.Economy.RedeemAll()
         xDTaraZ.UI.Notify("Codes", "Sent " .. sent .. " codes (level 5+ needed)", 4, "Coin")
     end) })
+
+    local bomb = tab:AddLeftGroupbox({ Name = T("Bomb", "Бомба"), Icon = "bomb" })
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(bomb, "Shitaro.AutoPlant", { Name = T("Auto plant", "Авто-установка"), Desc = T("Plants the C4 the moment you stand in a plant zone with it equipped (Shitaro)", "Ставит C4, как только вы с ним в зоне установки (Shitaro)"), Default = false }), function(value) xDTaraZ.Shitaro.misc.auto_plant = value end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(bomb, "Shitaro.AutoDefuse", { Name = T("Auto defuse", "Авто-разминирование"), Desc = T("Defuses the planted bomb when you are in range; CT only (Shitaro)", "Разминирует заложенную бомбу, когда вы в радиусе; только за CT (Shitaro)"), Default = false }), function(value) xDTaraZ.Shitaro.misc.auto_defuse = value end)
 
     local util = tab:AddRightGroupbox({ Name = T("Utility", "อรรถประโยชน์"), Icon = "settings-2" })
     xDTaraZ.UI.Toggle(util, "InfiniteJump", { Name = T("Infinite jump", "กระโดดไม่จำกัด"), Desc = T("Lobby only, use Bunny hop in rounds", "ใช้ได้เฉพาะล็อบบี้ ในรอบใช้บันนี่ฮอป") })
@@ -23494,6 +24150,7 @@ function xDTaraZ.Boot()
     xDTaraZ.Scheduler.Every("Auto Rebuy", 0.5, xDTaraZ.Economy.Tick, { "AutoRebuy" })
     xDTaraZ.Scheduler.Every("Sound ESP", 0.1, xDTaraZ.Sound.Step, { "SoundEsp" }, xDTaraZ.Sound.Step)
     xDTaraZ.Scheduler.Every("Skin Changer", 0.15, xDTaraZ.Skins.Step, { "SkinChanger" }, xDTaraZ.Skins.Step)
+    xDTaraZ.Util.Try("shitaro bomb", xDTaraZ.Shitaro.Start)
     xDTaraZ.Util.Try("scheduler", xDTaraZ.Scheduler.Boot)
 end
 
@@ -23504,6 +24161,7 @@ function xDTaraZ:Unload()
     pcall(xDTaraZ.Visuals.Destroy)
     if xDTaraZ.Esp.Folder then pcall(function() xDTaraZ.Esp.Folder:Destroy() end) end
     xDTaraZ.Combat.Unload()
+    if xDTaraZ.Shitaro and xDTaraZ.Shitaro.Stop then pcall(xDTaraZ.Shitaro.Stop) end
     for _, key in ipairs({ "NoRecoil", "NoSpread", "Fullbright", "CameraFov", "BunnyHop", "SkinChanger" }) do
         xDTaraZ.Options[key] = false
     end
