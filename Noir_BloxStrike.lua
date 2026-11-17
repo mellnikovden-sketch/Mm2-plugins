@@ -32,6 +32,10 @@
     (message.txt): выстрел ровно в кадр готовности оружия (Properties.
     FireRate / NextShotDue). Visuals — мобильный ESP из raw(2): чамсы
     Highlight AlwaysOnTop + BoxHandleAdornment, группа «Визуалы».
+    Antiaim + Movement — модули T/U/V/W дословно из оригинала
+    (движок анти-аима U: yaw/pitch/spin/jitter/мануал; контроллер
+    движения W с хуком MovementV2: bhop/strafe/edge jump/jump bug/
+    edge bug/slow walk/pixel surf), группы «Анти-аим» и «Движение».
     no-recoil / no-spread убраны по запросу (флаги жёстко false).
   • Автосохранение: фабрики элементов AirFlow берут состояние из opts.Default,
     а сохранённое значение пускают только на рендер — поэтому тумблер после
@@ -28954,6 +28958,1483 @@ m.shown=nil;
 end;
 return K;
 end;
+-- ── Antiaim + движение: модули T/U/V/W дословно из оригинала (строки 18075-19545).
+-- U — движок анти-аима (cfg: on/yaw/jitter/spin_rate/pitch/air_spin/air_rate/air_pitch/man/auto/ang),
+-- W — контроллер движения (cfg: bhop/strafe/edge_jump/jump_bug/edge_bug/slow_walk/pixel_surf),
+-- хук MovementV2 игры; T — трекер состояния, V — буфер команды. Загрузка W тянет U/V/T.
+
+D.T=function()local j,h=os.clock,{hooked=false,on=false,fresh=false,broke=false,target=nil,beat=0,samples=0,still=0,ground=false,bx=0,by=0,bj=false,input_at=0};
+h.engage=function(b)if not(h.on)then
+    h.on=true;
+    h.fresh=true;
+    h.broke=false;
+    h.samples=0;
+    h.still=0;
+    h.ground=false;
+end;
+h.target=b;
+h.beat=j();
+end;
+h.release=function()h.on=false;
+h.fresh=false;
+h.broke=false;
+h.target=nil;
+h.samples=0;
+h.still=0;
+h.ground=false;
+end;
+h.active=function(j)if not(h.on)then
+    return false;
+end;
+if j-h.beat>0.5 then
+    h.release();
+    return false;
+end;
+return true;
+end;
+return h;
+end;
+D.U=function()local j,h,b=D.load("b"),D.load("a"),D.load("h");
+local K,S,o=D.load("j"),D.load("L"),D.load("o");
+local t=D.load("k").slots;
+local G=D.load("T");
+local i=j.lp;
+local Y=j.workspace;
+local O=K.pose;
+local T,x,p=K.grenade,K.inventory,os.clock;
+local K=S.probe;
+local S=Vector3.new;
+local A=math.rad;
+local M=math.random;
+local a=math.clamp;
+local B=math.atan2;
+local N=math.cos;
+local I,R,n,E,d,w,P,r,L,Z,X,q,U,z,J=math.sin,3.141592653589793,{["Counter-Terrorists"]=true,Terrorists=true},2,4.5,3.5,0.05,0.25,2,10,{on=false,yaw="backward",jitter=45,spin_rate=25,pitch="off",air_spin=false,air_rate=30,air_pitch="off",duck=false,duck_rate=4,man=0,auto=false,ang=90},0;
+local y,f,k,g,Q=0,false,{s=0,at=0,lk=0,ch=nil},{},false;
+local c=type(O)=="table"and type(O.getJoints)=="function"and type(O.applyVerticalLook)=="function";
+local function H()if c then
+    if z then
+        pcall(O.applyVerticalLook,z,0,0);
+    end;
+end;
+end;
+local function _(s)if c then
+    if not(s)then
+        return nil;
+    end;
+else
+    return nil;
+end;
+if J==s then
+    if z then
+        local F=z;
+        return F;
+    end;
+end;
+H();
+z,J=nil,nil;
+local F,v=pcall(O.getJoints,s);
+if F then
+    if type(v)=="table"then z,J=v,s;
+end;
+end;
+s=z;
+return s;
+end;
+local function s(F)local v,u,V,e,l=i:GetAttribute("Team"),Y:GetAttribute("Gamemode")=="Deathmatch",p(),b.all();
+local b,C,W,mF,DF;
+for jF=1,l,1 do
+    local l=e[jF];
+    if l~=i then
+        jF=l:GetAttribute("Team");
+        if u or v~=nil and jF~=nil and n[v]and n[jF]and v~=jF then
+            local n,v,u=l.Character;
+            local e=false;
+            if n then
+                if n:GetAttribute("Dead")~=true then
+                    if n:IsDescendantOf(Y)then
+                        if n:GetAttribute("ClientCharacterPresentationVisible")~=false then
+                            local Y=n:FindFirstChild("HumanoidRootPart");
+                            if Y then
+                                local jF,hF=n:FindFirstChild("Head"),Y.Position;
+                                u=jF and jF.Position or hF+S(0,1.8,0);
+                                jF=true;
+                                v,e=hF,jF;
+                            else
+                            end;
+                        else
+                        end;
+                    else
+                    end;
+                else
+                end;
+            else
+            end;
+            local Y=mF;
+            if v then
+                mF=u;
+            else
+                local jF=t[l];
+                local t=jF and jF.mode=="est"and jF.cerr<=Z and V-jF.at<=L and jF.cur;
+                if t then
+                    local L=jF.ghost;
+                    local Z=L and L.parts.Head;
+                    mF=Z and Z.Position or t+S(0,1.8,0);
+                    v=t;
+                else
+                    mF=u;
+                end;
+            end;
+            if v then
+                local t=(v-F).Magnitude;
+                if(if b then
+                    e and not C
+                else
+                    not b)or e==C and t<b then
+                        b,C,W,DF=t,e,v,e and n or nil;
+                    else
+                        mF=Y;
+                    end;
+                else
+                    mF=Y;
+                end;
+            else
+            end;
+        else
+        end;
+    end;
+    return W,mF,DF;
+end;
+local function b(t,Y)if Q then
+    return o.clear(t,Y);
+end;
+return K(t,Y-t,nil,g).instance==nil;
+end;
+local function K(t,Y,n)Q=o.sync();
+if n then
+    local o=b(n,t-Y*E);
+    if o~=b(n,t+Y*E)then
+        return o and 1 or-1;
+    end;
+    if o then
+        return 0;
+    end;
+    o=b(n,t-Y*d);
+    if o~=b(n,t+Y*d)then
+        return o and 1 or-1;
+    end;
+end;
+n=not b(t,t-Y*w);
+if n~=not b(t,t+Y*w)then
+    return n and-1 or 1;
+end;
+return nil;
+end;
+local function b(o,t,Y,n,E)local d=p();
+if k.ch~=o then
+    k.ch=o;
+    k.s=0;
+    k.at=0;
+    k.lk=0;
+end;
+if d<k.at then
+    return k.s;
+end;
+k.at=d+P;
+g[1]=o;
+g[2]=E;
+local E,w=t.Position,o and(o:FindFirstChild("Head"));
+t=S(E.X,w and w.Position.Y or E.Y+1.8,E.Z);
+o,w=pcall(K,t,S(-N(Y),0,I(Y)),n);
+if o then
+    if w~=nil then
+        if w~=k.s then
+            if k.s==0 then
+                k.s,k.lk=w,d+r;
+            elseif  d>=k.lk then
+                k.s,k.lk=w,d+r;
+            end;
+        end;
+    end;
+end;
+return k.s;
+end;
+local function K()if p()<y then
+    return true;
+elseif  G.on then
+    return true;
+end;
+return i:GetAttribute("IsDefusingBomb")==true or i:GetAttribute("IsLocallyDefusingBomb")==true;
+end;
+if type(T)=="table"then if type(rawget(T,"Throw"))=="function"then h.field(T,"Throw",function(S)local function o(t,...)if X.on then
+    y=p()+1.25;
+end;
+return S(t,...);
+end;
+return o;
+end);
+end;
+end;
+if type(x)=="table"then if type(rawget(x,"PredictGrenadeThrow"))=="function"then h.field(x,"PredictGrenadeThrow",function(S)local function o(...)local t=S(...);
+if t==true then
+    if X.on then
+        y=p()+0.35;
+    end;
+end;
+return t;
+end;
+return o;
+end);
+end;
+end;
+j={cfg=X,reset=function()q,U=0,nil;
+k.s=0;
+k.at=0;
+k.lk=0;
+end,relax=function()H();
+end,apply=function(S,o)if not(X.on)then
+    return;
+end;
+if K()then
+    if not(f)then
+        f=true;
+        H();
+    end;
+    return;
+end;
+f=false;
+local K,t,G=tonumber(o.LookYaw)or 0,tonumber(o.VerticalLook)or 0,S and S.MovementState;
+local i=G and G.OnGround==false and X.air_spin==true;
+local Y,T=i and X.air_pitch or X.pitch;
+if i then
+    G=q;
+    q=G+A(tonumber(X.air_rate)or 30);
+    T=K+q;
+else
+    local x=U;
+    if x~=X.yaw then
+        q=0;
+        U=X.yaw;
+    end;
+    local p,n,E,d=X.yaw,X.man,K+R,S and S.HumanoidRootPart;
+    if d and(n~=0 or X.auto or p=="backward"or p=="jitter")then
+        x=d.Position;
+        local R,w,P=s(x);
+        if R then
+            local r=R-x;
+            E=B(r.X,r.Z);
+        else
+        end;
+        n=if n==0 then
+            if X.auto then
+                b(S.Character,d,E,w,P)
+            else
+                n
+            else
+                n;
+            else
+            end;
+            if n~=0 then
+                T=E+A(tonumber(X.ang)or 90)*(Y=="up"and-n or n);
+            else
+                if p=="spin"then x=q;
+                q=x+A(tonumber(X.spin_rate)or 25);
+                T=K+q;
+            else
+                T=if p=="backward"then E
+            else
+                if p=="jitter"then E
+            else
+                K;
+            end;
+        end;
+        T=if p=="jitter"then T+A((M()*2-1)*(tonumber(X.jitter)or 0))
+    else
+        T;
+    end;
+    i=Y~="off";
+    t=a(if Y=="down"then-1
+else
+    if Y=="up"then 1
+else
+    if Y=="jitter"then M()*2-1
+else
+    t,-1,1);
+    o.LookYaw=T;
+    o.VerticalLook=t;
+    if typeof(o.Move)=="Vector2"then G=T-K;
+    if math.abs(G)>1.0E-6 then
+        local b,T,x=N(G),I(G),o.Move;
+        o.Move=Vector2.new(x.X*b-x.Y*T,x.X*T+x.Y*b);
+    end;
+end;
+if X.duck then
+    K,Y=1/(2*a(tonumber(X.duck_rate)or 4,1,12)),tonumber(o.Buttons)or 0;
+    if math.floor(os.clock()/K)%2==1 then
+        o.Buttons=bit32.bor(Y,2);
+    else
+        o.Buttons=bit32.band(Y,bit32.bnot(2));
+    end;
+end;
+if i then
+    if c then
+        if S then
+            if S.Character then
+                K=_(S.Character);
+                if K then
+                    pcall(O.applyVerticalLook,K,t,0);
+                end;
+            end;
+        end;
+    end;
+end;
+end,unload=function()X.on=false;
+y,f=0,false;
+H();
+z,J=nil,nil;
+k.ch=nil;
+table.clear(g);
+end
+};
+h.teardown(j.unload);
+return j;
+end;
+D.V=function()local j={weapon=nil,cframe=nil,yaw=0,pitch=0,expires=0,cmd_samples=0};
+j.cmd_active=function(h)h=h or os.clock();
+if j.cmd_samples<=0 then
+    return false;
+elseif  h>j.expires then
+    return false;
+end;
+if type(j.yaw)~="number"then return false;
+elseif  type(j.pitch)~="number"then return false;
+end;
+return true;
+end;
+j.cmd_consume=function()if j.cmd_samples>0 then
+    j.cmd_samples=j.cmd_samples-1;
+end;
+end;
+j.clear=function()j.weapon=nil;
+j.cframe=nil;
+j.yaw=0;
+j.pitch=0;
+j.expires=0;
+j.cmd_samples=0;
+end;
+return j;
+end;
+D.W=function()local j,h,b,K=D.load("b"),D.load("a"),D.load("j"),D.load("U");
+local S=D.load("V");
+local o=D.load("T");
+local t,G,i=j.lp,j.storage,math.clamp;
+local Y=math.floor;
+local O=math.sqrt;
+local T=math.abs;
+local x=math.cos;
+local p,A=math.sin,3.141592653589793;
+local M=math.atan2;
+local a=bit32.bor;
+local B=bit32.band;
+local N,I,R,n,E,d,w=bit32.bnot,{bhop=false,strafe=false,edge_jump=false,jump_bug=false,edge_bug=false,slow_walk=false,pixel_surf=false};
+local P,r,L,Z,X,q,U=false;
+do
+    local z=G:FindFirstChild("MovementV2");
+    if z then
+        local J,y,f,k,g,Q=pcall(function()return require(z.Simulation),require(z.Simulation.State),require(z.Simulation.RuntimeSettings),require(z.Serial),require(z.Buttons);
+    end);
+    if J and type(y)=="table"then if type(y.step)=="function"then if type(f)=="table"then if type(k)=="table"then if type(g)=="table"then if type(Q)=="table"then local z=true;
+    R,n,E,d,w,P=y,f,k,g,Q,z;
+else
+end;
+else
+end;
+else
+end;
+else
+end;
+else
+end;
+else
+end;
+else
+end;
+r,L,Z,X,q,U=R,n,E,d,w,P;
+end;
+local R=q and q.Jump or 1;
+local n=q and q.Duck or 2;
+local E,d,w=q and q.Walk or 4,{char=nil,runtime=nil,bug_pending=false,hz=nil,config=nil,strafe_yaw=nil,strafe_side=1,capture=false,world=nil,world_tick=nil,world_owner=nil},{mode=nil,normal=nil,duck=false,wide=false,ticks=0,check=0,away=0,rest=0,jump=false,air=false};
+local P=math.round;
+local z=math.max;
+local J=math.log;
+local y,f,k,g=math.exp,6.283185307179586,{1,0.5,0},{};
+for Q=0,7,1 do
+    G=Q*A/4;
+    g[Q+1]=Vector3.new(x(G),0,p(G));
+end;
+local Q={};
+m:rH(Q,0,Vector2.zero);
+for c=0,15,1 do
+    j=c*A/8;
+    Q[#Q+1]=Vector2.new(x(j),p(j));
+end;
+local c,H={},{};
+G=b.mv_runtime;
+if type(G)=="table"then if type(rawget(G,"advance"))=="function"then h.field(G,"advance",function(_)return function(s,...)d.runtime=s;
+return _(s,...);
+end;
+end);
+end;
+end;
+if type(G)=="table"then if type(rawget(G,"_composeWorld"))=="function"then j=h.field(G,"_composeWorld",function(_)return function(s,F,...)local v,u=_(s,F,...);
+if v~=nil then
+    d.world=v;
+    d.world_tick=F;
+    d.world_owner=s;
+end;
+return v,u;
+end;
+end);
+d.capture=rawget(G,"_composeWorld")~=j;
+h.teardown(function()d.capture=false;
+d.world=nil;
+d.world_tick=nil;
+d.world_owner=nil;
+end);
+end;
+end;
+local function _(s,F,v)if q then
+    if type(q.with)=="function"then return q.with(s,F,v);
+end;
+end;
+if v then
+    return a(s,F);
+end;
+return B(s,N(F));
+end;
+local function q(s)local F=d.runtime;
+if type(F)~="table"then return nil;
+end;
+if rawget(F,"_started")~=true then
+    return nil;
+end;
+if type(s)=="table"then local v=rawget(F,"_mapping");
+if type(v)~="table"then return nil;
+elseif  v.Generation~=s.Generation then
+    return nil;
+end;
+end;
+return F;
+end;
+local function s(F)local v=type(F)=="table"and tonumber(F.SimulationHz)or nil;
+if not(v)then
+    return nil;
+end;
+if d.hz==v then
+    if d.config then
+        return d.config;
+    end;
+end;
+local F,u=pcall(Z.getMovementConfig,v);
+if F then
+    if type(u)~="table"then return nil;
+end;
+else
+    return nil;
+end;
+d.hz=v;
+d.config=u;
+return u;
+end;
+local function Z(F,v)if U then
+    if type(F)~="table"then return nil;
+elseif  type(v)~="table"then return nil;
+elseif  type(F.Support)~="table"then return nil;
+end;
+else
+    return nil;
+end;
+local U=tonumber(F.ServerTick);
+if not(U)then
+    return nil;
+end;
+local u=q(F.Mapping);
+if not(u)then
+    return nil;
+end;
+local q=rawget(u,"_commandStream");
+if type(q)~="table"then return nil;
+end;
+local V=d.world_owner==u and d.world_tick==U and d.world or nil;
+if V then
+else
+    if d.capture then
+    else
+        local e=rawget(u,"_timeline");
+        if type(e)~="table"then return nil;
+    end;
+    local l,C=pcall(e.resolve,e,U);
+    if l then
+        if type(C)~="table"then return nil;
+    end;
+else
+    return nil;
+end;
+l,e=pcall(u._composeWorld,u,U,C.Revision,nil,v);
+V=l and e or nil;
+end;
+end;
+if type(V)~="table"then return nil;
+elseif  type(V.Composed)~="table"then return nil;
+elseif  type(V.Composed.Query)~="table"then return nil;
+end;
+U=s(F.Mapping);
+if not U then
+    return nil;
+end;
+local s,e=pcall(q.lastSampledCommandNumber,q);
+if not(s)then
+    return nil;
+end;
+q,s=pcall(X.addUInt32,e or 4294967295,1);
+if not q then
+    return nil;
+end;
+return{runtime=u,state=v,support=F.Support,world=V,config=U,step=i(tonumber(F.StepSeconds)or 0.015625,0.001,0.05),number=s};
+end;
+local function X(q)local U,s=pcall(L.clone,q.state);
+if U then
+    if type(s)~="table"then return nil;
+end;
+else
+    return nil;
+end;
+local U,F=pcall(L.cloneSupport,q.support);
+if U then
+    if type(F)~="table"then return nil;
+end;
+else
+    return nil;
+end;
+return s,F;
+end;
+local function L(q)local U=P(q%f/f*65536)%65536/65536*f;
+if U>=A then
+    return U-f;
+end;
+return U;
+end;
+local function A(q,U,f,s,F,v,u,V)local e,l=pcall(q.runtime._resolveSupportMotion,q.runtime,q.world,U,f);
+if not(e)then
+    return nil;
+end;
+local e,C,W,mF=pcall(r.step,U,f,{CommandNumber=s,Move=Vector2.new(P(i(F.X,-1,1)*127)/127,P(i(F.Y,-1,1)*127)/127),LookYaw=L(v),VerticalLook=P(i(u,-1,1)*127)/127,Buttons=V},q.step,q.world.Composed.Query,l,q.config,nil);
+if e then
+    if type(C)~="table"then return nil;
+elseif  type(W)~="table"then return nil;
+elseif  type(mF)~="table"then return nil;
+end;
+else
+    return nil;
+end;
+return C,W,mF;
+end;
+local function P(r,L,q,U,f)local s,F=X(r);
+if not(s)then
+    return nil;
+end;
+return A(r,s,F,r.number,L,q,U,f);
+end;
+local function A(r,L,X,q)if q.Landed then
+    return false;
+elseif  q.StartSolid then
+    return false;
+elseif  L.OnGround==true then
+    return false;
+elseif  X.OnGround==true then
+    return false;
+end;
+local U,f=L.Velocity,X.Velocity;
+if typeof(U)~="Vector3"then return false;
+elseif  typeof(f)~="Vector3"then return false;
+elseif  U.Y>=-4 then
+    return false;
+end;
+q=T(tonumber(r.config.Gravity)or 60);
+local s=math.max(1.25,q*r.step*1.35);
+if T(f.Y)>s then
+    return false;
+elseif  f.Y<=U.Y+4 then
+    return false;
+end;
+return X.Position.Y<=L.Position.Y+0.05;
+end;
+local function r(L,X,q,U,f)local s=_(_(f,R,false),n,false);
+local F,v,v=P(L,X,q,U,s);
+if not(F)then
+    return nil;
+end;
+if A(L,L.state,F,v)then
+    return X,false;
+end;
+if not(v.Landed)then
+    return nil;
+end;
+f=#Q+1;
+for u=0,#Q,1 do
+    F=u+1;
+    c[F]=u;
+    H[F]=((u==0 and X or Q[u])-X).Magnitude;
+end;
+for u=2,f,1 do
+    local V,e,l=c[u],H[u],u-1;
+    while l>=1 and H[l]>e do
+        c[l+1]=c[l];
+        H[l+1]=H[l];
+        l-=1;
+    end;
+    c[l+1]=V;
+    H[l+1]=e;
+end;
+local u,V,e;
+for l=0,1,1 do
+    v=l==1;
+    local C,W=v and 0.25 or 0,_(s,n,v);
+    for s=1,f,1 do
+        F=c[s];
+        if l~=0 or F~=0 then
+            local f=H[s]+C;
+            if u then
+                if f>=u then
+                    break;
+                end;
+            end;
+            local c=F==0 and X or Q[F];
+            local X,Q,Q=P(L,c,q,U,W);
+            if X then
+                if A(L,L.state,X,Q)then
+                    u,V,e=f,c,v;
+                    break;
+                end;
+            end;
+        end;
+    end;
+end;
+return V,e;
+end;
+local function A(L,X)local q,U=p(X),x(X);
+local f,Q=U*L.X+q*L.Y,-q*L.X+U*L.Y;
+X=f*f+Q*Q;
+if X>1 then
+    U=1/O(X);
+    f,Q=f*U,Q*U;
+else
+end;
+return Vector3.new(f,0,Q);
+end;
+local function O(L,X)local q,U=p(X),x(X);
+return Vector2.new(U*L.X-q*L.Z,q*L.X+U*L.Z);
+end;
+local function L(X,q,U,f)local Q=Vector3.new(U.X,0,U.Z);
+local c,H=Q.Magnitude,d.strafe_yaw;
+d.strafe_yaw=q;
+if c<=0.05 then
+    if X.Magnitude>0.001 then
+        return X.Magnitude>1 and X.Unit or X;
+    end;
+    U=d.strafe_side or 1;
+    d.strafe_side=U;
+    return Vector2.new(U,0);
+end;
+U=Q/c;
+Q=Vector3.new(U.Z,0,-U.X);
+c=A(X,q):Dot(Q);
+X=nil;
+if T(c)>0.01 then
+    X=c>0 and 1 or-1;
+else
+    if H~=nil then
+        U=math.atan2(p(q-H),x(q-H));
+        X=if T(U)>1.0E-4 then
+            U>0 and 1 or-1
+        else
+            X;
+        else
+        end;
+    end;
+    if X then
+    else
+        U=tonumber(f);
+        X=if U then
+            Y(U)%2==0 and 1 or-1
+        else
+            -(d.strafe_side or 1);
+        end;
+        d.strafe_side=X;
+        return O(Q*X,q);
+    end;
+    local function Y(X)if typeof(X)~="Vector3"then return nil;
+elseif  T(X.Y)>=0.7 then
+    return nil;
+end;
+local q=Vector3.new(X.X,0,X.Z);
+if q.Magnitude<0.3 then
+    return nil;
+end;
+return q.Unit;
+end;
+local function X(q)return q.Stance=="Ducking"and"Ducking"or"Standing";
+end;
+local function q(U,f)local Q=f=="Ducking"and U.PlayerSizeDucking or U.PlayerSizeStanding;
+return typeof(Q)=="Vector3"and Q.X*0.5 or 1.2;
+end;
+local function U(f,Q)local c=Q=="Ducking"and f.PlayerSizeDucking or f.PlayerSizeStanding;
+return typeof(c)=="Vector3"and c.Y*0.5 or 2.7;
+end;
+local function f(Q,c)return c.Position.Y-U(Q,X(c));
+end;
+local function Q(c)local H,s=c.PlayerSizeStanding,c.PlayerSizeDucking;
+if typeof(H)~="Vector3"then return 0.27;
+elseif  typeof(s)~="Vector3"then return 0.27;
+end;
+return(H.Y-s.Y)*(tonumber(c.DuckJumpOriginShiftFraction)or 0.2);
+end;
+local function c(H)local s=tonumber(H.DuckAmount);
+if s then
+    if s>=0.999 then
+        return true;
+    end;
+end;
+s=tonumber(H.DuckCooldownSeconds);
+if s then
+    if s>0 then
+        local s=tonumber(H.DuckAmount);
+        if s then
+            if s<=0.75 then
+                return false;
+            end;
+        else
+            return false;
+        end;
+    end;
+end;
+return(tonumber(H.DuckSpeed)or 8)>=3.5;
+end;
+local function H(s,F,v,u)local V,e=pcall(s.Sweep,s,F,v,u,nil,1,1);
+if V then
+    if type(e)=="table"then return e;
+end;
+end;
+return nil;
+end;
+local function s(F,v,u,V)local e,l=pcall(F.FindGround,F,v,u,V,1);
+if e then
+    if type(l)=="table"then return l;
+end;
+end;
+return nil;
+end;
+local function F(v,u,V)local e,l=pcall(v.IsClear,v,u,V,1);
+return e and l==true;
+end;
+local function v(u,V)if V<=0 then
+    return 0;
+end;
+local e=z(tonumber(u.Friction)or 5.2,0.1);
+local l=(tonumber(u.GroundAccelerate)or 5.5)*z(tonumber(u.DefaultBaseMoveSpeed)or 18.75,1)/e;
+u=J(1+V/l)/e;
+return(V+l)/e*(1-y(-e*u))-l*u;
+end;
+local function J(y,u,V,e,l)local C=u-Vector3.new(0,0.5,0);
+u=C+V*(e*2+0.35);
+if not(F(y,u,l))then
+    return V;
+end;
+e=H(y,u,C,l);
+if e then
+    if not(e.StartSolid)then
+        C=tonumber(e.Fraction);
+        if C then
+            if C<1 then
+                u=Y(e.Normal);
+                if u then
+                    if u:Dot(V)>0.5 then
+                        return u;
+                    end;
+                end;
+            end;
+        end;
+    end;
+end;
+return V;
+end;
+local function y(u)return(tonumber(u.MaxStepHeight)or 1.35)+0.15;
+end;
+local function u(V,e,l,C)return F(V,e,l)and s(V,e,l,C)==nil;
+end;
+local function V(e,l,C)return s(e,l,C,1.5)~=nil;
+end;
+local function e(l)w.mode=nil;
+w.normal=nil;
+w.duck=false;
+w.wide=false;
+w.ticks=0;
+w.check=0;
+w.away=0;
+if l then
+    w.rest=10;
+end;
+end;
+local function l(C,W)local mF,DF,jF,hF=C.world.Composed.Query,C.config,X(W),W.Position;
+local bF,KF,SF=q(DF,jF),y(DF),w.mode=="catch"and w.normal or nil;
+e(false);
+SF=SF and(if u(mF,hF+SF*(bF*2+0.6),jF,KF)then
+    SF
+else
+    nil);
+    if SF then
+    else
+        C,DF=bF*2+0.35,Vector3.zero;
+        for oF=1,#g,1 do
+            W=g[oF];
+            DF=if u(mF,hF+W*C,jF,KF)then
+                DF+W
+            else
+                DF;
+            end;
+            SF=if DF.Magnitude>0.3 then
+                J(mF,hF,DF.Unit,bF,jF)
+            else
+                SF;
+            end;
+            if not(SF)then
+                return;
+            end;
+            w.mode="ride";
+            w.normal=SF;
+            w.wide=not u(mF,hF-SF*(bF*2+0.35),jF,KF);
+        end;
+        local function J(C,W,mF,DF,jF,hF,bF)local KF,SF,oF=C.world.Composed.Query,C.config,w.normal;
+        local tF,GF=Vector3.new(-oF.Z,0,oF.X),A(mF,DF);
+        mF=GF:Dot(oF);
+        if mF>0.7 then
+            w.away=w.away+1;
+            if w.away>=30 then
+                e(true);
+                return nil;
+            end;
+        else
+            w.away=0;
+        end;
+        local iF=X(W);
+        w.check=w.check+1;
+        if w.check>=8 then
+            w.check=0;
+            if not(u(KF,W.Position+oF*(q(SF,iF)*2+0.6),iF,y(SF)))then
+                e(false);
+                return nil;
+            end;
+        end;
+        local y,u,YF,OF,TF=_(_(hF,R,false),n,false),GF:Dot(tF),bF:Dot(oF),bF:Dot(tF),false;
+        GF=v(SF,T(OF))+0.45;
+        if T(OF)>0.5 and not V(KF,W.Position+tF*(OF>0 and GF or-GF),iF)then
+            u,TF=OF>0 and-1 or 1,true;
+        else
+            if T(u)>0.05 and(u*OF<=0 or T(OF)<=0.5)then
+                if V(KF,W.Position+tF*(u>0 and GF or-GF),iF)then
+                else
+                    bF,hF=true,0;
+                    u,TF=hF,bF;
+                end;
+            else
+            end;
+        end;
+        bF=if w.wide then
+            z(YF,0)*0.9+z(-mF,0)
+        else
+            YF*0.9;
+            for OF=1,3,1 do
+                iF=if OF==1 then
+                    tF*u-oF*i(bF,-1,1)
+                else
+                    if OF==2 then
+                        tF*(u*0.5)-oF*(YF>=0 and 1 or-1)
+                    else
+                        Vector3.zero;
+                        iF=if iF.Magnitude>1 then
+                            iF.Unit
+                        else
+                            iF;
+                            mF=iF.Magnitude>0.01 and O(iF,DF)or Vector2.zero;
+                            if OF==1 then
+                                if not(TF)then
+                                    if YF<=0 then
+                                        if iF:Dot(oF)<=0 then
+                                            return mF;
+                                        end;
+                                    end;
+                                end;
+                            end;
+                            W=P(C,mF,DF,jF,y);
+                            if W then
+                                if W.OnGround==true then
+                                    hF=W.Velocity;
+                                    GF=hF.X*oF.X+hF.Z*oF.Z;
+                                    if GF<=0.35 then
+                                        return mF;
+                                    elseif  V(KF,W.Position+oF*v(SF,GF),X(W))then
+                                        return mF;
+                                    end;
+                                end;
+                            end;
+                        end;
+                        e(true);
+                        return nil;
+                    end;
+                    local function y(v,u,V,C)local W=Vector3.new(V.X,0,V.Z);
+                    local mF,DF,jF,hF=W.Magnitude>1 and W.Unit or nil,v.world.Composed.Query,X(u),u.Position;
+                    V=if mF then
+                        C+mF*0.6
+                    else
+                        C;
+                        if V.Magnitude<0.15 then
+                            return nil;
+                        end;
+                        W=Y(u.WallNormal);
+                        u,C=W and-V.Unit:Dot(W)or nil,W;
+                        for bF=1,#g,1 do
+                            mF=g[bF];
+                            if V:Dot(mF)>0.15 then
+                                v=H(DF,hF,hF+mF*2.6,jF);
+                                if v then
+                                    if v.AllSolid then
+                                    else
+                                        bF=tonumber(v.Fraction);
+                                        if bF then
+                                            if bF<1 then
+                                                W=Y(v.Normal);
+                                                if W then
+                                                    local Y=-V.Unit:Dot(W);
+                                                    if Y>0.25 then
+                                                        if u then
+                                                            if Y>u then
+                                                                u,C=Y,W;
+                                                            else
+                                                            end;
+                                                        else
+                                                            u,C=Y,W;
+                                                        end;
+                                                    else
+                                                    end;
+                                                else
+                                                end;
+                                            else
+                                            end;
+                                        else
+                                        end;
+                                    end;
+                                else
+                                end;
+                            else
+                            end;
+                        end;
+                        return C;
+                    end;
+                    local function Y(g,H,v,u)local V,C,W,mF=g.world.Composed.Query,g.config,H.Position,X(H);
+                    local X,DF=f(C,H),T(tonumber(C.Gravity)or 60);
+                    local f,jF,hF,bF,KF=u.Y>0 and u.Y*u.Y/(2*DF)or 0,z(0,tonumber(C.AutoJumpLedgeAssistHeight)or 0),U(C,mF),(tonumber(H.DuckAmount)or 0)>=0.999,0;
+                    if bF then
+                    else
+                        KF=Q(C);
+                        KF=if mF~="Ducking"then KF+(C.PlayerSizeStanding.Y-C.PlayerSizeDucking.Y)*0.5
+                    else
+                        KF;
+                    end;
+                    g=s(V,W,mF,14);
+                    DF,u=g and g.Position.Y-hF or X-14,X+f;
+                    f,g=u+jF;
+                    for U=1,3,1 do
+                        X=W-v*(U==1 and 0.1 or U==2 and 0.4 or q(C,mF)+0.2);
+                        for q=1,#k,1 do
+                            jF=f+KF*k[q]+0.2;
+                            U=Vector3.new(X.X,jF+hF,X.Z);
+                            if F(V,U,mF)then
+                                q=s(V,U,mF,jF-DF+14);
+                                if q then
+                                    g=q.Position.Y-hF;
+                                    break;
+                                end;
+                            end;
+                        end;
+                        if g then
+                            break;
+                        end;
+                    end;
+                    if g then
+                        if g<=DF+0.6 then
+                            return nil;
+                        end;
+                    else
+                        return nil;
+                    end;
+                    if g<=u-0.2 then
+                        return bF;
+                    end;
+                    if KF>0 then
+                        if g<=f+KF then
+                            if c(H)then
+                                return true;
+                            end;
+                        end;
+                    end;
+                    if g<=f then
+                        return bF;
+                    end;
+                    return nil;
+                end;
+                local function X(q,U,z,f,k,g)local Q,c=A(z,f),w.mode=="catch"and w.normal or nil;
+                if c then
+                    w.ticks=w.ticks+1;
+                    if w.ticks>40 then
+                        e(false);
+                        c=nil;
+                    else
+                        if Q:Dot(c)>0.7 then
+                            e(false);
+                            c=nil;
+                        else
+                        end;
+                    end;
+                else
+                end;
+                z=c;
+                if not z then
+                    c=y(q,U,k,Q);
+                    if not(c)then
+                        return nil;
+                    end;
+                    local A=Y(q,U,c,k);
+                    if A==nil then
+                        return nil;
+                    end;
+                    w.mode="catch";
+                    w.normal=c;
+                    w.duck=A;
+                    w.ticks=0;
+                    w.check=0;
+                    return O(-c,f),A or g;
+                end;
+                w.check=w.check+1;
+                if w.check>=3 then
+                    w.check=0;
+                    Q=Y(q,U,z,k);
+                    if Q==nil then
+                        e(false);
+                        return nil;
+                    end;
+                    if Q then
+                        w.duck=true;
+                    end;
+                end;
+                return O(-z,f),w.duck or g;
+            end;
+            local function Y(A,q,U,z,y,f,k,g,Q,c,H)if g then
+                if H then
+                    e(true);
+                    return nil;
+                end;
+                if Q or w.mode=="catch"then if w.rest>0 then
+                    e(false);
+                    return nil;
+                elseif  c then
+                    e(false);
+                    return nil;
+                end;
+                l(A,q);
+            end;
+            if w.mode~="ride"then return nil;
+        end;
+        local g=J(A,q,U,z,y,f,k);
+        if g then
+            return g,false;
+        end;
+        return nil;
+    end;
+    if w.mode=="ride"then e(false);
+end;
+if w.rest>0 then
+    return nil;
+end;
+return X(A,q,U,z,k,B(f,n)~=0);
+end;
+local function A(X)d.char=X;
+d.bug_pending=false;
+d.hz=nil;
+d.config=nil;
+d.strafe_yaw=nil;
+d.strafe_side=1;
+w.mode=nil;
+w.normal=nil;
+w.duck=false;
+w.wide=false;
+w.ticks=0;
+w.check=0;
+w.away=0;
+w.rest=0;
+w.jump=false;
+w.air=false;
+end;
+local function X(q,U,z)local J=U and U.State or q and q.MovementState;
+if type(J)~="table"then return nil;
+end;
+local y=q and q.Character;
+if d.char~=y then
+    A(y);
+end;
+local f,k,g,Q,c,H,s,F,v=tonumber(z.Buttons)or 0,typeof(z.Move)=="Vector2"and z.Move or Vector2.zero,tonumber(z.LookYaw)or tonumber(J.LookYaw)or 0,tonumber(z.VerticalLook)or tonumber(J.VerticalLook)or 0,typeof(J.Velocity)=="Vector3"and J.Velocity or q and q.GlobalVelocity or Vector3.zero,J.OnGround==true,J.MovementMode==nil or J.MovementMode=="Walking";
+y=false;
+if not(I.jump_bug)then
+    d.bug_pending=false;
+end;
+if s and I.strafe then
+    if H then
+        d.strafe_yaw=nil;
+    end;
+else
+    d.strafe_yaw=nil;
+end;
+local u=B(f,R)~=0;
+local V,l=u and not w.jump,w.air and H;
+w.jump=u;
+local C=not H;
+w.air=C;
+local W=I.pixel_surf and s;
+if W then
+    if w.rest>0 then
+        w.rest=w.rest-1;
+    end;
+elseif  w.mode~=nil then
+    e(false);
+end;
+local w=if s and I.bhop then
+    if q then
+        if q.JumpInputDown then
+            H
+        else
+            nil
+        else
+            nil
+        else
+            nil;
+            if d.bug_pending then
+                d.bug_pending=false;
+                if I.jump_bug then
+                    if s then
+                        if H then
+                            local e,mF,DF=true,false,true;
+                            w,F,y=e,mF,DF;
+                        else
+                        end;
+                    else
+                    end;
+                else
+                end;
+            else
+            end;
+            q=s and(W or I.edge_jump and H or(if H then
+                C
+            else
+                I.jump_bug or I.edge_bug))and Z(U,J)or nil;
+                if q and not y then
+                    if W then
+                        local e,mF=Y(q,J,k,g,Q,f,c,H,l,u,V);
+                        if e then
+                            local Y,DF,jF=false,mF==true,true;
+                            w,F,v,y=Y,DF,e,jF;
+                        else
+                        end;
+                    else
+                    end;
+                else
+                end;
+                if q and not y then
+                    if I.edge_jump then
+                        if H then
+                            V,u,J=P(q,k,g,Q,_(f,R,false));
+                            w=if V and J.LeftGround then
+                                if J.Jumped then
+                                    w
+                                else
+                                    if V.OnGround~=true then
+                                        true
+                                    else
+                                        w
+                                    else
+                                        w;
+                                    else
+                                    end;
+                                else
+                                end;
+                            else
+                            end;
+                            if q and not y and I.edge_bug and C then
+                                if c.Y<-4 then
+                                    W=if w~=nil then
+                                        (_(f,R,w))
+                                    else
+                                        f;
+                                        W=if F~=nil then
+                                            (_(W,n,F))
+                                        else
+                                            W;
+                                            l,J=r(q,k,g,Q,W);
+                                            if typeof(l)=="Vector2"then local Y,r,u=false,J==true,true;
+                                            w,F,v,y=Y,r,l,u;
+                                        else
+                                        end;
+                                    else
+                                    end;
+                                else
+                                end;
+                                if q and not y and I.jump_bug and C then
+                                    if c.Y<-4 then
+                                        l=_(_(f,R,false),n,true);
+                                        V,J,W=P(q,k,g,Q,l);
+                                        if V then
+                                            if W.Landed then
+                                                d.bug_pending=true;
+                                                local Y,d,r=false,true,true;
+                                                w,F,y=Y,d,r;
+                                            else
+                                            end;
+                                        else
+                                        end;
+                                    else
+                                    end;
+                                else
+                                end;
+                                v=if(if y then
+                                    not y
+                                else
+                                    s)and I.strafe then
+                                        if H then
+                                            v
+                                        else
+                                            L(k,g,c,U and U.ServerTick)
+                                        else
+                                            v;
+                                            if typeof(v)=="Vector2"then z.Move=v;
+                                        end;
+                                        f=if w~=nil then
+                                            (_(f,R,w))
+                                        else
+                                            f;
+                                            f=if F~=nil then
+                                                (_(f,n,F))
+                                            else
+                                                f;
+                                                z.Buttons=if I.slow_walk and s then
+                                                    if H then
+                                                        _(f,E,true)
+                                                    else
+                                                        f
+                                                    else
+                                                        f;
+                                                        return F;
+                                                    end;
+                                                    local function Y(n,E,d)if typeof(n.Move)~="Vector2"then return;
+                                                end;
+                                                local w=E-d;
+                                                if T(w)<=1.0E-6 then
+                                                    return;
+                                                end;
+                                                local T,E,d=x(w),p(w),n.Move;
+                                                n.Move=Vector2.new(d.X*T-d.Y*E,d.X*E+d.Y*T);
+                                            end;
+                                            local function T(x)if x>0.1 then
+                                                return 1;
+                                            elseif  x<-0.1 then
+                                                return-1;
+                                            end;
+                                            return 0;
+                                        end;
+                                        local function x(p)if typeof(p)~="Vector3"then return 0;
+                                    end;
+                                    return Vector3.new(p.X,0,p.Z).Magnitude;
+                                end;
+                                local function p(n)local E=n.CameraPart;
+                                if typeof(E)=="Instance"then if E:IsA("BasePart")then
+                                    if E.Parent then
+                                        return E.Position;
+                                    end;
+                                end;
+                            end;
+                            E=n.HumanoidRootPart;
+                            if typeof(E)=="Instance"then if E:IsA("BasePart")then
+                                if E.Parent then
+                                    return E.Position+Vector3.new(0,2,0);
+                                end;
+                            end;
+                        end;
+                        return nil;
+                    end;
+                    local function n(E,d,w,r,L)local q=d.Velocity;
+                    if typeof(q)~="Vector3"then return Vector2.zero;
+                elseif  d.OnGround~=true then
+                    return Vector2.zero;
+                end;
+                local U=Vector3.new(q.X,0,q.Z);
+                q=U.Magnitude;
+                if q<0.05 then
+                    return Vector2.zero;
+                end;
+                local z,J=O(-U/q,w),Z(E,d);
+                if J then
+                    U,E=P(J,Vector2.zero,w,r,L),P(J,z,w,r,L);
+                    if U then
+                        if E then
+                            if x(E.Velocity)<x(U.Velocity)then
+                                return z;
+                            end;
+                            return Vector2.zero;
+                        end;
+                    end;
+                end;
+                if q>2.5 then
+                    return z;
+                end;
+                return Vector2.zero;
+            end;
+            local function O(E,d,w,P,r,L)local Z=os.clock();
+            if P.Magnitude>0.1 then
+                o.input_at=Z;
+            elseif  r then
+                o.input_at=Z;
+            end;
+            if E then
+                if o.broke then
+                    return;
+                elseif  not(o.active(Z))then
+                    return;
+                end;
+            else
+                return;
+            end;
+            local q,U=T(P.X),T(P.Y);
+            if o.fresh then
+                o.fresh=false;
+                o.bx=q;
+                o.by=U;
+                o.bj=r;
+            elseif  q~=0 and q~=o.bx or U~=0 and U~=o.by then
+                o.broke=true;
+                return;
+            elseif  r then
+                if not(o.bj)then
+                    o.broke=true;
+                    return;
+                end;
+            end;
+            if q~=o.bx then
+                o.bx=0;
+            end;
+            if U~=o.by then
+                o.by=0;
+            end;
+            if not(r)then
+                o.bj=false;
+            end;
+            U=d and d.State or E.MovementState;
+            if type(U)~="table"then return;
+        end;
+        q,r=tonumber(w.LookYaw)or tonumber(U.LookYaw)or 0,tonumber(w.VerticalLook)or 0;
+        if L then
+            o.samples=0;
+        else
+            Z,P=p(E),o.target;
+            if Z then
+                if typeof(P)=="Vector3"then local T=P-Z;
+                local p=T.Magnitude;
+                if p>0.05 then
+                    local E=T/p;
+                    local T,p=M(-E.X,-E.Z),i(E.Y,-0.98,0.98);
+                    w.LookYaw=T;
+                    w.VerticalLook=p;
+                    o.samples=o.samples+1;
+                    q,r=T,p;
+                else
+                end;
+            else
+            end;
+        else
+        end;
+    end;
+    P=_(tonumber(w.Buttons)or 0,R,false);
+    w.Buttons=P;
+    w.Move=n(d,U,q,r,P);
+    o.ground=U.OnGround==true;
+    if o.ground then
+        if x(U.Velocity)<=0.25 then
+            o.still=o.still+1;
+        else
+            o.still=0;
+        end;
+    else
+        o.still=0;
+    end;
+end;
+j,G={cfg=I},b.character;
+if type(G)=="table"then if type(G.SampleInput)=="function"then b=h.field(G,"SampleInput",function(i)return function(T,x)local p=i(T,x);
+if type(p)~="table"then return p;
+end;
+local i,M,I=typeof(p.Move)=="Vector2"and p.Move or Vector2.zero,T~=nil and T.JumpInputDown==true,X(T,x,p);
+K.apply(T,p);
+if I~=nil then
+    local K=tonumber(p.Buttons)or 0;
+    if I then
+        p.Buttons=a(K,2);
+    else
+        p.Buttons=B(K,N(2));
+    end;
+end;
+I=false;
+if S.cmd_samples>0 then
+    if os.clock()<=S.expires then
+        local K=tonumber(p.LookYaw)or S.yaw;
+        p.LookYaw=S.yaw;
+        p.VerticalLook=S.pitch;
+        Y(p,S.yaw,K);
+        S.cmd_samples=S.cmd_samples-1;
+        if S.cmd_samples<=0 then
+            S.expires=0;
+        end;
+        I=true;
+    else
+        S.cmd_samples=0;
+        S.expires=0;
+    end;
+else
+end;
+O(T,x,p,i,M,I);
+return p;
+end;
+end);
+o.hooked=G.SampleInput~=b;
+A(nil);
+h.connect(t.CharacterAdded,function(b)S.clear();
+o.release();
+A(b);
+end);
+end;
+end;
+h.teardown(function()S.clear();
+o.hooked=false;
+o.release();
+A(nil);
+end);
+return j;
+end;
+
 xDTaraZ.Shitaro.mods = D
 end
 
@@ -28974,11 +30455,19 @@ function xDTaraZ.Shitaro.Legit()
             return
         end
         if xDTaraZ.State.Alive == false then return end
+        pcall(function() D.load("W") end)  -- antiaim + движение (тянет U/V/T; сбой не валит боевой граф)
         self.legitOptions = D.load("ag")
         -- применяем stage: настройки, выставленные до загрузки графа
         -- (иначе ранние SetLegit-вызовы терялись и аимбот оставался выключенным)
         for key, value in pairs(self.legitStage) do
             self.legitOptions[key] = value
+        end
+        -- применяем ранние настройки анти-аима/движения (если виджеты трогали до загрузки)
+        for key, value in pairs(self.aaStage or {}) do
+            self.SetAA(key, value)
+        end
+        for key, value in pairs(self.mvStage or {}) do
+            self.SetMove(key, value)
         end
         self.Ready = true
         pcall(xDTaraZ.Shitaro.VisualsStart)
@@ -29104,6 +30593,44 @@ function xDTaraZ.Shitaro.VisualsStart()
             end
         end)
     end)
+end
+
+-- ── Мосты анти-аима и движения: SetAA → U.cfg, SetMove → W.cfg ──────────────
+-- Настройки, выставленные до загрузки графа, остаются в stage и применяются драйвером.
+xDTaraZ.Shitaro.aaStage = {}
+xDTaraZ.Shitaro.mvStage = {}
+
+local function noirModule(key)
+    local s = xDTaraZ.Shitaro
+    if s.mods and s.mods.load then
+        local ok, m = pcall(s.mods.load, key)
+        if ok then return m end
+    end
+    return nil
+end
+
+function xDTaraZ.Shitaro.SetAA(key, value)
+    local s = xDTaraZ.Shitaro
+    s.aaStage[key] = value
+    local u = noirModule("U")
+    if u and type(u.cfg) == "table" then
+        u.cfg[key] = value
+        if (key == "on" and value == false)
+            or (key == "pitch" and value == "off")
+            or (key == "air_pitch" and value == "off") then
+            pcall(u.relax)
+        end
+        pcall(u.reset)
+    end
+end
+
+function xDTaraZ.Shitaro.SetMove(key, value)
+    local s = xDTaraZ.Shitaro
+    s.mvStage[key] = value
+    local w = noirModule("W")
+    if w and type(w.cfg) == "table" then
+        w.cfg[key] = value
+    end
 end
 
 -- Instant auto shoot: выстрел в кадр готовности (гейты в стиле Atlas)
@@ -29627,6 +31154,21 @@ function xDTaraZ.UI.BuildSilent(tab)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(legit, "Legit.TeamCheck", { Name = T("Team check", "Проверка команды"), Desc = T("Ignore teammates when picking a target", "Игнорировать тиммейтов при выборе цели"), Default = true }), function(value) xDTaraZ.Shitaro.SetLegit("team_check", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(legit, "Legit.Fov", { Name = T("Targeting FOV", "Радиус поиска цели"), Desc = T("Target search radius of the silent-aim pipeline (180 = whole screen, like most mobile cheats)", "Радиус поиска цели silent-aim (180 = весь экран, как в большинстве мобильных читов)"), Min = 1, Max = 180, Default = 120, Suffix = "°" }), function(value) xDTaraZ.Shitaro.SetLegit("fov", value) end)
 
+    -- Anti-Aim — дословный движок оригинала (модуль U): рысканье/наклон/вращение/мануал.
+    local aag = tab:AddLeftGroupbox({ Name = T("Anti-Aim", "Анти-аим"), Icon = "shield-off" })
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.On", { Name = T("Enable", "Включить"), Desc = T("Master antiaim switch (yaw/pitch desync)", "Главный выключатель анти-аима (десинк рысканья/наклона)"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("on", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.Yaw", { Name = T("Yaw", "Рысканье"), Options = { "backward", "spin", "jitter", "off" }, Default = "off", Desc = T("Yaw antiaim mode", "Режим анти-аима по рысканью") }), function(value) xDTaraZ.Shitaro.SetAA("yaw", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(aag, "AA.Jitter", { Name = T("Jitter", "Джиттер"), Min = 0, Max = 180, Default = 45, Suffix = "°" }), function(value) xDTaraZ.Shitaro.SetAA("jitter", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(aag, "AA.SpinSpeed", { Name = T("Spin speed", "Скорость вращения"), Min = 1, Max = 90, Default = 25, Suffix = "" }), function(value) xDTaraZ.Shitaro.SetAA("spin_rate", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.Pitch", { Name = T("Pitch", "Наклон"), Options = { "off", "down", "up", "jitter" }, Default = "off", Desc = T("Pitch antiaim mode", "Режим анти-аима по наклону") }), function(value) xDTaraZ.Shitaro.SetAA("pitch", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.SpinAir", { Name = T("Spin in air", "Вращение в воздухе"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("air_spin", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(aag, "AA.SpinAirSpeed", { Name = T("Air spin speed", "Скорость в воздухе"), Min = 0, Max = 90, Default = 30, Suffix = "" }), function(value) xDTaraZ.Shitaro.SetAA("air_rate", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.AirPitch", { Name = T("Air pitch", "Наклон в воздухе"), Options = { "off", "down", "up", "jitter" }, Default = "off" }), function(value) xDTaraZ.Shitaro.SetAA("air_pitch", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.ManualLeft", { Name = T("Manual left", "Мануал влево"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("man", value and -1 or 0) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.ManualRight", { Name = T("Manual right", "Мануал вправо"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("man", value and 1 or 0) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.AutoManual", { Name = T("Auto manual", "Авто-мануал"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("auto", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(aag, "AA.ManualAngle", { Name = T("Manual angle", "Угол мануала"), Min = 0, Max = 180, Default = 90, Suffix = "°" }), function(value) xDTaraZ.Shitaro.SetAA("ang", value) end)
+
     -- Перезарядка: auto reload — порт v.reload из модуля D._ (гейты форс-
     -- модуля, кулдаун 0.8с, plain-вызов reload на identity 2); insta reload —
     -- детур reload, ставящий патроны ремоутом без анимации
@@ -29871,6 +31413,16 @@ function xDTaraZ.UI.BuildMisc(window)
     local vis = tab:AddRightGroupbox({ Name = T("Visuals", "Визуалы"), Icon = "eye" })
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(vis, "Visuals.Chams", { Name = T("Chams (through walls)", "Чамсы (сквозь стены)"), Desc = T("Highlights enemies through walls: red fill, green outline", "Подсвечивает врагов сквозь стены: красная заливка, зелёная обводка"), Default = true }), function(value) xDTaraZ.Shitaro.visuals.chams = value end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(vis, "Visuals.Box", { Name = T("Box ESP", "Боксы"), Desc = T("Draws a box around every enemy", "Рисует бокс вокруг каждого врага"), Default = true }), function(value) xDTaraZ.Shitaro.visuals.box = value end)
+
+    -- Movement — дословный контроллер оригинала (модуль W, хук MovementV2).
+    local mvg = tab:AddRightGroupbox({ Name = T("Movement", "Движение"), Icon = "move" })
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(mvg, "MV.Bhop", { Name = T("Bhop", "Бхоп"), Desc = T("Auto bunny hop", "Автоматический распрыск"), Default = false }), function(value) xDTaraZ.Shitaro.SetMove("bhop", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(mvg, "MV.Strafe", { Name = T("Auto strafe", "Авто-страйф"), Default = false }), function(value) xDTaraZ.Shitaro.SetMove("strafe", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(mvg, "MV.EdgeJump", { Name = T("Edge jump", "Прыжок с края"), Default = false }), function(value) xDTaraZ.Shitaro.SetMove("edge_jump", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(mvg, "MV.JumpBug", { Name = T("Jump bug", "Джамп-баг"), Default = false }), function(value) xDTaraZ.Shitaro.SetMove("jump_bug", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(mvg, "MV.EdgeBug", { Name = T("Edge bug", "Эдж-баг"), Default = false }), function(value) xDTaraZ.Shitaro.SetMove("edge_bug", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(mvg, "MV.SlowWalk", { Name = T("Slow walk", "Медленная ходьба"), Default = false }), function(value) xDTaraZ.Shitaro.SetMove("slow_walk", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(mvg, "MV.PixelSurf", { Name = T("Pixel surf", "Пиксельный сёрф"), Default = false }), function(value) xDTaraZ.Shitaro.SetMove("pixel_surf", value) end)
 
     local util = tab:AddRightGroupbox({ Name = T("Utility", "อรรถประโยชน์"), Icon = "settings-2" })
     xDTaraZ.UI.Toggle(util, "InfiniteJump", { Name = T("Infinite jump", "กระโดดไม่จำกัด"), Desc = T("Lobby only, use Bunny hop in rounds", "ใช้ได้เฉพาะล็อบบี้ ในรอบใช้บันนี่ฮอป") })
