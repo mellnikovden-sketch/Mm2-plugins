@@ -28971,6 +28971,11 @@ function xDTaraZ.Shitaro.Legit()
         end
         if xDTaraZ.State.Alive == false then return end
         self.legitOptions = D.load("ag")
+        -- применяем stage: настройки, выставленные до загрузки графа
+        -- (иначе ранние SetLegit-вызовы терялись и аимбот оставался выключенным)
+        for key, value in pairs(self.legitStage) do
+            self.legitOptions[key] = value
+        end
         self.Ready = true
         -- boot Shitaro: beat → aq.auto (auto shoot), early → p.step/ap.step
         xDTaraZ:Connect(RunService.Heartbeat, function()
@@ -29409,12 +29414,12 @@ function xDTaraZ.UI.BuildSilent(tab)
     -- и подмена луча пули); авто-стрельба включает конвейер сама.
     -- no_recoil / no_spread убраны по запросу.
     local legit = tab:AddLeftGroupbox({ Name = T("Legit", "Легит"), Icon = "target" })
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(legit, "Legit.Aimlock", { Name = T("Aimlock", "Аимлок"), Desc = T("Master switch: redirects bullets to the locked target", "Главный выключатель: удерживает пули на захваченной цели"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("on", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(legit, "Legit.Aimlock", { Name = T("Aimlock", "Аимлок"), Desc = T("Master switch of the silent-aim pipeline: bullets bend to the target inside the FOV; the crosshair itself does not move", "Главный тумблер silent-aim: пули сами летят в цель в радиусе FOV, крестик при этом не двигается; без него не работает ни автострельба, ни прострелы"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("on", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(legit, "Legit.AutoShoot", { Name = T("Auto shoot", "Авто-стрельба"), Desc = T("Fires automatically at the locked target", "Стреляет сам по захваченной цели (включает конвейер сама)"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_shoot", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(legit, "Legit.Rapid", { Name = T("Rapid fire", "Форс-очередь"), Desc = T("Forced-shot pipeline for rapid weapons", "Форс-выстрелы для автоматического оружия"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("rapid", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(legit, "Legit.AutoRevolver", { Name = T("Auto revolver", "Авто-револьвер"), Desc = T("Handles revolver charge and shots automatically", "Сам управляет взведением и выстрелами револьвера"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_revolver", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(legit, "Legit.TeamCheck", { Name = T("Team check", "Проверка команды"), Desc = T("Ignore teammates when picking a target", "Игнорировать тиммейтов при выборе цели"), Default = true }), function(value) xDTaraZ.Shitaro.SetLegit("team_check", value) end)
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(legit, "Legit.Fov", { Name = T("Targeting FOV", "Радиус поиска цели"), Desc = T("Target search radius of the legit pipeline", "Радиус поиска цели конвейером"), Min = 1, Max = 60, Default = 8, Suffix = "°" }), function(value) xDTaraZ.Shitaro.SetLegit("fov", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(legit, "Legit.Fov", { Name = T("Targeting FOV", "Радиус поиска цели"), Desc = T("Target search radius of the silent-aim pipeline (180 = whole screen, like most mobile cheats)", "Радиус поиска цели silent-aim (180 = весь экран, как в большинстве мобильных читов)"), Min = 1, Max = 180, Default = 120, Suffix = "°" }), function(value) xDTaraZ.Shitaro.SetLegit("fov", value) end)
 
     -- Перезарядка: auto reload — порт v.reload из модуля D._ (гейты форс-
     -- модуля, кулдаун 0.8с, plain-вызов reload на identity 2); insta reload —
@@ -29644,7 +29649,7 @@ function xDTaraZ.UI.BuildMisc(window)
     -- подменю «...» оригинала развёрнуты в плоские виджеты той же группы.
     local acc = tab:AddRightGroupbox({ Name = T("Accuracy", "Точность"), Icon = "crosshair" })
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.MinDamage", { Name = T("Min damage", "Мин. урон"), Desc = T("Only fire when the predicted damage at the point is at least this", "Стрелять, только если предсказанный урон по точке не ниже этого"), Min = 0, Max = 150, Default = 0, Suffix = "" }), function(value) xDTaraZ.Shitaro.SetLegit("min_damage", value) end)
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.AutoWall", { Name = T("Auto wall", "Авто-стена"), Desc = T("Check for wallbangs and shoot through thin cover when the damage holds", "Проверяет прострелы и стреляет через тонкие укрытия, если урон проходит"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_wall", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.AutoWall", { Name = T("Auto wall", "Авто-стена"), Desc = T("Wallbangs through crates, wood and thin walls - the enemy's trick from the screenshot; pair with Wall min damage", "Прострелы через ящики, дерево и тонкие стены - приём противника со скриншота; ставь вместе с мин. уроном через стену"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_wall", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.WallMinDamage", { Name = T("Wall min damage", "Мин. урон через стену"), Desc = T("Minimum damage that must remain after penetrating a wall", "Минимальный урон, который должен остаться после прострела стены"), Min = 0, Max = 150, Default = 0, Suffix = "" }), function(value) xDTaraZ.Shitaro.SetLegit("wall_min_damage", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.Multipoints", { Name = T("Multipoints", "Мультипоинты"), Desc = T("Scan several points per hitbox and pick the best one", "Сканирует несколько точек на хитбоксе и выбирает лучшую"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("multipoint", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.HeadSize", { Name = T("Head scale", "Скейл головы"), Desc = T("Multipoint spread over the head hitbox", "Разброс точек по хитбоксу головы"), Min = 0, Max = 100, Default = 65, Suffix = "%" }), function(value) xDTaraZ.Shitaro.SetLegit("head_size", value) end)
