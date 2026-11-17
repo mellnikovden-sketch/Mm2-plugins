@@ -28,6 +28,10 @@
     с защитой от зацикливания перезарядок, а также группа Accuracy (min
     damage, auto wall + wall min damage, multipoints со скейлами хитбоксов,
     auto scope, force origin) — все опции дословно из оригинального меню.
+    Instant auto shoot — wrapper-слой с таймингом из Atlas adapter
+    (message.txt): выстрел ровно в кадр готовности оружия (Properties.
+    FireRate / NextShotDue). Visuals — мобильный ESP из raw(2): чамсы
+    Highlight AlwaysOnTop + BoxHandleAdornment, группа «Визуалы».
     no-recoil / no-spread убраны по запросу (флаги жёстко false).
   • Автосохранение: фабрики элементов AirFlow берут состояние из opts.Default,
     а сохранённое значение пускают только на рендер — поэтому тумблер после
@@ -28977,13 +28981,215 @@ function xDTaraZ.Shitaro.Legit()
             self.legitOptions[key] = value
         end
         self.Ready = true
+        pcall(xDTaraZ.Shitaro.VisualsStart)
         -- boot Shitaro: beat → aq.auto (auto shoot), early → p.step/ap.step
         xDTaraZ:Connect(RunService.Heartbeat, function()
             pcall(D.load("p").step)
             pcall(D.load("ap").step)
             pcall(D.load("aq").auto)
+            -- instant fire (Atlas-тайминг): добивает выстрел ровно в кадр готовности
+            pcall(xDTaraZ.Shitaro.stepInstantFire)
         end)
     end)
+end
+
+-- ── Полезное из присланных скриптов (Atlas adapter + raw(2), оба BloxStrike) ──
+-- isEnemy/enemies: механика Team-атрибута — как в оригинале и в Atlas.
+-- Visuals: мобильный ESP без Drawing-библиотеки (подход из raw(2)) — Highlight-чамсы
+-- с AlwaysOnTop (видно сквозь стены) + BoxHandleAdornment-боксы; работает на телефонах.
+-- stepInstantFire: тайминг из Atlas — выстрел ровно в кадр готовности оружия
+-- (Properties.FireRate / NextShotDue), без скан-троттлинга и пола вербатим-конвейера;
+-- тишайм-редирект детура по-прежнему применяется к пулям (t.on).
+
+do
+    local okP, players = pcall(game.GetService, game, "Players")
+    if okP and type(players) == "table" then
+        xDTaraZ.Shitaro.Players = players
+        xDTaraZ.Shitaro.LocalPlayer = players.LocalPlayer
+    end
+    local okR, rs = pcall(game.GetService, game, "ReplicatedStorage")
+    if okR and type(rs) == "table" then
+        xDTaraZ.Shitaro.ReplicatedStorage = rs
+    end
+end
+
+function xDTaraZ.Shitaro.isEnemy(pl)
+    local self = xDTaraZ.Shitaro
+    local me = self.LocalPlayer
+    if not (me and pl and pl ~= me and pl.Parent ~= nil) then return false end
+    local rs = self.ReplicatedStorage
+    if rs and rs.GetAttribute and rs:GetAttribute("Gamemode") == "Deathmatch" then
+        return true
+    end
+    local mine = me.GetAttribute and me:GetAttribute("Team")
+    local theirs = pl.GetAttribute and pl:GetAttribute("Team")
+    if type(mine) ~= "string" or type(theirs) ~= "string" then return false end
+    return mine ~= theirs
+end
+
+function xDTaraZ.Shitaro.enemies()
+    local self = xDTaraZ.Shitaro
+    local players = self.Players
+    if not (players and type(players.GetPlayers) == "function") then return {} end
+    local out = {}
+    for _, pl in ipairs(players:GetPlayers()) do
+        local char = pl.Character
+        if self.isEnemy(pl) and char and char.Parent ~= nil then
+            out[#out + 1] = char
+        end
+    end
+    return out
+end
+
+-- Visuals (ESP): chams + box
+xDTaraZ.Shitaro.visuals = { chams = true, box = true, running = false, _items = {} }
+
+function xDTaraZ.Shitaro.VisualsStart()
+    local self = xDTaraZ.Shitaro
+    local vis = self.visuals
+    if vis.running then return end
+    vis.running = true
+    local folder = Instance.new("Folder")
+    folder.Name = "NoirVisuals"
+    local okHui, hui = pcall(function() return gethui and gethui() end)
+    folder.Parent = (okHui and hui) or game:GetService("CoreGui")
+    vis._folder = folder
+    local function drop(char)
+        local it = vis._items[char]
+        if it then
+            pcall(function() it.hl:Destroy() end)
+            pcall(function() it.box:Destroy() end)
+            vis._items[char] = nil
+        end
+    end
+    vis.drop = drop
+    local function ensure(char)
+        local it = vis._items[char]
+        if not it then
+            local hl = Instance.new("Highlight")
+            hl.Name = "NoirChams"
+            hl.FillTransparency = 0.55
+            hl.OutlineTransparency = 0.1
+            hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            local box = Instance.new("BoxHandleAdornment")
+            box.Name = "NoirBox"
+            box.Size = Vector3.new(3.6, 5.6, 2.2)
+            box.Transparency = 0.35
+            box.ZIndex = 0
+            box.AlwaysOnTop = true
+            it = { hl = hl, box = box }
+            vis._items[char] = it
+        end
+        return it
+    end
+    xDTaraZ:Connect(RunService.Heartbeat, function()
+        pcall(function()
+            local seen = {}
+            for _, char in ipairs(self.enemies()) do
+                seen[char] = true
+                local it = ensure(char)
+                it.hl.FillColor = Color3.fromRGB(255, 70, 70)
+                it.hl.OutlineColor = Color3.fromRGB(90, 255, 120)
+                if it.hl.Parent ~= char then it.hl.Parent = char end
+                if it.box.Adornee == nil then
+                    local root = char:FindFirstChild("HumanoidRootPart") or char.PrimaryPart
+                    if root then it.box.Adornee = root end
+                end
+                if it.box.Parent ~= folder then it.box.Parent = folder end
+                it.hl.Enabled = vis.chams
+                it.box.Visible = vis.box
+            end
+            for char in pairs(vis._items) do
+                if not seen[char] then drop(char) end
+            end
+        end)
+    end)
+end
+
+-- Instant auto shoot: выстрел в кадр готовности (гейты в стиле Atlas)
+xDTaraZ.Shitaro.instantFire = { lastFire = 0, shots = 0 }
+
+function xDTaraZ.Shitaro.defaultGetWeapon()
+    local ok, inv = pcall(function()
+        return require(game:GetService("ReplicatedStorage").Controllers.InventoryController)
+    end)
+    if ok and type(inv) == "table" and type(inv.peekCurrentEquippedForMovement) == "function" then
+        local okW, w = pcall(inv.peekCurrentEquippedForMovement, inv)
+        if okW then return w end
+    end
+    return nil
+end
+
+function xDTaraZ.Shitaro.defaultGetCamera()
+    local ok, cam = pcall(function() return workspace.CurrentCamera end)
+    if ok then return cam end
+    return nil
+end
+
+function xDTaraZ.Shitaro.hasLOS(camera, position)
+    local self = xDTaraZ.Shitaro
+    local ok, hit = pcall(function()
+        local params = RaycastParams.new()
+        params.FilterType = Enum.RaycastFilterType.Exclude
+        local exclude = {}
+        if self.LocalPlayer and self.LocalPlayer.Character then
+            exclude[#exclude + 1] = self.LocalPlayer.Character
+        end
+        params.FilterDescendantsInstances = exclude
+        return workspace:Raycast(camera.CFrame.Position, position - camera.CFrame.Position, params)
+    end)
+    if not ok then return true end
+    return hit == nil
+end
+
+function xDTaraZ.Shitaro.stepInstantFire(now)
+    local self = xDTaraZ.Shitaro
+    local opts = self.legitOptions
+    if not (opts and opts.on and opts.auto_shoot) then return false end
+    if self.Ready ~= true then return false end
+    now = now or os.clock()
+    if now - self.instantFire.lastFire < 0.05 then return false end
+    local getter = self.getWeapon or self.defaultGetWeapon
+    local okW, weapon = pcall(getter, self)
+    if not (okW and weapon and weapon.Properties and weapon.Properties.Class == "Weapon") then return false end
+    if type(weapon.Rounds) ~= "number" or weapon.Rounds <= 0 then return false end
+    if weapon.IsReloading or weapon.IsAdjustingSuppressor or weapon.IsShooting then return false end
+    local interval = tonumber(weapon.Properties.FireRate)
+    if interval and interval > 0 and now - self.instantFire.lastFire < interval then return false end
+    if weapon.NextShotDue and now < weapon.NextShotDue then return false end
+    local getterCam = self.getCamera or self.defaultGetCamera
+    local okC, camera = pcall(getterCam, self)
+    if not (okC and camera and camera.CFrame) then return false end
+    local lister = self.getEnemies or self.enemies
+    local okE, chars = pcall(lister, self)
+    if not okE or type(chars) ~= "table" then return false end
+    local fov = math.clamp(tonumber(opts.fov) or 120, 1, 180)
+    local minDot = math.cos(math.rad(fov))
+    local cf = camera.CFrame
+    local best = nil
+    for _, char in ipairs(chars) do
+        local hum = char.FindFirstChildOfClass and char:FindFirstChildOfClass("Humanoid")
+        local head = char.FindFirstChild and char:FindFirstChild("Head")
+        if hum and head and hum.Health and hum.Health > 0 and head.Position then
+            local dir = head.Position - cf.Position
+            if dir.Magnitude > 0.01 then
+                local u = dir.Unit
+                local dot = cf.LookVector.X * u.X + cf.LookVector.Y * u.Y + cf.LookVector.Z * u.Z
+                if dot >= minDot and self.hasLOS(camera, head.Position) then
+                    best = char
+                    break
+                end
+            end
+        end
+    end
+    if not best then return false end
+    self.instantFire.lastFire = now
+    local okS = pcall(function() weapon:shoot() end)
+    if okS then
+        self.instantFire.shots = self.instantFire.shots + 1
+        return true
+    end
+    return false
 end
 
 -- ── auto-persistence of settings ─────────────────────────────────────────────
@@ -29659,6 +29865,12 @@ function xDTaraZ.UI.BuildMisc(window)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.LegsSize", { Name = T("Legs scale", "Скейл ног"), Desc = T("Multipoint spread over the leg hitboxes", "Разброс точек по хитбоксам ног"), Min = 0, Max = 100, Default = 55, Suffix = "%" }), function(value) xDTaraZ.Shitaro.SetLegit("legs_size", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.AutoScope", { Name = T("Auto scope", "Авто-прицел"), Desc = T("Scopes in before firing scoped weapons", "Наводит прицел перед выстрелом из снайперки"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_scope", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.ForceOrigin", { Name = T("Force origin", "Форс-ориджин"), Desc = T("Shifts the bullet origin forward by this many studs (0 = off)", "Смещает точку вылета пули вперёд на столько студов (0 = выкл)"), Min = 0, Max = 8, Default = 0, Increment = 0.1, Suffix = "st" }), function(value) xDTaraZ.Shitaro.SetLegit("origin_shift", value) end)
+
+    -- Visuals — мобильный ESP из raw(2): чамсы (Highlight AlwaysOnTop, видно сквозь
+    -- стены, как подсветка врага на скриншоте противника) и боксы (BoxHandleAdornment).
+    local vis = tab:AddRightGroupbox({ Name = T("Visuals", "Визуалы"), Icon = "eye" })
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(vis, "Visuals.Chams", { Name = T("Chams (through walls)", "Чамсы (сквозь стены)"), Desc = T("Highlights enemies through walls: red fill, green outline", "Подсвечивает врагов сквозь стены: красная заливка, зелёная обводка"), Default = true }), function(value) xDTaraZ.Shitaro.visuals.chams = value end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(vis, "Visuals.Box", { Name = T("Box ESP", "Боксы"), Desc = T("Draws a box around every enemy", "Рисует бокс вокруг каждого врага"), Default = true }), function(value) xDTaraZ.Shitaro.visuals.box = value end)
 
     local util = tab:AddRightGroupbox({ Name = T("Utility", "อรรถประโยชน์"), Icon = "settings-2" })
     xDTaraZ.UI.Toggle(util, "InfiniteJump", { Name = T("Infinite jump", "กระโดดไม่จำกัด"), Desc = T("Lobby only, use Bunny hop in rounds", "ใช้ได้เฉพาะล็อบบี้ ในรอบใช้บันนี่ฮอป") })
