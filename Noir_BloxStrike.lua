@@ -32,6 +32,9 @@
     (message.txt): выстрел ровно в кадр готовности оружия (Properties.
     FireRate / NextShotDue). Visuals — мобильный ESP из raw(2): чамсы
     Highlight AlwaysOnTop + BoxHandleAdornment, группа «Визуалы».
+    Piercer — Wallbang mode и Piercer bullet (magic) пробуждают
+    движковые пути прострелов оригинала (через-стенные цели по урону),
+    Force origin до 20 студов.
     Antiaim + Movement — модули T/U/V/W дословно из оригинала
     (движок анти-аима U: yaw/pitch/spin/jitter/мануал; контроллер
     движения W с хуком MovementV2: bhop/strafe/edge jump/jump bug/
@@ -26368,8 +26371,8 @@ K.prefer=b("prefer");
 K.auto_shoot=h and b("auto")or false;
 K.auto_scope=h and b("autoscope")==true or false;
 K.auto_wall=h and b("aw")or false;
-K.wallbang=false;
-K.magic=false;
+K.wallbang=h and b("wallbang")or false;
+K.magic=h and b("magic")or false;
 K.auto_revolver=h and b("autorev")or false;
 K.auto_switch=h and b("autoswitch")or false;
 K.double_tap=h and b("dt")or false;
@@ -31398,6 +31401,8 @@ function xDTaraZ.UI.BuildMisc(window)
     local acc = tab:AddRightGroupbox({ Name = T("Accuracy", "Точность"), Icon = "crosshair" })
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.MinDamage", { Name = T("Min damage", "Мин. урон"), Desc = T("Only fire when the predicted damage at the point is at least this", "Стрелять, только если предсказанный урон по точке не ниже этого"), Min = 0, Max = 150, Default = 0, Suffix = "" }), function(value) xDTaraZ.Shitaro.SetLegit("min_damage", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.AutoWall", { Name = T("Auto wall", "Авто-стена"), Desc = T("Wallbangs through crates, wood and thin walls - the enemy's trick from the screenshot; pair with Wall min damage", "Прострелы через ящики, дерево и тонкие стены - приём противника со скриншота; ставь вместе с мин. уроном через стену"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_wall", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.Wallbang", { Name = T("Wallbang mode", "Режим прострелов"), Desc = T("Score targets through walls by remaining damage (engine path from the original)", "Оценка целей сквозь стены по остаточному урону (путь движка из оригинала)"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("wallbang", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.Pierce", { Name = T("Piercer bullet", "Пирсер-пуля"), Desc = T("MM2-style piercer: pick targets behind any wall by damage estimate, aim straight through (pair with Force origin)", "Пирсер как в MM2: выбор целей за любой стеной по оценке урона, прицел прямо сквозь (совместно с форс-ориджином)"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("magic", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.WallMinDamage", { Name = T("Wall min damage", "Мин. урон через стену"), Desc = T("Minimum damage that must remain after penetrating a wall", "Минимальный урон, который должен остаться после прострела стены"), Min = 0, Max = 150, Default = 0, Suffix = "" }), function(value) xDTaraZ.Shitaro.SetLegit("wall_min_damage", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.Multipoints", { Name = T("Multipoints", "Мультипоинты"), Desc = T("Scan several points per hitbox and pick the best one", "Сканирует несколько точек на хитбоксе и выбирает лучшую"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("multipoint", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.HeadSize", { Name = T("Head scale", "Скейл головы"), Desc = T("Multipoint spread over the head hitbox", "Разброс точек по хитбоксу головы"), Min = 0, Max = 100, Default = 65, Suffix = "%" }), function(value) xDTaraZ.Shitaro.SetLegit("head_size", value) end)
@@ -31406,7 +31411,7 @@ function xDTaraZ.UI.BuildMisc(window)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.ArmsSize", { Name = T("Arms scale", "Скейл рук"), Desc = T("Multipoint spread over the arm hitboxes", "Разброс точек по хитбоксам рук"), Min = 0, Max = 100, Default = 55, Suffix = "%" }), function(value) xDTaraZ.Shitaro.SetLegit("arms_size", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.LegsSize", { Name = T("Legs scale", "Скейл ног"), Desc = T("Multipoint spread over the leg hitboxes", "Разброс точек по хитбоксам ног"), Min = 0, Max = 100, Default = 55, Suffix = "%" }), function(value) xDTaraZ.Shitaro.SetLegit("legs_size", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.AutoScope", { Name = T("Auto scope", "Авто-прицел"), Desc = T("Scopes in before firing scoped weapons", "Наводит прицел перед выстрелом из снайперки"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_scope", value) end)
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.ForceOrigin", { Name = T("Force origin", "Форс-ориджин"), Desc = T("Shifts the bullet origin forward by this many studs (0 = off)", "Смещает точку вылета пули вперёд на столько студов (0 = выкл)"), Min = 0, Max = 8, Default = 0, Increment = 0.1, Suffix = "st" }), function(value) xDTaraZ.Shitaro.SetLegit("origin_shift", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.ForceOrigin", { Name = T("Force origin", "Форс-ориджин"), Desc = T("Shifts the bullet origin forward by this many studs (0 = off)", "Смещает точку вылета пули вперёд на столько студов (0 = выкл)"), Min = 0, Max = 20, Default = 0, Increment = 0.1, Suffix = "st" }), function(value) xDTaraZ.Shitaro.SetLegit("origin_shift", value) end)
 
     -- Visuals — мобильный ESP из raw(2): чамсы (Highlight AlwaysOnTop, видно сквозь
     -- стены, как подсветка врага на скриншоте противника) и боксы (BoxHandleAdornment).
