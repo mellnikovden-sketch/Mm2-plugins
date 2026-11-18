@@ -30597,37 +30597,51 @@ function xDTaraZ.Shitaro.VisualsStart()
         end
         return it
     end
-    xDTaraZ:Connect(RunService.Heartbeat, function()
+    local espWait = 0
+    xDTaraZ:Connect(RunService.Heartbeat, function(dt)
+        -- ESP does not need 60 Hz: 15 updates a second look the same and cost a quarter
+        espWait = espWait + (dt or 0)
+        if espWait < 0.066 then return end
+        espWait = 0
         pcall(function()
+            local now = os.clock()
             local seen = {}
+            local cam = workspace.CurrentCamera
             for _, char in ipairs(self.enemies()) do
                 seen[char] = true
                 local it = ensure(char)
-                it.hl.FillColor = Color3.fromRGB(255, 70, 70)
-                it.hl.OutlineColor = Color3.fromRGB(90, 255, 120)
-                it.hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                if not it.styled then
+                    it.styled = true
+                    it.hl.FillColor = Color3.fromRGB(255, 70, 70)
+                    it.hl.OutlineColor = Color3.fromRGB(90, 255, 120)
+                    it.hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    it.box.AlwaysOnTop = true
+                end
                 if it.hl.Parent ~= char then it.hl.Parent = char end
-                -- фикс «чамсы не сквозь стены»: Blox Strike вешает свой Highlight
-                -- (редкость скина), а рендерится только один — глушим чужие
-                for _, other in ipairs(char:GetDescendants()) do
-                    if other:IsA("Highlight") and other ~= it.hl and other.Enabled then
-                        other.Enabled = false
+                -- Blox Strike adds its own Highlight to enemies: sweep for it once a second, not every tick
+                if not it.sweepAt or now >= it.sweepAt then
+                    it.sweepAt = now + 1
+                    for _, other in ipairs(char:GetDescendants()) do
+                        if other:IsA("Highlight") and other ~= it.hl and other.Enabled then
+                            other.Enabled = false
+                        end
                     end
                 end
                 local root = char:FindFirstChild("HumanoidRootPart") or char.PrimaryPart
                 if it.box.Adornee == nil and root then it.box.Adornee = root end
                 if it.box.Parent ~= folder then it.box.Parent = folder end
-                it.box.AlwaysOnTop = true
-                it.hl.Enabled = vis.chams
-                it.box.Visible = vis.box
-                it.tag.Enabled = vis.tag and true or false
+                if it.hl.Enabled ~= vis.chams then it.hl.Enabled = vis.chams end
+                if it.box.Visible ~= vis.box then it.box.Visible = vis.box end
+                local tagOn = vis.tag and true or false
+                if it.tag.Enabled ~= tagOn then it.tag.Enabled = tagOn end
                 if root and it.tag.Parent ~= root then it.tag.Parent = root end
-                if vis.tag then
+                if vis.tag and (not it.labelAt or now >= it.labelAt) then
+                    it.labelAt = now + 0.25
                     local pl = self.Players.GetPlayerFromCharacter and self.Players:GetPlayerFromCharacter(char)
                     local hum = char:FindFirstChildOfClass("Humanoid")
-                    local cam = workspace.CurrentCamera
                     local dist = (cam and root) and math.floor((root.Position - cam.CFrame.Position).Magnitude + 0.5) or 0
-                    it.label.Text = string.format("%s  %dm\nHP %d", pl and pl.Name or "?", dist, hum and math.floor(hum.Health + 0.5) or 0)
+                    local text = string.format("%s  %dm\nHP %d", pl and pl.Name or "?", dist, hum and math.floor(hum.Health + 0.5) or 0)
+                    if it.label.Text ~= text then it.label.Text = text end
                 end
             end
             for char in pairs(vis._items) do
@@ -30656,11 +30670,24 @@ function xDTaraZ.Shitaro.TPStart()
         tp._rp = rp
     end
 
+    -- the body parts are listed once and refreshed twice a second; the transparency itself is still written
+    -- every frame (the game's first-person code resets it every frame)
     local function setCharVisible(char, alpha)
-        for _, part in ipairs(char:GetDescendants()) do
-            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Name ~= "CameraPart" then
-                pcall(function() part.LocalTransparencyModifier = alpha end)
+        local now = os.clock()
+        if tp._partsChar ~= char or not tp._partsAt or now >= tp._partsAt then
+            tp._partsChar, tp._partsAt = char, now + 0.5
+            local list = {}
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Name ~= "CameraPart" then
+                    list[#list + 1] = part
+                end
             end
+            tp._parts = list
+        end
+        local list = tp._parts
+        for index = 1, #list do
+            local part = list[index]
+            if part.Parent then part.LocalTransparencyModifier = alpha end
         end
     end
 
@@ -30674,8 +30701,19 @@ function xDTaraZ.Shitaro.TPStart()
     local function hideViewmodel()
         local cam = workspace.CurrentCamera
         if not cam then return end
-        for _, part in ipairs(cam:GetDescendants()) do
-            if part:IsA("BasePart") and part.LocalTransparencyModifier ~= 1 then
+        local now = os.clock()
+        if tp._camFor ~= cam or not tp._camAt or now >= tp._camAt then
+            tp._camFor, tp._camAt = cam, now + 0.3
+            local list = {}
+            for _, part in ipairs(cam:GetDescendants()) do
+                if part:IsA("BasePart") then list[#list + 1] = part end
+            end
+            tp._camParts = list
+        end
+        local list = tp._camParts
+        for index = 1, #list do
+            local part = list[index]
+            if part.Parent and part.LocalTransparencyModifier ~= 1 then
                 part.LocalTransparencyModifier = 1
                 tp._hidden[part] = true
             end
@@ -30731,10 +30769,12 @@ function xDTaraZ.Shitaro.TPStart()
     -- Пушим одновременно двумя каналами: бинд 4000 (после всех игровых биндов)
     -- и новейшее PreRender-соединение (последний писатель перед рендером).
     -- Guard в _step не даёт сместить камеру дважды за один кадр.
+    local bound = false
     if RunService.BindToRenderStep then
-        pcall(RunService.BindToRenderStep, RunService, "NoirThirdPerson", 4000, tp._step)
+        bound = pcall(RunService.BindToRenderStep, RunService, "NoirThirdPerson", 4000, tp._step)
     end
-    if RunService.PreRender then
+    -- a second PreRender step only when the render-step bind failed (running both doubles the work)
+    if not bound and RunService.PreRender then
         tp._pr = xDTaraZ:Connect(RunService.PreRender, tp._step)
     end
     print("[Noir] third person ready: bind=" .. tostring(RunService.BindToRenderStep ~= nil) .. " prerender=" .. tostring(RunService.PreRender ~= nil))
@@ -30813,6 +30853,8 @@ local function noirModule(key)
     if s.mods and s.mods.load then
         local ok, m = pcall(s.mods.load, key)
         if ok then return m end
+        s._modErr = s._modErr or {}
+        s._modErr[key] = tostring(m) -- the real reason a Shitaro module (antiaim = U) did not start
     end
     return nil
 end
@@ -30829,6 +30871,13 @@ function xDTaraZ.Shitaro.SetAA(key, value)
             pcall(u.relax)
         end
         pcall(u.reset)
+        if key == "on" then
+            print("[Noir] antiaim " .. (value and "ON" or "OFF") .. ": module loaded, yaw=" .. tostring(u.cfg.yaw)
+                .. " pitch=" .. tostring(u.cfg.pitch) .. " spin=" .. tostring(u.cfg.spin_rate))
+        end
+    elseif key == "on" then
+        warn("[Noir] antiaim: module U did not load: " .. tostring((s._modErr or {}).U or "no error recorded (legit subsystem not started?)")
+            .. " - the setting is staged and applies when the module loads")
     end
 end
 
@@ -31441,8 +31490,8 @@ function xDTaraZ.UI.BuildSilent(tab)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.SpinAir", { Name = T("Spin in air", "Вращение в воздухе"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("air_spin", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(aag, "AA.SpinAirSpeed", { Name = T("Air spin speed", "Скорость в воздухе"), Min = 0, Max = 90, Default = 30, Suffix = "" }), function(value) xDTaraZ.Shitaro.SetAA("air_rate", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.AirPitch", { Name = T("Air pitch", "Наклон в воздухе"), Options = { "off", "down", "up", "jitter" }, Default = "off" }), function(value) xDTaraZ.Shitaro.SetAA("air_pitch", value) end)
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.ManualLeft", { Name = T("Manual left", "Мануал влево"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("man", value and -1 or 0) end)
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.ManualRight", { Name = T("Manual right", "Мануал вправо"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("man", value and 1 or 0) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.ManualLeft", { Name = T("Manual left", "Мануал влево"), Default = false }), function(value) xDTaraZ.Shitaro.local s = xDTaraZ.Shitaro; s._manL = value == true; s.SetAA("man", s._manL and -1 or (s._manR and 1 or 0)) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.ManualRight", { Name = T("Manual right", "Мануал вправо"), Default = false }), function(value) xDTaraZ.Shitaro.local s = xDTaraZ.Shitaro; s._manR = value == true; s.SetAA("man", s._manR and 1 or (s._manL and -1 or 0)) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.AutoManual", { Name = T("Auto manual", "Авто-мануал"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("auto", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(aag, "AA.ManualAngle", { Name = T("Manual angle", "Угол мануала"), Min = 0, Max = 180, Default = 90, Suffix = "°" }), function(value) xDTaraZ.Shitaro.SetAA("ang", value) end)
 
