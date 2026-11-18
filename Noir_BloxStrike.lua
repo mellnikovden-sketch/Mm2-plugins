@@ -30501,12 +30501,12 @@ end
 
 do
     local okP, players = pcall(game.GetService, game, "Players")
-    if okP and type(players) == "table" then
+    if okP and typeof(players) == "Instance" then -- services are userdata, never tables: the old check left LocalPlayer nil
         xDTaraZ.Shitaro.Players = players
         xDTaraZ.Shitaro.LocalPlayer = players.LocalPlayer
     end
     local okR, rs = pcall(game.GetService, game, "ReplicatedStorage")
-    if okR and type(rs) == "table" then
+    if okR and typeof(rs) == "Instance" then
         xDTaraZ.Shitaro.ReplicatedStorage = rs
     end
 end
@@ -30945,7 +30945,12 @@ xDTaraZ.AutoSave = (function()
         end)
         if ok and type(text) == "string" and text ~= "" then
             local okDecode, decoded = pcall(HttpService.JSONDecode, HttpService, text)
-            if okDecode and type(decoded) == "table" then saved = decoded end
+            if okDecode and type(decoded) == "table" then
+                saved = decoded
+            else
+                -- unreadable file (cut write, manual edit): keep it as .bak instead of silently losing it
+                pcall(function() writefile(file .. ".bak", text) end)
+            end
         end
     end
 
@@ -30975,7 +30980,11 @@ xDTaraZ.AutoSave = (function()
                 makefolder(xDTaraZ.Config.SaveFolder)
             end
         end)
-        pcall(function() writefile(file, HttpService:JSONEncode(saved)) end)
+        local okWrite, writeError = pcall(function() writefile(file, HttpService:JSONEncode(saved)) end)
+        if not okWrite and not xDTaraZ.AutoSave_WriteWarned then
+            xDTaraZ.AutoSave_WriteWarned = true
+            warn("[Noir] settings were not saved: " .. tostring(writeError))
+        end
     end
 
     local function schedule()
@@ -30998,6 +31007,7 @@ xDTaraZ.AutoSave = (function()
     local function record(idx, value)
         local norm = normalize(value)
         if norm == nil or idx == nil then return end
+        if type(norm) ~= "table" and saved[idx] == norm then return end
         saved[idx] = norm
         schedule()
     end
@@ -31026,7 +31036,55 @@ xDTaraZ.AutoSave = (function()
         end
     end
 
-    return { get = get, record = record, recordLook = recordLook, applyWindowLook = applyWindowLook }
+    -- keybinds are stored by KeyCode name; "None" means the player cleared the key
+    local function getKey(idx, default)
+        local value = saved[idx]
+        if value == "None" then return nil end
+        if type(value) == "string" then
+            local okKey, code = pcall(function() return Enum.KeyCode[value] end)
+            if okKey and code then return value end
+        end
+        return default
+    end
+
+    local function recordKey(idx, key)
+        if idx == nil then return end
+        local name = typeof(key) == "EnumItem" and key.Name or "None"
+        if saved[idx] == name then return end
+        saved[idx] = name
+        schedule()
+    end
+
+    -- saved window look value (Weather / Scale / Backdrop) with the type of `default`
+    local function getLook(key, default)
+        local look = saved["_window"]
+        local value = type(look) == "table" and look[key] or nil
+        if value ~= nil and type(value) == type(default) then return value end
+        return default
+    end
+
+    -- writes right now: the 0.75 s debounce must never swallow the last change
+    local function flushNow()
+        if saveJob then pcall(task.cancel, saveJob) end
+        flush()
+    end
+    pcall(function()
+        local players = game:GetService("Players")
+        local function keep(connection)
+            local state = xDTaraZ.State
+            if state and state.Connections then table.insert(state.Connections, connection) end
+        end
+        keep(UserInputService.WindowFocusReleased:Connect(flushNow)) -- app minimised / alt-tab
+        keep(players.LocalPlayer.OnTeleport:Connect(flushNow))
+        keep(players.PlayerRemoving:Connect(function(leaving)
+            if leaving == players.LocalPlayer then flushNow() end
+        end))
+    end)
+
+    return {
+        get = get, record = record, recordLook = recordLook, applyWindowLook = applyWindowLook,
+        getKey = getKey, recordKey = recordKey, getLook = getLook, flush = flushNow,
+    }
 end)()
 
 xDTaraZ.UI = { Labels = {}, Widgets = {}, Binds = {}, Window = nil }
@@ -31194,16 +31252,26 @@ end
 ---(the old library's key picker modes) are handled here. Backspace or Delete clears the key.
 function xDTaraZ.UI.KeyBind(group, toggleIdx, keyIdx, defaultKey, defaultMode)
     local bind = { Toggle = toggleIdx, Mode = defaultMode or "Toggle" }
+    local savedKey = xDTaraZ.AutoSave.getKey(keyIdx, defaultKey ~= "None" and defaultKey or nil)
     bind.Key = group:CreateKeybind({
         Name = T("Keybind", "ปุ่มลัด"),
-        CurrentKeybind = defaultKey ~= "None" and defaultKey or nil,
+        CurrentKeybind = savedKey,
         Flag = keyIdx,
         OnChanged = function(key)
+            xDTaraZ.AutoSave.recordKey(keyIdx, key)
             if key == Enum.KeyCode.Backspace or key == Enum.KeyCode.Delete then
-                task.defer(function() bind.Key:Set(nil, true) end)
+                task.defer(function()
+                    bind.Key:Set(nil, true)
+                    xDTaraZ.AutoSave.recordKey(keyIdx, nil)
+                end)
             end
         end,
     })
+    -- the element only renders the saved key; Set(saved, true) makes Get() return it for the key handler
+    pcall(function()
+        local code = typeof(savedKey) == "EnumItem" and savedKey or (type(savedKey) == "string" and Enum.KeyCode[savedKey]) or nil
+        bind.Key:Set(code, true)
+    end)
     local mode = xDTaraZ.UI.Dropdown(group, toggleIdx .. "Mode", { Name = T("Key mode", "โหมดปุ่ม"), Options = { "Toggle", "Hold", "Always" }, Default = bind.Mode })
     mode:OnChanged(function(value) xDTaraZ.UI.SetKeyMode(bind, value) end)
     table.insert(xDTaraZ.UI.Binds, bind)
@@ -31666,25 +31734,36 @@ function xDTaraZ.UI.BuildSettings(window)
     local interface = tab:AddLeftGroupbox({ Name = T("Interface", "หน้าตา"), Icon = "monitor" })
     interface:CreateKeybind({
         Name = T("Menu key", "ปุ่มเปิดเมนู"),
-        CurrentKeybind = "RightControl",
+        CurrentKeybind = xDTaraZ.AutoSave.getKey("MenuKey", "RightControl"),
         Flag = "MenuKey",
         OnChanged = function(key)
+            xDTaraZ.AutoSave.recordKey("MenuKey", key)
             if key then window:SetKeybind(key) end
         end,
     })
+    do -- callbacks do not fire on creation: apply the saved menu key
+        local name = xDTaraZ.AutoSave.getKey("MenuKey", "RightControl")
+        local okCode, code = pcall(function() return name and Enum.KeyCode[name] end)
+        if okCode and code and name ~= "RightControl" then pcall(window.SetKeybind, window, code) end
+    end
     interface:CreateDropdown({
         Name = T("Toggle button", "ปุ่มเปิดเมนูบนจอ"),
         Options = { "Mobile only", "Mobile & PC" },
-        CurrentOption = "Mobile & PC",
+        CurrentOption = xDTaraZ.AutoSave.get("dropdown", "ToggleButtonPlatform", "Mobile & PC"),
         AllowNone = false,
         Flag = "ToggleButtonPlatform",
         Callback = function(option)
             window:SetToggleButtonPlatform(option == "Mobile & PC" and "Both" or "Mobile")
+            xDTaraZ.AutoSave.record("ToggleButtonPlatform", tostring(option))
         end,
     })
+    do
+        local platform = xDTaraZ.AutoSave.get("dropdown", "ToggleButtonPlatform", "Mobile & PC")
+        if platform ~= "Mobile & PC" then pcall(window.SetToggleButtonPlatform, window, "Mobile") end
+    end
     interface:CreateToggle({
         Name = T("Backdrop", "พื้นหลังมืด"),
-        CurrentValue = true,
+        CurrentValue = xDTaraZ.AutoSave.getLook("Backdrop", true),
         Flag = "Backdrop",
         Callback = function(value)
             window:SetBackdrop(value)
@@ -31694,7 +31773,7 @@ function xDTaraZ.UI.BuildSettings(window)
     interface:CreateDropdown({
         Name = T("Weather", "สภาพอากาศ"),
         Options = { "None", "Snow", "Rain", "Hell Fire", "Sakura", "Fireflies", "Matrix" },
-        CurrentOption = "Rain",
+        CurrentOption = xDTaraZ.AutoSave.getLook("Weather", "Rain"),
         AllowNone = false,
         Flag = "WeatherMode",
         Callback = function(option)
@@ -31706,7 +31785,7 @@ function xDTaraZ.UI.BuildSettings(window)
         Name = T("UI scale", "สเกลหน้าจอ"),
         Min = 60,
         Max = 150,
-        Default = 100,
+        Default = xDTaraZ.AutoSave.getLook("Scale", 100),
         Suffix = "%",
         Flag = "UIScale",
         Callback = function(value)
@@ -31733,21 +31812,29 @@ function xDTaraZ.UI.BuildSettings(window)
     panicGroup:CreateToggle({
         Name         = "Enable panic",
         Desc         = "Enables the panic keybind and mobile button. Turn off to prevent accidental triggers.",
-        CurrentValue = false,
+        CurrentValue = xDTaraZ.AutoSave.get("toggle", "PanicEnabled", false),
         Flag         = "PanicEnabled",
         Callback     = function(value)
             xDTaraZ.Panic.SetEnabled(value)
+            xDTaraZ.AutoSave.record("PanicEnabled", value)
         end,
     })
+    xDTaraZ.Panic.SetEnabled(xDTaraZ.AutoSave.get("toggle", "PanicEnabled", false))
 
     panicGroup:CreateKeybind({
         Name           = "Panic key",
-        CurrentKeybind = "RightShift",
+        CurrentKeybind = xDTaraZ.AutoSave.getKey("PanicKey", "RightShift"),
         Flag           = "PanicKey",
         OnChanged      = function(key)
             xDTaraZ.Panic.SetKey(key)
+            xDTaraZ.AutoSave.recordKey("PanicKey", key)
         end,
     })
+    do
+        local name = xDTaraZ.AutoSave.getKey("PanicKey", "RightShift")
+        local okCode, code = pcall(function() return name and Enum.KeyCode[name] end)
+        if okCode and code then xDTaraZ.Panic.SetKey(code) end
+    end
 
     -- config selector: lists saved configs; the chosen one loads on panic
     task.defer(function()
@@ -31757,10 +31844,17 @@ function xDTaraZ.UI.BuildSettings(window)
             Name          = "Panic config",
             Desc          = "Config to load when panic fires. Save your clean/offline cfg first then pick it here.",
             Options       = cfgList,
-            CurrentOption = cfgList[1],
+            CurrentOption = (function()
+                local savedCfg = xDTaraZ.AutoSave.get("dropdown", "PanicCfg", nil)
+                for _, configName in ipairs(cfgList) do
+                    if configName == savedCfg then return savedCfg end
+                end
+                return cfgList[1]
+            end)(),
             AllowNone     = false,
             Flag          = "PanicCfg",
             Callback      = function(option)
+                if option ~= "(none)" then xDTaraZ.AutoSave.record("PanicCfg", tostring(option)) end
                 xDTaraZ.Panic.CfgName = option ~= "(none)" and option or nil
             end,
         })
@@ -32091,6 +32185,7 @@ end
 function xDTaraZ:Unload()
     if not self.State.Alive then return end
     self.State.Alive = false
+    pcall(xDTaraZ.AutoSave.flush)
     pcall(xDTaraZ.Sound.Uninstall)
     pcall(xDTaraZ.Visuals.Destroy)
     if xDTaraZ.Esp.Folder then pcall(function() xDTaraZ.Esp.Folder:Destroy() end) end
