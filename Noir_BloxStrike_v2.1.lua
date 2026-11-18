@@ -25566,8 +25566,121 @@ end);
 return A;
 end;
         D.ag=function()local m=D.load("q").white;
-        return{on=false,team_check=true,boxes={head=true,chest=true},prefer="head",auto_shoot=false,auto_scope=false,auto_wall=false,wallbang=false,wall_power=3,magic=false,auto_revolver=false,auto_switch=false,double_tap=false,rapid=false,no_recoil=false,no_spread=false,insta_reload=false,min_damage=0,wall_min_damage=0,fov=8,draw_fov=false,fov_col=m,fov_grad=false,fov_col2=m,fov_fill=false,fov_fill_col=m,fov_fill_grad=false,fov_fill_col2=m,multipoint=false,origin_shift=0,head_size=65,chest_size=60,stomach_size=60,arms_size=55,legs_size=55,reg_hits=0,reg_miss=0,reg_lead=0};
+        return{on=false,team_check=true,boxes={head=true,chest=true},prefer="head",auto_shoot=false,auto_scope=false,auto_wall=false,wall_power=3,auto_revolver=false,auto_switch=false,double_tap=false,rapid=false,no_recoil=false,no_spread=false,insta_reload=false,min_damage=0,wall_min_damage=0,fov=8,draw_fov=false,fov_col=m,fov_grad=false,fov_col2=m,fov_fill=false,fov_fill_col=m,fov_fill_grad=false,fov_fill_col2=m,multipoint=false,origin_shift=0,head_size=65,chest_size=60,stomach_size=60,arms_size=55,legs_size=55,reg_hits=0,reg_miss=0,reg_lead=0};
     end;
+
+-- ============================================
+-- AUTOWALL + AUTOSHOOT + FORCEORIGIN
+-- ============================================
+do
+    local cam = workspace.CurrentCamera
+    local lp = xDTaraZ.LocalPlayer
+    local wallParams = RaycastParams.new()
+    wallParams.FilterType = Enum.RaycastFilterType.Exclude
+
+    local function getOrigin(cfg)
+        local char = lp.Character
+        if not char then return nil end
+        local camCF = cam.CFrame
+        local eye = camCF.Position
+        local look = camCF.LookVector
+        local force = cfg.force_origin or 0
+        if force > 0 then
+            force = math.min(force, 19)
+            local shift = look * force
+            wallParams.FilterDescendantsInstances = {char}
+            local hit = workspace:Raycast(eye, shift, wallParams)
+            if hit then
+                eye = hit.Position - look * 0.5
+            else
+                eye = eye + shift
+            end
+        end
+        return eye
+    end
+
+    local function rayToTarget(fromPos, targetChar, hitboxName, myChar)
+        local part = targetChar:FindFirstChild(hitboxName or "Head")
+        if not part then return false, nil, 0 end
+        local to = part.Position
+        local dir = to - fromPos
+        wallParams.FilterDescendantsInstances = {myChar, targetChar}
+        local result = workspace:Raycast(fromPos, dir, wallParams)
+        if not result then
+            return true, to, 0
+        end
+        local distRemaining = (to - result.Position).Magnitude
+        if distRemaining < 6 then
+            return true, to, 1
+        end
+        return false, nil, 1
+    end
+
+    local function canPenetrate(walls, cfg)
+        if walls == 0 then return true end
+        local minDmg = cfg.min_damage or cfg.wall_mindamage or 20
+        local penPenalty = walls * 8
+        return minDmg > penPenalty
+    end
+
+    local lastFire = 0
+    local function doAutoShoot(cfg, aimPos)
+        if not cfg.auto_shoot then return end
+        if not aimPos then return end
+        local now = tick()
+        local delayMs = cfg.fire_delay or (cfg.rapid and 50) or 120
+        if (now - lastFire) * 1000 < delayMs then return end
+        local weapon = xDTaraZ.Shitaro.CurrentWeapon
+        if not weapon then return end
+        local ready = weapon.fire_ready or weapon.CanFire or false
+        local reloading = weapon.reloading or weapon.Reloading or false
+        if not ready or reloading then return end
+        pcall(function()
+            local inputService = game:GetService("UserInputService")
+            if inputService.TouchEnabled and not inputService.KeyboardEnabled then
+                if weapon.mobile_shoot then
+                    weapon.mobile_shoot:Fire()
+                end
+            else
+                mouse1press()
+                task.delay(0.03, mouse1release)
+            end
+            lastFire = now
+        end)
+    end
+
+    xDTaraZ.Shitaro.WallCheck = function(targetChar, cfg)
+        local myChar = lp.Character
+        if not myChar then return false, nil end
+        local origin = getOrigin(cfg)
+        if not origin then return false, nil end
+        local hitboxOrder = {}
+        if cfg.prefer == "head" or cfg.prefer == "Head" then
+            hitboxOrder = {"Head", "UpperTorso", "HumanoidRootPart", "Torso"}
+        else
+            hitboxOrder = {"UpperTorso", "Torso", "Head", "HumanoidRootPart"}
+        end
+        for _, hb in ipairs(hitboxOrder) do
+            local clear, pos, walls = rayToTarget(origin, targetChar, hb, myChar)
+            if clear then
+                if walls == 0 or (cfg.auto_wall and canPenetrate(walls, cfg)) then
+                    return true, pos
+                end
+            end
+        end
+        return false, nil
+    end
+
+    xDTaraZ.Shitaro.TryFire = function(targetChar, cfg)
+        local clear, aimPos = xDTaraZ.Shitaro.WallCheck(targetChar, cfg)
+        if clear and aimPos then
+            doAutoShoot(cfg, aimPos)
+            return true, aimPos
+        end
+        return false, nil
+    end
+end
+
     D.ah=function()local m,j=D.load("b"),D.load("a");
     local h=m.lp;
     local b=m.http;
@@ -29313,6 +29426,47 @@ end
 h.teardown(j.unload);
 return j;
 end;
+
+-- ============================================
+-- ANTIAIM RECONNECT FIX
+-- ============================================
+do
+    local aaLoaded = false
+    local aaConn1, aaConn2 = nil, nil
+
+    local function tryLoadAA()
+        if aaLoaded then return end
+        local ok = pcall(function()
+            if not xDTaraZ.State.Alive then return end
+            local char = xDTaraZ.LocalPlayer.Character
+            if not char then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if not (hum and hrp) then return end
+            D.load("U")
+            aaLoaded = true
+        end)
+        if not ok then aaLoaded = false end
+    end
+
+    local function onCharAdded(char)
+        aaLoaded = false
+        task.delay(0.6, tryLoadAA)
+    end
+
+    if aaConn1 then pcall(aaConn1.Disconnect, aaConn1) end
+    if aaConn2 then pcall(aaConn2.Disconnect, aaConn2) end
+
+    aaConn1 = xDTaraZ.LocalPlayer.CharacterAdded:Connect(onCharAdded)
+    aaConn2 = game:GetService("RunService").Heartbeat:Connect(function()
+        if not aaLoaded and xDTaraZ.State.Alive then tryLoadAA() end
+    end)
+
+    if xDTaraZ.LocalPlayer.Character then
+        task.defer(tryLoadAA)
+    end
+end
+
 D.V=function()local j={weapon=nil,cframe=nil,yaw=0,pitch=0,expires=0,cmd_samples=0};
 j.cmd_active=function(h)h=h or os.clock();
 if j.cmd_samples<=0 then
@@ -33434,315 +33588,3 @@ end)()
 -- ══════════════════════════════════════════════════════════════════════════
 --  END OF PANIC SECTION
 -- ══════════════════════════════════════════════════════════════════════════
-
-
--- ==========================================================
--- NOIR PATCH v2.1 — BloxStrike improvements (appended)
--- Includes: AntiKick + AutoShoot Wall + Piercer + AntiAim Fix
--- ==========================================================
-
-do
-    local Shitaro = xDTaraZ.Shitaro
-    if not Shitaro then
-        warn("[Noir] Shitaro not found, patch aborted")
-        return
-    end
-
-    -- ── INTERNAL: get module U (anti-aim engine) reliably ──
-    local function getModuleU()
-        -- Try the standard mods.load path first
-        local s = Shitaro
-        if s.mods and type(s.mods.load) == "function" then
-            local ok, u = pcall(s.mods.load, "U")
-            if ok and u and type(u.cfg) == "table" then
-                return u
-            end
-        end
-        -- Fallback: try to access internal D registry if exposed
-        local ok, D = pcall(function() return xDTaraZ and xDTaraZ.Shitaro and xDTaraZ.Shitaro.mods end)
-        if ok and D and type(D.load) == "function" then
-            local ok2, u = pcall(D.load, "U")
-            if ok2 and u and type(u.cfg) == "table" then
-                return u
-            end
-        end
-        return nil
-    end
-
-    -- ── 1. ANTIKICK HARDEN ──
-    if Shitaro.antiKick then
-        local _akRunning = false
-        local oldStart = Shitaro.AntiKickStart
-        Shitaro.AntiKickStart = function()
-            if _akRunning then return end
-            _akRunning = true
-            oldStart()
-
-            local ak = Shitaro.antiKick
-            local lp = Shitaro.LocalPlayer
-
-            -- Direct Kick() hook (catches some executor-specific paths)
-            if type(hookfunction) == "function" and lp and type(lp.Kick) == "function" then
-                local oldKick
-                oldKick = hookfunction(lp.Kick, function(selfRef, ...)
-                    if ak.on and selfRef == lp then
-                        ak._blocked = ak._blocked + 1
-                        return nil
-                    end
-                    return oldKick(selfRef, ...)
-                end)
-            end
-
-            -- Block game:Shutdown() kick-vector
-            if type(hookmetamethod) == "function" and type(newcclosure) == "function" then
-                local oldNc
-                oldNc = hookmetamethod(game, "__namecall", newcclosure(function(inst, ...)
-                    local method = getnamecallmethod and getnamecallmethod() or ""
-                    if ak.on and method == "Shutdown" then
-                        return nil
-                    end
-                    return oldNc(inst, ...)
-                end))
-            end
-
-            print("[Noir] AntiKick: hardening applied")
-        end
-        pcall(Shitaro.AntiKickStart)
-    end
-
-    -- ── 2. AUTOSHOOT WALLBYPASS ──
-    -- hasLOS: when wall modes are on, skip the plain raycast
-    -- (silent-aim pipeline already handles target validation)
-    Shitaro.hasLOS = function(camera, position)
-        local opts = Shitaro.legitOptions
-        if opts and (opts.auto_wall or opts.wallbang or opts.magic) then
-            return true
-        end
-        local ok, hit = pcall(function()
-            local params = RaycastParams.new()
-            params.FilterType = Enum.RaycastFilterType.Exclude
-            local exclude = {}
-            if Shitaro.LocalPlayer and Shitaro.LocalPlayer.Character then
-                table.insert(exclude, Shitaro.LocalPlayer.Character)
-            end
-            params.FilterDescendantsInstances = exclude
-            return workspace:Raycast(camera.CFrame.Position, position - camera.CFrame.Position, params)
-        end)
-        if not ok then return true end
-        return hit == nil
-    end
-
-    -- stepInstantFire: lower cooldown, allow wall targets, skip LOS for wall modes
-    local oldStep = Shitaro.stepInstantFire
-    Shitaro.stepInstantFire = function(now)
-        local opts = Shitaro.legitOptions
-        if not (opts and opts.on and opts.auto_shoot) then return false end
-        if Shitaro.Ready ~= true then return false end
-        now = now or os.clock()
-
-        -- global cooldown tightened from 0.05 to 0.03
-        if now - Shitaro.instantFire.lastFire < 0.03 then return false end
-
-        local getter = Shitaro.getWeapon or Shitaro.defaultGetWeapon
-        local okW, weapon = pcall(getter, Shitaro)
-        if not (okW and weapon and weapon.Properties and weapon.Properties.Class == "Weapon") then return false end
-        if type(weapon.Rounds) ~= "number" or weapon.Rounds <= 0 then return false end
-        if weapon.IsReloading or weapon.IsAdjustingSuppressor or weapon.IsShooting then return false end
-
-        local interval = tonumber(weapon.Properties.FireRate)
-        if interval and interval > 0 and now - Shitaro.instantFire.lastFire < interval * 0.9 then return false end
-        if weapon.NextShotDue and now < weapon.NextShotDue then return false end
-
-        -- Wall modes: fire at any enemy inside FOV without plain LOS
-        if opts.auto_wall or opts.wallbang or opts.magic then
-            local getterCam = Shitaro.getCamera or Shitaro.defaultGetCamera
-            local okC, camera = pcall(getterCam, Shitaro)
-            if not (okC and camera and camera.CFrame) then return false end
-
-            local lister = Shitaro.getEnemies or Shitaro.enemies
-            local okE, chars = pcall(lister, Shitaro)
-            if not (okE and type(chars) == "table") then return false end
-
-            local fov = math.clamp(tonumber(opts.fov) or 120, 1, 180)
-            local minDot = math.cos(math.rad(fov))
-            local cf = camera.CFrame
-            local best = nil
-
-            for _, char in ipairs(chars) do
-                local hum = char.FindFirstChildOfClass and char:FindFirstChildOfClass("Humanoid")
-                local head = char.FindFirstChild and char:FindFirstChild("Head")
-                if hum and head and hum.Health and hum.Health > 0 and head.Position then
-                    local dir = head.Position - cf.Position
-                    if dir.Magnitude > 0.01 then
-                        local u = dir.Unit
-                        local dot = cf.LookVector.X * u.X + cf.LookVector.Y * u.Y + cf.LookVector.Z * u.Z
-                        if dot >= minDot then
-                            best = char
-                            break
-                        end
-                    end
-                end
-            end
-
-            if not best then return false end
-            Shitaro.instantFire.lastFire = now
-            -- VERIFY: method name in your game (Shoot / shoot / fire / etc.)
-            local okS = pcall(function() weapon:shoot() end)
-            if okS then
-                Shitaro.instantFire.shots = Shitaro.instantFire.shots + 1
-                return true
-            end
-            return false
-        end
-
-        -- Normal mode: fallback to original logic
-        return oldStep(now)
-    end
-
-    -- ── 3. PIERCER / MAGIC FIX ──
-    -- When magic is enabled, auto-set origin_shift so the bullet spawns
-    -- past thin cover. Also boost wall eval power.
-    if Shitaro.SetLegit then
-        local oldSet = Shitaro.SetLegit
-        Shitaro.SetLegit = function(key, value)
-            oldSet(key, value)
-            local opts = Shitaro.legitOptions
-            if not opts then return end
-
-            if key == "magic" and value == true then
-                if (opts.origin_shift or 0) < 3 then
-                    oldSet("origin_shift", 5.0) -- enough to clear most corners/thin walls
-                end
-                if (opts.wall_power or 0) < 5 then
-                    oldSet("wall_power", 10)
-                end
-                -- magic still needs auto_wall so the engine path validates penetration
-                if not opts.auto_wall and not opts.wallbang then
-                    oldSet("auto_wall", true)
-                end
-                if (opts.wall_min_damage or 0) < 10 then
-                    oldSet("wall_min_damage", 30)
-                end
-            elseif key == "magic" and value == false then
-                oldSet("origin_shift", 0)
-                oldSet("wall_power", 3)
-            end
-        end
-    end
-
-    -- ── 4. WEAPON PENETRATION BOOST (for wallbangs & piercer) ──
-    -- Wraps FindBullet so wall eval uses higher penetration stats while cheat is on.
-    if Shitaro.Guns and Shitaro.Guns.FindBullet then
-        local oldFindBullet = Shitaro.Guns.FindBullet
-        Shitaro.Guns.FindBullet = function(...)
-            local bullet = oldFindBullet(...)
-            if bullet and type(bullet) == "table" then
-                local opts = Shitaro.legitOptions
-                if opts and (opts.magic or opts.wallbang or opts.auto_wall) then
-                    if type(bullet.Penetration) == "number" then
-                        bullet._origPen = bullet._origPen or bullet.Penetration
-                        bullet.Penetration = bullet._origPen * 3.5
-                    end
-                    if type(bullet.WallbangMultiplier) == "number" then
-                        bullet._origWall = bullet._origWall or bullet.WallbangMultiplier
-                        bullet.WallbangMultiplier = bullet._origWall * 2.5
-                    end
-                elseif bullet._origPen then
-                    bullet.Penetration = bullet._origPen
-                    bullet.WallbangMultiplier = bullet._origWall or bullet.WallbangMultiplier
-                end
-            end
-            return bullet
-        end
-    end
-
-    -- ── 5. PRESET FIX (anti cheater) ──
-    -- Original preset sets origin_shift to 0; override it.
-    local oldPreset = Shitaro.ApplyPreset
-    if oldPreset then
-        Shitaro.ApplyPreset = function(name)
-            oldPreset(name)
-            if name == "anti" then
-                Shitaro.SetLegit("origin_shift", 5.0)
-                Shitaro.SetLegit("wall_power", 10)
-                Shitaro.SetLegit("wall_min_damage", 30)
-            end
-        end
-    end
-
-    -- ── 6. ANTI-AIM FIX ──
-    -- Replaces SetAA with a version that reliably finds module U
-    -- and applies staged settings after W module loads.
-    Shitaro.aaStage = Shitaro.aaStage or {}
-
-    function Shitaro.SetAA(key, value)
-        Shitaro.aaStage[key] = value
-        local u = getModuleU()
-        if u then
-            u.cfg[key] = value
-            -- Safe calls: check method exists before calling
-            if (key == "on" and value == false)
-                or (key == "pitch" and value == "off")
-                or (key == "air_pitch" and value == "off") then
-                if type(u.relax) == "function" then
-                    pcall(u.relax)
-                end
-            end
-            if type(u.reset) == "function" then
-                pcall(u.reset)
-            end
-            if key == "on" then
-                print("[Noir] antiaim " .. (value and "ON" or "OFF") .. " | yaw=" .. tostring(u.cfg.yaw) .. " pitch=" .. tostring(u.cfg.pitch) .. " spin=" .. tostring(u.cfg.spin_rate))
-            end
-        elseif key == "on" then
-            warn("[Noir] antiaim: module U not accessible yet, setting staged. It will apply when the module loads.")
-        end
-    end
-
-    -- Hook into module W loading to apply staged AA settings
-    -- W loads U/V/T automatically, so when W is ready, U is ready too
-    local oldBoot = Shitaro.BootShitaro or Shitaro.Boot
-    if oldBoot then
-        Shitaro.BootShitaro = function(...)
-            local result = oldBoot(...)
-            -- After boot, try to apply any staged anti-aim settings
-            task.delay(1, function()
-                local u = getModuleU()
-                if u then
-                    local staged = Shitaro.aaStage
-                    if staged and next(staged) then
-                        for k, v in pairs(staged) do
-                            u.cfg[k] = v
-                        end
-                        if type(u.reset) == "function" then
-                            pcall(u.reset)
-                        end
-                        print("[Noir] antiaim: staged settings applied after boot | yaw=" .. tostring(u.cfg.yaw) .. " pitch=" .. tostring(u.cfg.pitch))
-                    end
-                end
-            end)
-            return result
-        end
-    end
-
-    -- If already booted, apply staged settings immediately
-    if Shitaro.Ready then
-        task.delay(0.5, function()
-            local u = getModuleU()
-            if u then
-                local staged = Shitaro.aaStage
-                if staged and next(staged) then
-                    for k, v in pairs(staged) do
-                        u.cfg[k] = v
-                    end
-                    if type(u.reset) == "function" then
-                        pcall(u.reset)
-                    end
-                    print("[Noir] antiaim: staged settings applied immediately | yaw=" .. tostring(u.cfg.yaw) .. " pitch=" .. tostring(u.cfg.pitch))
-                end
-            end
-        end)
-    end
-
-    print("[Noir] Patch v2.1 loaded: AntiKick + AutoShoot Wall + Piercer + AntiAim Fix")
-end
