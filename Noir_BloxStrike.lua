@@ -30701,6 +30701,11 @@ function xDTaraZ.Shitaro.TPStart()
                 return
             end
             tp._wasActive = true
+            -- за кадр пушим один раз: второй канал (бинд/PreRender) видит уже
+            -- сдвинутую камеру и выходит, не удваивая смещение
+            if tp._pushed and cam.CFrame == tp._pushed then
+                return
+            end
             local base = cam.CFrame
             tp._eye = base
             local pos = base.Position
@@ -30720,14 +30725,19 @@ function xDTaraZ.Shitaro.TPStart()
         end)
     end
 
-    -- Last+1: игровой камер-контроллер биндится на Last позже нас и затирал push
-    -- до рендера (TP не включался) — биндимся строго после него
+    -- Многоканальный пуш. Игровой камер-контроллер может писать камеру ПОСЛЕ
+    -- нашего бинда (поздний приоритет или PreRender-соединения), а часть
+    -- мобильных экзекуторов вообще не доставляет BindToRenderStep-колбэки.
+    -- Пушим одновременно двумя каналами: бинд 4000 (после всех игровых биндов)
+    -- и новейшее PreRender-соединение (последний писатель перед рендером).
+    -- Guard в _step не даёт сместить камеру дважды за один кадр.
     if RunService.BindToRenderStep then
-        pcall(RunService.BindToRenderStep, RunService, "NoirThirdPerson", Enum.RenderPriority.Last.Value + 1, tp._step)
-    elseif RunService.PreRender then
-        -- fallback: без BindToRenderStep пушим через событие PreRender
+        pcall(RunService.BindToRenderStep, RunService, "NoirThirdPerson", 4000, tp._step)
+    end
+    if RunService.PreRender then
         tp._pr = xDTaraZ:Connect(RunService.PreRender, tp._step)
     end
+    print("[Noir] third person ready: bind=" .. tostring(RunService.BindToRenderStep ~= nil) .. " prerender=" .. tostring(RunService.PreRender ~= nil))
     -- Heartbeat из raw(2): если игра не перезаписала камеру — вернуть глазную точку
     tp._hb = xDTaraZ:Connect(RunService.Heartbeat, function()
         pcall(function()
