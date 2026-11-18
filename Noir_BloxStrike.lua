@@ -35,6 +35,11 @@
     Piercer — Wallbang mode и Piercer bullet (magic) пробуждают
     движковые пути прострелов оригинала (через-стенные цели по урону),
     Force origin до 20 студов.
+    Visuals fix — чамсы сквозь стены: глушим чужие Highlight редкости
+    скинов, reassert DepthMode; Billboard-теги (имя+HP+дистанция) сквозь
+    стены. Third person — полный порт ZamlbloxThirdPerson из raw(2):
+    коллизия, видимое тело, вьюмодель спрятана, restore при смерти.
+    Пресет «Против читеров» одной кнопкой (AA+движение+пирсер).
     Antiaim + Movement — модули T/U/V/W дословно из оригинала
     (движок анти-аима U: yaw/pitch/spin/jitter/мануал; контроллер
     движения W с хуком MovementV2: bhop/strafe/edge jump/jump bug/
@@ -30474,6 +30479,7 @@ function xDTaraZ.Shitaro.Legit()
         end
         self.Ready = true
         pcall(xDTaraZ.Shitaro.VisualsStart)
+        pcall(xDTaraZ.Shitaro.TPStart)
         -- boot Shitaro: beat → aq.auto (auto shoot), early → p.step/ap.step
         xDTaraZ:Connect(RunService.Heartbeat, function()
             pcall(D.load("p").step)
@@ -30534,7 +30540,7 @@ function xDTaraZ.Shitaro.enemies()
 end
 
 -- Visuals (ESP): chams + box
-xDTaraZ.Shitaro.visuals = { chams = true, box = true, running = false, _items = {} }
+xDTaraZ.Shitaro.visuals = { chams = true, box = true, tag = true, running = false, _items = {} }
 
 function xDTaraZ.Shitaro.VisualsStart()
     local self = xDTaraZ.Shitaro
@@ -30551,6 +30557,7 @@ function xDTaraZ.Shitaro.VisualsStart()
         if it then
             pcall(function() it.hl:Destroy() end)
             pcall(function() it.box:Destroy() end)
+            pcall(function() it.tag:Destroy() end)
             vis._items[char] = nil
         end
     end
@@ -30569,7 +30576,23 @@ function xDTaraZ.Shitaro.VisualsStart()
             box.Transparency = 0.35
             box.ZIndex = 0
             box.AlwaysOnTop = true
-            it = { hl = hl, box = box }
+            local tag = Instance.new("BillboardGui")
+            tag.Name = "NoirTag"
+            tag.Size = UDim2.new(0, 150, 0, 40)
+            tag.StudsOffsetWorldSpace = Vector3.new(0, 3.4, 0)
+            tag.AlwaysOnTop = true
+            tag.MaxDistance = 2048
+            local label = Instance.new("TextLabel")
+            label.Name = "Text"
+            label.BackgroundTransparency = 1
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.Font = Enum.Font.GothamBold
+            label.TextScaled = true
+            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            label.TextStrokeTransparency = 0.4
+            label.Text = ""
+            label.Parent = tag
+            it = { hl = hl, box = box, tag = tag, label = label }
             vis._items[char] = it
         end
         return it
@@ -30582,20 +30605,182 @@ function xDTaraZ.Shitaro.VisualsStart()
                 local it = ensure(char)
                 it.hl.FillColor = Color3.fromRGB(255, 70, 70)
                 it.hl.OutlineColor = Color3.fromRGB(90, 255, 120)
+                it.hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                 if it.hl.Parent ~= char then it.hl.Parent = char end
-                if it.box.Adornee == nil then
-                    local root = char:FindFirstChild("HumanoidRootPart") or char.PrimaryPart
-                    if root then it.box.Adornee = root end
+                -- фикс «чамсы не сквозь стены»: Blox Strike вешает свой Highlight
+                -- (редкость скина), а рендерится только один — глушим чужие
+                for _, other in ipairs(char:GetDescendants()) do
+                    if other:IsA("Highlight") and other ~= it.hl and other.Enabled then
+                        other.Enabled = false
+                    end
                 end
+                local root = char:FindFirstChild("HumanoidRootPart") or char.PrimaryPart
+                if it.box.Adornee == nil and root then it.box.Adornee = root end
                 if it.box.Parent ~= folder then it.box.Parent = folder end
+                it.box.AlwaysOnTop = true
                 it.hl.Enabled = vis.chams
                 it.box.Visible = vis.box
+                it.tag.Enabled = vis.tag and true or false
+                if root and it.tag.Parent ~= root then it.tag.Parent = root end
+                if vis.tag then
+                    local pl = self.Players.GetPlayerFromCharacter and self.Players:GetPlayerFromCharacter(char)
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    local cam = workspace.CurrentCamera
+                    local dist = (cam and root) and math.floor((root.Position - cam.CFrame.Position).Magnitude + 0.5) or 0
+                    it.label.Text = string.format("%s  %dm\nHP %d", pl and pl.Name or "?", dist, hum and math.floor(hum.Health + 0.5) or 0)
+                end
             end
             for char in pairs(vis._items) do
                 if not seen[char] then drop(char) end
             end
         end)
     end)
+end
+
+-- ── Third person: порт ZamlbloxThirdPerson из raw(2) (7748-8030) ────────────
+-- Камера отодвигается назад по взгляду (RenderStep Last), Heartbeat возвращает
+-- глазную точку, чтобы игровой камер-код не уплывал; тело видно (LTM=0),
+-- вьюмодель первого лица прячется, коллизия лучом (Exclude тело+камера).
+xDTaraZ.Shitaro.tp = { on = false, distance = 8, voffset = 0.5, hoffset = 0, collision = true, running = false }
+
+function xDTaraZ.Shitaro.TPStart()
+    local self = xDTaraZ.Shitaro
+    local tp = self.tp
+    if tp.running then return end
+    tp.running = true
+    tp._hidden = {}
+    tp._wasActive = false
+    local okRp, rp = pcall(function() return RaycastParams.new() end)
+    if okRp and rp then
+        rp.FilterType = Enum.RaycastFilterType.Exclude
+        tp._rp = rp
+    end
+
+    local function setCharVisible(char, alpha)
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Name ~= "CameraPart" then
+                pcall(function() part.LocalTransparencyModifier = alpha end)
+            end
+        end
+    end
+
+    local function restoreViewmodel()
+        for part in pairs(tp._hidden) do
+            if part.Parent then pcall(function() part.LocalTransparencyModifier = 0 end) end
+        end
+        table.clear(tp._hidden)
+    end
+
+    local function hideViewmodel()
+        local cam = workspace.CurrentCamera
+        if not cam then return end
+        for _, part in ipairs(cam:GetDescendants()) do
+            if part:IsA("BasePart") and part.LocalTransparencyModifier ~= 1 then
+                part.LocalTransparencyModifier = 1
+                tp._hidden[part] = true
+            end
+        end
+    end
+
+    -- H() из raw(2): вернуть первое лицо (тело скрыто, вьюмодель видна)
+    tp.restore = function()
+        tp._wasActive = false
+        restoreViewmodel()
+        local char = self.LocalPlayer and self.LocalPlayer.Character
+        if char then setCharVisible(char, 1) end
+    end
+
+    -- U() из raw(2): отодвинуть камеру, показать тело, спрятать вьюмодель
+    tp._step = function()
+        pcall(function()
+            local char = self.LocalPlayer and self.LocalPlayer.Character
+            local cam = workspace.CurrentCamera
+            local dead = char and char.GetAttribute and char:GetAttribute("Dead")
+            if not tp.on or not (char and cam) or dead then
+                if tp._wasActive then tp.restore() end
+                return
+            end
+            tp._wasActive = true
+            local base = cam.CFrame
+            tp._eye = base
+            local pos = base.Position
+            local off = base:VectorToWorldSpace(Vector3.new(tp.hoffset, tp.voffset, tp.distance))
+            local dist = off.Magnitude
+            if dist > 0.01 then
+                if tp.collision and tp._rp then
+                    tp._rp.FilterDescendantsInstances = { char, cam }
+                    local hit = workspace:Raycast(pos, off, tp._rp)
+                    if hit then dist = math.max((hit.Position - pos).Magnitude - 0.3, 0.2) end
+                end
+                cam.CFrame = base.Rotation + (pos + off.Unit * dist)
+                tp._pushed = cam.CFrame
+            end
+            setCharVisible(char, 0)
+            hideViewmodel()
+        end)
+    end
+
+    if RunService.BindToRenderStep then
+        pcall(RunService.BindToRenderStep, RunService, "NoirThirdPerson", Enum.RenderPriority.Last.Value, tp._step)
+    end
+    -- Heartbeat из raw(2): если игра не перезаписала камеру — вернуть глазную точку
+    tp._hb = xDTaraZ:Connect(RunService.Heartbeat, function()
+        pcall(function()
+            if tp.on and tp._wasActive and tp._pushed and workspace.CurrentCamera then
+                if workspace.CurrentCamera.CFrame == tp._pushed then
+                    workspace.CurrentCamera.CFrame = tp._eye
+                end
+            end
+            tp._pushed = nil
+        end)
+    end)
+
+    tp.stop = function()
+        pcall(function() RunService:UnbindFromRenderStep("NoirThirdPerson") end)
+        if tp._hb then pcall(function() tp._hb:Disconnect() end) end
+        tp._hb = nil
+        if tp._wasActive then tp.restore() end
+    end
+end
+
+function xDTaraZ.Shitaro.Stop()
+    local tp = xDTaraZ.Shitaro.tp
+    if tp and tp.stop then pcall(tp.stop) end
+end
+
+-- ── Пресеты: ApplyPreset — готовые конфиги против читеров одной строкой ─────
+function xDTaraZ.Shitaro.ApplyPreset(name)
+    local s = xDTaraZ.Shitaro
+    if name == "anti" then
+        -- против читеров: десинк + движение + прострелы
+        s.SetAA("on", true)
+        s.SetAA("yaw", "spin")
+        s.SetAA("spin_rate", 30)
+        s.SetAA("pitch", "down")
+        s.SetAA("air_spin", true)
+        s.SetAA("air_rate", 30)
+        s.SetMove("bhop", true)
+        s.SetMove("strafe", true)
+        s.SetMove("edge_jump", true)
+        s.SetLegit("magic", true)
+        s.SetLegit("wallbang", true)
+        s.SetLegit("wall_min_damage", 30)
+        s.SetLegit("origin_shift", 6)
+        s.SetLegit("multipoint", true)
+        s.SetLegit("auto_wall", true)
+        s.SetLegit("min_damage", 15)
+    elseif name == "normal" then
+        s.SetAA("on", false)
+        s.SetAA("yaw", "off")
+        s.SetAA("pitch", "off")
+        s.SetAA("air_spin", false)
+        s.SetMove("bhop", false)
+        s.SetMove("strafe", false)
+        s.SetMove("edge_jump", false)
+        s.SetLegit("magic", false)
+        s.SetLegit("wallbang", false)
+        s.SetLegit("origin_shift", 0)
+    end
 end
 
 -- ── Мосты анти-аима и движения: SetAA → U.cfg, SetMove → W.cfg ──────────────
@@ -31159,6 +31344,7 @@ function xDTaraZ.UI.BuildSilent(tab)
 
     -- Anti-Aim — дословный движок оригинала (модуль U): рысканье/наклон/вращение/мануал.
     local aag = tab:AddLeftGroupbox({ Name = T("Anti-Aim", "Анти-аим"), Icon = "shield-off" })
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.Preset", { Name = T("Preset", "Пресет"), Options = { "выкл", "Против читеров", "Обычная" }, Default = "выкл", Desc = T("anti-cheater: AA spin + bhop/strafe/edge jump + piercer through walls; normal: everything off", "anti-cheater: анти-аим спин + бхоп/страйф/прыжок с края + пирсер сквозь стены; Обычная: всё выключить") }), function(value) xDTaraZ.Shitaro.ApplyPreset(value == "Против читеров" and "anti" or (value == "Обычная" and "normal" or nil)) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.On", { Name = T("Enable", "Включить"), Desc = T("Master antiaim switch (yaw/pitch desync)", "Главный выключатель анти-аима (десинк рысканья/наклона)"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("on", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.Yaw", { Name = T("Yaw", "Рысканье"), Options = { "backward", "spin", "jitter", "off" }, Default = "off", Desc = T("Yaw antiaim mode", "Режим анти-аима по рысканью") }), function(value) xDTaraZ.Shitaro.SetAA("yaw", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(aag, "AA.Jitter", { Name = T("Jitter", "Джиттер"), Min = 0, Max = 180, Default = 45, Suffix = "°" }), function(value) xDTaraZ.Shitaro.SetAA("jitter", value) end)
@@ -31418,6 +31604,7 @@ function xDTaraZ.UI.BuildMisc(window)
     local vis = tab:AddRightGroupbox({ Name = T("Visuals", "Визуалы"), Icon = "eye" })
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(vis, "Visuals.Chams", { Name = T("Chams (through walls)", "Чамсы (сквозь стены)"), Desc = T("Highlights enemies through walls: red fill, green outline", "Подсвечивает врагов сквозь стены: красная заливка, зелёная обводка"), Default = true }), function(value) xDTaraZ.Shitaro.visuals.chams = value end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(vis, "Visuals.Box", { Name = T("Box ESP", "Боксы"), Desc = T("Draws a box around every enemy", "Рисует бокс вокруг каждого врага"), Default = true }), function(value) xDTaraZ.Shitaro.visuals.box = value end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(vis, "Visuals.Tag", { Name = T("Tag (name+HP)", "Тег (имя+HP)"), Desc = T("Billboard nameplate with HP and distance, renders through walls", "Табличка с именем, HP и дистанцией — видна сквозь стены"), Default = true }), function(value) xDTaraZ.Shitaro.visuals.tag = value end)
 
     -- Movement — дословный контроллер оригинала (модуль W, хук MovementV2).
     local mvg = tab:AddRightGroupbox({ Name = T("Movement", "Движение"), Icon = "move" })
@@ -31428,6 +31615,13 @@ function xDTaraZ.UI.BuildMisc(window)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(mvg, "MV.EdgeBug", { Name = T("Edge bug", "Эдж-баг"), Default = false }), function(value) xDTaraZ.Shitaro.SetMove("edge_bug", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(mvg, "MV.SlowWalk", { Name = T("Slow walk", "Медленная ходьба"), Default = false }), function(value) xDTaraZ.Shitaro.SetMove("slow_walk", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(mvg, "MV.PixelSurf", { Name = T("Pixel surf", "Пиксельный сёрф"), Default = false }), function(value) xDTaraZ.Shitaro.SetMove("pixel_surf", value) end)
+
+    -- Third person — полный порт ZamlbloxThirdPerson из raw(2): камера с коллизией,
+    -- видимое тело, спрятанная вьюмодель, восстановление при смерти/выключении.
+    local tpg = tab:AddRightGroupbox({ Name = T("Third person", "Вид от 3-го лица"), Icon = "camera" })
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(tpg, "TP.Enable", { Name = T("Enable", "Включить"), Desc = T("Third person camera with collision and visible body (Zamlblox port)", "Камера от третьего лица с коллизией и видимым телом (порт Zamlblox)"), Default = false }), function(value) xDTaraZ.Shitaro.tp.on = value end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(tpg, "TP.Distance", { Name = T("Distance", "Дистанция"), Min = 2, Max = 25, Default = 8, Increment = 0.5, Suffix = "st" }), function(value) xDTaraZ.Shitaro.tp.distance = value end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(tpg, "TP.Collision", { Name = T("Collision", "Коллизия"), Desc = T("Camera pulls in front of walls instead of clipping through", "Камера приближается перед стенами вместо прохода сквозь"), Default = true }), function(value) xDTaraZ.Shitaro.tp.collision = value end)
 
     local util = tab:AddRightGroupbox({ Name = T("Utility", "อรรถประโยชน์"), Icon = "settings-2" })
     xDTaraZ.UI.Toggle(util, "InfiniteJump", { Name = T("Infinite jump", "กระโดดไม่จำกัด"), Desc = T("Lobby only, use Bunny hop in rounds", "ใช้ได้เฉพาะล็อบบี้ ในรอบใช้บันนี่ฮอป") })
