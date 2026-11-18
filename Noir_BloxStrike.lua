@@ -30720,8 +30720,13 @@ function xDTaraZ.Shitaro.TPStart()
         end)
     end
 
+    -- Last+1: игровой камер-контроллер биндится на Last позже нас и затирал push
+    -- до рендера (TP не включался) — биндимся строго после него
     if RunService.BindToRenderStep then
-        pcall(RunService.BindToRenderStep, RunService, "NoirThirdPerson", Enum.RenderPriority.Last.Value, tp._step)
+        pcall(RunService.BindToRenderStep, RunService, "NoirThirdPerson", Enum.RenderPriority.Last.Value + 1, tp._step)
+    elseif RunService.PreRender then
+        -- fallback: без BindToRenderStep пушим через событие PreRender
+        tp._pr = xDTaraZ:Connect(RunService.PreRender, tp._step)
     end
     -- Heartbeat из raw(2): если игра не перезаписала камеру — вернуть глазную точку
     tp._hb = xDTaraZ:Connect(RunService.Heartbeat, function()
@@ -30737,6 +30742,8 @@ function xDTaraZ.Shitaro.TPStart()
 
     tp.stop = function()
         pcall(function() RunService:UnbindFromRenderStep("NoirThirdPerson") end)
+        if tp._pr then pcall(function() tp._pr:Disconnect() end) end
+        tp._pr = nil
         if tp._hb then pcall(function() tp._hb:Disconnect() end) end
         tp._hb = nil
         if tp._wasActive then tp.restore() end
@@ -30759,13 +30766,16 @@ function xDTaraZ.Shitaro.ApplyPreset(name)
         s.SetAA("pitch", "down")
         s.SetAA("air_spin", true)
         s.SetAA("air_rate", 30)
-        s.SetMove("bhop", true)
+        -- бхоп НЕ включаем: аномалия скорости — главный триггер анти-спида (кик)
+        s.SetMove("bhop", false)
         s.SetMove("strafe", true)
         s.SetMove("edge_jump", true)
         s.SetLegit("magic", true)
         s.SetLegit("wallbang", true)
         s.SetLegit("wall_min_damage", 30)
-        s.SetLegit("origin_shift", 6)
+        -- origin_shift 0: высокий сдвиг = аномальный вектор выстрела для сервера;
+        -- включай вручную и по чуть-чуть (2-4), если начнёт кикать — убирай
+        s.SetLegit("origin_shift", 0)
         s.SetLegit("multipoint", true)
         s.SetLegit("auto_wall", true)
         s.SetLegit("min_damage", 15)
@@ -31344,7 +31354,7 @@ function xDTaraZ.UI.BuildSilent(tab)
 
     -- Anti-Aim — дословный движок оригинала (модуль U): рысканье/наклон/вращение/мануал.
     local aag = tab:AddLeftGroupbox({ Name = T("Anti-Aim", "Анти-аим"), Icon = "shield-off" })
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.Preset", { Name = T("Preset", "Пресет"), Options = { "выкл", "Против читеров", "Обычная" }, Default = "выкл", Desc = T("anti-cheater: AA spin + bhop/strafe/edge jump + piercer through walls; normal: everything off", "anti-cheater: анти-аим спин + бхоп/страйф/прыжок с края + пирсер сквозь стены; Обычная: всё выключить") }), function(value) xDTaraZ.Shitaro.ApplyPreset(value == "Против читеров" and "anti" or (value == "Обычная" and "normal" or nil)) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.Preset", { Name = T("Preset", "Пресет"), Options = { "выкл", "Против читеров", "Обычная" }, Default = "выкл", Desc = T("anti-cheater: AA spin + strafe/edge jump + piercer through walls (bhop and Force origin stay manual - they can trigger speed/fire kicks); normal: everything off", "anti-cheater: анти-аим спин + страйф/прыжок с края + пирсер сквозь стены (бхоп и форс-ориджин включай вручную - они могут дать кик за скорость/выстрелы); Обычная: всё выключить") }), function(value) xDTaraZ.Shitaro.ApplyPreset(value == "Против читеров" and "anti" or (value == "Обычная" and "normal" or nil)) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.On", { Name = T("Enable", "Включить"), Desc = T("Master antiaim switch (yaw/pitch desync)", "Главный выключатель анти-аима (десинк рысканья/наклона)"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("on", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.Yaw", { Name = T("Yaw", "Рысканье"), Options = { "backward", "spin", "jitter", "off" }, Default = "off", Desc = T("Yaw antiaim mode", "Режим анти-аима по рысканью") }), function(value) xDTaraZ.Shitaro.SetAA("yaw", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(aag, "AA.Jitter", { Name = T("Jitter", "Джиттер"), Min = 0, Max = 180, Default = 45, Suffix = "°" }), function(value) xDTaraZ.Shitaro.SetAA("jitter", value) end)
