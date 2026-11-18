@@ -25574,7 +25574,7 @@ end;
 -- ============================================
 do
     local cam = workspace.CurrentCamera
-    local lp = xDTaraZ.LocalPlayer
+    local lp = xDTaraZ.LocalPlayer or game:GetService("Players").LocalPlayer
     local wallParams = RaycastParams.new()
     wallParams.FilterType = Enum.RaycastFilterType.Exclude
 
@@ -29438,7 +29438,9 @@ do
         if aaLoaded then return end
         local ok = pcall(function()
             if not xDTaraZ.State.Alive then return end
-            local char = xDTaraZ.LocalPlayer.Character
+            local lp = xDTaraZ.LocalPlayer or game:GetService("Players").LocalPlayer
+            if not lp then return end
+            local char = lp.Character
             if not char then return end
             local hum = char:FindFirstChildOfClass("Humanoid")
             local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -29457,12 +29459,15 @@ do
     if aaConn1 then pcall(aaConn1.Disconnect, aaConn1) end
     if aaConn2 then pcall(aaConn2.Disconnect, aaConn2) end
 
-    aaConn1 = xDTaraZ.LocalPlayer.CharacterAdded:Connect(onCharAdded)
+    local lp = xDTaraZ.LocalPlayer or game:GetService("Players").LocalPlayer
+    if lp then
+        aaConn1 = lp.CharacterAdded:Connect(onCharAdded)
+    end
     aaConn2 = game:GetService("RunService").Heartbeat:Connect(function()
         if not aaLoaded and xDTaraZ.State.Alive then tryLoadAA() end
     end)
 
-    if xDTaraZ.LocalPlayer.Character then
+    if lp and lp.Character then
         task.defer(tryLoadAA)
     end
 end
