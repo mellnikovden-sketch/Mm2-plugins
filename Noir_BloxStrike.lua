@@ -13058,6 +13058,8 @@ end
 function Window:Rejoin()
     self:Notify({ Title = "Rejoining", Content = "Teleporting back into this server", Icon = "refresh-cw", Duration = 3 })
     task.spawn(function()
+        local ak = xDTaraZ.Shitaro.antiKick
+        if ak then ak._allowTpUntil = os.clock() + 5 end
         local ok, err = pcall(function()
             if #Players:GetPlayers() <= 1 or game.JobId == "" then
                 TeleportService:Teleport(game.PlaceId, LocalPlayer)
@@ -21656,10 +21658,14 @@ end
 -- ──────────────────────────────────────────────────────────────────────────
 
 function xDTaraZ.World.Rejoin()
+    local ak = xDTaraZ.Shitaro.antiKick
+    if ak then ak._allowTpUntil = os.clock() + 5 end
     pcall(TeleportService.TeleportToPlaceInstance, TeleportService, game.PlaceId, game.JobId, LocalPlayer)
 end
 
 function xDTaraZ.World.ServerHop()
+    local ak = xDTaraZ.Shitaro.antiKick
+    if ak then ak._allowTpUntil = os.clock() + 5 end
     pcall(TeleportService.Teleport, TeleportService, game.PlaceId, LocalPlayer)
 end
 
@@ -30480,6 +30486,7 @@ function xDTaraZ.Shitaro.Legit()
         self.Ready = true
         pcall(xDTaraZ.Shitaro.VisualsStart)
         pcall(xDTaraZ.Shitaro.TPStart)
+        pcall(xDTaraZ.Shitaro.AntiKickStart)
         -- boot Shitaro: beat → aq.auto (auto shoot), early → p.step/ap.step
         xDTaraZ:Connect(RunService.Heartbeat, function()
             pcall(D.load("p").step)
@@ -30525,18 +30532,24 @@ function xDTaraZ.Shitaro.isEnemy(pl)
     return mine ~= theirs
 end
 
+-- Кэш списка врагов: пересборка 3 раза в секунду вместо GetPlayers на каждый
+-- тик; таблица переиспользуется — на тике ноль аллокаций
+local enemyCache, enemyCacheAt = {}, 0
 function xDTaraZ.Shitaro.enemies()
     local self = xDTaraZ.Shitaro
+    local now = os.clock()
+    if now < enemyCacheAt then return enemyCache end
+    enemyCacheAt = now + 0.3
+    table.clear(enemyCache)
     local players = self.Players
-    if not (players and type(players.GetPlayers) == "function") then return {} end
-    local out = {}
+    if not (players and type(players.GetPlayers) == "function") then return enemyCache end
     for _, pl in ipairs(players:GetPlayers()) do
         local char = pl.Character
         if self.isEnemy(pl) and char and char.Parent ~= nil then
-            out[#out + 1] = char
+            enemyCache[#enemyCache + 1] = char
         end
     end
-    return out
+    return enemyCache
 end
 
 -- Visuals (ESP): chams + box
@@ -30598,6 +30611,7 @@ function xDTaraZ.Shitaro.VisualsStart()
         return it
     end
     local espWait = 0
+    local seen = {}
     xDTaraZ:Connect(RunService.Heartbeat, function(dt)
         -- ESP does not need 60 Hz: 15 updates a second look the same and cost a quarter
         espWait = espWait + (dt or 0)
@@ -30605,7 +30619,7 @@ function xDTaraZ.Shitaro.VisualsStart()
         espWait = 0
         pcall(function()
             local now = os.clock()
-            local seen = {}
+            table.clear(seen)
             local cam = workspace.CurrentCamera
             for _, char in ipairs(self.enemies()) do
                 seen[char] = true
@@ -30803,6 +30817,53 @@ end
 function xDTaraZ.Shitaro.Stop()
     local tp = xDTaraZ.Shitaro.tp
     if tp and tp.stop then pcall(tp.stop) end
+end
+
+-- ── AntiKick: блокировка клиентских киков и игровых телепортов ─────────────
+-- По скинутым файлам: ни один из читов кик не блокирует (там Kick = отдача
+-- оружия). Серверный Player:Kick клиент заблокировать не может — он приходит
+-- по сети. Перехватываем то, что живёт на клиенте: ЛОКАЛЬНЫЕ вызовы
+-- LocalPlayer:Kick (клиентские проверки игры) и телепорты TeleportService
+-- («перекидывает с сервера на сервер»). Свои Rejoin/ServerHop открываются
+-- одноразовым окном _allowTpUntil.
+xDTaraZ.Shitaro.antiKick = { on = false, blockTp = true, running = false, _blocked = 0, _blockedTp = 0, _allowTpUntil = 0, _tps = nil }
+
+function xDTaraZ.Shitaro.AntiKickStart()
+    local self = xDTaraZ.Shitaro
+    local ak = self.antiKick
+    if ak.running then return end
+    ak.running = true
+    pcall(function() ak._tps = game:GetService("TeleportService") end)
+    if type(hookmetamethod) ~= "function" or type(getnamecallmethod) ~= "function" or type(newcclosure) ~= "function" then
+        print("[Noir] AntiKick: у экзекутора нет namecall-хуков — модуль пассивен")
+        return
+    end
+    local old
+    old = hookmetamethod(game, "__namecall", newcclosure(function(inst, ...)
+        local method = getnamecallmethod()
+        if ak.on then
+            -- клиентский кик: игра вызвала LocalPlayer:Kick из LocalScript
+            if method == "Kick" and self.LocalPlayer ~= nil and inst == self.LocalPlayer then
+                ak._blocked = ak._blocked + 1
+                local reason = (...)
+                print("[Noir] AntiKick: заблокирован клиентский Kick: " .. tostring(reason == nil and "(без причины)" or reason))
+                return nil
+            end
+            -- телепорт: блокируем чужие, свои (rejoin/hop) открывает окно 5 с
+            if ak.blockTp and ak._tps ~= nil and inst == ak._tps
+                and (method == "TeleportToPlaceInstance" or method == "TeleportAsync" or method == "Teleport") then
+                if os.clock() <= ak._allowTpUntil then
+                    ak._allowTpUntil = 0 -- одноразовое окно: пропускаем только наш вызов
+                else
+                    ak._blockedTp = ak._blockedTp + 1
+                    print("[Noir] AntiKick: заблокирован телепорт (" .. tostring(method) .. "), всего: " .. tostring(ak._blockedTp))
+                    return nil
+                end
+            end
+        end
+        return old(inst, ...)
+    end))
+    print("[Noir] AntiKick: namecall-хук установлен")
 end
 
 -- ── Пресеты: ApplyPreset — готовые конфиги против читеров одной строкой ─────
@@ -31759,6 +31820,11 @@ function xDTaraZ.UI.BuildMisc(window)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(tpg, "TP.Enable", { Name = T("Enable", "Включить"), Desc = T("Third person camera with collision and visible body (Zamlblox port)", "Камера от третьего лица с коллизией и видимым телом (порт Zamlblox)"), Default = false }), function(value) xDTaraZ.Shitaro.tp.on = value end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(tpg, "TP.Distance", { Name = T("Distance", "Дистанция"), Min = 2, Max = 25, Default = 8, Increment = 0.5, Suffix = "st" }), function(value) xDTaraZ.Shitaro.tp.distance = value end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(tpg, "TP.Collision", { Name = T("Collision", "Коллизия"), Desc = T("Camera pulls in front of walls instead of clipping through", "Камера приближается перед стенами вместо прохода сквозь"), Default = true }), function(value) xDTaraZ.Shitaro.tp.collision = value end)
+
+    -- AntiKick — клиентские кики и телепорты игры; серверный кик не блокируется
+    local akg = tab:AddRightGroupbox({ Name = T("AntiKick", "Анти-кик"), Icon = "shield" })
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(akg, "AntiKick.Enable", { Name = T("Block kicks", "Блокировать кики"), Desc = T("Blocks LOCAL Kick attempts (client-side checks). Server-side kicks cannot be blocked - they come over the network.", "Блокирует ЛОКАЛЬНЫЕ кики (клиентские проверки игры). Серверный кик заблокировать нельзя - он идёт по сети."), Default = false }), function(value) xDTaraZ.Shitaro.antiKick.on = value == true end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(akg, "AntiKick.BlockTp", { Name = T("Block server hopping", "Блокировать перекидывание"), Desc = T("Blocks game-initiated TeleportService moves. Our Rejoin/ServerHop still work.", "Блокирует телепорты игры (перекидывание между серверами). Наши Rejoin/ServerHop работают как раньше."), Default = true }), function(value) xDTaraZ.Shitaro.antiKick.blockTp = value == true end)
 
     local util = tab:AddRightGroupbox({ Name = T("Utility", "อรรถประโยชน์"), Icon = "settings-2" })
     xDTaraZ.UI.Toggle(util, "InfiniteJump", { Name = T("Infinite jump", "กระโดดไม่จำกัด"), Desc = T("Lobby only, use Bunny hop in rounds", "ใช้ได้เฉพาะล็อบบี้ ในรอบใช้บันนี่ฮอป") })
