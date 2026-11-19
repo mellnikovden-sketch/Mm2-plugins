@@ -1,259 +1,3 @@
---[[
-═══════════════════════════════════════════════════════════════════════════════
-  Noir UI — ПОЛНАЯ БИБЛИОТЕКА МЕНЮ (все её функции) | бренд NOIR CREATOR
-  Построена на базе UI-библиотеки AirFlow (из stage_7.lua "FieldKit / Cybrion"):
-  тот же движок и анимации, но своё имя, логотип, тема Noir и погода Rain.
-═══════════════════════════════════════════════════════════════════════════════
-
-  ЧТО ЭТО
-  Автономная UI-библиотека для меню в Roblox-исполнителях (Synapse Z, Wave,
-  Delta, Krnl, Solara, Fluxus и др.). Окно, вкладки, подвкладки, группы,
-  20+ типов элементов, конфиги, темы, поиск, уведомления, диалоги, погода,
-  мобильная кнопка открытия, тултипы, перетаскивание, масштаб.
-
-  КАК ЗАГРУЗИТЬ
-    -- из файла (положи рядом и executed):
-    local Noir = loadstring(readfile("Noir_Menu.lua"))()
-    -- или по ссылке (залей на GitHub raw / pastebin):
-    local Noir = loadstring(game:HttpGet("https://.../Noir_Menu.lua"))()
-
-  ⚡ AUTO START
-    Running this file opens the menu IMMEDIATELY. The CORE BLOCK is at the
-    bottom of the file: the game module is embedded in full and loaded as is,
-    its native window is hidden and locked, and its features (aim, trigger,
-    visuals, world, misc, settings) are rebuilt inside this Noir menu under
-    new names. Value edits go through the bridge straight into its logic.
-    On top of that the user's own BloxStrike systems run natively: the full
-    Skin Changer tab, AntiKick / Anti Rejoin and the Obsidian Aimbot.
-    Noir configs (Settings tab) persist every flag, extras included.
-
-  ТРЕБОВАНИЯ (опционально)
-    • writefile / readfile / isfile / isfolder / makefolder / getcustomasset —
-      для кастомного шрифта ValleySans и встроенного логотипа.
-    • game:HttpGet — для иконок lucide (если недоступны, меню работает и без них).
-    • Без этих функций библиотека НЕ падает — просто отключает часть красоты.
-
-───────────────────────────────────────────────────────────────────────────────
-  1. ОКНО
-───────────────────────────────────────────────────────────────────────────────
-  local window = Noir:CreateWindow({
-      Name            = "My Hub",          -- имя окна
-      Title           = "My Hub",          -- заголовок шапки
-      LoadingTitle    = "My Hub",          -- экран загрузки
-      LoadingSubtitle = "by you",          -- подпись на экране загрузки
-      ToggleUIKeybind = "RightControl",    -- клавиша открытия/закрытия меню
-      Theme           = "Noir",            -- стартовая тема (см. список ниже)
-      DefaultTheme    = "Noir",            -- тема по умолчанию для всех
-      Weather         = "Matrix",          -- фон: Snow/Rain/Hell Fire/Sakura/
-                                           -- Fireflies/Matrix/None
-      ConfigurationSaving = {              -- автосохранение конфигов
-          Enabled    = true,
-          FolderName = "MyHub/Configs",    -- папка в workspace исполнителя
-      },
-      ToggleButton = { Platform = "Mobile", Icon = "layout-grid" },
-          -- Platform: "Mobile" | "Both" (кнопка открытия на экране)
-      Home = {                             -- вкладка Home в шапке
-          Discord = "discord.gg/xxxxx",
-          Stats   = { "Players", "Session", "FPS", "Ping" },
-      },
-  })
-
-───────────────────────────────────────────────────────────────────────────────
-  2. ВКЛАДКИ, ПОДВКЛАДКИ, ГРУППЫ
-───────────────────────────────────────────────────────────────────────────────
-  local tab  = window:CreateTab({ Name = "Main", Icon = "star", Desc = "описание" })
-  local sub  = tab:CreateSubTab({ Name = "Страница 1", Icon = "zap" })  -- внутри вкладки
-  local left = tab:AddLeftGroupbox({ Name = "Группа слева", Icon = "box" })
-  local right= tab:AddRightGroupbox({ Name = "Группа справа", Icon = "cog" })
-  local any  = tab:AddGroupbox({ Name = "Группа", Icon = "star", Side = "Left" })
-      -- опции группы: Name, Icon, Side ("Left"/"Right"), Desc,
-      -- Collapsed = true (свернуть), PoppedOut = true (отдельное окно)
-
-───────────────────────────────────────────────────────────────────────────────
-  3. ЭЛЕМЕНТЫ (добавляются в группу ИЛИ сразу в tab/sub)
-───────────────────────────────────────────────────────────────────────────────
-  Общие опции у всех: Name, Desc, Flag (ключ для конфигов), Visible,
-  Tooltip (строка или {Title=, Text=, Icon=}).
-
-  • Тумблер
-    local t = group:CreateToggle({
-        Name = "Функция", Desc = "описание",
-        Default = false,                   -- начальное значение
-        Callback = function(value) end,    -- вызывается при смене
-    })
-  • Слайдер
-    group:CreateSlider({
-        Name = "Дальность", Min = 50, Max = 3000, Default = 1500,
-        Increment = 50, Suffix = "m",      -- шаг и суффикс
-        Callback = function(value) end,
-    })
-  • Выпадающий список
-    group:CreateDropdown({
-        Name = "Режим", Options = { "A", "B", "C" }, Default = "A",
-        Multi = false,                     -- мультивыбор (Default = {"A"})
-        AllowNone = true, Searchable = true, MaxRows = 6,
-        Callback = function(option) end,   -- при Multi приходит таблица
-    })
-  • Кнопка
-    group:CreateButton({
-        Name = "Действие", Desc = "описание", Icon = "zap",
-        Style = "Primary",                 -- "Primary" (акцент) | "Danger" | обычная
-        Callback = function() end,
-    })
-  • Ряд кнопок (равная ширина)
-    group:CreateButtonRow({
-        { Name = "Кнопка 1", Callback = function() end },
-        { Name = "Кнопка 2", Style = "Danger", Callback = function() end },
-    })
-  • Клавиша (бинд)
-    group:CreateKeybind({
-        Name = "Хоткей", Default = "E",    -- строка KeyCode, напр. "E", "RightShift"
-        Callback = function(key) end,      -- новая клавиша
-        OnChanged = function(key) end,     -- то же, алиас
-    })
-  • Выбор цвета
-    group:CreateColorPicker({
-        Name = "Цвет", Default = Color3.fromRGB(50, 230, 150),
-        Callback = function(color) end,
-    })
-  • Текстовое поле
-    group:CreateInput({
-        Name = "Ввод", Default = "", Placeholder = "текст...",
-        Icon = "search",                   -- иконка внутри поля
-        Callback = function(text) end,     -- по Enter / потере фокуса
-        OnChanged = function(text) end,    -- на каждый символ
-    })
-  • Степпер (- значение +)
-    group:CreateStepper({
-        Name = "Кол-во", Min = 1, Max = 10, Default = 1,
-        Step = 1, Suffix = "x", Callback = function(v) end,
-    })
-  • Прогресс-бар (значение 0..1)
-    local p = group:CreateProgress({
-        Name = "Загрузка", Default = 0.25, -- доля от 0 до 1
-        Format = function(frac) return string.format("%d/%d", frac * 20, 20) end,
-    })
-    p:Set(0.5)                            -- обновлять из кода (0..1)
-  • Список-сортировщик (перетаскивание строк)
-    group:CreateOrderList({
-        Name = "Список",
-        Items = { "Пункт 1", "Пункт 2", "Пункт 3" },  -- просто значения
-        MaxRows = 6, Numbered = true, Arrows = true,
-        Callback = function(items) end,   -- приходит НОВЫЙ порядок
-    })
-  • Надпись
-    group:CreateLabel("Просто текст")   -- или CreateLabel({ Text = "...", Icon = "info" })
-  • Абзац (заголовок + текст)
-    local par = group:CreateParagraph({ Title = "Заголовок", Content = "Текст" })
-    par:Set("новый текст")               -- обновление из кода
-  • Строки состояния (live-статистика)
-    local rows = group:CreateStatuses({
-        { Name = "Деньги", Value = "$0" },
-        { Name = "Килы",  Value = "0" },
-    }, { Style = "Row" })
-        -- Style: "Plain" | "Row" | "Badge" | "Dot" | "Bar" | "Stat"
-    rows["Деньги"]:Set("$500")           -- обновление по имени
-    -- одиночная строка: group:CreateStatus({ Name = "Пинг", Value = "0", Style = "Dot" })
-  • Разделитель
-    group:CreateDivider()                -- или CreateDivider("Текст по центру")
-    group:CreateSection("ЗАГОЛОВОК")     -- секция-подпись
-  • Таблица / лидерборд (сортировка по клику на колонку, поиск)
-    local t = group:CreateTable({
-        Name = "Игроки", Rank = true,        -- колонка с местами
-        Columns = {
-            { Name = "Имя", Width = 0.6 },  -- Width: >1 пиксели, <1 доля, Align = "Right" },
-            { Name = "Килы", Width = 60, Sortable = true, Format = function(v) return tostring(v) end },
-        },
-        Rows = { { "Alice", 12 }, { "Bob", 7 } },   -- или { { Name="Alice", Kills=12 } }
-        MaxRows = 8, Search = true,
-        Callback = function(row) end,      -- клик по строке
-    })
-    -- методы таблицы: SetColumns, SetRows, GetRows, AddRow, UpdateRow,
-    --                RemoveRow, Clear, Sort, SetTitle, SetMaxRows, SetSearch
-  • Картинка
-    local img = group:CreateImage({ Name = "Превью", Image = "rbxassetid://123",
-                        Height = 160, ScaleType = "Crop", Color = Color3.new(1,1,1) })
-    img:SetImage("rbxassetid://456")        -- смена картинки из кода
-  • 3D-вьюпорт (модель в меню)
-    group:CreateViewport({ Name = "Скин", Model = someModel,
-                           FieldOfView = 35, Ambient = Color3..., LightColor = Color3... })
-  • Список статусов (прокручиваемый, для логов)
-    local log = group:CreateStatusList({ Name = "Лог", MaxRows = 5 })
-    log:Set({ { Text = "строка 1", Value = "ок" }, { Text = "строка 2" } })  -- обновить весь список
-    log:SetName("Новый заголовок")
-
-  МЕТОДЫ КАЖДОГО ЭЛЕМЕНТА (возвращается объект):
-    el:Set(value, silent)   -- выставить значение (silent = без Callback)
-    el:Get()                -- прочитать значение
-    el:SetVisible(false)    -- скрыть/показать элемент
-    el:SetTooltip("подсказка")
-    el:Destroy()            -- удалить элемент
-
-───────────────────────────────────────────────────────────────────────────────
-  4. ОКНО: МЕТОДЫ
-───────────────────────────────────────────────────────────────────────────────
-  window:Notify({ Title = "Заголовок", Content = "Текст", Duration = 3,
-                  Icon = "check", Type = "Success" })  -- Success/Warning/Error/обычный
-  window:Confirm({ Title = "Точно?", Content = "описание", ConfirmText = "Да",
-                   CancelText = "Нет", Callback = function() end })
-  window:Dialog({ Title = "...", Content = "текст", Buttons = {
-                   { Name = "OK", Variant = "Primary", Callback = fn } } })
-  window:Toggle(true/false)      -- открыть/закрыть меню программно
-  window:SetKeybind(Enum.KeyCode.X)         -- сменить клавишу меню
-  window:SetToggleButtonPlatform("Both")    -- "Mobile" | "Both"
-  window:SetBackdrop(true)      -- затемнение фона за меню
-  window:SetWeather("Matrix")   -- смена погоды на ходу
-  window:SetUIScale(1.1)        -- масштаб интерфейса
-  window:SetDensity("Compact")  -- "Compact" | "Comfortable"
-  window:SetSize(UDim2.fromOffset(720, 520))
-  window:Destroy()              -- полностью убрать меню
-
-───────────────────────────────────────────────────────────────────────────────
-  5. КОНФИГИ И ТЕМЫ
-───────────────────────────────────────────────────────────────────────────────
-  Каждый элемент с Flag = "Имя" автоматически сохраняется в конфиг.
-  Готовый менеджер — одна строка на вкладке:
-    tab:CreateConfigManager({ Name = "Конфиги", Side = "Left" })
-    tab:CreateThemeManager({ Name = "Темы", Side = "Right" })
-  Программно:
-    window:SaveConfig("main") / LoadConfig("main") / DeleteConfig("main")
-    window:RenameConfig("main", "pvp") / ListConfigs()
-    window:ExportConfig("main")            -- код для передачи
-    window:ImportConfig(code, "имя")       -- импорт кода
-    window:ResetConfig()                   -- сброс всего к дефолтам
-    window:SetAutoload("main")             -- грузить при старте
-    window:LoadAutoload()
-    Noir:SetTheme("Midnight")           -- смена темы
-    window:SaveTheme("моя") / LoadTheme("моя") / ListThemes()
-
-  ТЕМЫ (31 шт.): Noir (брендовая), Cybrion, Midnight, Ocean, Rose, Emerald, Amber, Mono, Nebula,
-  Synthwave, Sakura, Velvet, Crimson, Sunset, Gold, Cyber, Toxic, Matcha,
-  Aurora, Frost, Abyss, Halloween, Haunted, Christmas, Valentine, Lunar,
-  Tropical, Dracula, Coffee.
-
-  ПОГОДА (фон меню): Snow, Rain, Hell Fire, Sakura, Fireflies, Matrix, None.
-  Режимы погоды: SetWeatherMode("Screen" | "UI") — весь экран или только окно.
-
-───────────────────────────────────────────────────────────────────────────────
-  6. ПРОЧЕЕ
-───────────────────────────────────────────────────────────────────────────────
-  • Кастомный шрифт:  Noir:LoadFont({ Name = "ValleySans" })
-      (скачивает и подключает настоящий TTF-шрифт, нужен writefile+getcustomasset)
-  • Иконки:          Noir:PreloadIcons()
-      набор lucide: "star", "crosshair", "eye", "settings", "zap", "bomb", ...
-      или свой asset: Icon = 123456789 / "rbxassetid://..."
-  • Скругления:      Noir:SetCornerRadius(10)
-  • Флаги напрямую:  Noir.Flags["MyFlag"]:Set(true)
-  • Несколько окон:  Noir.Windows — список всех открытых окон.
-  • Меню перетаскивается за шапку, ресайзится за угол, сворачивается,
-    работает на ПК и телефоне (тач), есть поиск по элементам.
-
-───────────────────────────────────────────────────────────────────────────────
-  ДАЛЬШЕ ИДЁТ ПОЛНЫЙ КОД БИБЛИОТЕКИ (не меняй его, если не знаешь Lua).
-  Логотип NOIR CREATOR вшит в файл и подхватывается автоматически.
-───────────────────────────────────────────────────────────────────────────────
-]]
-
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
@@ -340,7 +84,7 @@ local function finishElement(tab, opts, element, frame, kind)
     if frame and not element._userVisible then
         frame.Visible = false
     end
-    -- Tooltip: a string, or { Title, Text, Icon }. nil, false or "" hides it.
+
     function element:SetTooltip(tip)
         element._tooltip = tip
         if frame and window and not element._tooltipBound then
@@ -401,7 +145,6 @@ Library.Theme = {
     Error = Color3.fromRGB(245, 85, 85),
 }
 
--- Order decides which key wins when two theme colors are identical.
 local THEME_KEYS = {
     "Accent", "AccentDark", "Background", "Surface", "Surface2", "Surface3",
     "Stroke", "StrokeHover", "Text", "Muted", "Warning", "Success", "Error",
@@ -428,8 +171,7 @@ end
 
 Library.ThemePresets = {
     Noir = preset({ 7, 7, 9 }, { 10, 10, 13 }, { 14, 14, 18 }, { 22, 22, 28 }, { 20, 20, 26 }, { 86, 34, 40 }, { 228, 52, 66 }, { 30, 8, 12 }, { 240, 240, 244 }, { 132, 130, 138 }),
-    -- Colours here must not be pure white, pure black or any other colour the
-    -- library hard-codes, or those objects would get bound to the theme.
+
     Cybrion = preset({ 12, 14, 12 }, { 16, 20, 17 }, { 22, 28, 23 }, { 32, 44, 34 }, { 28, 44, 31 }, { 50, 105, 65 }, { 50, 230, 150 }, { 12, 28, 18 }, { 235, 248, 238 }, { 115, 145, 125 }),
     Midnight = preset({ 15, 18, 26 }, { 18, 22, 31 }, { 22, 26, 37 }, { 37, 44, 60 }, { 34, 40, 55 }, { 70, 84, 112 }, { 128, 160, 246 }, { 14, 18, 30 }, { 228, 232, 242 }, { 116, 126, 148 }),
     Ocean = preset({ 12, 20, 24 }, { 15, 24, 29 }, { 18, 29, 35 }, { 31, 48, 56 }, { 29, 44, 52 }, { 58, 92, 104 }, { 110, 214, 222 }, { 10, 24, 28 }, { 226, 238, 240 }, { 108, 134, 140 }),
@@ -450,7 +192,7 @@ Library.ThemePresets = {
     Aurora = preset({ 10, 20, 22 }, { 12, 25, 27 }, { 15, 30, 33 }, { 26, 50, 53 }, { 24, 45, 48 }, { 50, 104, 104 }, { 94, 240, 180 }, { 6, 30, 22 }, { 224, 246, 240 }, { 102, 142, 134 }),
     Frost = preset({ 13, 17, 23 }, { 16, 21, 28 }, { 20, 26, 34 }, { 34, 43, 56 }, { 31, 40, 52 }, { 72, 92, 118 }, { 164, 214, 255 }, { 12, 22, 34 }, { 230, 238, 246 }, { 114, 128, 146 }),
     Abyss = preset({ 7, 11, 22 }, { 9, 14, 28 }, { 12, 18, 35 }, { 22, 31, 58 }, { 20, 28, 52 }, { 44, 64, 120 }, { 72, 148, 255 }, { 6, 14, 34 }, { 226, 234, 250 }, { 100, 116, 152 }),
-    -- Seasonal and themed palettes.
+
     Halloween = preset({ 18, 12, 20 }, { 23, 15, 25 }, { 28, 18, 30 }, { 46, 30, 48 }, { 43, 28, 44 }, { 104, 62, 40 }, { 255, 138, 36 }, { 36, 16, 4 }, { 246, 234, 224 }, { 146, 120, 128 }),
     Haunted = preset({ 14, 12, 20 }, { 18, 15, 26 }, { 22, 18, 32 }, { 38, 31, 54 }, { 35, 29, 50 }, { 70, 96, 64 }, { 156, 255, 110 }, { 14, 30, 8 }, { 232, 240, 228 }, { 120, 116, 140 }),
     Christmas = preset({ 12, 20, 15 }, { 15, 25, 19 }, { 19, 30, 23 }, { 32, 50, 38 }, { 30, 46, 35 }, { 100, 54, 56 }, { 236, 72, 80 }, { 34, 8, 10 }, { 240, 244, 236 }, { 120, 142, 128 }),
@@ -569,8 +311,6 @@ function Library:PreloadIcons()
     return loadLucide() ~= false
 end
 
--- Numbers, digit strings and asset URLs are custom images; anything else is
--- a lucide name.
 local function assetId(value)
     if type(value) == "number" then
         return "rbxassetid://" .. string.format("%.0f", value)
@@ -586,8 +326,6 @@ local function assetId(value)
     return nil
 end
 
--- Returns image, rect offset, rect size, whether it is a custom image, and
--- whether that custom image should still take the theme tint.
 local function resolveIcon(icon)
     if typeof(icon) == "table" then
         return assetId(icon.Image) or icon.Image, icon.RectOffset, icon.RectSize, true, icon.Tint == true
@@ -631,8 +369,6 @@ Library.Fonts = {
 local Theme = Library.Theme
 local Assets = Library.Assets
 
--- The Noir mark (NOIR CREATOR), embedded as a PNG so it needs no upload.
--- It is written to the workspace once and loaded with getcustomasset.
 local EMBEDDED_LOGO = "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"
 
 local function decodeBase64(data)
@@ -694,8 +430,6 @@ local PROFILE_HEIGHT = 64
 local SEARCH_WIDTH = 176
 local STACK_BELOW = 440
 
--- Elements read their geometry from one of these. Cards stand alone on a tab,
--- rows sit flush inside a groupbox.
 local METRICS = {
     Card = {
         Compact = false,
@@ -727,11 +461,6 @@ local METRICS = {
 
 local tweenInfoCache = {}
 
--- Theme bindings: every instance property painted with a theme color is
--- remembered by theme key, so SetTheme can repaint the whole UI live.
--- Held strongly: an Instance's Lua handle can be collected while the Instance
--- still exists, which would silently drop it from a weak table. Destroyed
--- objects are pruned instead, once they have been parentless for two sweeps.
 local themeBindings = {}
 local themeHooks = {}
 local themeLookup = {}
@@ -798,10 +527,6 @@ local function bindColors(object, props)
     end
 end
 
--- Repaints every bound property from the colours on screen to the new theme.
--- One Heartbeat loop lerps each theme key once per frame and assigns the
--- result, instead of creating a tween per object, which hitched the frame the
--- theme changed on large UIs. A change mid-fade picks up from what is shown.
 local shownTheme = table.clone(Library.Theme)
 local themeDriver = nil
 
@@ -864,7 +589,6 @@ local function driveTheme(duration)
     end)
 end
 
--- Runs fn now and again whenever the theme changes, while owner exists.
 local function onTheme(owner, fn)
     themeHooks[owner] = fn
     fn()
@@ -914,13 +638,8 @@ local function create(className, props, children)
     return inst
 end
 
--- Corners in pixels follow the player's corner radius setting: each one
--- remembers the radius it was drawn at, and Library:SetCornerRadius rescales
--- them all. Scale corners (pills, circles) stay as they are.
 Library.Roundness = 0.8
--- A strong table: weak keys would drop the Lua handles for corners nothing
--- else in Lua holds, and those corners would never rescale. Destroyed ones
--- are pruned whenever the radius changes.
+
 Library._cornerBases = {}
 
 local function corner(parent, radius)
@@ -935,13 +654,10 @@ local function corner(parent, radius)
     return object
 end
 
--- A corner that ignores the setting, for shapes that animate their own
--- radius (the minimized island, the morph panels).
 function Library._fixedCorner(parent, radius)
     return create("UICorner", { CornerRadius = radius, Parent = parent })
 end
 
--- The radius the window's own corners are drawn at right now.
 function Library._radius(pixels)
     return math.floor(pixels * Library.Roundness + 0.5)
 end
@@ -1027,23 +743,21 @@ local function applyIcon(imageLabel, icon, fixedSize)
     imageLabel.Image = image
     imageLabel.ImageRectOffset = rectOffset or Vector2.zero
     imageLabel.ImageRectSize = rectSize or Vector2.zero
-    -- Brand logo preserves its original colours
+
     if icon == Assets.Logo then
         tint = false
     end
     local keepColours = custom and not tint
     imageLabel:SetAttribute("CustomIcon", keepColours or nil)
     if keepColours then
-        -- Original colours, and out of the theme's reach.
+
         local bound = themeBindings[imageLabel]
         if bound then
             bound.ImageColor3 = nil
         end
         tween(imageLabel, { ImageColor3 = Color3.new(1, 1, 1) }, 0)
     end
-    -- Uploaded images usually carry transparent padding and read smaller than
-    -- the lucide set, so they are drawn larger. A table icon can pick its own
-    -- Scale. Brand logos pass fixedSize, their slots are already sized for them.
+
     local scale = custom and not fixedSize and icon ~= Assets.Logo and (typeof(icon) == "table" and tonumber(icon.Scale) or CUSTOM_ICON_SCALE) or 1
     local scaler = imageLabel:FindFirstChild("CustomIconScale")
     if scale ~= 1 then
@@ -1054,8 +768,6 @@ local function applyIcon(imageLabel, icon, fixedSize)
     end
 end
 
--- Selection state for icons: tinted icons change colour, custom images keep
--- their colours and dim instead.
 local function tintIcon(imageLabel, color, active, duration)
     if imageLabel:GetAttribute("CustomIcon") then
         tween(imageLabel, { ImageTransparency = active and 0 or 0.4 }, duration)
@@ -1105,8 +817,6 @@ local function usingTouch()
     return UserInputService:GetLastInputType() == Enum.UserInputType.Touch
 end
 
--- A press that turned into a scroll is not a tap. Returns a check to call
--- from the click handler.
 local function tapGuard(button, getScroller)
     local startCanvas
     button.InputBegan:Connect(function(input)
@@ -1208,7 +918,7 @@ local function ripple(button)
     local mouse = pointerPosition()
     local diameter = math.max(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 2.2
     local circle = table.remove(ripplePool)
-    -- A pooled circle can't be reparented if it was destroyed along the way.
+
     if circle and not pcall(function()
         circle.Parent = nil
     end) then
@@ -1230,7 +940,7 @@ local function ripple(button)
     circle.Parent = button
     tween(circle, { Size = UDim2.fromOffset(diameter, diameter), BackgroundTransparency = 1 }, 0.55)
     task.delay(0.55, function()
-        -- A button destroyed mid-ripple takes the circle with it: drop it.
+
         if circle.Parent ~= button or not button.Parent then
             pcall(circle.Destroy, circle)
             return
@@ -1292,10 +1002,6 @@ local function safeCall(callback, ...)
     end
 end
 
--- Runs a user callback on its own thread and waits for it with task.wait.
--- A callback that yields inside an engine call (InvokeServer and the like)
--- resumes at game identity, which can no longer touch the GUI in CoreGui;
--- keeping that on a separate thread leaves the caller's identity intact.
 local function isolatedCall(callback)
     local result = nil
     task.spawn(function()
@@ -1330,8 +1036,6 @@ local function metricsOf(tab)
     return tab._metrics or METRICS.Card
 end
 
--- Width of a value control inside a groupbox row. Every dropdown and input in
--- a groupbox uses the same share of the row, so their left edges line up.
 local function rowControlWidth(frame, window)
     local width = frame.AbsoluteSize.X / window.Scale.Scale
     return math.clamp(math.floor(width * 0.48), 90, 220)
@@ -1470,7 +1174,7 @@ end
 function Tab:Divider(opts)
     local caption = type(opts) == "table" and (opts.Text or opts.Name) or type(opts) == "string" and opts or nil
     if caption then
-        -- A centred caption with a rule on each side.
+
         local inset = metricsOf(self).Compact and 14 or 2
         local holder = create("Frame", {
             Size = UDim2.new(1, 0, 0, 18),
@@ -2184,7 +1888,7 @@ function Tab:Dropdown(opts)
     local window = self.Window
     local ROW = TOUCH and 40 or 30
     local MAX_ROWS = opts.MaxRows or 6
-    -- Stacked: the chip spans the whole row, with the name (if any) above it.
+
     local stacked = compact and opts.Stacked == true
     local stackTop = 2
     if stacked then
@@ -2283,8 +1987,7 @@ function Tab:Dropdown(opts)
         end
     end)
     if compact then
-        -- The chip follows the row every frame; re-measuring the text waits
-        -- until the width stops changing so resizing stays cheap.
+
         local lastWidth, pending = 0, false
         frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
             local width = frame.AbsoluteSize.X
@@ -2303,10 +2006,6 @@ function Tab:Dropdown(opts)
         end)
     end
 
-    -- Popup: floats over the window under the chip, with search, bulk
-    -- actions for multi selection and a scrolling list of checkbox rows.
-    -- The popup is a plain clipped frame that unfolds out of the chip, so text
-    -- stays crisp. The shadow sits outside the clip.
     local popup = create("Frame", {
         AnchorPoint = Vector2.new(1, 0),
         Size = UDim2.fromOffset(220, 0),
@@ -2429,8 +2128,7 @@ function Tab:Dropdown(opts)
         ScrollBarImageColor3 = Theme.Accent,
         ScrollBarImageTransparency = 0.4,
         ScrollingDirection = Enum.ScrollingDirection.Y,
-        -- Sized by hand: AutomaticCanvasSize under the window's UIScale
-        -- sometimes leaves the canvas short, so the list would not scroll.
+
         CanvasSize = UDim2.new(),
         Parent = inner,
     })
@@ -2460,7 +2158,6 @@ function Tab:Dropdown(opts)
         return filter == "" or string.find(string.lower(tostring(option)), filter, 1, true) ~= nil
     end
 
-    -- Option labels are rich text, so the part matching the search can light up.
     local function escapeRich(text)
         return (text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"))
     end
@@ -2502,7 +2199,6 @@ function Tab:Dropdown(opts)
         return nil
     end
 
-    -- A picked row rests on a faint accent tint; hovering lifts either kind.
     local function restRow(entry, duration)
         local on, hover = entry.On == true, entry.Hover == true
         tween(entry.Frame, {
@@ -2543,7 +2239,7 @@ function Tab:Dropdown(opts)
         if #options == 0 then
             fullText = opts.EmptyText or "None"
         elseif multi then
-            -- Two names at most, then a count, so a long pick stays readable.
+
             if #value > 2 then
                 fullText = tostring(value[1]) .. ", " .. tostring(value[2]) .. "  +" .. (#value - 2)
             else
@@ -2553,7 +2249,7 @@ function Tab:Dropdown(opts)
             fullText = value ~= nil and tostring(value) or (opts.NoneText or "None")
         end
         valueLabel.Text = trimmed()
-        -- A picked value reads in full colour; "None" stays muted.
+
         local picked = #options > 0 and (if multi then #value > 0 else value ~= nil)
         tween(valueLabel, { TextColor3 = picked and Theme.Text or Theme.Muted }, animate and 0.15 or 0)
         for _, button in pairs(optionButtons) do
@@ -2594,8 +2290,7 @@ function Tab:Dropdown(opts)
         local listHeight = rows * ROW + (rows - 1) * 2
         list.CanvasSize = UDim2.fromOffset(0, math.max(count, 1) * (ROW + 2) - 2)
         local scale = window.Scale.Scale
-        -- Shrink the list to whichever side of the chip has more room, so the
-        -- popup never runs off a short window (phones in landscape).
+
         local host = window:_popupHost(frame)
         local bodyHeight = host.AbsoluteSize.Y / scale
         local chipTop = (chip.AbsolutePosition.Y - host.AbsolutePosition.Y) / scale
@@ -2646,7 +2341,7 @@ function Tab:Dropdown(opts)
         local chipSize = chip.AbsoluteSize / scale
         local right = math.clamp(chipPosition.X + chipSize.X, targetSize.X + 8, math.max(bodySize.X - 8, targetSize.X + 8))
         local below = chipPosition.Y + chipSize.Y + 6
-        -- Opening upward pins the content to the bottom edge so it unfolds from the chip.
+
         if below + targetSize.Y > bodySize.Y - 8 and chipPosition.Y - 6 - targetSize.Y >= 8 then
             popup.AnchorPoint = Vector2.new(1, 1)
             popup.Position = UDim2.fromOffset(right, chipPosition.Y - 6)
@@ -2662,8 +2357,7 @@ function Tab:Dropdown(opts)
 
     local stopFollowing = nil
     local closeGeneration = 0
-    -- The page behind stops scrolling while the popup is open, so wheel and
-    -- swipe input always reach the list instead of dragging the page away.
+
     local lockedScroller = nil
     local function unlockScroller()
         if lockedScroller then
@@ -2706,7 +2400,7 @@ function Tab:Dropdown(opts)
                 lockedScroller = scroller
                 scroller.ScrollingEnabled = false
             end
-            -- Drawn over a floating panel when the dropdown lives in one.
+
             popup.Parent = window:_popupHost(frame)
             filter = ""
             searchBox.Text = ""
@@ -2790,8 +2484,7 @@ function Tab:Dropdown(opts)
                 Parent = list,
             })
             corner(row, UDim.new(0, 7))
-            -- Multi selection ticks a checkbox on the left. A single pick
-            -- gets an accent bar on the left edge and a check on the right.
+
             local box, boxStroke, bar, check
             if multi then
                 box = create("Frame", {
@@ -2852,7 +2545,7 @@ function Tab:Dropdown(opts)
                 return list
             end)
             row.MouseEnter:Connect(function()
-                -- Touch fires enter without a matching leave; skip the hover.
+
                 if usingTouch() then
                     return
                 end
@@ -2947,8 +2640,6 @@ function Tab:Dropdown(opts)
         return true
     end
 
-    -- A kept pick only counts once its option exists, so a list filled in after a
-    -- config load changes the value; the callback runs so scripts see it.
     function self_:Refresh(newOptions, keepSelection, silent)
         local before = currentValue()
         options = newOptions or {}
@@ -2962,8 +2653,6 @@ function Tab:Dropdown(opts)
         end
     end
 
-    -- Every pick, including ones whose option isn't in the list right now, so
-    -- saving never drops them.
     function self_:_saveValue()
         local picked = currentValue()
         if multi then
@@ -2996,7 +2685,7 @@ function Tab:Dropdown(opts)
             setOpen(not self_.Open)
         end
     end)
-    -- The chip answers the pointer before it is opened.
+
     header.MouseEnter:Connect(function()
         if not self_.Open and not usingTouch() then
             tween(chipStroke, { Color = Theme.StrokeHover }, 0.15)
@@ -3315,7 +3004,6 @@ function Tab:ColorPicker(opts)
     })
     titleDesc(header, opts.Name or "Color", opts.Desc, 140, metrics)
 
-    -- Closed, the row shows the hex code beside a rounded swatch.
     local swatch = create("Frame", {
         AnchorPoint = Vector2.new(1, 0.5),
         Position = UDim2.new(1, compact and -38 or -34, 0.5, 0),
@@ -3345,7 +3033,6 @@ function Tab:ColorPicker(opts)
         Parent = frame,
     })
 
-    -- Saturation runs left to right, brightness top to bottom.
     local svBox = create("TextButton", {
         Size = UDim2.new(1, 0, 0, 118),
         BackgroundColor3 = Color3.new(1, 1, 1),
@@ -3376,8 +3063,6 @@ function Tab:ColorPicker(opts)
         Parent = svDark,
     })
 
-    -- Both handles are a white ring filled with the colour under them, with a
-    -- faint dark edge so they read on light and dark spots alike.
     local function knob(parent, size)
         local ring = create("Frame", {
             AnchorPoint = Vector2.new(0.5, 0.5),
@@ -3402,7 +3087,6 @@ function Tab:ColorPicker(opts)
     end
     local svCursor, svFill = knob(svBox, 14)
 
-    -- Hue is a slim horizontal track under the square.
     local hueBar = create("TextButton", {
         Position = UDim2.fromOffset(0, 132),
         Size = UDim2.new(1, 0, 0, 10),
@@ -3428,7 +3112,6 @@ function Tab:ColorPicker(opts)
     local hueCursor, hueFill = knob(hueBar, 16)
     hueCursor.Position = UDim2.fromScale(0, 0.5)
 
-    -- Bottom row: a preview chip and hex field on the left, RGB on the right.
     local hexHolder = create("Frame", {
         Position = UDim2.fromOffset(0, 154),
         Size = UDim2.fromOffset(compact and 110 or 124, 28),
@@ -3830,20 +3513,17 @@ function Tab:Progress(opts)
     function self_:SetColor(color)
         tween(fill, { BackgroundColor3 = Library._color(color) or Theme.Accent }, 0.25)
     end
-    -- The percentage's colour; nil goes back to the accent.
+
     function self_:SetTextColor(color)
         tween(valueLabel, { TextColor3 = Library._color(color) or Theme.Accent }, 0.25)
     end
-    -- Runs render now, and again on a theme change for theme tags in Format.
+
     onTheme(valueLabel, function()
         render(0)
     end)
     return finishElement(self, opts, self_, frame, "Progress")
 end
 
--- An always-open list the player puts in order: drag a row (by its grip on
--- touch, anywhere on PC) or nudge it with the arrows. Past MaxRows the list
--- scrolls, and dragging near its top or bottom edge scrolls it along.
 function Tab:OrderList(opts)
     opts = normalize(opts, { Title = "Name", Description = "Desc", Options = "Items", Values = "Items" })
     local metrics = metricsOf(self)
@@ -3901,7 +3581,7 @@ function Tab:OrderList(opts)
         ScrollBarImageColor3 = Theme.Accent,
         ScrollBarImageTransparency = 0.4,
         ScrollingDirection = Enum.ScrollingDirection.Y,
-        -- Sized by hand, like the dropdown list, so it scrolls under UIScale.
+
         CanvasSize = UDim2.new(),
         ScrollingEnabled = false,
         LayoutOrder = 3,
@@ -3924,7 +3604,6 @@ function Tab:OrderList(opts)
         Parent = content,
     })
 
-    -- A lucide icon, or a text glyph when the icon set didn't load.
     local function iconButton(parent, icon, glyph, rotation, props)
         props.BackgroundTransparency = 1
         props.Text = ""
@@ -3963,8 +3642,7 @@ function Tab:OrderList(opts)
 
     local self_ = {}
     local entries = {}
-    -- The last order Set asked for, including items not in the list right now,
-    -- so a saved order still applies once Refresh brings those items in.
+
     local remembered = {}
     local dragging = nil
     local nudge, beginDrag
@@ -4101,8 +3779,7 @@ function Tab:OrderList(opts)
                 beginDrag(entry)
             end
         end)
-        -- On PC the whole row drags; on touch only the grip does, so a swipe
-        -- across the rows still scrolls.
+
         row.InputBegan:Connect(function(input)
             if input.UserInputType ~= Enum.UserInputType.MouseButton1 then
                 return
@@ -4130,8 +3807,6 @@ function Tab:OrderList(opts)
         return entry
     end
 
-    -- Reuses the rows whose item is still in the list, so a reorder slides
-    -- rows instead of rebuilding them.
     local function build(list)
         local pool = {}
         for _, entry in ipairs(entries) do
@@ -4156,7 +3831,6 @@ function Tab:OrderList(opts)
         entries = nextEntries
     end
 
-    -- items sorted by where they sit in ranking; the rest keep their order after.
     local function arrange(items, ranking)
         local left = {}
         for _, value in ipairs(items) do
@@ -4212,7 +3886,6 @@ function Tab:OrderList(opts)
     local grabOffset, lastPointer = 0, nil
     local startEntries, stopRender, lockedPage = nil, nil, nil
 
-    -- Moves the held row under the pointer and slides the others out of its way.
     local function follow(pointer)
         local scale = window.Scale.Scale
         local y = (pointer.Y - grabOffset - scroller.AbsolutePosition.Y) / scale + scroller.CanvasPosition.Y
@@ -4227,8 +3900,6 @@ function Tab:OrderList(opts)
         end
     end
 
-    -- Holding the row near the list's top or bottom edge scrolls it, faster
-    -- the closer the pointer gets.
     local function autoScroll(deltaTime)
         if not dragging or not lastPointer then
             return
@@ -4267,7 +3938,7 @@ function Tab:OrderList(opts)
         tween(entry.Stroke, { Color = Theme.Accent }, 0.12)
         tween(entry.Scale, { Scale = 1.02 }, 0.18, Enum.EasingStyle.Back)
         tint(entry.GripIcon, Theme.Accent, 0, 0.12)
-        -- Neither the list nor the page scrolls under the finger while dragging.
+
         scroller.ScrollingEnabled = false
         local page = frame:FindFirstAncestorWhichIsA("ScrollingFrame")
         if page and page.ScrollingEnabled then
@@ -4329,8 +4000,6 @@ function Tab:OrderList(opts)
         endDrag(false)
     end
 
-    -- Reorders the items already in the list. Unknown items are remembered for
-    -- a later Refresh; items missing from the list keep their order after.
     function self_:Set(list, silent)
         if type(list) ~= "table" then
             return
@@ -4347,8 +4016,6 @@ function Tab:OrderList(opts)
         return values()
     end
 
-    -- Replaces the items. Items that were already there keep the player's
-    -- order unless keepOrder is false; new ones go to the end.
     function self_:Refresh(items, keepOrder, silent)
         endDrag(true)
         items = type(items) == "table" and table.clone(items) or {}
@@ -4363,7 +4030,6 @@ function Tab:OrderList(opts)
         changed(silent)
     end
 
-    -- The shown order, then remembered items that aren't in the list right now.
     function self_:_saveValue()
         local list = values()
         local left = {}
@@ -4386,7 +4052,6 @@ function Tab:OrderList(opts)
     self_.Value = values()
     return finishElement(self, opts, self_, frame, "OrderList")
 end
-
 
 for name, method in pairs(table.clone(Tab)) do
     if type(method) == "function" and name:sub(1, 1) ~= "_" and name:sub(1, 6) ~= "Create" then
@@ -4440,10 +4105,6 @@ local function executorReport(opts)
     return executor, false, "Missing " .. table.concat(missing, ", ") .. ". Some features may not work."
 end
 
--- "Don't ask again" on the unsupported executor warning: the executor's
--- name goes in a file in the script folder, and the warning is skipped while
--- the same executor is in use. Resetting the folder brings it back.
--- A table, not separate locals: the main chunk is at Luau's 200 local limit.
 local UnsupportedSkip = {}
 
 function UnsupportedSkip.Path(folder)
@@ -4487,9 +4148,6 @@ function UnsupportedSkip.Save(folder, executor)
     return UnsupportedSkip.Write(folder, UnsupportedSkip.Path(folder), executor)
 end
 
--- Custom disclaimers ticked "Don't show again": one key per line in
--- disclaimers.txt. The key is the disclaimer's Id, or a hash of its title
--- and text, so rewording a disclaimer shows it again.
 function UnsupportedSkip.DisclaimerKey(entry)
     if entry.Id ~= nil then
         return (tostring(entry.Id):gsub("[\r\n]", " "))
@@ -4697,8 +4355,6 @@ function Library.Window(_, opts)
     self.Shadow = shadow
     self._shadowRest = 0.6
 
-    -- The body is a plain Frame so resizing never re-renders the window into a
-    -- texture. It only moves into the fader CanvasGroup while fading.
     local fader = create("CanvasGroup", {
         Name = "Fader",
         Size = UDim2.fromScale(1, 1),
@@ -4722,7 +4378,7 @@ function Library.Window(_, opts)
     corner(body, UDim.new(0, 10))
     self.BodyStroke = stroke(body, Theme.Stroke)
     edgeHighlight(body)
-    -- Background image: made first so everything else in the body draws over it.
+
     self._backgroundImage = create("ImageLabel", {
         Name = "BackgroundImage",
         Size = UDim2.fromScale(1, 1),
@@ -4737,8 +4393,6 @@ function Library.Window(_, opts)
     self.BackgroundTransparency = math.clamp(tonumber(opts.BackgroundTransparency) or 0.35, 0, 1)
     self._backgroundGeneration = 0
 
-    -- The sidebar is a flush, solid rail down the left edge, split from the
-    -- content by a single hairline.
     local sidebar = create("Frame", {
         Name = "Sidebar",
         Size = UDim2.new(0, SIDEBAR_WIDTH, 1, 0),
@@ -4748,9 +4402,7 @@ function Library.Window(_, opts)
         Parent = body,
     })
     self.Sidebar = sidebar
-    -- One rounded fill that runs past the rail's right edge, where the rail
-    -- clips it: the left corners round with the window, the right edge is
-    -- square, and nothing overlaps, so it fades evenly when see-through.
+
     local sidebarFill = create("Frame", {
         Name = "Fill",
         Size = UDim2.new(1, 24, 1, 0),
@@ -4824,8 +4476,7 @@ function Library.Window(_, opts)
         Parent = sidebar,
     })
     self.TabList = tabList
-    -- The highlight sits beside the stack of buttons, so it scrolls and clips
-    -- with them and glides between tiles.
+
     local indicator = create("Frame", {
         Position = UDim2.fromOffset(8, 2),
         Size = UDim2.new(1, -16, 0, TAB_TILE_HEIGHT),
@@ -4836,8 +4487,7 @@ function Library.Window(_, opts)
         Parent = tabList,
     })
     corner(indicator, UDim.new(0, 7))
-    -- The active tab is just a quiet neutral fill with white text; the bar
-    -- is kept for callers but stays hidden.
+
     local pill = create("Frame", {
         AnchorPoint = Vector2.new(0, 0.5),
         Position = UDim2.new(0, 0, 0.5, 0),
@@ -4866,7 +4516,6 @@ function Library.Window(_, opts)
     })
     self._tabStack = stack
 
-    -- More tabs than fit: a fade and a small "more" chip at the hidden end.
     self:_overflowHint(sidebar, tabList, stack, true, Theme.Surface)
 
     if profileEnabled then
@@ -4912,8 +4561,7 @@ function Library.Window(_, opts)
         Parent = content,
     })
     minimizeButton:SetAttribute("NoDrag", true)
-    -- A bare "minimize" arrows glyph, no box: muted at rest, full text
-    -- colour and a touch smaller on hover, as if pulling in.
+
     local minimizeGlyph = create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
@@ -4982,7 +4630,7 @@ function Library.Window(_, opts)
     self.MaxSize = opts.MaxSize
     self.KeepOnScreen = opts.KeepOnScreen ~= false
     self:_enableResize(opts.MinSize or Vector2.new(480, 360))
-    -- The window's exact size rides along in configs as a hidden flag.
+
     if opts.SaveSize ~= false then
         local window = self
         local sizeFlag = { _type = "WindowSize", _listeners = {} }
@@ -5042,7 +4690,7 @@ function Library.Window(_, opts)
     if type(toggleOpts) == "table" then
         self:_createToggleButton(toggleOpts)
     end
-    -- The toggle button already brings a hidden window back.
+
     local toggleShown = self.ToggleButton ~= nil and self:_toggleButtonAllowed()
     if (opts.OpenButton ~= nil and opts.OpenButton ~= false) or (opts.OpenButton == nil and TOUCH and not toggleShown) then
         self:_createOpenButton(type(opts.OpenButton) == "table" and opts.OpenButton or {})
@@ -5066,8 +4714,7 @@ function Library.Window(_, opts)
         opts.LoadingTitle = loading.Title or opts.LoadingTitle
         loading = loading.Enabled ~= false
     end
-    -- An executor off the supported list (or missing the file / asset API)
-    -- stops at a warning card before the window opens.
+
     local prompts = {}
     local gate = opts.UnsupportedExecutor
     if gate ~= false then
@@ -5093,8 +4740,7 @@ function Library.Window(_, opts)
             })
         end
     end
-    -- Custom disclaimers queue up after the executor warning, in order. Each
-    -- one must be accepted (or skipped by an earlier "Don't show again").
+
     local disclaimers = opts.Disclaimer or opts.Disclaimers
     if type(disclaimers) == "string" or (type(disclaimers) == "table" and (disclaimers.Title ~= nil or disclaimers.Text ~= nil)) then
         disclaimers = { disclaimers }
@@ -5148,8 +4794,6 @@ function Library.Window(_, opts)
 end
 
 Library.CreateWindow = Library.Window
-
-
 
 function Library:Notify(opts)
     local window = Library.Windows[#Library.Windows]
@@ -5213,10 +4857,6 @@ function Window:_overControl(point)
     return false
 end
 
--- Tooltips: one shared card per window that follows the pointer over any
--- element built with Tooltip = "..." or { Title, Text, Icon }. It appears
--- after a short hover (straight away when moving from one tooltip to the
--- next), hides on press, and shows on a long press on touch screens.
 function Window:_tooltipCard()
     if self._tip then
         return self._tip
@@ -5231,9 +4871,7 @@ function Window:_tooltipCard()
         Parent = self.Gui,
     })
     local tipScale = create("UIScale", { Parent = holder })
-    -- Bare text, no card: a dark outline keeps it readable over anything.
-    -- The holder is sized from the text by hand, since scale sizes inside an
-    -- automatic size would stretch it across the screen.
+
     local PAD = 4
     local panel = create("Frame", {
         Position = UDim2.fromOffset(PAD, PAD),
@@ -5320,8 +4958,7 @@ function Window:_tooltipCard()
         Fit = fit,
     }
     self._tip = tip
-    -- Follow the pointer, and drop the card once its element is gone or off
-    -- screen (tab switched, window hidden or minimized).
+
     self:_listen("Render", function(deltaTime)
         local owner = self._tipOwner
         if not owner then
@@ -5355,7 +4992,7 @@ function Window:_tooltipCard()
         )
         local current = tip.Position
         if not current or tip.Snap then
-            -- Rises a few pixels into place as it fades in.
+
             current = target + Vector2.new(0, 6)
             tip.Snap = false
         else
@@ -5364,7 +5001,7 @@ function Window:_tooltipCard()
         tip.Position = current
         holder.Position = UDim2.fromOffset(math.floor(current.X - pad + 0.5), math.floor(current.Y - pad + 0.5))
     end)
-    -- A press anywhere (a dropdown chip inside the card, a key) hides it.
+
     self:_listen("Began", function(input)
         if self._tipOwner and not tip.Touch and (input.UserInputType == Enum.UserInputType.MouseButton1
             or input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.Keyboard) then
@@ -5441,7 +5078,7 @@ function Window:_attachTooltip(element, frame)
             if token ~= mine or not hovering or element._destroyed or self._destroyed then
                 return
             end
-            -- A finger that moved was scrolling, not holding.
+
             if touch and pressAt and (pointerPosition() - pressAt).Magnitude > 10 then
                 return
             end
@@ -5486,9 +5123,6 @@ function Window:_attachTooltip(element, frame)
     end)())
 end
 
--- While dragging, a stand-in follows the pointer while the window stays put,
--- and the window glides into its spot on release. The look is the player's
--- Drag Style; "Off" drags the window itself.
 Library.DragStyles = { "Outline", "Brackets", "Ghost", "Frame", "Off" }
 
 local function makeSkeleton(window)
@@ -5505,7 +5139,7 @@ local function makeSkeleton(window)
         Parent = window.Gui,
     })
     corner(skeleton, UDim.new(0, 10))
-    -- Each part fades from hidden to its shown values, and back on release.
+
     local parts = {}
     local function part(object, shown)
         local hidden = {}
@@ -5533,17 +5167,17 @@ local function makeSkeleton(window)
         end
     end
     if style == "Brackets" then
-        -- Just the four corners of the window, a little longer.
+
         brackets(22, 0)
     elseif style == "Ghost" then
-        -- A see-through copy of the window's panel.
+
         part(skeleton, { BackgroundTransparency = 0.35 })
         part(stroke(skeleton, Theme.Stroke, 1, 1), { Transparency = 0 })
     elseif style == "Frame" then
-        -- A single quiet line, nothing else.
+
         part(stroke(skeleton, Theme.StrokeHover, 1, 1), { Transparency = 0 })
     else
-        -- Outline: a faint accent wash, an outline and corner brackets.
+
         part(skeleton, { BackgroundTransparency = 0.92 })
         part(stroke(skeleton, Theme.Accent, 1, 1.5), { Transparency = 0.2 })
         brackets(16, 6)
@@ -5643,7 +5277,7 @@ function Window:_enableDrag()
         if not moved then
             return
         end
-        -- Hidden or minimized mid-drag: land it where the outline is.
+
         if skeleton and (not self.Open or not self.Root.Visible) then
             dragging = false
             dropSkeleton()
@@ -5662,8 +5296,6 @@ function Window:_enableDrag()
     end)
 end
 
--- One of Library.DragStyles; anything else falls back to "Outline".
--- Returns the style it settled on.
 function Window:SetDragStyle(style)
     style = table.find(Library.DragStyles, style) and style or "Outline"
     self.DragStyle = style
@@ -5675,12 +5307,8 @@ function Window:GetDragStyle()
     return self.DragStyle
 end
 
--- How the minimized island shows the session card: opening it while
--- hovered, or keeping it open the whole time it's minimized.
 Library.IslandStyles = { "Show on Hover", "Always Show" }
 
--- One of Library.IslandStyles; anything else falls back to "Show on Hover".
--- Returns the style it settled on.
 function Window:SetIslandStyle(style)
     style = table.find(Library.IslandStyles, style) and style or "Show on Hover"
     self.IslandStyle = style
@@ -5694,8 +5322,6 @@ function Window:GetIslandStyle()
     return self.IslandStyle
 end
 
--- The older on/off switch: off is the "Off" style, on brings back the
--- default style if it was off.
 function Window:SetDragSkeleton(enabled)
     if enabled == false then
         self:SetDragStyle("Off")
@@ -5704,8 +5330,6 @@ function Window:SetDragSkeleton(enabled)
     end
 end
 
--- The sidebar's divider is a grab strip: dragging it sets the rail's width,
--- kept between a usable minimum and enough room for the content.
 function Window:_sidebarResize(sidebar, width)
     local divider = sidebar:FindFirstChild("Divider")
     local want = width
@@ -5767,7 +5391,7 @@ function Window:_sidebarResize(sidebar, width)
             light(false)
         end
     end)
-    -- Shrinking the window pulls an over-wide rail back in.
+
     self.Body:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         if not dragging then
             apply(want, false)
@@ -5775,15 +5399,12 @@ function Window:_sidebarResize(sidebar, width)
     end)
 end
 
--- See-through window: the body and sidebar let the game show through, and the
--- shadow lightens so it doesn't smudge behind them.
 function Window:SetTransparent(enabled)
     self.Transparent = enabled == true
     local on = self.Transparent
     self._shadowRest = on and 0.85 or 0.6
     tween(self.Body, { BackgroundTransparency = on and 0.35 or 0 }, 0.25)
-    -- See-through, the rail stays a touch more solid than the body so the
-    -- tabs keep their contrast; over a background image it lets more through.
+
     local railAlpha = on and 0.5 or (self.Background and 0.45 or 0)
     tween(self.SidebarFill, { BackgroundTransparency = railAlpha }, 0.25)
     if self.Open and not self.Minimized and self.Root.Visible then
@@ -5860,8 +5481,7 @@ function Window:_playIntro(morph)
     task.delay(0.4, function()
         self:_refreshToggleButton()
     end)
-    -- Build the minimized bar ahead of time so the first minimize doesn't
-    -- pay for it mid-click.
+
     task.delay(1.5, function()
         if not self._destroyed and not self.MiniBar then
             self:_buildMiniBar()
@@ -5903,10 +5523,7 @@ end
 function Window:_showLoader(opts)
     local duration = opts.LoadingDuration or 1.6
     local gui = self.Gui
-    -- A compact card: logo, title and subtitle on top, a checklist of the
-    -- loading steps under a hairline, and a thin progress line along the
-    -- bottom edge. Everything but the prompt cards lives in one canvas group
-    -- so it can fade as a unit.
+
     local steps = opts.LoadingSteps or { "Preparing interface", "Loading icons", "Almost there" }
     local WIDTH, PAD, STEP = 340, 22, 24
     local listTop = 80
@@ -5988,8 +5605,6 @@ function Window:_showLoader(opts)
         Parent = content,
     })
 
-    -- Each step: a marker and its text. Pending is a dim dot, the running
-    -- step a turning arc, and a finished one a check.
     local rows = {}
     for index, text in ipairs(steps) do
         local row = create("Frame", {
@@ -6052,7 +5667,7 @@ function Window:_showLoader(opts)
             Parent = row,
         })
         rows[index] = { Dot = dot, Spinner = spinner, Check = check, Label = stepLabel, State = "pending" }
-        -- The rows fade in one after another once the card is up.
+
         task.delay(0.15 + index * 0.06, function()
             if loader.Parent and rows[index].State == "pending" then
                 tween(stepLabel, { TextTransparency = 0.45 }, 0.3)
@@ -6093,7 +5708,7 @@ function Window:_showLoader(opts)
     tween(loaderScale, { Scale = 1 }, 0.45, Enum.EasingStyle.Quint)
     tween(loaderShadow, { ImageTransparency = 0.55 }, 0.4)
     tween(fill, { Size = UDim2.fromScale(0.85, 1) }, duration * 0.8, Enum.EasingStyle.Quart)
-    -- The percentage follows the bar and the running step's arc turns.
+
     local percentStep
     percentStep = RunService.RenderStepped:Connect(function(deltaTime)
         if not loader.Parent then
@@ -6151,9 +5766,6 @@ function Window:_showLoader(opts)
         end)
     end
 
-    -- Prompt cards (unsupported executor, custom disclaimers): the checklist
-    -- gives way to one card at a time, each with Exit and Continue, before
-    -- the window opens.
     local function hideBar()
         completeSteps()
         tween(content, { GroupTransparency = 1 }, 0.18)
@@ -6162,8 +5774,7 @@ function Window:_showLoader(opts)
     local function showCard(info, onContinue)
         local WIDTH, PAD, MAX_BODY = 360, 24, 220
         local tone = info.Color or Theme.Accent
-        -- Fixed width from the start, so the body wraps at its final width
-        -- while the loader is still resizing.
+
         local warnCard = create("CanvasGroup", {
             AnchorPoint = Vector2.new(0.5, 0),
             Position = UDim2.fromScale(0.5, 0),
@@ -6210,7 +5821,7 @@ function Window:_showLoader(opts)
                 Parent = warnCard,
             })
         end
-        -- Long text scrolls past MAX_BODY instead of pushing the card off screen.
+
         local scroller = create("ScrollingFrame", {
             Position = UDim2.fromOffset(PAD, PAD + 60),
             Size = UDim2.new(1, -PAD * 2, 0, 16),
@@ -6249,8 +5860,6 @@ function Window:_showLoader(opts)
             Parent = row,
         })
 
-        -- Don't ask again: only offered when Continue is, and the executor
-        -- can write the file that remembers it.
         local remember = false
         local rememberRow = nil
         if not info.Block and info.RememberText and UnsupportedSkip.Available() then
@@ -6389,13 +5998,8 @@ function Window:_showLoader(opts)
             end)
         end
 
-        -- The card grows to fit the message, then it fades in. The wrapped
-        -- height can land a few frames late (font loading, the scroller's
-        -- layout), so the card refits whenever it changes.
         local laidOut = false
-        -- TextBounds of wrapped text stops at the label's current height, so
-        -- the card would fit to its own clipped text; the full wrapped height
-        -- is measured at the body's width instead.
+
         local function measure()
             local ok, size = pcall(function()
                 local params = Instance.new("GetTextBoundsParams")
@@ -6475,8 +6079,7 @@ function Window:_fitToScreen(instant)
         return
     end
     local size = self.Root.Size
-    -- The player's UI scale, times the adaptive factor for this screen, shrunk
-    -- further when the window wouldn't fit.
+
     local wanted = (self._uiScale or 1) * (self._adaptive ~= false and Library._adaptiveFactor(viewport) or 1)
     local scale = math.min(wanted, (viewport.X - 24) / math.max(size.X.Offset, 1), (viewport.Y - 24) / math.max(size.Y.Offset, 1))
     self._fitScale = math.max(scale, 0.45)
@@ -6489,10 +6092,6 @@ function Window:_fitToScreen(instant)
     end
 end
 
--- Adaptive size: the window is drawn for a 1080p screen and grows on larger
--- ones (up to 1.75x on 4K) or shrinks a little on small laptops, so it covers
--- about the same share of any screen. 1080p-class screens, windowed or with
--- the topbar inset, stay at exactly 1. Touch screens only use the fit.
 function Library._adaptiveFactor(viewport)
     if TOUCH then
         return 1
@@ -6518,7 +6117,6 @@ function Window:GetAdaptiveSize()
     return self._adaptive ~= false
 end
 
--- UI scale: 0.6 to 1.5 on top of the automatic fit to small screens.
 function Window:SetUIScale(value)
     value = math.clamp(tonumber(value) or 1, 0.6, 1.5)
     self.UIScale = value
@@ -6535,12 +6133,9 @@ function Window:GetUIScale()
     return self._uiScale or 1
 end
 
--- Density: the spacing between cards, groupboxes and rows. Shared by every
--- window, like the theme. Anything built with Library._space follows it.
 Library.DensityModes = { Compact = 0.55, Default = 1, Comfortable = 1.45 }
 Library.Density = "Default"
 
--- Small gaps (a groupbox's 2px rows) still move visibly between modes.
 function Library._spaced(base, factor)
     if base <= 0 then
         return 0
@@ -6554,7 +6149,7 @@ function Library._space(object, base)
         object:SetAttribute("Space", base)
         object.Padding = UDim.new(0, Library._spaced(base, factor))
     elseif object:IsA("UIPadding") then
-        -- base is { left, right, top, bottom }
+
         object:SetAttribute("SpaceL", base[1])
         object:SetAttribute("SpaceR", base[2])
         object:SetAttribute("SpaceT", base[3])
@@ -6606,7 +6201,6 @@ function Window:GetDensity()
     return Library.Density
 end
 
--- Nearest centre that keeps the whole window inside the viewport.
 function Window:_clampedCentre(centre)
     local viewport = self.Gui.AbsoluteSize
     local half = self.Root.AbsoluteSize / 2
@@ -6703,8 +6297,6 @@ function Window:_createOpenButton(opts)
     end))
 end
 
--- Square floating button that minimizes and restores the window. Shown on
--- touch devices only, or everywhere with Platform = "Both".
 function Window:_toggleButtonAllowed()
     return self._toggleEnabled and (TOUCH or self._togglePlatform == "Both")
 end
@@ -6722,7 +6314,7 @@ function Window:_refreshToggleButton()
     elseif not shown then
         button.Visible = false
     end
-    -- Folded (window minimized or hidden): the outline takes the accent.
+
     local folded = self.Minimized or not self.Open
     tween(self._toggleStroke, { Color = folded and Theme.Accent or Theme.Stroke, Transparency = folded and 0.3 or 0 }, 0.35)
     local icon = self._toggleIcon
@@ -6855,9 +6447,7 @@ function Window:_enableResize(minSize)
         Parent = root,
     })
     self._grip = grip
-    -- An arc that traces the window's own rounded corner: a rounded square
-    -- laid over the corner whose outline fades out away from it, so only the
-    -- curve and a short run of each edge show. Faint at rest, accent in use.
+
     local gripArc = create("Frame", {
         AnchorPoint = Vector2.new(1, 1),
         Position = UDim2.fromOffset(12, 12),
@@ -6890,10 +6480,6 @@ function Window:_enableResize(minSize)
         }, on and 0.15 or 0.3, Enum.EasingStyle.Quint)
     end
 
-    -- The size follows the pointer through a critically damped spring, so it
-    -- glides after the cursor and eases to rest when released instead of
-    -- snapping. While resizing, the window is anchored at its top-left corner
-    -- so only the right and bottom edges move and nothing jitters on half pixels.
     local STIFFNESS = 20
     local resizing = false
     local startSize = Vector2.zero
@@ -6911,7 +6497,7 @@ function Window:_enableResize(minSize)
         if root.AnchorPoint == Vector2.zero then
             return
         end
-        -- A clamp tween still writing centre coordinates would fight the new anchor.
+
         if self._clampTween then
             self._clampTween:Cancel()
             self._clampTween = nil
@@ -7003,13 +6589,10 @@ function Window:_enableResize(minSize)
     end)
 end
 
--- The window's own size in pixels, before the UI scale and screen fit.
 function Window:GetSize()
     return Vector2.new(self.Root.Size.X.Offset, self.Root.Size.Y.Offset)
 end
 
--- Resizes to an exact size, kept within MinSize and MaxSize. Ignored while the
--- player is dragging the grip.
 function Window:SetSize(size, instant)
     if typeof(size) == "UDim2" then
         size = Vector2.new(size.X.Offset, size.Y.Offset)
@@ -7036,11 +6619,6 @@ function Window:SetSize(size, instant)
     end)
 end
 
--- Configs are plain JSON, one file per config, in the same shape as a share code:
---   {"Folder":"MyHub","Name":"farm","Version":1,"Config":"{\"AutoFarm\":{\"Value\":true,\"Type\":\"Toggle\"}}"}
--- Config holds the flags as their own JSON string, each one {"Value":...,"Type":...}.
--- Colours are {"Hex":"ff5a5a"}, keybinds are key names, an empty dropdown has no Value.
-
 local CONFIG_VERSION = 1
 local LEGACY_SHARE_PREFIX = "airflow:"
 
@@ -7052,7 +6630,6 @@ local function fileApiAvailable()
     return type(writefile) == "function" and type(readfile) == "function" and type(isfile) == "function"
 end
 
--- Makes every missing folder along the path, so FolderName can be "Hub/Game".
 local function ensureFolder(folder)
     if type(isfolder) ~= "function" or type(makefolder) ~= "function" then
         return
@@ -7078,7 +6655,7 @@ local function colorFromValue(value)
         if type(value.Hex) == "string" then
             value = value.Hex
         elseif type(value[1]) == "number" then
-            -- Older configs stored { r, g, b } in 0-1.
+
             return Color3.new(value[1], value[2] or 0, value[3] or 0)
         end
     end
@@ -7116,7 +6693,7 @@ local function deserializeFlag(element, entry, silent)
             element:Set(color, silent)
         end
     elseif kind == "Dropdown" then
-        -- A dropdown saved with nothing picked has no Value at all.
+
         element:Set(value, silent)
     elseif kind == "Toggle" then
         if type(value) == "boolean" then
@@ -7136,9 +6713,6 @@ local function entryMatches(element, entry)
     return type(entry) == "table" and (entry.Type == nil or entry.Type == element._type)
 end
 
--- Flags a config holds but no element has claimed yet are kept here. They are
--- applied when an element with that flag is created and written back on save,
--- so a config survives elements that only exist some of the time.
 local function collectFlags(self)
     local data = {}
     if self and self._pendingFlags then
@@ -7172,8 +6746,6 @@ function Window:_applyFlags(data, silent)
     end
 end
 
--- Every flagged element reports here: its starting value becomes its default,
--- and a value waiting from an earlier load is applied once the constructor returns.
 function Window:_flagCreated(flag, element)
     local ok, entry = pcall(serializeFlag, element)
     if ok then
@@ -7194,7 +6766,6 @@ function Window:_flagCreated(flag, element)
     end)
 end
 
--- Anything listening for config changes (the config manager's status line).
 function Window:_configChanged()
     for _, handler in ipairs(self._configListeners) do
         safeCall(handler)
@@ -7230,7 +6801,6 @@ for index = 1, #B64 do
     B64_INDEX[B64:byte(index)] = index - 1
 end
 
--- Only for reading the old "airflow:<base64>" share codes.
 local function base64Decode(text)
     if #text % 4 ~= 0 then
         return nil
@@ -7258,8 +6828,6 @@ local function base64Decode(text)
     return table.concat(out)
 end
 
--- Reads a config file or a pasted code: the JSON above (Config as a string or
--- a table), a bare flag table, or an old "airflow:" code. Returns flags, info.
 local function decodeConfig(text)
     text = tostring(text or ""):match("^%s*(.-)%s*$")
     if text:sub(1, #LEGACY_SHARE_PREFIX) == LEGACY_SHARE_PREFIX then
@@ -7275,7 +6843,7 @@ local function decodeConfig(text)
         return nil, "invalid config code"
     end
     local info = {}
-    -- A bare flag table could have a flag named Config, but its entry carries a Type.
+
     if type(data.Config) == "string" or (type(data.Config) == "table" and data.Config.Type == nil) then
         info.Folder = type(data.Folder) == "string" and data.Folder or nil
         info.Name = type(data.Name) == "string" and data.Name or nil
@@ -7393,7 +6961,6 @@ function Window:DeleteConfig(name)
     return true
 end
 
--- Moves the file and anything pointing at it: the loaded name and both autoloads.
 function Window:RenameConfig(name, newName)
     if not validConfigName(newName) then
         return false, "invalid config name"
@@ -7452,7 +7019,6 @@ function Window:ListConfigs()
     return names
 end
 
--- Puts every flagged element back to the value it was created with.
 function Window:ResetConfig(silent)
     self._pendingFlags = {}
     for _, element in pairs(Library.Flags) do
@@ -7464,8 +7030,6 @@ function Window:ResetConfig(silent)
     return true
 end
 
--- Empties a folder and removes it, one file at a time when the executor has
--- no delfolder or it refuses a folder that still has files in it.
 local function wipeFolder(path)
     if type(isfolder) ~= "function" or not isfolder(path) then
         return true
@@ -7489,8 +7053,6 @@ local function wipeFolder(path)
     return not isfolder(path)
 end
 
--- Deletes the script's whole workspace folder: configs, themes, the default
--- theme, autoload, settings and the execution count.
 function Window:ClearWorkspace()
     local ok = wipeFolder(self.ConfigFolder)
     self.LoadedConfig = nil
@@ -7500,8 +7062,6 @@ function Window:ClearWorkspace()
     self:_configChanged()
     return ok
 end
-
--- Share codes are the same JSON a config file holds.
 
 function Window:ExportConfig(name)
     local data, err
@@ -7521,13 +7081,10 @@ function Window:ExportConfig(name)
     return code
 end
 
--- Reads a code without applying it. Returns flags and { Folder, Name, Version }.
 function Window:DecodeConfig(code)
     return decodeConfig(code)
 end
 
--- saveAs: a name to save under, true for the name inside the code, or nil to
--- only apply it. Codes made for another folder are refused unless force is set.
 function Window:ImportConfig(code, saveAs, force)
     local data, info = decodeConfig(code)
     if not data then
@@ -7574,9 +7131,6 @@ local function removeFile(path)
     end
 end
 
--- Manager settings (autoload mode) live beside the configs, apart
--- from the flags, so loading a config never changes them.
-
 local function settingsPath(self)
     return self.ConfigFolder .. "/configsettings.txt"
 end
@@ -7605,9 +7159,6 @@ function Window:_writeConfigSettings(changes)
     ensureFolder(self.ConfigFolder)
     return pcall(writefile, settingsPath(self), HttpService:JSONEncode(data))
 end
-
--- Autoload: one config name kept next to the configs, either for every
--- account ("Global") or only the local player ("Account").
 
 local function autoloadPath(self, scope)
     if scope == "Account" then
@@ -7649,7 +7200,6 @@ function Window:SetAutoload(name, scope)
     return ok, err
 end
 
--- Switching the mode moves the current autoload so only one stays active.
 function Window:SetAutoloadMode(mode)
     mode = mode == "Account" and "Account" or "Global"
     if mode == self:GetAutoloadMode() then
@@ -7675,8 +7225,6 @@ function Window:LoadAutoload(silent)
     end
     return self:LoadConfig(name, silent)
 end
-
--- Themes
 
 Library._themeListeners = {}
 
@@ -7704,16 +7252,11 @@ local function hexOf(color)
         math.floor(color.B * 255 + 0.5))
 end
 
--- Coloured text for statuses, metrics, table cells and labels. A theme key
--- used as a tag, <Success>online</Success>, follows theme changes; plain
--- rich text such as <font color="#ff5a5a"> works too. Library.Colorize wraps
--- text for you. Table fields, not locals: the chunk is at Luau's 200 limit.
 Library._toneTags = {}
 for _, name in ipairs(THEME_KEYS) do
     Library._toneTags[string.lower(name)] = name
 end
 
--- A theme key, a Color3, "#rrggbb" or { r, g, b } as a Color3.
 function Library._color(value)
     if type(value) == "string" then
         local key = Library._toneTags[string.lower(value)]
@@ -7741,7 +7284,6 @@ function Library._rich(text)
     end))
 end
 
--- Library.Colorize("12 ms", "Success") or Library:Colorize(text, Color3).
 function Library.Colorize(...)
     local args = { ... }
     if args[1] == Library then
@@ -7759,9 +7301,6 @@ function Library.Colorize(...)
     return '<font color="' .. hexOf(resolved) .. '">' .. text .. "</font>"
 end
 
--- The window's corner radius in pixels, 0 (square) to 20; every other
--- rounded corner scales with it. The default is 10. Corners ease to the new
--- radius instead of jumping. Returns the radius it settled on.
 function Library:SetCornerRadius(pixels, instant)
     pixels = math.clamp(math.floor((tonumber(pixels) or 10) + 0.5), 0, 20)
     Library.Roundness = pixels / 10
@@ -7828,8 +7367,6 @@ function Library:GetTheme()
     return copy
 end
 
--- The script's starting theme: a preset name or a colour table. A default the
--- player picked in the theme manager still wins over it.
 function Library:SetDefaultTheme(theme)
     Library.DefaultTheme = theme
     if theme == nil then
@@ -7954,9 +7491,6 @@ function Window:_applyDefaultTheme()
     end
 end
 
--- Background images
-
--- Image assets anyone can use, from Fluent-modded's themes.
 Library.BackgroundPresets = {
     ["Deep Violet"] = "rbxassetid://136310484943077",
     ["Blood Red"] = "rbxassetid://121343473918667",
@@ -7967,7 +7501,6 @@ Library.BackgroundPresets = {
 }
 Library.BackgroundPresetOrder = { "Deep Violet", "Blood Red", "Cyanic", "Amber Glow", "Bloomings", "Lavender Pink" }
 
--- Table fields, not locals: the library chunk is at Luau's 200 local limit.
 Library._imageExtensions = { png = true, jpg = true, jpeg = true, webp = true, gif = true, bmp = true }
 
 function Window:_backgroundFolder()
@@ -7978,9 +7511,6 @@ function Window:_trimBackground(source)
     return (tostring(source or ""):match("^%s*(.-)%s*$"))
 end
 
--- Turns a background source into something ImageLabel.Image takes. Web images
--- are downloaded once into backgrounds/cache and loaded with getcustomasset,
--- so this yields the first time a URL is used.
 function Window:_resolveBackground(source)
     source = self:_trimBackground(source)
     local preset = Library.BackgroundPresets[source]
@@ -8035,7 +7565,7 @@ function Window:_resolveBackground(source)
         pcall(delfile, path)
         return nil, "the downloaded file is not an image"
     end
-    -- A file in the backgrounds folder, or any path in the workspace.
+
     if canLoad then
         for _, path in ipairs({ self:_backgroundFolder() .. "/" .. source, source }) do
             if isfile(path) then
@@ -8050,9 +7580,6 @@ function Window:_resolveBackground(source)
     return nil, "no image called " .. source
 end
 
--- source: a preset name, an image asset id, an rbxassetid:// link, an http(s)
--- image URL, or an image file in <ConfigFolder>/backgrounds. nil or "None"
--- removes it. May yield while a web image downloads.
 function Window:SetBackground(source)
     self._backgroundGeneration += 1
     local generation = self._backgroundGeneration
@@ -8089,7 +7616,6 @@ function Window:GetBackground()
     return self.Background
 end
 
--- 0 shows the image fully, 1 hides it behind the theme background colour.
 function Window:SetBackgroundTransparency(value)
     self.BackgroundTransparency = math.clamp(tonumber(value) or 0.35, 0, 1)
     if self.Background then
@@ -8097,7 +7623,6 @@ function Window:SetBackgroundTransparency(value)
     end
 end
 
--- Preset names, then the image files in <ConfigFolder>/backgrounds.
 function Window:ListBackgrounds()
     local names = table.clone(Library.BackgroundPresetOrder)
     local folder = self:_backgroundFolder()
@@ -8212,7 +7737,6 @@ local function fetchServers(order)
     return data.data
 end
 
--- Small on/off pill used on the home card for the privacy switches.
 local function miniSwitch(parent, initial, order, callback)
     local pill = create("TextButton", {
         Size = UDim2.fromOffset(30, 16),
@@ -8325,8 +7849,6 @@ local STAT_TYPES = {
     Memory = { "cpu", "Memory" },
 }
 
--- Health colour for a live metric: Success under good, Warning under bad,
--- Error past it. lowerIsBetter flips the scale (ping, memory).
 function Library._healthColor(value, good, bad, lowerIsBetter)
     if type(value) ~= "number" then
         return Theme.Text
@@ -8353,9 +7875,6 @@ local function bumpExecutions(folder)
     pcall(writefile, path, tostring(count))
     return count
 end
-
--- Containers: a tab or sub tab owns a scrolling list. Elements added straight
--- to it stack full width, groupboxes go into two columns underneath.
 
 local function buildContainer(owner, parent, top, emptyIcon, emptyText)
     local list = create("ScrollingFrame", {
@@ -8446,7 +7965,7 @@ function Tab:_columns()
     end
     local set = { Holder = holder, Left = column(1), Right = column(2), Counts = { 0, 0 }, Stacked = false }
     local window = self.Window
-    -- Narrow windows stack the right column under the left one.
+
     local function relayout()
         local width = holder.AbsoluteSize.X / window.Scale.Scale
         if width <= 0 then
@@ -8507,8 +8026,6 @@ function Tab:Groupbox(opts, icon)
         Parent = box,
     })
 
-    -- The header is a filled strip: icon and bold title on the left, a
-    -- chevron on the right. Pressing anywhere on it folds the box.
     local header = create("TextButton", {
         Size = UDim2.new(1, 0, 0, 40),
         BackgroundColor3 = Theme.Surface3,
@@ -8519,7 +8036,7 @@ function Tab:Groupbox(opts, icon)
         Parent = box,
     })
     corner(header, UDim.new(0, 10))
-    -- Squares the strip's lower corners so it meets the body flat.
+
     local headerFill = create("Frame", {
         AnchorPoint = Vector2.new(0, 1),
         Position = UDim2.fromScale(0, 1),
@@ -8554,8 +8071,7 @@ function Tab:Groupbox(opts, icon)
         Parent = header,
     })
     applyIcon(collapseButton, "chevron-down")
-    -- Beside the chevron, a button that pops the box out into a floating
-    -- panel (and docks it back once it's out). PopOut = false leaves it off.
+
     local canPop = opts.PopOut ~= false
     local popButton, popIcon
     if canPop then
@@ -8648,8 +8164,7 @@ function Tab:Groupbox(opts, icon)
         generation += 1
         local current = generation
         local duration = instant and 0 or 0.32
-        -- Anything open inside the box (a dropdown list, a picker, a focused
-        -- box) closes with it, rather than floating over a folded header.
+
         if value then
             for _, element in ipairs(group._items) do
                 if element._onHide then
@@ -8681,9 +8196,7 @@ function Tab:Groupbox(opts, icon)
             end
         end
         local motion = instant and 0 or 0.3
-        -- Folded, the strip is the whole box: the hairline under it drops out
-        -- of the layout once the body has closed, so the box ends exactly at
-        -- the strip and both share the same rounded corners.
+
         if value then
             local function fold()
                 if generation == current and collapsed then
@@ -8719,10 +8232,7 @@ function Tab:Groupbox(opts, icon)
     local isTap = tapGuard(header, function()
         return box:FindFirstAncestorWhichIsA("ScrollingFrame")
     end)
-    -- Popping out: the box itself is lifted out of its column into a panel
-    -- on the window's pop-out layer, and a slot holds its place in the column
-    -- (pressing the slot docks it back). The header drags the panel; a drop
-    -- is clamped on screen and the spot is remembered for the next pop-out.
+
     local popped, popGeneration = false, 0
     local panel, panelScale, panelShadow, slot, stopPanel
     local dragStart, dragOrigin, dragMoved, suppressClick = nil, nil, false, false
@@ -8734,7 +8244,7 @@ function Tab:Groupbox(opts, icon)
     local function toLayer(point)
         return (point - window._popLayer.AbsolutePosition) / layerScale()
     end
-    -- Keeps a panel's top-centre spot on screen, header always reachable.
+
     local function clampSpot(spot, width, height)
         local view = window._popLayer.AbsoluteSize / layerScale()
         local margin = 8
@@ -8762,7 +8272,7 @@ function Tab:Groupbox(opts, icon)
         if popped or not canPop or not box.Parent or group._destroyed then
             return
         end
-        -- A dock still in flight lands first, so the box is back in its column.
+
         if group._settleDock then
             group._settleDock()
         end
@@ -8779,8 +8289,6 @@ function Tab:Groupbox(opts, icon)
         local width = box.AbsoluteSize.X / scale
         local height = box.AbsoluteSize.Y / scale
 
-        -- The slot left behind: starts at the box's height so nothing below
-        -- jumps, then eases down to a slim bar.
         slot = create("TextButton", {
             Size = UDim2.new(1, 0, 0, height),
             BackgroundColor3 = Theme.Surface2,
@@ -8850,8 +8358,6 @@ function Tab:Groupbox(opts, icon)
         window._controlsDirty = true
         setPopIcon(true)
 
-        -- Lifts off the column: a spring up and out to its float spot, with
-        -- the shadow deepening under it.
         local spot = clampSpot(group._popSpot or Vector2.new(from.X + width / 2 + 22, from.Y - 14), width, height)
         animating = true
         panelScale.Scale = 0.97
@@ -8864,8 +8370,6 @@ function Tab:Groupbox(opts, icon)
             end
         end)
 
-        -- Each frame: the panel follows the box's height (folding, rows
-        -- coming and going), mirrors its visibility, and stays on screen.
         local thisPanel = panel
         stopPanel = window:_listen("Render", function()
             if panel ~= thisPanel or not thisPanel.Parent then
@@ -8919,7 +8423,7 @@ function Tab:Groupbox(opts, icon)
             if index then
                 table.remove(window._popPanels, index)
             end
-            -- Back into the column, unless it was popped again meanwhile.
+
             if box.Parent == oldPanel then
                 if oldSlot and oldSlot.Parent and not group._destroyed then
                     box.Parent = oldSlot.Parent
@@ -8936,8 +8440,7 @@ function Tab:Groupbox(opts, icon)
             window._controlsDirty = true
         end
         group._settleDock = settle
-        -- Flies home only when its slot is on screen; otherwise (another tab,
-        -- the window hidden) it just drops back into place.
+
         local canFly = not instant and oldSlot and oldSlot.Parent and window.Root.Visible and box.Visible
             and oldSlot.AbsoluteSize.X > 0 and isShown(oldSlot, window.Body, oldSlot.AbsolutePosition + oldSlot.AbsoluteSize / 2)
         if not canFly then
@@ -8953,7 +8456,7 @@ function Tab:Groupbox(opts, icon)
         if oldLabel then
             tween(oldLabel, { TextTransparency = 1 }, 0.12)
         end
-        -- The slot's top stays put as it grows, so its spot is the landing.
+
         local target = toLayer(oldSlot.AbsolutePosition)
         tween(oldPanel, {
             Position = UDim2.fromOffset(target.X + width / 2, target.Y),
@@ -8964,7 +8467,6 @@ function Tab:Groupbox(opts, icon)
         task.delay(0.37, settle)
     end
 
-    -- Dragging the floating panel by its header.
     header.InputBegan:Connect(function(input)
         if not popped or not isPress(input) or not panel then
             return
@@ -9125,8 +8627,6 @@ Tab.AddGroupbox = Tab.Groupbox
 Tab.AddLeftGroupbox = sideGroupbox("Left")
 Tab.AddRightGroupbox = sideGroupbox("Right")
 
--- Button rows: equal-width buttons side by side.
-
 function Tab:ButtonRow(opts)
     local specs = type(opts) == "table" and (opts.Buttons or opts) or {}
     local compact = metricsOf(self).Compact
@@ -9172,8 +8672,6 @@ function Tab:ButtonRow(opts)
     return finishElement(self, { Name = table.concat(names, " "), Visible = not (type(opts) == "table" and opts.Visible == false) }, handle, frame, "ButtonRow")
 end
 
--- A text box with an action button beside it, for naming new configs and themes.
--- Without buttonText the box spans the row on its own.
 local function actionInput(tab, placeholder, buttonText, callback)
     local boxHeight = TOUCH and 34 or 30
     local frame = card(tab, "Frame", boxHeight + 4, {})
@@ -9242,13 +8740,12 @@ local function trim(text)
     return (tostring(text or ""):match("^%s*(.-)%s*$"))
 end
 
--- Managers go in their own groupbox when added straight to a tab.
 local function managerHost(tab, opts, name, icon)
     if tab._groupbox then
         return tab
     end
     local host = tab:Groupbox({ Name = opts.Name or name, Icon = opts.Icon or icon, Side = opts.Side })
-    -- Library chrome, not a script feature: the feature list skips it.
+
     host._manager = true
     return host
 end
@@ -9513,7 +9010,7 @@ function Tab:ConfigManager(opts)
             notify(false, "Import failed", "Invalid config code")
             return
         end
-        -- The typed name wins; otherwise the code's own name, never overwriting a config.
+
         local saveAs = trim(nameInput:Get())
         if saveAs == "" then
             saveAs = nil
@@ -9554,7 +9051,7 @@ function Tab:ConfigManager(opts)
     end
 
     local disconnect = window:OnConfigChanged(function()
-        -- Configs can arrive from elsewhere (a cloud install), so the list is reread.
+
         manager:Refresh()
         if window.LoadedConfig and list:Get() == nil then
             list:Set(window.LoadedConfig, true)
@@ -9725,8 +9222,7 @@ function Tab:ThemeManager(opts)
             Increment = 5,
             Default = math.floor(window:GetUIScale() * 100 + 0.5),
             Suffix = "%",
-            -- Rescaling mid-drag would move the slider out from under the
-            -- pointer, so a drag applies on release.
+
             Callback = function(value)
                 if not (uiScale and uiScale.Dragging) then
                     window:SetUIScale(value / 100)
@@ -9764,7 +9260,7 @@ function Tab:ThemeManager(opts)
         })
     end
     if opts.Background ~= false then
-        -- The dropdown shows listed images by name, "custom" for ids and links.
+
         backgroundLabel = function(source)
             if source == nil or source == "" then
                 return "None"
@@ -9938,8 +9434,7 @@ function Tab:ThemeManager(opts)
                 Name = title,
                 Default = Theme[key],
                 Callback = function(color)
-                    -- Dragging the picker fires every frame; repaint at most
-                    -- a dozen times a second.
+
                     pending = color
                     if scheduled then
                         return
@@ -9960,9 +9455,6 @@ function Tab:ThemeManager(opts)
         end
     end
 
-    -- One hidden flag carries the palette and the look settings above, so
-    -- configs save and load the theme. Not a flag per toggle: flagged toggles
-    -- would count as running features on the minimized island.
     if opts.Flag ~= false then
         local flag = type(opts.Flag) == "string" and opts.Flag or "__Theme"
         local look = { _type = "Theme", _searchName = "Theme", _searchKey = "theme", _listeners = {} }
@@ -9977,7 +9469,7 @@ function Tab:ThemeManager(opts)
                 Colors = colors,
                 Weather = weather and window.Weather or nil,
                 WeatherMode = weatherMode and window.WeatherMode or nil,
-                -- if-expressions, not and/or: a switched-off value is false, not nil.
+
                 Dim = if dim then window._backdropDim == true else nil,
                 Transparent = if transparent then window.Transparent == true else nil,
                 DragStyle = dragSkeleton and window.DragStyle or nil,
@@ -9986,7 +9478,7 @@ function Tab:ThemeManager(opts)
                 UIScale = uiScale and window:GetUIScale() or nil,
                 AdaptiveSize = if adaptive then window:GetAdaptiveSize() else nil,
                 Density = density and Library.Density or nil,
-                -- "" is no background; a missing field leaves it alone on load.
+
                 Background = background and (window.Background or "") or nil,
                 BackgroundTransparency = background and window.BackgroundTransparency or nil,
             }
@@ -10030,7 +9522,7 @@ function Tab:ThemeManager(opts)
             if dragSkeleton and type(value.DragStyle) == "string" then
                 dragSkeleton:Set(window:SetDragStyle(value.DragStyle), true)
             elseif dragSkeleton and type(value.DragSkeleton) == "boolean" then
-                -- Configs saved before drag styles.
+
                 window:SetDragSkeleton(value.DragSkeleton)
                 dragSkeleton:Set(window.DragStyle, true)
             end
@@ -10058,7 +9550,7 @@ function Tab:ThemeManager(opts)
             if background and type(value.Background) == "string" and value.Background ~= (window.Background or "") then
                 local source = value.Background
                 background:Set(backgroundLabel(source), true)
-                -- A web image may download first; don't hold up the rest of the config.
+
                 task.spawn(window.SetBackground, window, source)
             end
             refreshStatus()
@@ -10068,7 +9560,6 @@ function Tab:ThemeManager(opts)
         window:_flagCreated(flag, look)
     end
 
-    -- A reset wipes the themes folder, so drop the stale list.
     window._workspaceListeners = window._workspaceListeners or {}
     table.insert(window._workspaceListeners, function()
         themes:Set(nil, true)
@@ -10083,11 +9574,8 @@ Tab.CreateButtonRow = Tab.ButtonRow
 Tab.CreateConfigManager = Tab.ConfigManager
 Tab.CreateThemeManager = Tab.ThemeManager
 
--- Status: read-only key/value lines, mostly for groupboxes, in several styles.
-
 local STATUS_HEIGHT = { Plain = 22, Row = 24, Badge = 28, Dot = 24, Bar = 38, Stat = 46 }
 
--- Tone: a theme key, a Color3 or "#rrggbb".
 local function toneColor(tone)
     return Library._color(tone) or Theme.Accent
 end
@@ -10297,7 +9785,7 @@ function Tab:Status(opts)
         valueLabel.Text = text
         local tone = toneColor(handle.Tone)
         local duration = animate and 0.25 or 0
-        -- Color paints the whole value; inline tags still win over it.
+
         local valueColor = not tinted and Library._color(handle.Color) or Theme.Text
         if not tinted and not (changed and animate and opts.Flash ~= false) then
             tween(valueLabel, { TextColor3 = valueColor }, duration)
@@ -10314,7 +9802,7 @@ function Tab:Status(opts)
         if fill then
             tween(fill, { BackgroundColor3 = tone }, duration)
         end
-        -- A brief accent flash marks a changed value.
+
         if changed and animate and not tinted and opts.Flash ~= false then
             tween(valueLabel, { TextColor3 = Theme.Accent }, 0.08)
             task.delay(0.1, function()
@@ -10327,7 +9815,7 @@ function Tab:Status(opts)
 
     keyLabel.RichText = true
     valueLabel.RichText = true
-    -- Theme tags in the text are baked to colours, so repaint on theme change.
+
     onTheme(holder, function()
         if lastText ~= nil then
             render(false)
@@ -10348,7 +9836,7 @@ function Tab:Status(opts)
         handle.Tone = tone
         render(true)
     end
-    -- nil goes back to the normal text colour.
+
     function handle:SetColor(color)
         handle.Color = color
         render(true)
@@ -10360,7 +9848,7 @@ function Tab:Status(opts)
     function handle:Text()
         return valueLabel.Text
     end
-    -- The value's resting colour, for the copy pinned on the minimized island.
+
     function handle._shownColor()
         if handle.Color ~= nil then
             return Library._color(handle.Color) or Theme.Text
@@ -10430,8 +9918,6 @@ function Tab:Statuses(entries, shared)
     return handles
 end
 
--- Status list: a read-only block of rows that grows up to MaxRows, then
--- scrolls inside itself. Rows are reused between refreshes so nothing flickers.
 function Tab:StatusList(opts)
     opts = normalize(opts, { Title = "Name" })
     local compact = metricsOf(self).Compact
@@ -10502,8 +9988,6 @@ function Tab:StatusList(opts)
     local rowObjects, rows, signature, raw = {}, {}, nil, {}
     local handle = { _listeners = {} }
 
-    -- Fits the list to its first MaxRows rows, measured, so wrapped rows count
-    -- at their real height. Past MaxRows the list scrolls.
     local function fit()
         if handle._destroyed then
             return
@@ -10606,7 +10090,6 @@ function Tab:StatusList(opts)
         return entry.Text .. "\0" .. (entry.Value or "\1") .. "\0" .. tostring(entry.Tone or "")
     end
 
-    -- Tone tints the value, or the text when there is no value.
     local function paint(row, entry)
         local key = rowKey(entry)
         if row.Key == key then
@@ -10689,7 +10172,6 @@ function Tab:StatusList(opts)
         rate = math.max(tonumber(seconds) or rate, 0.05)
     end
 
-    -- Theme tags are baked into the text, so a theme change repaints the rows.
     onTheme(content, function()
         for index, row in ipairs(rowObjects) do
             if rows[index] then
@@ -10710,8 +10192,6 @@ function Tab:StatusList(opts)
         end
     end)
 
-    -- Refreshes only while someone can see it: window open and not minimized,
-    -- its tab and sub tab showing, and neither it nor its groupbox hidden.
     local function onScreen()
         if window._destroyed or not window.Open or window.Minimized or not handle._userVisible then
             return false
@@ -10765,11 +10245,6 @@ Tab.AddStatus = Tab.Status
 Tab.CreateStatuses = Tab.Statuses
 Tab.CreateStatusList = Tab.StatusList
 Tab.AddStatusList = Tab.StatusList
-
--- Image and Viewport: media cards. Image shows a picture from the same sources
--- as window backgrounds, plus "Avatar" for the player's headshot. Viewport
--- shows a 3D model or the player's avatar, turning slowly; drag it to spin it
--- by hand.
 
 function Tab:_mediaCard(opts, defaultHeight)
     opts = normalize(opts, { Title = "Name", Description = "Desc" })
@@ -10825,7 +10300,7 @@ function Tab:_mediaCard(opts, defaultHeight)
         ScaleType = Enum.ScaleType.Fit,
         Parent = media,
     })
-    -- A caption over the bottom of the picture, on a dark fade.
+
     local captionHolder = create("Frame", {
         AnchorPoint = Vector2.new(0, 1),
         Position = UDim2.fromScale(0, 1),
@@ -10873,7 +10348,7 @@ function Tab:Image(opts)
     local window = self.Window
     local media = parts.Media
     applyIcon(parts.Placeholder, "image")
-    -- Enum lookups throw on unknown names.
+
     local function scaleType(name, fallback)
         local ok, value = pcall(function()
             return Enum.ScaleType[tostring(name)]
@@ -10896,7 +10371,6 @@ function Tab:Image(opts)
     local handle = { Value = nil }
     local generation = 0
 
-    -- Yields while a web image downloads. Returns ok, err like SetBackground.
     function handle:SetImage(source)
         generation += 1
         local current = generation
@@ -10928,7 +10402,7 @@ function Tab:Image(opts)
         end
         image.ImageTransparency = 1
         image.Image = asset
-        -- Fade in once it has loaded, or after a few seconds regardless.
+
         task.spawn(function()
             local waited = 0
             while not image.IsLoaded and waited < 4 and generation == current and image.Parent do
@@ -11038,7 +10512,6 @@ function Tab:Viewport(opts)
         return true
     end
 
-    -- A copy with its scripts and sounds stripped and every part anchored.
     local function prepare(instance)
         local copy = instance
         if opts.Clone ~= false then
@@ -11088,7 +10561,7 @@ function Tab:Viewport(opts)
             local character = value.Character
             if not character then
                 character = value.CharacterAdded:Wait()
-                -- Let the body parts and accessories load in.
+
                 task.wait(0.5)
             end
             value = character
@@ -11096,7 +10569,6 @@ function Tab:Viewport(opts)
         return typeof(value) == "Instance" and value or nil
     end
 
-    -- Yields while waiting for a character to spawn.
     function handle:SetModel(value)
         generation += 1
         local current = generation
@@ -11140,7 +10612,6 @@ function Tab:Viewport(opts)
         return handle.Model
     end
 
-    -- Copies the source again, e.g. after the character respawned or changed.
     function handle:Refresh()
         return handle:SetModel(source)
     end
@@ -11202,9 +10673,6 @@ function Tab:Viewport(opts)
     return finishElement(self, opts, handle, parts.Frame, "Viewport")
 end
 
--- Table: rows under a header, sortable by clicking a column. Rank = true adds
--- a # column with medals for the top three, for leaderboards.
-
 function Tab:Table(opts)
     opts = normalize(opts, { Title = "Name", Description = "Desc", Data = "Rows", OnRowClick = "Callback" })
     local window = self.Window
@@ -11246,8 +10714,7 @@ function Tab:Table(opts)
             })
         end
     end
-    -- Search: filters rows by any cell's text as you type. A count of what
-    -- matches shows on the right while it filters.
+
     local query = ""
     local searchBox, searchCount
     if searchable then
@@ -11377,8 +10844,6 @@ function Tab:Table(opts)
         return Enum.TextXAlignment.Left
     end
 
-    -- Widths: a number above 1 is pixels, up to 1 is a share of what the pixel
-    -- columns leave, and the rest split whatever share is left.
     local function layoutColumns()
         local pixels, shares, autos = 0, 0, 0
         for _, column in ipairs(columns) do
@@ -11424,7 +10889,7 @@ function Tab:Table(opts)
         if type(value) == "number" then
             local whole = value == math.floor(value)
             local text = whole and string.format("%d", value) or string.format("%.2f", value)
-            -- Thousands separators on the whole part.
+
             local sign, int, rest = text:match("^(%-?)(%d+)(.*)$")
             if int then
                 int = int:reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
@@ -11476,13 +10941,13 @@ function Tab:Table(opts)
                         return sx < sy
                     end
                 elseif x ~= y then
-                    -- Empty cells sink to the bottom either way.
+
                     return x ~= nil
                 end
                 return a.Index < b.Index
             end)
         end
-        -- Ranks come from the full order, so filtering never renumbers them.
+
         for position, item in ipairs(list) do
             item.Rank = position
         end
@@ -11515,8 +10980,7 @@ function Tab:Table(opts)
             Text = "",
             Parent = body,
         })
-        -- The accent bar on a highlighted row sits beside the cells, outside
-        -- their layout.
+
         local marker = create("Frame", {
             Position = UDim2.new(0, 3, 0.5, 0),
             AnchorPoint = Vector2.new(0, 0.5),
@@ -11647,8 +11111,7 @@ function Tab:Table(opts)
                 else
                     local value = columnValue(row, column)
                     cell.Label.Text = Library._rich(display(value, column, row))
-                    -- Column Color: a colour, a theme key or a function(value, row)
-                    -- returning either. A row's Colors[key or index] beats it.
+
                     local wanted = column.Color
                     if type(wanted) == "function" then
                         local ok, result = pcall(wanted, value, row)
@@ -11740,8 +11203,7 @@ function Tab:Table(opts)
                 Parent = cell,
             })
             applyIcon(arrow, "chevron-down")
-            -- The arrow sits just after the header text (before it when the
-            -- column is right aligned).
+
             local function placeArrow()
                 local width = text.TextBounds.X
                 if right then
@@ -11769,8 +11231,7 @@ function Tab:Table(opts)
                     end
                 end)
                 cell.MouseButton1Click:Connect(function()
-                    -- Numbers sort high to low first, text A to Z; the second
-                    -- click flips it and the third goes back to the given order.
+
                     if sortKey ~= column then
                         local numeric = false
                         for _, data in ipairs(handle.Rows) do
@@ -11860,7 +11321,6 @@ function Tab:Table(opts)
         return #handle.Rows
     end
 
-    -- Replaces a row (by its index in the list you gave) and flashes it.
     function handle:UpdateRow(index, row)
         if not handle.Rows[index] then
             return false
@@ -11895,7 +11355,6 @@ function Tab:Table(opts)
         handle:SetRows({})
     end
 
-    -- Sort(nil) goes back to the given order.
     function handle:Sort(key, descending)
         sortKey = key ~= nil and findColumn(key) or nil
         sortDescending = descending == true
@@ -11938,7 +11397,7 @@ function Tab:Table(opts)
             searchBox.Text = tostring(text or "")
         end
     end
-    -- Theme tags in cells are baked to colours; repaint them on theme change.
+
     onTheme(grid, render)
     return finishElement(self, opts, handle, frame, "Table")
 end
@@ -12044,7 +11503,7 @@ function Tab:_setupSubTabs()
     self._subTabs = {}
     self.List.Visible = false
     self:_refreshEmpty()
-    -- Keep the pill under the selected tab when widths change after layout.
+
     row:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         if self.CurrentSubTab and not ui.Moving then
             self:_placeSubHighlight(self.CurrentSubTab, true)
@@ -12255,10 +11714,6 @@ function Tab:SelectSubTab(sub, instant)
     end)
 end
 
--- Search: one box over the whole window. Typing lists matching tabs, pages,
--- groupboxes and controls from every tab; picking one opens its tab and page,
--- scrolls it into view and flashes it.
-
 Window._searchIcons = {
     Tab = "app-window",
     Page = "panels-top-left",
@@ -12292,7 +11747,7 @@ function Window:_searchResults(query)
         end
         entry.Name = name
         entry.At = at
-        -- Name starts first, then word starts, then anywhere inside a word.
+
         entry.Rank = at == 1 and 0 or (string.find(string.sub(name, at - 1, at - 1), "[%s%p]") and 1 or 2)
         entry.Order = #results + 1
         table.insert(results, entry)
@@ -12340,9 +11795,6 @@ function Window:_searchResults(query)
     return results
 end
 
--- Marks a found control: it pops, a soft accent glow blooms around it, a
--- sheen of light sweeps across it and a bright spot runs round its border,
--- then everything breathes once more and fades.
 function Window:_flash(frame, radius)
     for _, name in ipairs({ "SearchFlash", "SearchGlow" }) do
         local old = frame:FindFirstChild(name)
@@ -12354,7 +11806,6 @@ function Window:_flash(frame, radius)
     local accent = Theme.Accent
     local bright = accent:Lerp(Color3.new(1, 1, 1), 0.65)
 
-    -- Outer glow: a wide, faint stroke around a second outline.
     local halo = create("Frame", {
         Name = "SearchGlow",
         Size = UDim2.fromScale(1, 1),
@@ -12371,7 +11822,6 @@ function Window:_flash(frame, radius)
         Parent = halo,
     })
 
-    -- Wash with a moving sheen: a brighter diagonal band crosses it once.
     local wash = create("Frame", {
         Name = "SearchFlash",
         Size = UDim2.fromScale(1, 1),
@@ -12395,7 +11845,6 @@ function Window:_flash(frame, radius)
         Parent = wash,
     })
 
-    -- Border light: the ring's gradient turns, so a bright spot runs round it.
     local ring = create("UIStroke", {
         Color = Color3.new(1, 1, 1),
         Thickness = 1.6,
@@ -12417,9 +11866,6 @@ function Window:_flash(frame, radius)
         Parent = ring,
     })
 
-    -- Groupboxes clip their rows, so anything drawn outside a control is cut
-    -- off at its corners. The strokes go on the inside of the control where
-    -- the engine supports it; otherwise everything is inset by its width.
     local inside = pcall(function()
         haloStroke.BorderStrokePosition = Enum.BorderStrokePosition.Inner
         ring.BorderStrokePosition = Enum.BorderStrokePosition.Inner
@@ -12432,8 +11878,6 @@ function Window:_flash(frame, radius)
         wash.Size = UDim2.new(1, -4, 1, -4)
     end
 
-    -- A small pop, unless something else is scaling the control already. It
-    -- never grows past full size, which would be clipped as well.
     local pop
     if not frame:FindFirstChildOfClass("UIScale") then
         pop = create("UIScale", { Scale = 0.975, Parent = frame })
@@ -12447,7 +11891,7 @@ function Window:_flash(frame, radius)
     tween(runner, { Rotation = 540 }, 2.2, Enum.EasingStyle.Quad)
     task.spawn(function()
         task.wait(0.75)
-        -- One softer breath, then fade out.
+
         tween(wash, { BackgroundTransparency = 0.9 }, 0.35, Enum.EasingStyle.Sine)
         tween(haloStroke, { Thickness = glowWidth / 2, Transparency = 0.85 }, 0.35, Enum.EasingStyle.Sine)
         task.wait(0.35)
@@ -12489,7 +11933,7 @@ function Window:_revealResult(result)
     end
     local list = (sub or tab).List
     task.spawn(function()
-        -- Let the freshly shown page lay out before measuring it.
+
         task.wait()
         task.wait()
         if expanding then
@@ -12521,7 +11965,6 @@ function Window:_resetSearch()
     end
 end
 
--- Page titles stop short of the search box and close button.
 function Window:_fitTitle(tab)
     local right = self.SearchBox and (self._searchWidth or SEARCH_WIDTH) + 72 or 56
     local reserve = tab._titleX + right
@@ -12532,8 +11975,7 @@ function Window:_fitTitle(tab)
 end
 
 function Window:_buildSearch(content)
-    -- No box: the icon and text sit on a thin baseline. Focus draws an
-    -- accent line out from the middle of it.
+
     local holder = create("Frame", {
         AnchorPoint = Vector2.new(1, 0),
         Position = UDim2.new(1, -56, 0, 14),
@@ -12562,7 +12004,7 @@ function Window:_buildSearch(content)
         Parent = holder,
     })
     corner(focusLine, UDim.new(1, 0))
-    -- Kept for the focus handlers below, which recolour it.
+
     local _, icon = glowIcon(holder, "search", Theme.Muted, UDim2.new(0, 2, 0.5, -1))
     icon.Parent.Size = UDim2.fromOffset(15, 15)
     local box = create("TextBox", {
@@ -12590,7 +12032,6 @@ function Window:_buildSearch(content)
     end)
     self.SearchBox = box
 
-    -- Results float over the window under the box, like a dropdown popup.
     local rowHeight = TOUCH and 40 or 34
     local maxRows = 8
     local popup = create("Frame", {
@@ -12785,8 +12226,7 @@ function Window:_buildSearch(content)
                 Parent = list,
             })
             corner(button, UDim.new(0, 7))
-            -- One line of breadcrumbs: tab, sub tab and groupbox in muted
-            -- text, each split by a chevron, ending on the match in accent.
+
             local crumbs = create("Frame", {
                 Position = UDim2.fromOffset(10, 0),
                 Size = UDim2.new(1, -20, 1, 0),
@@ -12859,7 +12299,7 @@ function Window:_buildSearch(content)
                     chevron()
                 end
             end
-            -- The match itself: accent, with the typed part in bold.
+
             local name = result.Name
             local stop = result.At + #query
             local marked = escape(string.sub(name, 1, result.At - 1))
@@ -12954,9 +12394,6 @@ function Window:_buildSearch(content)
     content:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
     task.defer(fit)
 end
-
--- Identity: the player's name and headshot shown in the sidebar and on the
--- home tab. The privacy switches hide them everywhere at once.
 
 function Window:_trackName(textLabel, kind)
     table.insert(self._identity.Names, { Label = textLabel, Kind = kind })
@@ -13112,8 +12549,6 @@ function Window:_buildProfile(sidebar)
     self.Profile = card
 end
 
--- Server actions
-
 function Window:Rejoin()
     self:Notify({ Title = "Rejoining", Content = "Teleporting back into this server", Icon = "refresh-cw", Duration = 3 })
     task.spawn(function()
@@ -13193,12 +12628,6 @@ function Window:CopyToClipboard(text, what)
     return ok
 end
 
--- Home
-
--- Home reads top to bottom: a banner greeting the player, a performance card
--- with live graphs, the server and links side by side, and a status line.
-
--- A Home card that grows with its stacked contents.
 function Window:_homeCard(parent, order)
     local card = panelCard(parent, 0, order)
     card.AutomaticSize = Enum.AutomaticSize.Y
@@ -13207,7 +12636,6 @@ function Window:_homeCard(parent, order)
     return card
 end
 
--- A small caps heading at the top of a Home card.
 function Window:_homeCaption(parent, text, order)
     return label({
         Size = UDim2.new(1, 0, 0, 22),
@@ -13220,8 +12648,6 @@ function Window:_homeCaption(parent, text, order)
     })
 end
 
--- A rounded chip of an icon and short text. Returns the chip, its label and
--- its icon so callers can recolour them.
 function Window:_homeChip(parent, order, icon, text, color)
     local chip = create("TextButton", {
         Size = UDim2.fromOffset(0, 24),
@@ -13266,7 +12692,6 @@ function Window:_homeChip(parent, order, icon, text, color)
     return chip, text_, image, chipStroke
 end
 
--- A chip that flips on press: on, it takes the accent; off, it sits muted.
 function Window:_homeToggleChip(parent, order, icon, text, initial, callback)
     local chip, text_, image, chipStroke = self:_homeChip(parent, order, icon, text)
     local on = initial == true
@@ -13289,8 +12714,6 @@ function Window:_homeProfile(list, opts, order)
     local banner = panelCard(list, 140, order)
     banner.ClipsDescendants = true
 
-    -- The avatar bust stands on the banner's right edge and fades in from
-    -- the left, so it reads as part of the card rather than a framed photo.
     local bust = create("ImageLabel", {
         AnchorPoint = Vector2.new(1, 1),
         Position = UDim2.new(1, -16, 1, 0),
@@ -13348,7 +12771,6 @@ function Window:_homeProfile(list, opts, order)
     })
     self:_trackName(userLabel, "User")
 
-    -- Chips along the bottom: tier, time left, then the privacy toggles.
     local chips = create("Frame", {
         Position = UDim2.new(0, 22, 1, -40),
         Size = UDim2.new(1, -44, 0, 24),
@@ -13399,8 +12821,6 @@ function Window:_homeProfile(list, opts, order)
     end
 end
 
--- A large live readout with a short bar history under it. Returns the value
--- label and a push(value, color) that adds a sample.
 function Window:_homeGraph(parent, order, icon, title, ceiling)
     local cell = create("Frame", {
         BackgroundTransparency = 1,
@@ -13476,7 +12896,6 @@ function Window:_homeGraph(parent, order, icon, title, ceiling)
     return value, push
 end
 
--- A small figure: value over a caps caption.
 function Window:_homeFigure(parent, order, title)
     local cell = create("Frame", {
         BackgroundTransparency = 1,
@@ -13502,7 +12921,6 @@ function Window:_homeFigure(parent, order, title)
     return value
 end
 
--- A square tile button: an icon over a short label.
 function Window:_homeAction(parent, order, icon, text, callback)
     local button = create("TextButton", {
         BackgroundColor3 = Theme.Surface3,
@@ -13631,14 +13049,12 @@ function Window:_homeGame(parent, order)
         Parent = card,
     })
 
-    -- The detail line keeps the player count live.
     return function()
         local count = #Players:GetPlayers() .. "/" .. Players.MaxPlayers .. " players"
         detail.Text = owner and ("by " .. owner .. "  ·  " .. count) or count
     end
 end
 
--- One row of the links card: icon, title and text, and a round icon button.
 function Window:_homeLink(card, order, icon, title, text, buttonIcon, callback)
     local row = create("Frame", {
         Size = UDim2.new(1, 0, 0, 46),
@@ -13710,8 +13126,6 @@ function Window:_homeLink(card, order, icon, title, text, buttonIcon, callback)
     return row, titleLabel, textLabel
 end
 
--- Builds the links card into parent, or nothing when there are no links and
--- the feature list is off. Returns the card (or nil) and the feature refresh.
 function Window:_homeLinks(parent, opts, order)
     local links = {}
     if opts.Discord then
@@ -13765,7 +13179,7 @@ function Window:_homeLinks(parent, opts, order)
         end
         task.defer(refresh)
     end
-    -- The first row needs no rule above it.
+
     local first = nil
     for _, child in ipairs(card:GetChildren()) do
         if child:IsA("Frame") and child:FindFirstChild("Rule") and (not first or child.LayoutOrder < first.LayoutOrder) then
@@ -13778,8 +13192,6 @@ function Window:_homeLinks(parent, opts, order)
     return card, refresh
 end
 
--- A quiet status line under the cards: executor support on the left, the
--- hide key on the right.
 function Window:_homeExecutor(list, opts, order)
     local line = create("Frame", {
         Size = UDim2.new(1, 0, 0, 26),
@@ -13880,9 +13292,6 @@ function Window:_homeExecutor(list, opts, order)
     })
 end
 
--- Feature list: every control the script adds, grouped by tab, or a list the
--- script writes itself. Items that match a control jump to it when picked.
-
 Window._featureKinds = {
     Toggle = true,
     Slider = true,
@@ -13950,8 +13359,7 @@ function Window:_featureGroups()
     if type(custom) ~= "table" then
         return found
     end
-    -- A written list: groups of items, or bare items, which gather into one
-    -- group where the first one appears.
+
     local function customItem(entry)
         if type(entry) ~= "table" then
             entry = { Name = entry }
@@ -14001,8 +13409,6 @@ function Window:_featureSummary()
     return text, groups, count
 end
 
--- Opens the feature list over the window. Search filters it; picking an item
--- linked to a control closes the list and jumps to that control.
 function Window:ShowFeatures()
     if self._dialog then
         self._dialog.Close()
@@ -14021,7 +13427,7 @@ function Window:ShowFeatures()
         ZIndex = 40,
         Parent = body,
     })
-    -- A canvas group so the whole list fades as one on open and close.
+
     local card_ = create("CanvasGroup", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0.5, 0, 0.5, 10),
@@ -14153,7 +13559,7 @@ function Window:ShowFeatures()
         Padding = UDim.new(0, 2),
         Parent = content,
     })
-    -- Canvas sized by hand, as elsewhere, so it scrolls under UIScale.
+
     layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         scroller.CanvasSize = UDim2.fromOffset(0, layout.AbsoluteContentSize.Y / self.Scale.Scale + 4)
     end)
@@ -14182,7 +13588,7 @@ function Window:ShowFeatures()
         end
         fitConnection:Disconnect()
         if stopEscape then
-            -- Deferred: Close can run from inside the input dispatch loop.
+
             task.defer(stopEscape)
         end
         if searchBox:IsFocused() then
@@ -14375,8 +13781,7 @@ end
 
 function Window:_homeStats(list, opts, order, tab)
     local show = opts.Stats or { "Players", "Execs", "Session", "FPS", "Ping" }
-    -- FPS and ping get large readouts with a bar history; every other stat
-    -- is a small figure in the row under them.
+
     local card = self:_homeCard(list, order)
     local graphs = create("Frame", {
         Size = UDim2.new(1, 0, 0, 76),
@@ -14494,8 +13899,7 @@ function Window:_homeStats(list, opts, order, tab)
     self:_listen("Render", function()
         frames += 1
     end)
-    -- FPS, ping and memory are tinted by how healthy they are, unless the
-    -- script turns that off with StatColors = false.
+
     local tinted = opts.StatColors ~= false
     local function tint(valueLabel, color)
         if tinted and valueLabel.TextColor3 ~= color then
@@ -14659,7 +14063,6 @@ function Window:_buildHome(opts)
     local refreshExpiry = self:_homeProfile(list, opts, 1)
     local refreshStats, resetStats = self:_homeStats(list, opts, 2, tab)
 
-    -- Server and links side by side, stacked when narrow.
     local split = create("Frame", {
         Size = UDim2.new(1, 0, 0, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
@@ -14872,10 +14275,6 @@ end
 
 Window.CreateTab = Window.Tab
 
--- Cloud configs: a tab for browsing, previewing, installing and publishing
--- configs other players shared. The library draws it; OnFetch, OnPublish and
--- the other callbacks are the script's backend. Favorites, installs and the
--- sort order are remembered in the script's settings file.
 function Window:CloudConfigs(opts)
     opts = normalize(opts, { Title = "Name", Description = "Desc" })
     local window = self
@@ -14930,12 +14329,9 @@ function Window:CloudConfigs(opts)
         window:Notify({ Title = title, Content = detail_, Type = ok and "Success" or "Error", Duration = 3 })
     end
 
-    -- The Home tab's hide-name switch doubles as streamer mode.
     local function streamerOn()
         return window._hideName == true
     end
-
-    -- Records
 
     local function countFlags(code)
         local data = type(code) == "string" and window:DecodeConfig(code)
@@ -14983,7 +14379,6 @@ function Window:CloudConfigs(opts)
         return (text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub('"', "&quot;"):gsub("'", "&apos;"))
     end
 
-    -- Rich text with every match of the search drawn in the accent.
     local function highlight(text)
         local needle = string.lower(query.Search)
         if needle == "" then
@@ -15056,7 +14451,6 @@ function Window:CloudConfigs(opts)
         }
     end
 
-    -- What is kept locally for favorites and installs: no code, it is refetched.
     local function summary(record)
         local kept = publicRecord(record)
         kept.Code = nil
@@ -15078,8 +14472,6 @@ function Window:CloudConfigs(opts)
     local function otherScript(record)
         return type(record.Folder) == "string" and record.Folder ~= window.ConfigFolder
     end
-
-    -- Small pieces
 
     local function iconButton(parent, icon, glyph, size, plain)
         local button = create("TextButton", {
@@ -15243,7 +14635,6 @@ function Window:CloudConfigs(opts)
         return frame
     end
 
-    -- A text box on the surface colour. Multi-line boxes show a counter.
     local function field(parent, order, placeholder, height, limit)
         local multi = height > ROW
         local holder = create("Frame", {
@@ -15322,11 +14713,8 @@ function Window:CloudConfigs(opts)
         return name
     end
 
-    -- Layout: the page holds three views that slide over each other.
-
     local top = tab._headerBottom
-    -- One pixel wider than the content on every side: root clips the slide,
-    -- and the strokes along its edges would be clipped with it.
+
     local root = create("Frame", {
         Position = UDim2.fromOffset(23, top - 1),
         Size = UDim2.new(1, -46, 1, -(top + 14)),
@@ -15358,8 +14746,6 @@ function Window:CloudConfigs(opts)
         view.Visible = true
         tween(view, { Position = UDim2.fromOffset(0, 0) }, 0.3, Enum.EasingStyle.Quint)
     end
-
-    -- Browse: search, publish and refresh, the filter strip, then results.
 
     local browse = views.Browse
     local toolbar = create("Frame", {
@@ -15535,7 +14921,6 @@ function Window:CloudConfigs(opts)
     publishButton:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitToolbar)
     task.defer(fitToolbar)
 
-    -- A pixel taller than the chips on each side, so their strokes aren't clipped.
     local filterRow = create("Frame", {
         Position = UDim2.fromOffset(0, ROW + 7),
         Size = UDim2.new(1, 0, 0, CHIP + 2),
@@ -15628,7 +15013,6 @@ function Window:CloudConfigs(opts)
         return query.Search ~= "" or query.Tag ~= nil or query.Filter ~= "All"
     end
 
-    -- "12 configs in Favorites, tagged PvP, matching "boss"", or "Searching..."
     local function renderSummary(pending)
         local parts = {}
         if query.Filter ~= "All" then
@@ -15699,7 +15083,6 @@ function Window:CloudConfigs(opts)
         Parent = results,
     })
 
-    -- Loading placeholders that pulse where cards will land.
     local skeletons = {}
     local function addSkeletons(count)
         for _ = 1, count do
@@ -15734,7 +15117,6 @@ function Window:CloudConfigs(opts)
         skeletons = {}
     end
 
-    -- kind: nil hides it, or "empty" / "error" with a message.
     local function setState(kind, text)
         clear(stateFrame)
         stateFrame.Visible = kind ~= nil
@@ -15763,8 +15145,6 @@ function Window:CloudConfigs(opts)
         end
         renderSummary()
     end
-
-    -- Cards
 
     local openDetail, installRecord, refreshRecord
 
@@ -15961,7 +15341,6 @@ function Window:CloudConfigs(opts)
         end
     end
 
-    -- Favorites and Installed are kept on this device, so they filter locally.
     local function localRecords()
         local source = query.Filter == "Favorites" and favorites or installed
         local search = string.lower(query.Search)
@@ -16089,7 +15468,6 @@ function Window:CloudConfigs(opts)
         end)
     end
 
-    -- Near the bottom, the next page loads by itself.
     results:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
         if not hasMore or loading then
             return
@@ -16100,8 +15478,6 @@ function Window:CloudConfigs(opts)
             fetch(true)
         end
     end)
-
-    -- Filters and sorting
 
     local filterChips, tagChips = {}, {}
     local function renderFilters(instant)
@@ -16158,7 +15534,6 @@ function Window:CloudConfigs(opts)
     end
     resetButton.MouseButton1Click:Connect(resetFilters)
 
-    -- Typing searches after a short pause; Enter searches now.
     searchBox:GetPropertyChangedSignal("Text"):Connect(function()
         searchClear.Visible = searchBox.Text ~= ""
         showRecent(searchBox:IsFocused())
@@ -16185,7 +15560,7 @@ function Window:CloudConfigs(opts)
         tween(searchStroke, { Color = Theme.Stroke }, 0.2)
         tween(searchImage, { ImageColor3 = Theme.Muted }, 0.2)
         rememberSearch(searchBox.Text)
-        -- Late enough for a press on a recent search to land first.
+
         task.delay(0.15, function()
             if not searchBox:IsFocused() then
                 showRecent(false)
@@ -16208,7 +15583,7 @@ function Window:CloudConfigs(opts)
             fetch(false)
         end
     end)
-    -- "/" jumps to the search box while the list is showing.
+
     window:_listen("Began", function(input, processed)
         if processed or input.KeyCode ~= Enum.KeyCode.Slash then
             return
@@ -16224,10 +15599,6 @@ function Window:CloudConfigs(opts)
         cloud:Refresh()
     end)
 
-    -- Actions on a record
-
-    -- Runs callback with the record's code, asking the backend for it first
-    -- when the list came without codes.
     local function withCode(record, callback, onFail)
         if record.Code then
             callback(record.Code)
@@ -16277,7 +15648,7 @@ function Window:CloudConfigs(opts)
             local mark = installed[record.Id]
             local saveAs = nil
             if fileApiAvailable() then
-                -- An update overwrites the config it installed last time.
+
                 saveAs = type(mark) == "table" and type(mark.Name) == "string" and window:ConfigExists(mark.Name) and mark.Name
                     or uniqueName(record.Name)
             end
@@ -16425,8 +15796,6 @@ function Window:CloudConfigs(opts)
         })
     end
 
-    -- Detail view
-
     local detailList = scroller(views.Detail)
     padding(detailList, 1, 8, 1, 16)
     vlist(detailList, 10)
@@ -16542,8 +15911,6 @@ function Window:CloudConfigs(opts)
         detail.FavoriteLabel.Text = favorites[record.Id] and "Favorited" or "Favorite"
     end
 
-    -- Every setting in the config next to the player's own: changed ones
-    -- first, then the same ones, then flags this script doesn't have.
     local function fillPreview(record, myToken)
         local function mismatch(text)
             if detailToken == myToken then
@@ -16711,8 +16078,6 @@ function Window:CloudConfigs(opts)
         end
     end
 
-    -- Publish view: also the edit form for the player's own configs.
-
     local form = { Mode = "Publish", Record = nil, Source = false, Tags = {}, Busy = false }
     local publishList = scroller(views.Publish)
     padding(publishList, 1, 8, 1, 16)
@@ -16798,7 +16163,6 @@ function Window:CloudConfigs(opts)
         end)
     end
 
-    -- The code and setting count for the picked source, or nil and why not.
     local function sourceCode(name)
         if form.Source == "Keep" then
             return nil, form.Record and form.Record.Count
@@ -16866,7 +16230,7 @@ function Window:CloudConfigs(opts)
             nameBox.Text = editing.Name
             descBox.Text = editing.Description
         elseif form.Mode == "Edit" then
-            -- Leaving an edit starts a fresh draft; a publish draft is kept.
+
             form.Mode, form.Record, form.Source, form.Tags = "Publish", nil, false, {}
             nameBox.Text = ""
             descBox.Text = ""
@@ -16985,8 +16349,6 @@ function Window:CloudConfigs(opts)
         end)
     end
 
-    -- Handle
-
     function cloud:Refresh()
         fetch(false)
     end
@@ -16997,7 +16359,6 @@ function Window:CloudConfigs(opts)
         end
     end
 
-    -- For backends that push results instead of answering OnFetch.
     function cloud:SetConfigs(list, more)
         token += 1
         busy(false)
@@ -17104,7 +16465,7 @@ function Window:CloudConfigs(opts)
 
     renderFilters(true)
     showView(views.Browse)
-    -- The first fetch waits until the tab is opened, so a hidden tab costs nothing.
+
     local fetched = false
     local function firstFetch()
         if not fetched and tab._page.Visible then
@@ -17126,8 +16487,6 @@ Window.CreateCloudConfigs = Window.CloudConfigs
 Window.CloudConfig = Window.CloudConfigs
 Window.CreateCloudConfig = Window.CloudConfigs
 
--- Tab badges were removed. These stay as no-ops so older scripts that call
--- them keep running.
 function Tab:SetBadge() end
 
 function Tab:GetBadge()
@@ -17386,9 +16745,6 @@ function Window:_placeIndicator(tab)
     tween(indicator, { Position = UDim2.fromOffset(8, targetY) }, 0.45, Enum.EasingStyle.Quint)
 end
 
--- While a tab list or sub tab strip runs past an end, that end gets a fade
--- and a small chip with a chevron and how many tabs are out of sight there.
--- Pressing the chip scrolls most of a view toward them.
 function Window:_overflowHint(host, scroller, items, vertical, fadeColor)
     local overlay = create("Frame", {
         AnchorPoint = scroller.AnchorPoint,
@@ -17615,9 +16971,6 @@ function Window:_closePopups()
     end
 end
 
--- Popped-out groupboxes float on one screen-wide layer above the window. It
--- carries the window's scale, so a panel keeps the size it had in its column,
--- and it shows while the window is open (minimized included).
 function Window:_popoutLayer()
     if self._popLayer then
         return self._popLayer
@@ -17643,8 +16996,6 @@ function Window:_popoutLayer()
     return layer
 end
 
--- Where a control's popup is drawn: the pop-out layer for one inside a
--- floating panel, otherwise the window body.
 function Window:_popupHost(object)
     local layer = self._popLayer
     if layer and object and object:IsDescendantOf(layer) then
@@ -17653,8 +17004,6 @@ function Window:_popupHost(object)
     return self.Body
 end
 
--- A floating panel under the point counts as a control, so pressing it never
--- starts a window drag.
 function Window:_overPopout(point)
     local layer = self._popLayer
     if not layer or not layer.Visible then
@@ -17668,8 +17017,6 @@ function Window:_overPopout(point)
     return false
 end
 
--- Fades the whole body by lending it to the fader CanvasGroup, then hands it
--- back to the root once fully shown so it renders directly again.
 function Window:_fade(target, duration)
     local fader, body = self._fader, self.Body
     self._fadeGeneration = (self._fadeGeneration or 0) + 1
@@ -17769,20 +17116,12 @@ function Window:_settleTransition()
     self:_settleIn()
 end
 
--- Backdrop: a black tint over the game while the window is up, with an
--- optional weather layer (rain, snow or hell fire embers) drifting through it.
--- It fades out when the window is minimized or hidden and sweeps back in with
--- a gust when it comes back.
-
 local WEATHER = {
-    -- The rain texture is a wide sheet with one faint streak down the middle
-    -- (about 1/60 of its width, 57% of its height), so it is stretched much
-    -- wider than the drop it draws. See RAIN_STREAK.
+
     Rain = { Image = "rbxassetid://241868005", Count = 90, Stretch = true },
     Snow = { Image = "rbxassetid://99851851", Count = 60 },
     Ember = { Image = "rbxassetid://242205518", Count = 55 },
-    -- Drawn with plain frames and text, no images: petals are tinted pills
-    -- that flip as they fall, matrix columns are text strips.
+
     Sakura = { Petal = true, Count = 46, Glow = Color3.fromRGB(255, 150, 190), GlowAmount = 0.1 },
     Fireflies = { Image = Assets.Glow, Count = 34, Glow = Color3.fromRGB(70, 150, 60), GlowAmount = 0.16 },
     Matrix = {
@@ -17812,8 +17151,6 @@ local WEATHER_NAMES = {
 local RAIN_STREAK = Vector2.new(7 / 420, 151 / 263)
 local weatherRandom = Random.new()
 
--- "UI" keeps the weather inside the window, behind its content; anything
--- else drifts it across the whole screen.
 local function weatherMode(mode)
     if type(mode) == "string" and ({ ui = true, window = true, inside = true })[mode:lower()] then
         return "UI"
@@ -17832,8 +17169,6 @@ local function roll(min, max)
     return weatherRandom:NextNumber(min, max)
 end
 
--- Places a particle. `anywhere` scatters it over the whole screen (first
--- frame after the backdrop appears), otherwise it enters from its edge.
 local function seedParticle(kind, particle, width, height, anywhere)
     particle.Time = roll(0, 10)
     particle.Phase = roll(0, math.pi * 2)
@@ -17874,8 +17209,7 @@ local function seedParticle(kind, particle, width, height, anywhere)
         particle.X = roll(-0.25 * width, width)
         particle.Y = anywhere and roll(-20, height) or roll(-60, -s)
     elseif kind == "Fireflies" then
-        -- They wander instead of crossing the screen, and live a few seconds:
-        -- fade in, pulse, fade out, then turn up somewhere else.
+
         local s = roll(14, 28)
         particle.Size = Vector2.new(s, s)
         particle.VY = roll(-14, 8)
@@ -17906,7 +17240,7 @@ local function seedParticle(kind, particle, width, height, anywhere)
         particle.Size = Vector2.new(s + 6, s * length)
         particle.VY = roll(160, 360) * (s / 15)
         particle.VX, particle.Sway, particle.Spin, particle.Rotation = 0, 0, 0, 0
-        -- Smaller columns read as further away: dimmer.
+
         particle.Alpha = roll(0, 0.25) + (19 - s) * 0.04
         particle.X = math.floor(roll(0, width) / 18) * 18 + 9
         particle.Y = anywhere and roll(-particle.Size.Y / 2, height) or -particle.Size.Y / 2 - roll(0, 240)
@@ -17963,7 +17297,7 @@ function Window:_buildBackdrop(opts)
         ZIndex = 0,
         Parent = layer,
     })
-    -- Darker towards the top and bottom edges.
+
     create("UIGradient", {
         Rotation = 90,
         Transparency = NumberSequence.new({
@@ -17973,7 +17307,7 @@ function Window:_buildBackdrop(opts)
         }),
         Parent = tint,
     })
-    -- Heat rising from the bottom of the screen, hell fire only.
+
     local heat = create("Frame", {
         AnchorPoint = Vector2.new(0, 1),
         Position = UDim2.fromScale(0, 1),
@@ -17989,8 +17323,7 @@ function Window:_buildBackdrop(opts)
         Transparency = NumberSequence.new(1, 0),
         Parent = heat,
     })
-    -- Holds the heat and the particles so both move together between the
-    -- screen and the window.
+
     local field = create("Frame", {
         Size = UDim2.fromScale(1, 1),
         BackgroundTransparency = 1,
@@ -18022,7 +17355,6 @@ function Window:_buildBackdrop(opts)
     end)
 end
 
--- The area the particles cover, in the field's own (unscaled) units.
 function Window:_weatherSize()
     if self.WeatherMode == "UI" then
         return Vector2.new(self.Root.Size.X.Offset, self.Root.Size.Y.Offset)
@@ -18039,11 +17371,10 @@ function Window:_rebuildWeather()
     if not definition then
         return
     end
-    -- The glow along the bottom: red heat for hell fire, a soft tint for the
-    -- others that ask for one.
+
     self._backdropHeat.BackgroundColor3 = definition.Glow or Color3.fromRGB(255, 60, 15)
     local size = self:_weatherSize()
-    -- The window is a fraction of the screen, so it gets fewer particles.
+
     local count = definition.Count * self._weatherDensity * (self.WeatherMode == "UI" and 0.45 or 1)
     for _ = 1, math.floor(count + 0.5) do
         local instance, property
@@ -18062,7 +17393,7 @@ function Window:_rebuildWeather()
                 ZIndex = 2,
                 Parent = self._weatherField,
             })
-            -- A fading tail and a pale leading glyph.
+
             create("UIGradient", {
                 Rotation = 90,
                 Color = ColorSequence.new({
@@ -18130,7 +17461,7 @@ function Window:_stepBackdrop(deltaTime)
     end
     local eased = 1 - (1 - fade) ^ 3
     local kind = self.Weather
-    -- The dim eases on its own so turning it off doesn't touch the weather.
+
     local dim = self._dimLevel
     if self._backdropDim then
         dim = math.min(dim + deltaTime / 0.3, 1)
@@ -18145,7 +17476,6 @@ function Window:_stepBackdrop(deltaTime)
         or definition and definition.GlowAmount and 1 - (definition.GlowAmount + math.sin(os.clock() * 0.8) * definition.GlowAmount * 0.25) * eased
         or 1
 
-    -- The gust on restore: particles rush in fast and settle back.
     local kick = self._weatherKick
     self._weatherKick = math.max(kick - deltaTime * 1.3, 0)
     local speed = self._weatherSpeed * (1 + kick * kick * 2.5)
@@ -18176,11 +17506,11 @@ function Window:_stepBackdrop(deltaTime)
         local y = particle.Y
         local label = particle.Label
         if kind == "Ember" then
-            -- Flicker, and burn out on the way up.
+
             alpha *= math.clamp(particle.Y / (height * 0.85), 0, 1) ^ 0.6
             alpha *= 0.75 + math.sin(particle.Time * 9 + particle.Phase) * 0.25
         elseif kind == "Sakura" then
-            -- Flip: the petal narrows and widens as it turns over.
+
             local turn = math.abs(math.cos(particle.Time * particle.Flutter + particle.Phase))
             label.Size = UDim2.fromOffset(particle.Size.X * (0.3 + turn * 0.7), particle.Size.Y)
         elseif kind == "Fireflies" then
@@ -18241,7 +17571,6 @@ function Window:SetBackdropTint(amount)
     self._backdropTint = math.clamp(tonumber(amount) or 0.45, 0, 1)
 end
 
--- Turns the black tint on or off, leaving the weather running.
 function Window:SetDim(enabled)
     if not self._backdrop then
         return
@@ -18256,7 +17585,7 @@ function Window:SetWeatherMode(mode)
     mode = weatherMode(mode)
     local field = self._weatherField
     if mode == "UI" then
-        -- Under everything else in the body: sidebar, content and glows.
+
         field.ZIndex = 0
         field.Parent = self.Body
     else
@@ -18303,31 +17632,17 @@ function Window:SetWeatherSpeed(speed)
     self._weatherSpeed = math.clamp(tonumber(speed) or 1, 0.1, 3)
 end
 
--- Minimize: the window folds into a Dynamic Island style pill hanging from
--- the top of the screen. Compact, it shows the logo and a live meter of
--- running toggles. Hovering springs it open into a session card: the
--- player, the game and session time, frame rate and ping meters, the server
--- and running counts, and the key that reopens the window. A
--- notification while minimized opens it briefly to show it. Click or tap
--- restores.
-
--- One table, not separate locals: the main chunk is at Luau's 200 local limit.
 local Mini = {
-    -- Sized after the iPhone 18 island: a slimmer, shorter pill sitting close
-    -- to the top edge, opening into a wide card with deep rounded corners.
-    Top = 8, -- gap from the top of the screen
-    Width = TOUCH and 176 or 168, -- compact
+
+    Top = 8,
+    Width = TOUCH and 176 or 168,
     Height = TOUCH and 36 or 32,
-    Wide = 340, -- expanded and activity
-    Radius = 34, -- corner of the expanded and activity cards
+    Wide = 340,
+    Radius = 34,
     Bars = 4,
     Pinned = 6,
 }
 
--- The morph is carried by a plain "ghost" panel drawn over the window. The
--- window body itself never moves or fades, so nothing has to be laid out
--- again mid-animation: the ghost covers it, the window is hidden underneath,
--- and on the way back the window is shown under the ghost before it clears.
 local function makeGhost(window, position, size, radius)
     if window._ghost then
         window._ghost:Destroy()
@@ -18372,8 +17687,6 @@ function Window:_buildMiniBar()
     end
     local gui = self.Gui
 
-    -- The island itself: a black pill hanging from the top of the screen. It
-    -- is a canvas so its rounded shape clips whatever layer is showing.
     local island = create("CanvasGroup", {
         Name = "Island",
         AnchorPoint = Vector2.new(0.5, 0),
@@ -18389,14 +17702,11 @@ function Window:_buildMiniBar()
     local islandCorner = Library._fixedCorner(island, UDim.new(0, Mini.Height / 2))
     local islandScale = create("UIScale", { Parent = island })
     self._miniScale = islandScale
-    -- How far the split bubble is out of the pill: drawn back in while the
-    -- island is open, budded off again once it settles to the pill.
+
     local merge = create("NumberValue", { Value = 1 })
     local mergeTween
     self._miniOrb = island
 
-    -- The wide layers keep a fixed width, so nothing reflows while the island
-    -- grows around them.
     local function layer(name)
         return create("CanvasGroup", {
             Name = name,
@@ -18409,9 +17719,6 @@ function Window:_buildMiniBar()
         })
     end
 
-    -- Compact: the logo leading, a live meter of running toggles trailing.
-    -- A graphite surface, lit from the top, so the pill isn't a flat black
-    -- slab; it fades with the layer, leaving the open card black.
     local compact = create("CanvasGroup", {
         Name = "Compact",
         Size = UDim2.fromScale(1, 1),
@@ -18424,7 +17731,7 @@ function Window:_buildMiniBar()
         Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(120, 120, 120)),
         Parent = compact,
     })
-    -- The logo sits in a soft accent disc, like an app glyph.
+
     local logoDisc = create("Frame", {
         AnchorPoint = Vector2.new(0, 0.5),
         Position = UDim2.new(0, 5, 0.5, 0),
@@ -18445,7 +17752,7 @@ function Window:_buildMiniBar()
         Parent = logoDisc,
     })
     applyIcon(logo, self._logoIcon, true)
-    -- The script's name beside the logo, so the pill reads at a glance.
+
     local miniTitle = label({
         AnchorPoint = Vector2.new(0, 0.5),
         Position = UDim2.new(0, Mini.Height + 2, 0.5, 0),
@@ -18503,8 +17810,7 @@ function Window:_buildMiniBar()
         LayoutOrder = 2,
         Parent = meter,
     })
-    -- Idle (nothing running): a health dot tinted by frame rate and the
-    -- session clock, so the pill never sits empty.
+
     local idleDot = create("Frame", {
         Size = UDim2.fromOffset(6, 6),
         BackgroundColor3 = Theme.Accent,
@@ -18525,7 +17831,6 @@ function Window:_buildMiniBar()
         Parent = meter,
     })
 
-    -- Expanded, on hover: the player's session.
     local expanded = layer("Expanded")
     local expandedList = create("Frame", {
         Position = UDim2.fromOffset(16, 14),
@@ -18539,9 +17844,7 @@ function Window:_buildMiniBar()
         Padding = UDim.new(0, 8),
         Parent = expandedList,
     })
-    -- The open card is the player's session, like a now-playing card: who
-    -- and where on top with the session clock, two wide meters for frame
-    -- rate and ping, then chips for the server and what's running.
+
     local top = create("Frame", {
         Size = UDim2.new(1, 0, 0, 48),
         BackgroundTransparency = 1,
@@ -18612,8 +17915,6 @@ function Window:_buildMiniBar()
         Parent = top,
     })
 
-    -- Two readouts: a large number with its unit, a caption, and a thin
-    -- line under them that fills and tints with how healthy it is.
     local meters = create("Frame", {
         Size = UDim2.new(1, 0, 0, 42),
         BackgroundTransparency = 1,
@@ -18667,7 +17968,6 @@ function Window:_buildMiniBar()
     local fpsFill, fpsValue = meterPill(UDim2.fromScale(0, 0), "FRAME RATE")
     local pingFill, pingValue = meterPill(UDim2.new(0.5, 10, 0, 0), "PING")
 
-    -- Chips: a muted name and a bold value, the running count in accent.
     local chips = create("Frame", {
         Size = UDim2.new(1, 0, 0, 30),
         BackgroundTransparency = 1,
@@ -18726,8 +18026,6 @@ function Window:_buildMiniBar()
     local bigCount = chipOf(2, "Running", Theme.Accent)
     local tabValue = chipOf(3, "Tab")
 
-    -- Pinned statuses are no longer shown here; the holder stays so the
-    -- refresh below has somewhere to keep its rows.
     local rowsHolder = create("Frame", {
         Size = UDim2.new(1, 0, 0, 0),
         BackgroundTransparency = 1,
@@ -18740,7 +18038,7 @@ function Window:_buildMiniBar()
         Padding = UDim.new(0, 2),
         Parent = rowsHolder,
     })
-    -- What's running, by name, so the count above has something behind it.
+
     local runningNames = label({
         Size = UDim2.new(1, 0, 0, 15),
         Text = "",
@@ -18761,8 +18059,6 @@ function Window:_buildMiniBar()
         Parent = expandedList,
     })
 
-    -- Frame rate is counted every frame; the card's values refresh twice a
-    -- second while it's open.
     local sessionStart = self._sessionStart or os.clock()
     local frames, frameClock, fps = 0, os.clock(), 60
     self:_listen("Render", function()
@@ -18788,7 +18084,7 @@ function Window:_buildMiniBar()
         end)
         ping = okPing and ping or 0
         pingValue.Text = ping .. string.format(unit, "ms")
-        -- Lower ping fills more: 40ms or less is full, 400ms and up is low.
+
         tween(pingFill, {
             Size = UDim2.fromScale(math.clamp(1 - (ping - 40) / 360, 0.05, 1), 1),
             BackgroundColor3 = Library._healthColor(ping, 90, 180, true),
@@ -18806,7 +18102,6 @@ function Window:_buildMiniBar()
         end
     end)
 
-    -- Activity: a notification that arrives while minimized drops in here.
     local activity = layer("Activity")
     local activityList = create("Frame", {
         Position = UDim2.fromOffset(16, 13),
@@ -18874,8 +18169,6 @@ function Window:_buildMiniBar()
         Parent = island,
     })
 
-    -- Morphing between shapes: the island springs to its new size while the
-    -- old layer fades out and the new one fades in just behind it.
     local layers = { Compact = compact, Expanded = expanded, Activity = activity }
     local mode = "Compact"
     local modeToken = 0
@@ -18895,10 +18188,6 @@ function Window:_buildMiniBar()
         return Vector2.new(Mini.Width, Mini.Height), Mini.Height / 2
     end
 
-    -- Where the island hangs: the top centre of its shape, as fractions of
-    -- the screen so it keeps its spot across resolutions. Dragging moves it;
-    -- each shape is clamped on screen, so the wide card slides in from an edge
-    -- and the pill goes back to its spot when it folds.
     local saved = self:_readConfigSettings().IslandPosition
     if type(saved) == "table" and tonumber(saved.X) and tonumber(saved.Y) then
         self._islandAnchor = Vector2.new(math.clamp(tonumber(saved.X), 0, 1), math.clamp(tonumber(saved.Y), 0, 1))
@@ -18948,8 +18237,7 @@ function Window:_buildMiniBar()
         local current = Vector2.new(island.Size.X.Offset, island.Size.Y.Offset)
         local growing = size.X > current.X + 1 or size.Y > current.Y + 1
         local duration = instant and 0 or (growing and 0.5 or 0.38)
-        -- A snap must stop a morph still in flight, or it keeps writing the
-        -- old shape over the new one.
+
         if sizeTween then
             sizeTween:Cancel()
         end
@@ -18959,8 +18247,7 @@ function Window:_buildMiniBar()
         placeIsland(size, duration)
         sizeTween = tween(island, { Size = UDim2.fromOffset(size.X, size.Y) }, duration, growing and Enum.EasingStyle.Back or Enum.EasingStyle.Quint)
         cornerTween = tween(islandCorner, { CornerRadius = UDim.new(0, radius) }, duration, Enum.EasingStyle.Quint)
-        -- The iOS island gives a soft squeeze as it swells open, then springs
-        -- back, so the morph reads as one elastic body rather than a resize.
+
         if changed and not instant and not pressed and not dragging then
             islandScale.Scale = growing and 0.96 or 1.03
             tween(islandScale, { Scale = 1 }, growing and 0.55 or 0.4, Enum.EasingStyle.Back)
@@ -18973,7 +18260,7 @@ function Window:_buildMiniBar()
             if instant then
                 merge.Value = name == "Compact" and 1 or 0
             elseif name == "Compact" then
-                -- Wait for the pill to shrink most of the way, then bud off.
+
                 task.delay(duration * 0.55, function()
                     if modeToken == token then
                         mergeTween = tween(merge, { Value = 1 }, 0.6, Enum.EasingStyle.Back)
@@ -18984,9 +18271,7 @@ function Window:_buildMiniBar()
             end
         end
         if not changed and not instant then
-            -- A refit (same shape, new height) bumps the token, which cancels
-            -- a fade-in still waiting from the morph; finish it here or the
-            -- card stays black until the next hover.
+
             local target = layers[name]
             if target.GroupTransparency > 0 then
                 tween(target, { GroupTransparency = 0 }, 0.22, Enum.EasingStyle.Quad)
@@ -19004,14 +18289,12 @@ function Window:_buildMiniBar()
         local target = layers[name]
         if instant then
             target.GroupTransparency = 0
-            -- Compact fills the island from its corner; only the wide
-            -- layers hang from the centre.
+
             if target ~= compact then
                 target.Position = UDim2.fromScale(0.5, 0)
             end
         else
-            -- The new layer rises a few pixels into place as it fades in, so
-            -- the content reads as arriving with the shape, not popping in.
+
             if target ~= compact then
                 target.Position = UDim2.new(0.5, 0, 0, 6)
             end
@@ -19046,8 +18329,6 @@ function Window:_buildMiniBar()
         end
     end
 
-    -- Called by Minimize once the window is out of the way: the island is
-    -- reset to its compact pill and its spot handed back for the ghost.
     function self:_miniLand()
         hovered, activityLive = false, false
         activityToken += 1
@@ -19065,9 +18346,7 @@ function Window:_buildMiniBar()
         hovered = true
         hoverToken += 1
         local token = hoverToken
-        -- Already open (the pointer left and came back within the grace):
-        -- just stay. Otherwise lean in a touch, and only open once the
-        -- pointer rests, so sweeping past the island doesn't burst it open.
+
         if mode == "Expanded" then
             return
         end
@@ -19089,17 +18368,14 @@ function Window:_buildMiniBar()
         if not pressed then
             tween(islandScale, { Scale = 1 }, 0.25, Enum.EasingStyle.Quint)
         end
-        -- A grace period: the card shifts while it morphs and clamps on
-        -- screen, so a pointer grazing its edge shouldn't snap it shut.
+
         task.delay(mode == "Expanded" and 0.28 or 0.1, function()
             if hoverToken == token and not hovered and self.Minimized then
                 settleMode()
             end
         end)
     end)
-    -- Press and pull to move the island anywhere on screen. It folds to the
-    -- pill while carried, lifts a little, and a drop near its home at the top
-    -- centre snaps back there. A drag never counts as the click that restores.
+
     hit.InputBegan:Connect(function(input)
         if not isPress(input) then
             return
@@ -19162,7 +18438,7 @@ function Window:_buildMiniBar()
             end)
         end
     end))
-    -- Keeps the island on screen when the viewport changes size.
+
     table.insert(self._connections, gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         if island.Visible and not dragging then
             placeIsland(Vector2.new(island.Size.X.Offset, island.Size.Y.Offset), 0)
@@ -19177,14 +18453,13 @@ function Window:_buildMiniBar()
             self:Restore()
         end
     end)
-    -- Restore hides the island under the pointer, so MouseLeave never fires.
+
     self._miniUnhover = function()
         hovered, pressed, activityLive = false, false, false
         dragFrom, dragging = nil, false
         activityToken += 1
         islandScale.Scale = 1
-        -- Clicked open while expanded: once the island has faded out, fold it
-        -- back to the pill so the next minimize starts from it.
+
         task.delay(0.15, function()
             if not self.Minimized then
                 setMode("Compact", true)
@@ -19192,8 +18467,6 @@ function Window:_buildMiniBar()
         end)
     end
 
-    -- A notification while minimized: the island opens to show it for a few
-    -- seconds, then folds back.
     self._islandActivity = function(opts)
         if not self.Minimized or not island.Visible then
             return
@@ -19232,7 +18505,6 @@ function Window:_buildMiniBar()
         end)
     end
 
-    -- The meter dances while anything runs and lies flat when nothing does.
     local running = 0
     self:_listen("Render", function()
         if island.Visible and running > 0 and mode == "Compact" then
@@ -19244,10 +18516,6 @@ function Window:_buildMiniBar()
         end
     end)
 
-    -- Split, like iOS with two Live Activities: when toggles are running and
-    -- a status is pinned, the pill keeps the status (logo leading, value
-    -- trailing) and the running meter buds off into its own little circle
-    -- beside it. One activity alone stays in the single pill.
     local pinValue = label({
         AnchorPoint = Vector2.new(1, 0.5),
         Position = UDim2.new(1, -14, 0.5, 0),
@@ -19285,7 +18553,7 @@ function Window:_buildMiniBar()
         barsHolder.Position = on and UDim2.fromScale(0.5, 0.5) or UDim2.new()
         meter.Visible = not on
         tween(pinValue, { TextTransparency = on and 0 or 1 }, 0.2, Enum.EasingStyle.Quad)
-        -- Buds off with a spring, and is drawn back in quicker.
+
         tween(split, { Value = on and 1 or 0 }, on and 0.55 or 0.3, on and Enum.EasingStyle.Back or Enum.EasingStyle.Quint)
         if on then
             islandScale.Scale = 0.96
@@ -19303,8 +18571,7 @@ function Window:_buildMiniBar()
         local pos, size = island.AbsolutePosition - origin, island.AbsoluteSize
         local d = math.min(size.Y, Mini.Height)
         local gap = 6
-        -- Buds off the side with room to spare: the right, or the left near
-        -- the right edge of the screen.
+
         local right = pos.X + size.X + gap + d <= gui.AbsoluteSize.X
         local edge = right and pos.X + size.X or pos.X
         local dir = right and 1 or -1
@@ -19312,8 +18579,7 @@ function Window:_buildMiniBar()
         local outer = edge + dir * (gap + d / 2)
         local x = inner + (outer - inner) * t
         local scale = math.clamp(0.35 + 0.65 * t, 0, 1.2)
-        -- Liquid: mid-flight the drop stretches along its path and thins,
-        -- then rounds back into a circle as it settles.
+
         local stretch = math.sin(math.clamp(t, 0, 1) * math.pi)
         bubble.Position = UDim2.fromOffset(x, pos.Y + d / 2)
         bubble.Size = UDim2.fromOffset(d * scale * (1 + 0.4 * stretch), d * scale * (1 - 0.18 * stretch))
@@ -19343,7 +18609,7 @@ function Window:_buildMiniBar()
                     tween(bar, { Size = UDim2.fromOffset(3, 3) }, 0.25)
                 end
             end
-            -- A small bump, like a live activity updating.
+
             if rising and mode == "Compact" and island.Visible then
                 islandScale.Scale = 1.06
                 tween(islandScale, { Scale = 1 }, 0.4, Enum.EasingStyle.Back)
@@ -19374,11 +18640,11 @@ function Window:_buildMiniBar()
         end
         if pinnedLead then
             local text = tostring(pinnedLead:Text() or "")
-            -- A status with nothing to show yet doesn't take the pill.
+
             if text:gsub("<[^>]*>", ""):match("%S") then
                 pinValue.Text = text
                 local color = pinnedLead._shownColor and pinnedLead._shownColor() or Theme.Text
-                -- Too dark to read on the black pill: fall back to text colour.
+
                 local _, _, value = color:ToHSV()
                 pinValue.TextColor3 = value < 0.35 and Theme.Text or color
             else
@@ -19386,8 +18652,7 @@ function Window:_buildMiniBar()
             end
         end
         setSplit(running > 0 and pinnedLead ~= nil)
-        -- The pill's own meter: the clock when idle or when the bars budded
-        -- off without a status to keep, the bars and count otherwise.
+
         local barsHere = running > 0 and not splitOn
         idleDot.Visible = not barsHere
         idleLabel.Visible = not barsHere
@@ -19441,8 +18706,7 @@ function Window:_buildMiniBar()
                 row.Frame.Visible = true
                 row.Key.Text = Library._rich(handle.Name)
                 row.Value.Text = handle:Text()
-                -- Carries the status's own colour: its Color, or its tone
-                -- for the tinted styles (badge, dot, bar).
+
                 local color = handle._shownColor and handle._shownColor() or Theme.Text
                 if row.Value.TextColor3 ~= color then
                     tween(row.Value, { TextColor3 = color }, 0.2)
@@ -19451,7 +18715,7 @@ function Window:_buildMiniBar()
                 row.Frame.Visible = false
             end
         end
-        -- Rows coming and going change the expanded height.
+
         if mode == "Expanded" and (hovered or self.IslandStyle == "Always Show") then
             task.defer(function()
                 if mode == "Expanded" and (hovered or self.IslandStyle == "Always Show") and self.Minimized then
@@ -19483,8 +18747,6 @@ function Window:Minimize()
     self:_refreshMini()
     local gui = self.Gui
 
-    -- Starts from whatever is on screen: the window, or a ghost still
-    -- mid-flight if a restore was interrupted.
     local fromPosition = self.Root.AbsolutePosition - gui.AbsolutePosition
     local fromSize = self.Root.AbsoluteSize
     local fromAlpha = 1
@@ -19494,7 +18756,6 @@ function Window:Minimize()
         fromAlpha = self._ghost.BackgroundTransparency
     end
 
-    -- 1. The ghost fades in over the window while it eases back a touch.
     local ghost, ghostStroke, ghostCorner = makeGhost(self, fromPosition, fromSize, Library._radius(10))
     ghost.BackgroundTransparency = fromAlpha
     ghostStroke.Transparency = fromAlpha
@@ -19509,8 +18770,7 @@ function Window:Minimize()
         if self._minimizeGeneration ~= generation or self._destroyed then
             return
         end
-        -- 2. Covered by the ghost, the window is hidden and the ghost folds
-        -- down into the island.
+
         self.Root.Visible = false
         self.Scale.Scale = self._fitScale or 1
         local target, size = self:_miniLand(fromPosition + fromSize / 2)
@@ -19519,12 +18779,12 @@ function Window:Minimize()
             if self._minimizeGeneration ~= generation or self._destroyed then
                 return
             end
-            -- 3. The island fades in on top as the ghost lands.
+
             self._miniScale.Scale = 0.9
             tween(self._miniScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Quint)
             tween(bar, { GroupTransparency = 0 }, 0.18, Enum.EasingStyle.Quad)
             dissolve(self, ghost, ghostStroke, 0.2)
-            -- Always Show: once landed as the pill, swell open into the card.
+
             if self.IslandStyle == "Always Show" then
                 task.delay(0.22, function()
                     if self._minimizeGeneration == generation and self._islandSettle then
@@ -19559,8 +18819,6 @@ function Window:Restore()
     local centre = self.Root.AbsolutePosition + self.Root.AbsoluteSize / 2 - gui.AbsolutePosition
     local target = centre - size / 2
 
-    -- Picks up from whatever is on screen: a ghost still mid-flight if
-    -- minimize was interrupted, otherwise the island.
     local fromPosition, fromSize = target, size
     local fromAlpha = 1
     if self._ghost then
@@ -19591,8 +18849,6 @@ function Window:Restore()
     morphGhost(ghost, ghostCorner, target, size, Library._radius(10), 0.4)
     tween(self.Shadow, { ImageTransparency = self._shadowRest }, 0.45)
 
-    -- Shown under the ghost a little early so its first frames are drawn
-    -- while still covered, then the ghost clears to reveal it.
     task.delay(0.3, function()
         if self._minimizeGeneration ~= generation or self._destroyed then
             return
@@ -19608,8 +18864,6 @@ function Window:Restore()
     end)
 end
 
--- The minimized island can be dragged anywhere; its spot is remembered in
--- the config folder. These lock it in place or send it back to the top.
 function Window:SetIslandDraggable(enabled)
     self._islandLocked = enabled == false
 end
@@ -19649,9 +18903,7 @@ function Window:Toggle(open)
     self.Open = open
     self:_refreshToggleButton()
     self:_refreshBackdrop(open)
-    -- Like minimize, a plain ghost panel carries the scale and fade. The body
-    -- is never reparented into the fader or rescaled, which relaid out the
-    -- whole window and stuttered on the keypress frame.
+
     self._minimizeGeneration = (self._minimizeGeneration or 0) + 1
     local generation = self._minimizeGeneration
     local gui = self.Gui
@@ -19673,7 +18925,7 @@ function Window:Toggle(open)
         tween(ghostStroke, { Transparency = 0 }, 0.12, Enum.EasingStyle.Quad)
         morphGhost(ghost, ghostCorner, centre - size / 2, size, Library._radius(10), 0.3)
         tween(self.Shadow, { ImageTransparency = self._shadowRest }, 0.3)
-        -- Shown under the ghost once it covers the spot, then revealed.
+
         task.delay(0.2, function()
             if self._minimizeGeneration ~= generation or self._destroyed then
                 return
@@ -19921,9 +19173,7 @@ function Window:Destroy()
             end)
         end
     end
-    -- The fade out is decoration only. Input is already cut at this point, so
-    -- if any of it fails the gui is removed straight away instead of being
-    -- left frozen on screen.
+
     local ok, err = pcall(function()
         if self._dialog then
             self._dialog.Close()
@@ -19938,7 +19188,7 @@ function Window:Destroy()
             tween(self.MiniBar, { GroupTransparency = 1 }, 0.18)
         end
         if self._backdrop then
-            -- Frame steps are already cut, so the weather stops where it is.
+
             self._weatherField.Visible = false
             tween(self._backdropTintFrame, { BackgroundTransparency = 1 }, 0.2)
             tween(self._backdropHeat, { BackgroundTransparency = 1 }, 0.2)
@@ -19959,7 +19209,6 @@ end
 
 Window.Unload = Window.Destroy
 
--- Unloads every window the library created.
 function Library:Destroy()
     for index = #Library.Windows, 1, -1 do
         local window = Library.Windows[index]
@@ -19971,11 +19220,6 @@ end
 
 Library.Unload = Library.Destroy
 
--- A script thread that yielded inside an engine call (InvokeServer and the
--- like) resumes at game identity and can no longer touch the GUI in CoreGui.
--- Every public call checks for that: it raises the thread back to the identity
--- the library loaded at, or, when the executor cannot, runs the call on a
--- trusted Heartbeat thread and waits for its result.
 local getIdentity = getthreadidentity or getidentity or get_thread_identity or (syn and syn.get_thread_identity)
 local setIdentity = setthreadidentity or setidentity or set_thread_identity or (syn and syn.set_thread_identity)
 local loadIdentity = nil
@@ -20041,8 +19285,6 @@ local function guarded(fn)
     end
 end
 
--- Elements carry their methods as closures, so each returned object gets its
--- public functions wrapped too; windows and tabs share the guarded metatables.
 function guardObject(...)
     for index = 1, select("#", ...) do
         local object = select(index, ...)
@@ -20072,20 +19314,7 @@ for _, class in ipairs({ Library, Window, Tab }) do
 end
 
 (function()
--- ══════════════════════════════════════════════════════════════════════════════
---  CORE → NOIR BRIDGE (full feature port)
---  The whole game module is embedded below and executed as-is. Its own
---  window is hidden and its menu key is disabled; every tab/page/section/element
---  of it is rebuilt here in Noir with the same names. Values flow through
---  a bridge: Noir Set -> el:set() -> original callbacks and logic.
---  Re-execute safe: previous Noir window and previous core are unloaded.
--- ═════════════════════════════════════════════════════════════════════════════
 
--- ═════════════════════════════════════════════════════════════════════════════
---  EXTRA FEATURES — taken from the user's own Noir BloxStrike build:
---  full Skin Changer tab, AntiKick + Anti Rejoin, Obsidian Aimbot.
---  Self-contained xDTaraZ runtime; everything sleeps until toggled on.
--- ═════════════════════════════════════════════════════════════════════════════
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -20104,7 +19333,6 @@ if not LPH_OBFUSCATED then
     local function Passthrough(fn) return fn end
     LPH_JIT, LPH_JIT_MAX, LPH_NO_VIRTUALIZE = Passthrough, Passthrough, Passthrough
 end
-
 
 local xDTaraZ = setmetatable({}, {
     __newindex = function(self, key, value)
@@ -20228,7 +19456,7 @@ xDTaraZ.Options = {
     AimbotVisible = true,
     AimbotSticky = true,
     AimbotMaxDistance = 1500,
-    -- Separate Obsidian-style touch aimbot; target selection still uses xDTaraZ.Target.
+
     ObsidianAimbot = false,
     ObsidianSmooth = 10,
     ObsidianBone = "Head",
@@ -20278,15 +19506,13 @@ xDTaraZ.Options = {
     SkinChanger = false,
     AutoRebuy = false,
     AntiAfk = false,
-    -- Auto Counter Strafe
+
     AutoCounterStrafe      = false,
-    CounterStrafeHoldMs   = 300,  -- ms to hold the counter key
-    CounterStrafeCooldown = 500,  -- ms base cooldown between counters (added on top of hold time)
-    AimbotDependency       = false, -- only counter-strafe when Obsidian FOV has a target
+    CounterStrafeHoldMs   = 300,
+    CounterStrafeCooldown = 500,
+    AimbotDependency       = false,
 }
 
----Executor capability probes. The old UI library shipped these; AirFlow does not, so the script owns them now.
----Every probe runs the API on a throwaway fixture, because some executors ship stubs that pass type() but do nothing.
 xDTaraZ.Compat = { Probes = {} }
 
 xDTaraZ.Compat.Api = {
@@ -20297,7 +19523,6 @@ xDTaraZ.Compat.Api = {
     GetUpvalue = getupvalue or (debug and debug.getupvalue),
 }
 
----Probes run inline (this __index cannot yield), so a probe that yields counts as unsupported.
 xDTaraZ.Compat.Caps = setmetatable({}, {
     __index = function(caps, name)
         local probe = xDTaraZ.Compat.Probes[name]
@@ -20321,9 +19546,6 @@ function xDTaraZ.Compat.Probes.HookFunction()
     return works
 end
 
--- Delta's getgc(false) hides freshly created closures and can be sparse, so
--- probe what the features actually scan: getgc(true), hole-tolerant. A heap
--- that exposes tables is enough — every Gc-gated feature scans for tables.
 function xDTaraZ.Compat.Probes.Gc()
     local getGc = xDTaraZ.Compat.Api.GetGc
     if not getGc then return false end
@@ -20349,7 +19571,6 @@ function xDTaraZ.Compat.Probes.Upvalues()
     return getUpvalue(Holder, 1) == marker
 end
 
----The FOV circles set these every frame; a shim that only knows Line would throw.
 function xDTaraZ.Compat.Probes.Drawing()
     if type(Drawing) ~= "table" and type(Drawing) ~= "userdata" then return false end
     local okNew, circle = pcall(Drawing.new, "Circle")
@@ -20362,8 +19583,6 @@ function xDTaraZ.Compat.Probes.Drawing()
     return ok
 end
 
----@param caps string|string[]
----@return boolean, string?  false + the first missing cap
 function xDTaraZ.Compat.Has(caps)
     for _, name in ipairs(type(caps) == "table" and caps or { caps }) do
         if not xDTaraZ.Compat.Caps[name] then return false, name end
@@ -20371,7 +19590,6 @@ function xDTaraZ.Compat.Has(caps)
     return true
 end
 
----Undoes a hook: the executor's restorefunction first, else `rehook`.
 function xDTaraZ.Compat.Unhook(target, rehook)
     local api = xDTaraZ.Compat.Api
     if target and api.RestoreFunction and pcall(api.RestoreFunction, target) then
@@ -20390,7 +19608,6 @@ xDTaraZ.Caps = setmetatable({}, {
 
 xDTaraZ.Util = {}
 
----@param detail any  extra context for the warn; the player only sees `text`
 function xDTaraZ.Util.Alert(text, detail)
     warn("[BloxStrike] menu:", detail or text)
     task.spawn(function()
@@ -20401,9 +19618,8 @@ function xDTaraZ.Util.Alert(text, detail)
     end)
 end
 
----@return table?  nil after the player was told on screen
 function xDTaraZ.Util.LoadLibrary()
-    return Library -- this file already carries the Noir library up top
+    return Library
 end
 
 function xDTaraZ.Util.Try(label, fn, ...)
@@ -20418,7 +19634,6 @@ function xDTaraZ.Util.Copy(text)
     return pcall(fn, text)
 end
 
----@return function?  original, nil when already hooked or the executor can't hook it
 function xDTaraZ.Util.Hook(key, fn, replacement)
     if type(fn) ~= "function" or xDTaraZ.State.Hooks[key] or not xDTaraZ.Caps.HookFunction then return nil end
     local ok, original = pcall(hookfunction, fn, replacement)
@@ -20452,9 +19667,6 @@ end
 
 xDTaraZ.GameLib = { Missing = {} }
 
----@param parent Instance?     where it lives today
----@param home string          parent name a moved copy must still have
----@return Instance?           nil after a warning that names it
 function xDTaraZ.GameLib.Find(parent, name, class, home)
     local found = parent and parent:FindFirstChild(name)
     if found and found:IsA(class) then return found end
@@ -20466,7 +19678,6 @@ function xDTaraZ.GameLib.Find(parent, name, class, home)
     return nil
 end
 
----@return any  module, or nil when this executor can't require it (never throws)
 function xDTaraZ.GameLib.Require(inst)
     if not (inst and inst:IsA("ModuleScript")) then return nil end
     local ok, mod = pcall(require, inst)
@@ -20500,7 +19711,7 @@ do
     local vfx = ReplicatedStorage:FindFirstChild("Components") and ReplicatedStorage.Components:FindFirstChild("VFXLibary", true)
     xDTaraZ.GameLib.Smoke = xDTaraZ.GameLib.Require(find(vfx, "CreateVoxelSmoke", "ModuleScript", "VFXLibary"))
     xDTaraZ.GameLib.Flash = xDTaraZ.GameLib.Require(find(vfx, "FlashEffect", "ModuleScript", "VFXLibary"))
-    -- CounterStrafe: RuntimeKinematics for velocity, ControlModule for movement injection
+
     local movementV2 = ReplicatedStorage:FindFirstChild("MovementV2")
     local rkInst     = movementV2 and movementV2:FindFirstChild("RuntimeKinematics")
     xDTaraZ.GameLib.RuntimeKinematics = rkInst and xDTaraZ.GameLib.Require(rkInst)
@@ -20536,7 +19747,6 @@ function xDTaraZ.Player.Humanoid()
     return char and char:FindFirstChildOfClass("Humanoid")
 end
 
----@return table?  the game's own local character state; nil outside a round
 function xDTaraZ.Player.Body()
     local controller = xDTaraZ.GameLib.Character
     if not controller then return nil end
@@ -20570,7 +19780,6 @@ function xDTaraZ.Target.Owner(model)
     return Players:FindFirstChild(model.Name)
 end
 
----@return string?  team of a character: owner's Team attribute, else the team that wears this character model
 function xDTaraZ.Target.TeamOf(model)
     local owner = model and xDTaraZ.Target.Owner(model)
     local team = owner and owner:GetAttribute("Team")
@@ -20595,7 +19804,6 @@ function xDTaraZ.Target.IsEnemy(model)
     return xDTaraZ.Target.TeamOf(model) ~= mine
 end
 
----Samples every enemy's head each frame so shots can lead a moving target.
 function xDTaraZ.Target.Track()
     local motion, now = xDTaraZ.Target.Motion, osClock()
     for _, model in ipairs(xDTaraZ.Target.Candidates()) do
@@ -20612,7 +19820,6 @@ function xDTaraZ.Target.Track()
     end
 end
 
----@return Vector3  where the part will be once the shot reaches the server
 function xDTaraZ.Target.Lead(part)
     if not xDTaraZ.Options.SilentPredict then return part.Position end
     local track = xDTaraZ.Target.Motion[part] or xDTaraZ.Target.Motion[part.Parent and part.Parent:FindFirstChild("Head")]
@@ -20622,7 +19829,6 @@ function xDTaraZ.Target.Lead(part)
     return part.Position + vel * ((ok and ping or 0.05) + xDTaraZ.Config.LeadExtra)
 end
 
----@return boolean  true in Deathmatch, where the team picker is only cosmetic
 function xDTaraZ.Target.FreeForAll()
     return tostring(Workspace:GetAttribute("Gamemode")):find("Deathmatch") ~= nil
 end
@@ -20645,8 +19851,6 @@ function xDTaraZ.Target.Visible(from, model, point)
     return Workspace:Raycast(from, point - from, wallParams) == nil
 end
 
----@param cfg table  { Bone, Fov?, Visible, MaxDistance, Priority }  Fov nil = whole map
----@return Model?, BasePart?
 function xDTaraZ.Target.Pick(cfg)
     local cam = Workspace.CurrentCamera
     local origin = cam.CFrame.Position
@@ -20676,7 +19880,6 @@ function xDTaraZ.Target.Pick(cfg)
     return best, bestPart
 end
 
----@return boolean  still a valid lock, with a looser fov
 function xDTaraZ.Target.StillValid(model, part, cfg)
     if not (model and part and part.Parent and xDTaraZ.Target.IsEnemy(model)) then return false end
     local cam = Workspace.CurrentCamera
@@ -20689,7 +19892,6 @@ function xDTaraZ.Target.StillValid(model, part, cfg)
     return onScreen and (vector2New(screen.X, screen.Y) - center).Magnitude <= cfg.Fov * xDTaraZ.Config.StickySlack
 end
 
----@return Model?  enemy under the crosshair right now
 function xDTaraZ.Target.UnderCrosshair()
     local cam = Workspace.CurrentCamera
     losFilter[1], losFilter[2], losFilter[3] = xDTaraZ.Player.Character(), cam, nil
@@ -20722,7 +19924,6 @@ function xDTaraZ.Aimbot.Step()
     state.AimTarget, state.AimPart = xDTaraZ.Target.Pick(cfg)
 end
 
----@param dt number  frame time from RenderStep
 function xDTaraZ.Aimbot.Lock(dt)
     local o, state = xDTaraZ.Options, xDTaraZ.State
     local part, smooth = nil, 1
@@ -20740,9 +19941,6 @@ function xDTaraZ.Aimbot.Lock(dt)
     cam.CFrame = cframeLookAt(origin, origin + look)
 end
 
--- Obsidian-style touch movement with Z86's target acquisition/validation.
--- This is a separate mode: it does not reuse Obsidian's GetNearestTarget or
--- replace the original Z86 camera aimbot.
 xDTaraZ.ObsidianAimbot = {}
 local OBSIDIAN_TOUCH_SLOT = 10
 local TOUCH_BEGIN, TOUCH_CHANGE, TOUCH_END = 0, 1, 2
@@ -21009,14 +20207,12 @@ end
 
 xDTaraZ.Silent = {}
 
----@param forced boolean  ragebot shot: always hits, no fov
 function xDTaraZ.Silent.Config(bone, forced)
     local o = xDTaraZ.Options
     if forced then return { Bone = bone, Visible = o.RageVisible, MaxDistance = o.RageMaxDistance, Priority = "Distance" } end
     return { Bone = bone, Fov = o.SilentFov, Visible = o.SilentVisible, MaxDistance = o.SilentMaxDistance, Priority = o.SilentPriority }
 end
 
----@return BasePart?  part this shot should go to, nil = shoot where you look
 function xDTaraZ.Silent.Aim()
     local o, state = xDTaraZ.Options, xDTaraZ.State
     state.SilentTarget = nil
@@ -21029,7 +20225,6 @@ function xDTaraZ.Silent.Aim()
     return part
 end
 
----The server checks bullets against where you really look, so each new bullet turns the camera to the target and the view goes back as the shot is sent, before anything is drawn.
 function xDTaraZ.Silent.InstallHook()
     local gun = xDTaraZ.Guns.FindClass()
     if gun then
@@ -21061,7 +20256,6 @@ function xDTaraZ.Silent.InstallHook()
     end)
 end
 
----Turns the camera onto the silent aim target for this bullet.
 function xDTaraZ.Silent.Flick()
     local ok, part = pcall(xDTaraZ.Silent.Aim)
     local cam, state = Workspace.CurrentCamera, xDTaraZ.State
@@ -21071,7 +20265,6 @@ function xDTaraZ.Silent.Flick()
     state.Redirected += 1
 end
 
----Puts your view back before the game's camera runs, so silent aim never moves what you see.
 function xDTaraZ.Silent.RestoreView()
     local state, cam = xDTaraZ.State, Workspace.CurrentCamera
     if not state.ViewSaved then return end
@@ -21089,7 +20282,6 @@ function xDTaraZ.Trigger.Press(down)
     pcall(VirtualInputManager.SendMouseButtonEvent, VirtualInputManager, center.X, center.Y, 0, down, game, 0)
 end
 
----@param want boolean  holds auto guns and re-clicks semi-auto ones
 function xDTaraZ.Trigger.Fire(want)
     local state, now = xDTaraZ.State, osClock()
     if not want then
@@ -21128,7 +20320,6 @@ end
 
 xDTaraZ.Combat = { Circles = {} }
 
----@return ScreenGui  made once; hidden gui first, then CoreGui, then PlayerGui
 function xDTaraZ.Combat.Screen()
     local screen = xDTaraZ.Combat.Gui
     if screen and screen.Parent then return screen end
@@ -21149,7 +20340,6 @@ function xDTaraZ.Combat.Screen()
     return screen
 end
 
----@return table  { Drawing = circle }, or { Frame = ring } drawn with Gui when Drawing is missing
 function xDTaraZ.Combat.NewCircle(color)
     if xDTaraZ.Caps.Drawing then
         local circle = Drawing.new("Circle")
@@ -21274,7 +20464,6 @@ function xDTaraZ.Skins.Folder()
     return assets and assets:FindFirstChild("Skins")
 end
 
----@return string?  category name, nil = not a weapon look
 function xDTaraZ.Skins.CategoryOf(name, kind)
     local mapped = xDTaraZ.Config.SkinKinds[kind]
     if mapped then return mapped end
@@ -21310,7 +20499,6 @@ function xDTaraZ.Skins.Build()
     skins.Catalog = catalog
 end
 
----@return string[]  categories in display order
 function xDTaraZ.Skins.Categories()
     if not xDTaraZ.Skins.Catalog then xDTaraZ.Skins.Build() end
     local list, seen = {}, {}
@@ -21330,7 +20518,6 @@ function xDTaraZ.Skins.Items(category)
     return (names and #names > 0) and names or { "-" }
 end
 
----@return string[]  rarest first
 function xDTaraZ.Skins.List(weapon)
     local folder = xDTaraZ.Skins.Folder()
     local holder = folder and folder:FindFirstChild(weapon or "")
@@ -21346,8 +20533,6 @@ function xDTaraZ.Skins.List(weapon)
     return #names > 0 and names or { "-" }
 end
 
----@param view string  "Camera" or "Character"
----@return Folder?     best wear available
 function xDTaraZ.Skins.Source(weapon, skin, view)
     local folder = xDTaraZ.Skins.Folder()
     local paint = folder and folder:FindFirstChild(weapon) and folder[weapon]:FindFirstChild(skin)
@@ -21378,7 +20563,6 @@ function xDTaraZ.Skins.Paint(model, weapon, skin, view)
     return true
 end
 
----Puts back the look each part had before we painted it.
 function xDTaraZ.Skins.Reset(model)
     local originals = xDTaraZ.Skins.Originals
     for _, part in ipairs(model:GetDescendants()) do
@@ -21448,8 +20632,6 @@ function xDTaraZ.Skins.Set(weapon, skin, quiet)
     return true
 end
 
----@param pick fun(list: string[]): string  chooses one skin per item
----@return number  items changed
 function xDTaraZ.Skins.SetAll(pick)
     local count = 0
     for _, category in ipairs(xDTaraZ.Skins.Categories()) do
@@ -21498,7 +20680,6 @@ function xDTaraZ.Faults.AnyOn(toggles)
     return false
 end
 
----@param restore function?  the feature's own off path
 function xDTaraZ.Faults.Halt(name, err, toggles, restore)
     warn("[BloxStrike] " .. name .. " stopped:", err)
     for _, key in ipairs(toggles) do
@@ -21509,9 +20690,6 @@ function xDTaraZ.Faults.Halt(name, err, toggles, restore)
     halted[#halted + 1] = { name, tostring(err):match("^[^\n]*"), toggles }
 end
 
----@param toggles string[]   turned off once the feature keeps failing; empty = keeps running, warns once per streak
----@param restore function?  run once when the feature is stopped
----@return boolean           true while the feature is stopped
 function xDTaraZ.Faults.Report(name, err, toggles, restore)
     local now, streaks = osClock(), xDTaraZ.Faults.Streaks
     local streak = streaks[name]
@@ -21535,13 +20713,10 @@ end
 
 xDTaraZ.Scheduler = { Jobs = {} }
 
----@param toggles string[]   options the job serves; switched off if it keeps failing
----@param restore function?  the job's off path, run once if it gets stopped
 function xDTaraZ.Scheduler.Every(name, interval, fn, toggles, restore)
     xDTaraZ.Scheduler.Jobs[name] = { Interval = interval, Fn = fn, Next = 0, Toggles = toggles, Restore = restore }
 end
 
----@return boolean  a halted job runs again once one of its toggles is back on
 function xDTaraZ.Scheduler.Resume(name, job)
     if not xDTaraZ.Faults.AnyOn(job.Toggles) then return false end
     job.Halted = false
@@ -21575,7 +20750,7 @@ xDTaraZ.Guard = {
 
 do
     local okP, players = pcall(game.GetService, game, "Players")
-    if okP and typeof(players) == "Instance" then -- services are userdata, never tables: the old check left LocalPlayer nil
+    if okP and typeof(players) == "Instance" then
         xDTaraZ.Guard.Players = players
         xDTaraZ.Guard.LocalPlayer = players.LocalPlayer
     end
@@ -21590,13 +20765,6 @@ function xDTaraZ.Guard.Stop()
     if tp and tp.stop then pcall(tp.stop) end
 end
 
--- ── AntiKick: блокировка клиентских киков и игровых телепортов ─────────────
--- По скинутым файлам: ни один из читов кик не блокирует (там Kick = отдача
--- оружия). Серверный Player:Kick клиент заблокировать не может — он приходит
--- по сети. Перехватываем то, что живёт на клиенте: ЛОКАЛЬНЫЕ вызовы
--- LocalPlayer:Kick (клиентские проверки игры) и телепорты TeleportService
--- («перекидывает с сервера на сервер»). Свои Rejoin/ServerHop открываются
--- одноразовым окном _allowTpUntil.
 xDTaraZ.Guard.antiKick = { on = false, blockTp = true, running = false, _blocked = 0, _blockedTp = 0, _allowTpUntil = 0, _tps = nil,
     _winStart = 0, _winCount = 0, _lastLog = {} }
 
@@ -21614,15 +20782,13 @@ function xDTaraZ.Guard.AntiKickStart()
         TeleportToPrivateServer = true, TeleportToSpawnByName = true, TeleportPartyAsync = true }
     local function ours() return type(checkcaller) == "function" and checkcaller() end
     local function say(kind, text)
-        -- one console line per kind every 2 s: a game that retries a blocked call must not flood the console
+
         local now = os.clock()
         if now - (ak._lastLog[kind] or 0) < 2 then return end
         ak._lastLog[kind] = now
         print(text)
     end
-    -- A blocked call returns at once while the real one would end the session / yield. A game that retries it in a
-    -- tight loop would therefore hang the client. Past 25 calls a second the caller is made to wait; where the
-    -- executor cannot yield inside this hook the call goes through instead of freezing the game.
+
     local function pace()
         local now = os.clock()
         if now - ak._winStart > 1 then ak._winStart, ak._winCount = now, 0 end
@@ -21648,7 +20814,7 @@ function xDTaraZ.Guard.AntiKickStart()
                 if pace() then return nil end
             elseif ak.blockTp and ak._tps ~= nil and inst == ak._tps and TP_METHODS[method] then
                 if os.clock() <= ak._allowTpUntil then
-                    ak._allowTpUntil = 0 -- our own Rejoin / ServerHop passes once
+                    ak._allowTpUntil = 0
                 else
                     ak._blockedTp = ak._blockedTp + 1
                     say("tp", "[Noir] AntiKick: blocked teleport (" .. tostring(method) .. "), total: " .. tostring(ak._blockedTp))
@@ -21659,7 +20825,7 @@ function xDTaraZ.Guard.AntiKickStart()
         if type(setnamecallmethod) == "function" then setnamecallmethod(method) end
         return old(inst, ...)
     end))
-    -- LocalPlayer.Kick(LocalPlayer, ...) called without the colon never reaches the namecall hook
+
     pcall(function()
         local kick = self.LocalPlayer and self.LocalPlayer.Kick
         if type(kick) ~= "function" or type(hookfunction) ~= "function" then return end
@@ -21676,17 +20842,13 @@ function xDTaraZ.Guard.AntiKickStart()
     print("[Noir] AntiKick: namecall hook installed")
 end
 
--- ── Пресеты: ApplyPreset — готовые конфиги против читеров одной строкой ─────
 function xDTaraZ.Guard.SetAntiKick(on)
     local ak = xDTaraZ.Guard.antiKick
     ak.on = on == true
-    -- the __namecall hook is installed only once the feature is switched on: a permanent hook taxes every engine call
-    -- of the game for nothing while the toggle is off
+
     if ak.on then xDTaraZ.Guard.AntiKickStart() end
 end
 
--- persistence for these features rides on this menu's Noir flags (the
--- "autosave" config), so the build's own settings.json writer is not needed
 xDTaraZ.AutoSave = {
     get = function(kind, idx, default) return default end,
     record = function(idx, value) end,
@@ -21695,7 +20857,6 @@ xDTaraZ.AutoSave = {
 
 xDTaraZ.UI = { Labels = {}, Widgets = {}, Binds = {}, Window = nil }
 
----Thai when the Roblox locale is Thai, else English (the old library's Language = "Auto").
 xDTaraZ.UI.Thai = tostring(LocalPlayer.LocaleId):lower():sub(1, 2) == "th"
 T = function(en, th) return xDTaraZ.UI.Thai and th or en end
 
@@ -21709,7 +20870,6 @@ function xDTaraZ.UI.Detach(fn)
     end
 end
 
----Runs `fn` every `interval` seconds until the script unloads.
 function xDTaraZ.UI.Every(interval, fn)
     task.spawn(function()
         while xDTaraZ.State.Alive do
@@ -21720,7 +20880,6 @@ function xDTaraZ.UI.Every(interval, fn)
     end)
 end
 
----@return boolean  true while the menu covers the screen
 function xDTaraZ.UI.MenuOpen()
     local window = xDTaraZ.UI.Window
     return window ~= nil and not window._destroyed and window.Open == true and not window.Minimized
@@ -21741,8 +20900,6 @@ function xDTaraZ.UI.Notify(title, content, duration, kind)
     if not ok then warn("[BloxStrike] notify:", err) end
 end
 
----One control the script reads and writes. AirFlow elements only take a single Callback, so this adds
----OnChanged listeners and guards (a guard returning false vetoes the value before any listener sees it).
 function xDTaraZ.UI.Widget(idx, name)
     local widget = { Idx = idx, Name = name or idx, Listeners = {}, Guards = {}, Value = nil, Element = nil }
     function widget:OnChanged(fn) table.insert(self.Listeners, fn) end
@@ -21765,7 +20922,6 @@ function xDTaraZ.UI.Widget(idx, name)
     return widget
 end
 
----@param info table  { Name, Desc, Default }
 function xDTaraZ.UI.Toggle(group, idx, info)
     local widget = xDTaraZ.UI.Widget(idx, info.Name)
     local saved = xDTaraZ.AutoSave.get("toggle", idx, info.Default == true)
@@ -21779,15 +20935,12 @@ function xDTaraZ.UI.Toggle(group, idx, info)
             xDTaraZ.AutoSave.record(idx, value)
         end,
     })
-    -- фабрика AirFlow берёт состояние из opts.Default, а CurrentValue пускает
-    -- только на рендер: без Set(saved) Get() вернёт дефолт и Bind включит
-    -- функцию при выключенном тумблере
+
     pcall(widget.Element.Set, widget.Element, saved, true)
     widget.Value = widget.Element:Get()
     return widget
 end
 
----@param info table  { Name, Desc, Min, Max, Default, Increment, Suffix }
 function xDTaraZ.UI.Slider(group, idx, info)
     local widget = xDTaraZ.UI.Widget(idx, info.Name)
     local saved = xDTaraZ.AutoSave.get("slider", idx, info.Default)
@@ -21809,7 +20962,6 @@ function xDTaraZ.UI.Slider(group, idx, info)
     return widget
 end
 
----@param info table  { Name, Desc, Options, Default, Searchable, NoSave }
 function xDTaraZ.UI.Dropdown(group, idx, info)
     local widget = xDTaraZ.UI.Widget(idx, info.Name)
     local saved = xDTaraZ.AutoSave.get("dropdown", idx, info.Default)
@@ -21848,13 +21000,11 @@ function xDTaraZ.UI.Color(group, idx, info)
     return widget
 end
 
----Feeds a widget's current value and every change into `fn`.
 function xDTaraZ.UI.Feed(widget, fn)
     pcall(fn, widget.Value)
     widget:OnChanged(fn)
 end
 
----Vetoes turning `idx` on and tells the player why.
 local function Veto(idx, message)
     local widget = xDTaraZ.UI.Widgets[idx]
     if not widget then return end
@@ -21868,7 +21018,6 @@ local function Veto(idx, message)
     end)
 end
 
----Blocks a hook-only feature on executors that cannot run it.
 function xDTaraZ.UI.NeedCap(idx, caps)
     local widget = xDTaraZ.UI.Widgets[idx]
     Veto(idx, function()
@@ -21878,7 +21027,6 @@ function xDTaraZ.UI.NeedCap(idx, caps)
     end)
 end
 
----Blocks a feature for good (missing game module, unsupported executor).
 function xDTaraZ.UI.Block(idx, reason)
     local widget = xDTaraZ.UI.Widgets[idx]
     if widget then widget.Blocked = reason end
@@ -21907,7 +21055,6 @@ local skinTitles = {
     Gear = { "Gear", "อุปกรณ์", "settings" },
 }
 
----Skin pickers save to their own skins.json, so they carry no config flag.
 function xDTaraZ.UI.SkinGroup(tab, category, side)
     local title = skinTitles[category] or { category, category, "star" }
     local group = tab:AddGroupbox({ Name = T(title[1], title[2]), Icon = title[3], Side = side })
@@ -21922,7 +21069,6 @@ function xDTaraZ.UI.SkinGroup(tab, category, side)
     end
 end
 
----@param heights table  rows used per side so far, updated in place
 function xDTaraZ.UI.PlaceSkinGroup(tab, category, heights)
     local side = heights.Left <= heights.Right and "Left" or "Right"
     local rows = 1
@@ -21934,7 +21080,6 @@ function xDTaraZ.UI.PlaceSkinGroup(tab, category, heights)
     xDTaraZ.Util.Try("skins " .. category, xDTaraZ.UI.SkinGroup, tab, category, side)
 end
 
----Shows the saved skin in every picker without setting it again.
 function xDTaraZ.UI.SyncSkins()
     for _, category in ipairs(xDTaraZ.Skins.Categories()) do
         for _, weapon in ipairs(xDTaraZ.Skins.Items(category)) do
@@ -21986,20 +21131,14 @@ function xDTaraZ.UI.BuildSkins(window)
     end
 end
 
--- Obsidian touch aimbot controls, now living inside the custom AirFlow UI as
--- a native "Obsidian Aimbot" subtab under Combat — no second window, no network
--- fetch of the Obsidian library.  Target picking still runs through Z86's own
--- xDTaraZ.Target.Pick / StillValid; the touch movement loop is unchanged.
 function xDTaraZ.UI.BuildObsidianAimbot(tab)
-    -- Spin up the drag-box and input-shield GUIs exactly once; Combat.Unload
-    -- already tears them down on script reload, so this is safe to call here.
+
     xDTaraZ.ObsidianAimbot.CreateDragBox()
     xDTaraZ.ObsidianAimbot.CreateInputShield()
     xDTaraZ.ObsidianAimbot.UpdateDragAppearance()
 
     local o = xDTaraZ.Options
 
-    -- ── Left column: aim controls + drag-box settings ──────────────────────
     local aim = tab:AddLeftGroupbox({ Name = "Aimbot", Icon = "crosshair" })
 
     local enabledWidget = xDTaraZ.UI.Toggle(aim, "ObsidianAimbot", {
@@ -22007,7 +21146,7 @@ function xDTaraZ.UI.BuildObsidianAimbot(tab)
         Desc = "Touch-movement aimbot using Z86 target selection",
         Default = o.ObsidianAimbot,
     })
-    -- Stop any active touch sequence the moment the feature is turned off.
+
     enabledWidget:OnChanged(function(value)
         if not value then task.defer(xDTaraZ.ObsidianAimbot.Stop) end
     end)
@@ -22028,8 +21167,6 @@ function xDTaraZ.UI.BuildObsidianAimbot(tab)
         Default = o.ObsidianSticky,
     })
 
-    -- Drag-box appearance — each change must call UpdateDragAppearance after
-    -- the Bind loop has committed the new value, so use task.defer.
     local dragVisWidget = xDTaraZ.UI.Toggle(aim, "ObsidianDragVisible", {
         Name = "Show / Hide Drag Area",
         Default = o.ObsidianDragVisible,
@@ -22054,7 +21191,6 @@ function xDTaraZ.UI.BuildObsidianAimbot(tab)
         task.defer(xDTaraZ.ObsidianAimbot.UpdateDragAppearance)
     end)
 
-    -- ── Right column top: input shield ──────────────────────────────────────
     local shield = tab:AddRightGroupbox({ Name = "Input Shield", Icon = "shield" })
 
     xDTaraZ.UI.Toggle(shield, "ObsidianShieldBlock", {
@@ -22077,7 +21213,6 @@ function xDTaraZ.UI.BuildObsidianAimbot(tab)
         Min = 10, Max = 95, Default = o.ObsidianShieldOpacity, Suffix = "%",
     })
 
-    -- ── Right column bottom: Z86 target selection ───────────────────────────
     local targeting = tab:AddRightGroupbox({ Name = "Z86 Targeting", Icon = "target" })
 
     xDTaraZ.UI.Dropdown(targeting, "ObsidianBone", {
@@ -28353,8 +27488,6 @@ eF();
 end
 }):dep(Q);
 Q=h:section({name="Overlay",side=2});
-
-
 
 Q:toggle({name="Event logs",flag="ps_logs",nocfg=true,default=c.on,cb=function(j)c.on=j;
 eF();
@@ -50060,10 +49193,8 @@ end);
 h.finish();
 m.publish(m.release);
 return true;
-
 ]=]
 
-    -- settings of the hidden core menu itself: not ported into Noir
     local SKIP_FLAG = {
         ps_key = true, ps_blur = true, ps_op = true,
         ps_fscale = true, ps_scale = true, ps_acc = true,
@@ -50099,7 +49230,7 @@ return true;
     genv.NoirAutoUnload = function()
         pcall(function() window:Destroy() end)
         pcall(function()
-            -- stop this run's extra-feature runtime (rebind-safe re-execute)
+
             xDTaraZ.State.Alive = false
             xDTaraZ.Combat.Unload()
             for _, c in ipairs(xDTaraZ.State.Connections) do
@@ -50108,7 +49239,6 @@ return true;
         end)
     end
 
-    -- ── load the embedded core logic ──────────────────────────────────────────
     local loadErr = nil
     do
         local okl, errl = pcall(function()
@@ -50120,7 +49250,6 @@ return true;
         if not okl then loadErr = tostring(errl) end
     end
 
-    -- the core publishes its app state through the injection inside module "e"
     local st = genv.NOIR_CORE
     if not st and not loadErr then
         for _ = 1, 200 do
@@ -50134,7 +49263,7 @@ return true;
     end
 
     if loadErr then
-        -- graceful failure: Noir stays usable and explains what happened
+
         local tb = window:CreateTab({ Name = "Error", Icon = "triangle-alert" })
         local gb = tb:AddLeftGroupbox({ Name = "CORE" })
         gb:CreateParagraph({
@@ -50150,9 +49279,8 @@ return true;
             local C = st.lib
             local els = C.els or {}
 
-            -- hide the native core window right away
             pcall(function() C:toggle(false) end)
-            -- block its window from ever showing again (Insert key etc.)
+
             pcall(function()
                 local origToggle = C.toggle
                 C.toggle = function(self, show)
@@ -50160,13 +49288,12 @@ return true;
                     return origToggle(self, show)
                 end
             end)
-            -- clear its own menu keybind so it never shows in bind lists
+
             pcall(function()
                 local kb = C.fl and C.fl.ps_key
                 if kb and type(kb.setkey) == "function" then kb:setkey(nil) end
             end)
 
-            -- ── bridge state ──────────────────────────────────────────────────
             local records, byEl, dependents = {}, {}, {}
 
             local function eff(el)
@@ -50208,7 +49335,6 @@ return true;
                 queueResync()
             end
 
-            -- ── read the core element tree ─────────────────────────────────
             local function rootOf(el)
                 local c = el.c
                 for _ = 1, 12 do
@@ -50219,7 +49345,7 @@ return true;
             end
 
             local function skipped(el)
-                -- nested elements link to their parent through .host
+
                 local p, n = el, 0
                 while p and n < 12 do
                     if p.tmp or (p.o and p.o.tmp) then return true end
@@ -50269,16 +49395,13 @@ return true;
                 end
             end
 
-            -- ── my own tab layout: tabs reshuffled, sections truly scattered ──
             local MY_TABS = {
                 { name = "Combat",   icon = "crosshair", subs = { "General", "Extra" } },
                 { name = "Misc",     icon = "wrench",    subs = { "General", "Extra" } },
                 { name = "Visuals",  icon = "eye",       subs = { "General", "Extra" } },
                 { name = "Settings", icon = "settings",  subs = nil },
             }
-            local CONTENT = { 1, 2, 3 } -- MY_TABS indices that take scattered secs
-            -- the Skins tab is NOT ported from the core: the real skin changer
-            -- from the user's own build is appended as the last tab below
+            local CONTENT = { 1, 2, 3 }
 
             local noirTabs = {}
             for mi = 1, #MY_TABS do
@@ -50293,8 +49416,6 @@ return true;
                 end
             end
 
-            -- pool every section of every his tab; his settings stays whole,
-            -- his skins port is dropped entirely (replaced by the real system)
             local pool, coreSecs = {}, {}
             for ti = 1, #tabList do
                 local tab = tabList[ti]
@@ -50317,8 +49438,6 @@ return true;
                 end
             end
 
-            -- deal sections round-robin: consecutive secs land in different tabs,
-            -- and inside each tab they alternate subtab and side
             local groupOfSec = {}
             for si = 1, #pool do
                 local sec = pool[si]
@@ -50336,7 +49455,6 @@ return true;
                 groupOfSec[sec] = gb
             end
 
-            -- his settings sections live straight on the Settings tab
             do
                 local st = noirTabs["Settings"]
                 for si = 1, #coreSecs do
@@ -50351,7 +49469,6 @@ return true;
                 end
             end
 
-            -- ── element mapping ───────────────────────────────────────────────
             local function nflag(el)
                 if el.flag and el.flag ~= "" then return "sh_" .. el.flag end
                 return nil
@@ -50391,7 +49508,6 @@ return true;
                 local name = tostring(el.name or "")
                 local rec = { el = el, kind = kind }
 
-                -- unnamed nested elements (e.g. a color under a toggle)
                 if name == "" and kind ~= "btn" and kind ~= "lbl" and kind ~= "sub" then
                     local host = el.host
                     local hn = host and tostring(host.name or "") or ""
@@ -50549,7 +49665,6 @@ return true;
                 end
             end
 
-            -- ── dependencies (grayed/hidden elements in the core) ──────────────
             local function depPass(src, want)
                 local v = eff(src)
                 if type(want) == "function" then
@@ -50593,7 +49708,6 @@ return true;
                 end
             end
 
-            -- ── periodic re-sync (config autoload, profiles, rounding) ────────
             resyncAll = function()
                 for i = 1, #records do
                     local rec = records[i]
@@ -50666,8 +49780,6 @@ return true;
                 end
             end)
 
-            -- ── extra features from the user's own BloxStrike build ──────────
-            -- each feature is isolated: one failing must not take the rest down
             local function extra(name, fn)
                 xDTaraZ.Util.Try(name, fn)
             end
@@ -50675,16 +49787,16 @@ return true;
                 xDTaraZ.UI.Window = window
             end)
             extra("skins load", xDTaraZ.Skins.Load)
-            -- full skin changer tab (creates its own tab, lands last)
+
             extra("skins tab", function()
                 xDTaraZ.UI.BuildSkins(window)
             end)
-            -- obsidian aimbot: subtab under Combat
+
             extra("obsidian aimbot", function()
                 xDTaraZ.UI.BuildObsidianAimbot(
                     noirTabs["Combat"]:CreateSubTab({ Name = "Obsidian Aimbot" }))
             end)
-            -- protection: subtab under Misc
+
             extra("protection", function()
                 local protSub = noirTabs["Misc"]:CreateSubTab({ Name = "Protection" })
                 local akg = protSub:AddRightGroupbox({ Name = "AntiKick", Icon = "shield" })
@@ -50704,14 +49816,14 @@ return true;
                     { Name = "Server Hop", Callback = xDTaraZ.UI.Detach(xDTaraZ.World.ServerHop) },
                 })
             end)
-            -- every widget whose idx is an Options key mirrors into Options
+
             extra("options bind", function()
                 for key in pairs(xDTaraZ.Options) do
                     local w = xDTaraZ.UI.Widgets[key]
                     if w then xDTaraZ.Util.Try("bind " .. key, xDTaraZ.UI.Bind, w, key) end
                 end
             end)
-            -- keep the loops alive: obsidian step + fov circle + skin job
+
             extra("combat boot", function()
                 xDTaraZ.Combat.Start()
                 xDTaraZ.Scheduler.Every("Skin Changer", 0.15, xDTaraZ.Skins.Step,
@@ -50719,7 +49831,6 @@ return true;
                 xDTaraZ.Scheduler.Boot()
             end)
 
-            -- menu settings (themes, background, scale) + config manager
             local setTab = noirTabs["Settings"]
             if setTab then
                 pcall(function()
@@ -50730,9 +49841,8 @@ return true;
                 end)
             end
 
-            -- ── auto-save: every change persists to the "autosave" config ─────
             pcall(function()
-                window:LoadConfig("autosave", true) -- restore last session
+                window:LoadConfig("autosave", true)
             end)
             do
                 local saveTimer = 0
@@ -50760,16 +49870,13 @@ return true;
                 for _, el in pairs(Library.Flags) do
                     pcall(wrap, el)
                 end
-                -- elements created later (dynamic lists) get wrapped too
+
                 local origFC = window._flagCreated
                 window._flagCreated = function(self, flag, el)
                     if origFC then origFC(self, flag, el) end
                     pcall(wrap, el)
                 end
 
-                -- restored flag values must flow into the extra-feature
-                -- options: a silent Set skips element callbacks, so the
-                -- widget layer is pushed by hand after the config load
                 for idx, widget in pairs(xDTaraZ.UI.Widgets) do
                     if Library.Flags[idx] and widget.Element
                         and type(widget.Element.Get) == "function" then
