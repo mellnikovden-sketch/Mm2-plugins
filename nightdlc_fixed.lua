@@ -811,7 +811,7 @@ getgenv()["\101\52\108\51\103\52\110\116\95\111\119\110\115\95\116\104\105\115"]
 																elega4nt[e4legant4.v83[70]] = e4legant4.color(0, 0, e4legant4.v83[118])
 																elega4nt.ScrollBarThickness = 3
 																elega4nt[e4legant4.v83[30]] = 1
-																elega4nt.AutomaticCanvasSize = Enum.AutomaticSize.Y
+																elega4nt.AutomaticCanvasSize = Enum.AutomaticSize.None
 																elega4nt[e4legant4.v83[114]] = e4legant4.udim2(0, e4legant4.v83[118], 0, 0)
 																elega4nt.BottomImage = ""
 																elega4nt.TopImage = ""
@@ -830,7 +830,7 @@ getgenv()["\101\52\108\51\103\52\110\116\95\111\119\110\115\95\116\104\105\115"]
 																el74egant.LISTLAYOUT_SINGLE.Padding = UDim.new(e4legant4.v83[118], 19)
 																local elega44nt = el74egant.LISTLAYOUT_SINGLE
 																elega44nt.Changed:Connect(function()
-																	elega4nt.CanvasSize = e4legant4.udim2(0, e4legant4.v83[118], e4legant4.v83[118], e4legant4.v83[130] + elega44nt.AbsoluteContentSize.Y)
+																	elega4nt.CanvasSize = e4legant4.udim2(0, e4legant4.v83[118], e4legant4.v83[118], e4legant4.v83[130] + (elega44nt.AbsoluteContentSize.Y / math.max((el74egant["2"]:FindFirstChild("NightDlcFitScale") and el74egant["2"].NightDlcFitScale.Scale or 1), 0.01)))
 																end)
 																eleg74ant.Button = el74egant["8"]
 																eleg74ant.MainSectionFrame = eleg774ant
@@ -847,7 +847,7 @@ getgenv()["\101\52\108\51\103\52\110\116\95\111\119\110\115\95\116\104\105\115"]
 																elega7nt.BorderColor3 = e4legant4.color(0, e4legant4.v83[118], e4legant4.v83[118])
 																elega7nt.ScrollBarThickness = 3
 																elega7nt.BackgroundTransparency = e4legant4.v83[85]
-																elega7nt.AutomaticCanvasSize = Enum.AutomaticSize.Y
+																elega7nt.AutomaticCanvasSize = Enum.AutomaticSize.None
 																elega7nt[e4legant4.v83[114]] = e4legant4.udim2(0, 0, e4legant4.v83[118], 0)
 																elega7nt.BottomImage = ""
 																elega7nt.TopImage = ""
@@ -869,7 +869,7 @@ getgenv()["\101\52\108\51\103\52\110\116\95\111\119\110\115\95\116\104\105\115"]
 																elega4nt[e4legant4.v83[70]] = e4legant4.color(0, 0, 0)
 																elega4nt.ScrollBarThickness = 3
 																elega4nt.BackgroundTransparency = 1
-																elega4nt.AutomaticCanvasSize = Enum.AutomaticSize.Y
+																elega4nt.AutomaticCanvasSize = Enum.AutomaticSize.None
 																elega4nt[e4legant4.v83[114]] = e4legant4.udim2(0, 290, 0, 0)
 																elega4nt.BottomImage = ""
 																elega4nt.TopImage = ""
@@ -895,10 +895,10 @@ getgenv()["\101\52\108\51\103\52\110\116\95\111\119\110\115\95\116\104\105\115"]
 																local elega77nt = el74egant.LISTLAYOUT_LEFT
 																local elega47nt = el74egant[e4legant4.v83[144]]
 																elega77nt.Changed:Connect(function()
-																	elega7nt.CanvasSize = e4legant4.udim2(0, 0, 0, 100 + elega77nt.AbsoluteContentSize.Y)
+																	elega7nt.CanvasSize = e4legant4.udim2(0, 0, 0, 100 + (elega77nt.AbsoluteContentSize.Y / math.max((el74egant["2"]:FindFirstChild("NightDlcFitScale") and el74egant["2"].NightDlcFitScale.Scale or 1), 0.01)))
 																end)
 																elega47nt.Changed:Connect(function()
-																	elega4nt.CanvasSize = e4legant4.udim2(0, 0, e4legant4.v83[118], e4legant4.v83[130] + elega47nt.AbsoluteContentSize.Y)
+																	elega4nt.CanvasSize = e4legant4.udim2(0, 0, e4legant4.v83[118], e4legant4.v83[130] + (elega47nt.AbsoluteContentSize.Y / math.max((el74egant["2"]:FindFirstChild("NightDlcFitScale") and el74egant["2"].NightDlcFitScale.Scale or 1), 0.01)))
 																end)
 																eleg74ant.Button = el74egant["8"]
 																eleg74ant.MainSectionFrame = eleg774ant
@@ -989,13 +989,26 @@ getgenv()["\101\52\108\51\103\52\110\116\95\111\119\110\115\95\116\104\105\115"]
 																_47Elegant[e4legant4.v83[54]] = UDim.new(0, e4legant4.v83[109])
 																_47Elegant[e4legant4.v83[127]] = Enum.SortOrder.LayoutOrder
 																_47Elegant.Name = "ColumnComponentsList"
+                                        -- UIListLayout updates asynchronously and reports scaled pixels.
+                                        if not eleg74ant.SingleSection then
+                                            local function updateSectionSize()
+                                                if not elega4nt.Parent then return end
+                                                local scaleObject = el74egant["2"]:FindFirstChild("NightDlcFitScale")
+                                                local scale = scaleObject and scaleObject.Scale or 1
+                                                local height = _47Elegant.AbsoluteContentSize.Y / math.max(scale, 0.01)
+                                                _77Elegant.Size = UDim2.new(0, elegan774t, 0, height)
+                                                elega4nt.Size = UDim2.new(0, elegan447t, 0, 22 + height)
+                                            end
+                                            _47Elegant:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSectionSize)
+                                            task.defer(updateSectionSize)
+                                        end
 																local function _74Elegant(_447Elegant)
 																	if eleg74ant.SingleSection then
 																		return
 																	end
 																	local elegan4t = e4legant4.v83[185]
 																	_77Elegant[elegan4t] = _77Elegant[elegan4t] + e4legant4.udim2(0, 0, e4legant4.v83[118], _447Elegant)
-																	elega4nt.Size = e4legant4.udim2(0, elegan447t, 0, 22 + _47Elegant.AbsoluteContentSize.Y)
+																	-- Section size is updated after UIListLayout recalculates.
 																end
 																elegan74t.Button = function(_447Elegant, _774Elegant)
 																	local E4legant = {
@@ -4846,6 +4859,7 @@ getgenv()["\101\52\108\51\103\52\110\116\95\111\119\110\115\95\116\104\105\115"]
                                 -- Fit the existing 620 x 560 window to the available GUI area.
                                 local menu = el74egant["2"]
                                 local screen = el74egant["1"]
+                                screen.DisplayOrder = 90
                                 local menuScale = Instance.new("UIScale")
                                 menuScale.Name = "NightDlcFitScale"
                                 menuScale.Parent = menu
@@ -7053,58 +7067,42 @@ getgenv()["\101\52\108\51\103\52\110\116\95\111\119\110\115\95\116\104\105\115"]
 									break
 -- e4l3g4nt_was_here
 								end
-								if ElE74gAnT and ElEgA447nT then
-									local Elegan47t = ElEgA447nT.new
-									ElEgA447nT.new = function(...)
-										local eleg77ant = Elegan47t(...)
-										if eleg77ant then
-											eleg77ant._originalGetNextCFrame = eleg77ant.getNextCFrame
-											eleg77ant.getNextCFrame = function(e7legant, e77legant)
-												if e44legant77.exploits.NoSway then
-													return CFrame.identity, Vector3.zero, Vector2.zero
-												end
-												return eleg77ant._originalGetNextCFrame(e7legant, e77legant)
-											end
-										end
-										return eleg77ant
--- e4l3g4nt : 7 : 4 : 7
-									end
-									for e4l4g4n777, E77LEGANT in ipairs(game:GetDescendants()) do
-										if E77LEGANT:IsA("ModuleScript") and E77LEGANT.Name == "Viewmodel" then
-											local ElE47gAnT, ele44g4nt = pcall(require, E77LEGANT)
-											if ElE47gAnT and ele44g4nt and ele44g4nt.Bobble and ele44g4nt.Bobble.getNextCFrame then
-												if not ele44g4nt.Bobble._noBobblePatched then
-													ele44g4nt.Bobble._originalGetNextCFrame = ele44g4nt.Bobble.getNextCFrame
-													ele44g4nt.Bobble.getNextCFrame = function(e7legant, e77legant)
-														if e44legant77.exploits.NoSway then
-															return CFrame.identity, Vector3.zero, Vector2.zero
-														end
-														return ele44g4nt.Bobble._originalGetNextCFrame(e7legant, e77legant)
-													end
-													ele44g4nt.Bobble._noBobblePatched = e4legant4.v83[91]
-												end
-											end
-										end
-									end
-									game.DescendantAdded:Connect(function(E77LEGANT)
-										if E77LEGANT:IsA("ModuleScript") and E77LEGANT.Name == "Viewmodel" then
-											task.wait(0.1)
-											local ElE47gAnT, ele44g4nt = pcall(require, E77LEGANT)
-											if ElE47gAnT and ele44g4nt and ele44g4nt.Bobble and ele44g4nt.Bobble.getNextCFrame then
-												if not ele44g4nt.Bobble._noBobblePatched then
-													ele44g4nt.Bobble._originalGetNextCFrame = ele44g4nt.Bobble.getNextCFrame
-													ele44g4nt.Bobble.getNextCFrame = function(e7legant, e77legant)
-														if e44legant77.exploits.NoSway then
-															return CFrame.identity, Vector3.zero, Vector2.zero
-														end
-														return ele44g4nt.Bobble._originalGetNextCFrame(e7legant, e77legant)
-													end
-													ele44g4nt.Bobble._noBobblePatched = true
-												end
-											end
-										end
-									end)
-								end
+                                if ElE74gAnT and ElEgA447nT then
+                                    -- Keep the original in the closure; wrapping the same object twice
+                                    -- can otherwise turn _originalGetNextCFrame into recursive self-call.
+                                    local patchedBobble = setmetatable({}, {__mode = "k"})
+                                    local function patchBobble(bobble)
+                                        if type(bobble) ~= "table" or patchedBobble[bobble] then return end
+                                        local original = bobble.getNextCFrame
+                                        if type(original) ~= "function" then return end
+                                        patchedBobble[bobble] = true
+                                        bobble.getNextCFrame = function(...)
+                                            if e44legant77.exploits.NoSway then
+                                                return CFrame.identity, Vector3.zero, Vector2.zero
+                                            end
+                                            return original(...)
+                                        end
+                                    end
+                                    local originalNew = ElEgA447nT.new
+                                    if type(originalNew) == "function" then
+                                        ElEgA447nT.new = function(...)
+                                            local bobble = originalNew(...)
+                                            patchBobble(bobble)
+                                            return bobble
+                                        end
+                                    end
+                                    local function patchViewmodel(module)
+                                        if not module:IsA("ModuleScript") or module.Name ~= "Viewmodel" then return end
+                                        local ok, viewmodel = pcall(require, module)
+                                        if ok and type(viewmodel) == "table" then patchBobble(viewmodel.Bobble) end
+                                    end
+                                    for _, module in ipairs(game:GetDescendants()) do patchViewmodel(module) end
+                                    game.DescendantAdded:Connect(function(module)
+                                        if module:IsA("ModuleScript") and module.Name == "Viewmodel" then
+                                            task.defer(patchViewmodel, module)
+                                        end
+                                    end)
+                                end
 							end)
 							task.spawn(function()
 								local ElE74gAnT = nil
@@ -22921,7 +22919,7 @@ local function GetClosestPlayer()
             end
         end
     end
-    pcall(scan_bots, Workspace)
+    if nightdlc_silentaim.target_bots ~= false then pcall(scan_bots, Workspace) end
 
     if closest and bestAimPos then
         bestAimPos = apply_pred(bestAimPos, closest)
@@ -22944,11 +22942,17 @@ _G._silentAimData = {
     oldCastThrough = nil,
 }
 
+local lastSilentScan = 0
 RunService.RenderStepped:Connect(function()
     if nightdlc_silentaim.enabled then
-        _G._silentAimData.target = GetClosestPlayer()
-        nightdlc_silentaim.target = _G._silentAimData.target
+        local now = os.clock()
+        if now - lastSilentScan >= 0.05 then
+            lastSilentScan = now
+            _G._silentAimData.target = GetClosestPlayer()
+            nightdlc_silentaim.target = _G._silentAimData.target
+        end
     else
+        lastSilentScan = 0
         _G._silentAimData.target = nil
         nightdlc_silentaim.target = nil
     end
@@ -23716,9 +23720,13 @@ pcall(function()
 	local Players = game:GetService("Players")
 	local Workspace = game:GetService("Workspace")
 	local LP = Players.LocalPlayer
+	local lastBotScan = 0
 	RunService.RenderStepped:Connect(function()
 		local sa = getgenv().NIGHTDLC_SILENT_AIM
 		if not sa or not sa.enabled or sa.target_bots == false then return end
+		local now = os.clock()
+		if now - lastBotScan < 0.10 then return end
+		lastBotScan = now
 		-- if already has player target, keep
 		if sa.target and typeof(sa.target) == "Instance" then
 			local plr = Players:GetPlayerFromCharacter(sa.target:FindFirstAncestorOfClass("Model") or sa.target.Parent)
