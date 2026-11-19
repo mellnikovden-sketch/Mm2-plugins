@@ -87502,7 +87502,7 @@ return function(p)
 							O(i, y, P)
 						end, "search/leave")
 						J.signal(p.icon.InputBegan, function(O)
-							if O.UserInputType ~= Enum.UserInputType.MouseButton1 then
+							if (O.UserInputType ~= Enum.UserInputType.MouseButton1 and O.UserInputType ~= Enum.UserInputType.Touch) then
 								return
 							end
 							if p.field.Text == "" then
@@ -87518,7 +87518,7 @@ return function(p)
 							p.Clear()
 						end, "search/clear")
 						J.signal(p.icon.InputEnded, function(J)
-							if J.UserInputType ~= Enum.UserInputType.MouseButton1 then
+							if (J.UserInputType ~= Enum.UserInputType.MouseButton1 and J.UserInputType ~= Enum.UserInputType.Touch) then
 								return
 							end
 							f.cancel(p.iconPress)
@@ -99057,7 +99057,7 @@ return function(p)
 							}
 						)
 						J.signal(h.InputBegan, function(P)
-							if P.UserInputType == Enum.UserInputType.MouseButton1 then
+							if (P.UserInputType == Enum.UserInputType.MouseButton1 or P.UserInputType == Enum.UserInputType.Touch) then
 								Z.cancel(f.actionPress)
 								f.actionPress = Z.to(
 									h,
@@ -99067,7 +99067,7 @@ return function(p)
 								if typeof(f.actionRun) == "function" then
 									pcall(f.actionRun)
 								end
-							elseif P.UserInputType == Enum.UserInputType.MouseMovement then
+							elseif (P.UserInputType == Enum.UserInputType.MouseMovement or P.UserInputType == Enum.UserInputType.Touch) then
 								if i.blocks(h) then
 									return
 								end
@@ -99078,13 +99078,13 @@ return function(p)
 						end, "action/begin")
 						J.signal(h.InputEnded, function(P)
 							if
-								P.UserInputType == Enum.UserInputType.MouseButton1
-								or P.UserInputType == Enum.UserInputType.MouseMovement
+								(P.UserInputType == Enum.UserInputType.MouseButton1 or P.UserInputType == Enum.UserInputType.Touch)
+								or (P.UserInputType == Enum.UserInputType.MouseMovement or P.UserInputType == Enum.UserInputType.Touch)
 							then
 								Z.cancel(f.actionPress)
 								f.actionPress = Z.to(h, Z.RELEASE, { Size = UDim2.fromOffset(I, I) })
 							end
-							if P.UserInputType == Enum.UserInputType.MouseMovement then
+							if (P.UserInputType == Enum.UserInputType.MouseMovement or P.UserInputType == Enum.UserInputType.Touch) then
 								local P, I, A = Z.to, Z.HOVER_OUT, {}
 								A.ImageColor3 = O.get(p.IDLE_ROLE)
 								P(h, I, A)
@@ -99134,7 +99134,7 @@ return function(p)
 							F(false)
 						end
 						J.signal(A.InputBegan, function(O)
-							if O.UserInputType == Enum.UserInputType.MouseButton1 then
+							if (O.UserInputType == Enum.UserInputType.MouseButton1 or O.UserInputType == Enum.UserInputType.Touch) then
 								Z.cancel(f.gearPress)
 								f.gearPress = Z.to(
 									A,
@@ -99142,7 +99142,7 @@ return function(p)
 									{ Size = UDim2.fromOffset(h * o.pressScale, h * o.pressScale) }
 								)
 								u:Toggle()
-							elseif O.UserInputType == Enum.UserInputType.MouseMovement then
+							elseif (O.UserInputType == Enum.UserInputType.MouseMovement or O.UserInputType == Enum.UserInputType.Touch) then
 								if i.blocks(A) then
 									return
 								end
@@ -99153,13 +99153,13 @@ return function(p)
 						end, "gear/begin")
 						J.signal(A.InputEnded, function(J)
 							if
-								J.UserInputType == Enum.UserInputType.MouseButton1
-								or J.UserInputType == Enum.UserInputType.MouseMovement
+								(J.UserInputType == Enum.UserInputType.MouseButton1 or J.UserInputType == Enum.UserInputType.Touch)
+								or (J.UserInputType == Enum.UserInputType.MouseMovement or J.UserInputType == Enum.UserInputType.Touch)
 							then
 								Z.cancel(f.gearPress)
 								f.gearPress = Z.to(A, Z.RELEASE, { Size = UDim2.fromOffset(h, h) })
 							end
-							if J.UserInputType == Enum.UserInputType.MouseMovement and not u.open then
+							if (J.UserInputType == Enum.UserInputType.MouseMovement or J.UserInputType == Enum.UserInputType.Touch) and not u.open then
 								F(false)
 							end
 						end, "gear/end")
@@ -99331,7 +99331,7 @@ return function(p)
 				end
 				p.wire = function(p)
 					u.signal(p.field.InputBegan, function(J)
-						if J.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (J.UserInputType == Enum.UserInputType.MouseButton1 or J.UserInputType == Enum.UserInputType.Touch) then
 							Z.hold()
 						end
 					end, "box/down")
@@ -99578,10 +99578,10 @@ return function(p)
 				end
 				J.wire = function(J)
 					u.signal(J.bar.InputBegan, function(O)
-						if O.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (O.UserInputType == Enum.UserInputType.MouseButton1 or O.UserInputType == Enum.UserInputType.Touch) then
 							i.hold()
 							J:press(true)
-						elseif O.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (O.UserInputType == Enum.UserInputType.MouseMovement or O.UserInputType == Enum.UserInputType.Touch) then
 							if i.blocks(J.bar) then
 								return
 							end
@@ -99589,9 +99589,9 @@ return function(p)
 						end
 					end, "button/begin")
 					u.signal(J.bar.InputEnded, function(O)
-						if O.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (O.UserInputType == Enum.UserInputType.MouseButton1 or O.UserInputType == Enum.UserInputType.Touch) then
 							J:press(false)
-						elseif O.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (O.UserInputType == Enum.UserInputType.MouseMovement or O.UserInputType == Enum.UserInputType.Touch) then
 							J:press(false)
 							J:highlight(false)
 						end
@@ -100032,10 +100032,10 @@ return function(p)
 				p.wire = function(J, O, F)
 					J.row = F and J.main or nil
 					u.signal(O.InputBegan, function(F)
-						if F.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (F.UserInputType == Enum.UserInputType.MouseButton1 or F.UserInputType == Enum.UserInputType.Touch) then
 							J:press(true)
 							J:toggle()
-						elseif F.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (F.UserInputType == Enum.UserInputType.MouseMovement or F.UserInputType == Enum.UserInputType.Touch) then
 							if i.blocks(O) then
 								return
 							end
@@ -100043,9 +100043,9 @@ return function(p)
 						end
 					end, "color/begin")
 					u.signal(O.InputEnded, function(O)
-						if O.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (O.UserInputType == Enum.UserInputType.MouseButton1 or O.UserInputType == Enum.UserInputType.Touch) then
 							J:press(false)
-						elseif O.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (O.UserInputType == Enum.UserInputType.MouseMovement or O.UserInputType == Enum.UserInputType.Touch) then
 							J:press(false)
 							J:highlight(false)
 						end
@@ -100754,7 +100754,7 @@ return function(p)
 							Y()
 						end
 						F.signal(A.InputBegan, function(T)
-							if T.UserInputType ~= Enum.UserInputType.MouseButton1 then
+							if (T.UserInputType ~= Enum.UserInputType.MouseButton1 and T.UserInputType ~= Enum.UserInputType.Touch) then
 								return
 							end
 							y.hold(p.popup)
@@ -100762,13 +100762,13 @@ return function(p)
 							e(T)
 						end, "list/editor")
 						F.signal(A.InputChanged, function(p)
-							local T = c and p.UserInputType == Enum.UserInputType.MouseMovement
+							local T = c and (p.UserInputType == Enum.UserInputType.MouseMovement or p.UserInputType == Enum.UserInputType.Touch)
 							if T then
 								e(p)
 							end
 						end, "list/editormove")
 						F.signal(A.InputEnded, function(p)
-							local A = p.UserInputType == Enum.UserInputType.MouseButton1
+							local A = (p.UserInputType == Enum.UserInputType.MouseButton1 or p.UserInputType == Enum.UserInputType.Touch)
 							if A then
 								c = false
 							end
@@ -101034,7 +101034,7 @@ return function(p)
 					else
 					end
 					F.signal(T.InputBegan, function(I)
-						if I.UserInputType == Enum.UserInputType.MouseMovement then
+						if (I.UserInputType == Enum.UserInputType.MouseMovement or I.UserInputType == Enum.UserInputType.Touch) then
 							if y.blocks(T) then
 								return
 							end
@@ -101048,7 +101048,7 @@ return function(p)
 						end
 					end, "list/row")
 					F.signal(T.InputEnded, function(p)
-						if p.UserInputType == Enum.UserInputType.MouseMovement then
+						if (p.UserInputType == Enum.UserInputType.MouseMovement or p.UserInputType == Enum.UserInputType.Touch) then
 							i.to(T, i.HOVER_OUT, { BackgroundTransparency = 1 })
 							if O then
 								i.to(O, i.HOVER_OUT, { ImageTransparency = 1 })
@@ -101152,7 +101152,7 @@ return function(p)
 							p:filter("")
 						end, "list/refresh")
 						F.signal(I.InputBegan, function(o)
-							if o.UserInputType == Enum.UserInputType.MouseMovement then
+							if (o.UserInputType == Enum.UserInputType.MouseMovement or o.UserInputType == Enum.UserInputType.Touch) then
 								if y.blocks(I) then
 									return
 								end
@@ -101162,7 +101162,7 @@ return function(p)
 							end
 						end, "list/refreshin")
 						F.signal(I.InputEnded, function(o)
-							if o.UserInputType == Enum.UserInputType.MouseMovement then
+							if (o.UserInputType == Enum.UserInputType.MouseMovement or o.UserInputType == Enum.UserInputType.Touch) then
 								local o, b, A = i.to, i.HOVER_OUT, {}
 								A.ImageColor3, A.Rotation = u.get("hint"), 0
 								o(I, b, A)
@@ -101252,12 +101252,12 @@ return function(p)
 				end
 				J.wire = function(p)
 					F.signal(p.field.InputBegan, function(J)
-						if J.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (J.UserInputType == Enum.UserInputType.MouseButton1 or J.UserInputType == Enum.UserInputType.Touch) then
 							local O = p:buildPanel()
 							if O then
 								O:Toggle()
 							end
-						elseif J.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (J.UserInputType == Enum.UserInputType.MouseMovement or J.UserInputType == Enum.UserInputType.Touch) then
 							if y.blocks(p.field) then
 								return
 							end
@@ -101270,7 +101270,7 @@ return function(p)
 						end
 					end, "list/open")
 					F.signal(p.field.InputEnded, function(J)
-						if J.UserInputType == Enum.UserInputType.MouseMovement then
+						if (J.UserInputType == Enum.UserInputType.MouseMovement or J.UserInputType == Enum.UserInputType.Touch) then
 							if p.popup and p.popup.open then
 								return
 							end
@@ -101638,7 +101638,7 @@ return function(p)
 					A.CornerRadius, A.Parent = UDim.new(0, f.corner - 2), G
 					S("UICorner", A)
 					O.signal(r.InputBegan, function(A)
-						if A.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (A.UserInputType == Enum.UserInputType.MouseButton1 or A.UserInputType == Enum.UserInputType.Touch) then
 							Z.hold()
 							if T.locked then
 								return
@@ -101648,7 +101648,7 @@ return function(p)
 							J.dragY = A.Position.Y
 							J.dragMoved = false
 							J:paintRow(T.key)
-						elseif A.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (A.UserInputType == Enum.UserInputType.MouseMovement or A.UserInputType == Enum.UserInputType.Touch) then
 							if Z.blocks(r) then
 								return
 							end
@@ -101659,7 +101659,7 @@ return function(p)
 						end
 					end, "order/rowdown")
 					O.signal(r.InputEnded, function(A)
-						if A.UserInputType == Enum.UserInputType.MouseMovement then
+						if (A.UserInputType == Enum.UserInputType.MouseMovement or A.UserInputType == Enum.UserInputType.Touch) then
 							if J.dragKey == T.key then
 								return
 							end
@@ -101807,10 +101807,10 @@ return function(p)
 				end
 				p.wire = function(p)
 					O.signal(p.field.InputBegan, function(J)
-						if J.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (J.UserInputType == Enum.UserInputType.MouseButton1 or J.UserInputType == Enum.UserInputType.Touch) then
 							Z.hold()
 							p:setExpanded(not p.expanded)
-						elseif J.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (J.UserInputType == Enum.UserInputType.MouseMovement or J.UserInputType == Enum.UserInputType.Touch) then
 							if Z.blocks(p.field) then
 								return
 							end
@@ -101823,7 +101823,7 @@ return function(p)
 						end
 					end, "order/open")
 					O.signal(p.field.InputEnded, function(J)
-						if J.UserInputType == Enum.UserInputType.MouseMovement then
+						if (J.UserInputType == Enum.UserInputType.MouseMovement or J.UserInputType == Enum.UserInputType.Touch) then
 							if p.expanded then
 								return
 							end
@@ -101836,7 +101836,7 @@ return function(p)
 						if not p.dragKey then
 							return
 						end
-						if J.UserInputType ~= Enum.UserInputType.MouseMovement then
+						if (J.UserInputType ~= Enum.UserInputType.MouseMovement and J.UserInputType ~= Enum.UserInputType.Touch) then
 							return
 						end
 						local u = J.Position.Y - p.dragY
@@ -101852,7 +101852,7 @@ return function(p)
 						if not p.dragKey then
 							return
 						end
-						if J.UserInputType ~= Enum.UserInputType.MouseButton1 then
+						if (J.UserInputType ~= Enum.UserInputType.MouseButton1 and J.UserInputType ~= Enum.UserInputType.Touch) then
 							return
 						end
 						local J, O = p.dragKey, p.dragMoved
@@ -101929,19 +101929,22 @@ return function(J)
 						if not r then
 							return
 						end
-						if A.UserInputType ~= Enum.UserInputType.MouseMovement then
+						if (A.UserInputType ~= Enum.UserInputType.MouseMovement and A.UserInputType ~= Enum.UserInputType.Touch) then
 							return
 						end
-						h.slider:dragTo(I:GetMouseLocation().X)
+						if A.UserInputType == Enum.UserInputType.Touch and h.input ~= A then return end
+						h.slider:dragTo(A.UserInputType == Enum.UserInputType.Touch and A.Position.X or I:GetMouseLocation().X)
 					end, "slider/move")
 					F.signal(I.InputEnded, function(A)
 						local r = h
 						if not r then
 							return
 						end
-						if A.UserInputType ~= Enum.UserInputType.MouseButton1 then
+						if (A.UserInputType ~= Enum.UserInputType.MouseButton1 and A.UserInputType ~= Enum.UserInputType.Touch) then
 							return
 						end
+						if A.UserInputType == Enum.UserInputType.Touch and h.input ~= A then return end
+						h.slider:suppressScroll(false)
 						h.slider:release()
 						h = nil
 					end, "slider/up")
@@ -102434,11 +102437,12 @@ return function(J)
 						f:paintValue()
 					end, "slider/counthigh")
 					F.signal(f.lane.InputBegan, function(p)
-						local o = p.UserInputType == Enum.UserInputType.MouseButton1
+						local o = (p.UserInputType == Enum.UserInputType.MouseButton1 or p.UserInputType == Enum.UserInputType.Touch)
 						if o then
-							local o = I:GetMouseLocation().X
+							local o = p.UserInputType == Enum.UserInputType.Touch and p.Position.X or I:GetMouseLocation().X
 							local P = f:nearest(o)
-							h = { slider = f, which = P }
+							h = { slider = f, which = P, input = p }
+							f:suppressScroll(true)
 							f:grabHeld(P, true)
 							f:showBubble(true)
 							f:dragTo(o)
@@ -102446,7 +102450,7 @@ return function(J)
 							if f.rangeable then
 								f:setRange(not f.range)
 							end
-						elseif p.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (p.UserInputType == Enum.UserInputType.MouseMovement or p.UserInputType == Enum.UserInputType.Touch) then
 							if i.blocks(f.lane) then
 								return
 							end
@@ -102462,7 +102466,7 @@ return function(J)
 						end
 					end, "slider/wheel")
 					F.signal(f.lane.InputEnded, function(p)
-						if p.UserInputType == Enum.UserInputType.MouseMovement then
+						if (p.UserInputType == Enum.UserInputType.MouseMovement or p.UserInputType == Enum.UserInputType.Touch) then
 							f:suppressScroll(false)
 							local p, o, P, b = Z.to, f.track, Z.HOVER_OUT, {}
 							b.BackgroundColor3 = u.get(J.TRACK_COLOR)
@@ -102470,7 +102474,7 @@ return function(J)
 						end
 					end, "slider/out")
 					F.signal(f.box.InputBegan, function(p)
-						if p.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (p.UserInputType == Enum.UserInputType.MouseButton1 or p.UserInputType == Enum.UserInputType.Touch) then
 							i.hold()
 						end
 					end, "slider/boxdown")
@@ -102657,10 +102661,10 @@ return function(p)
 						return
 					end
 					u.signal(J.interest.InputBegan, function(F)
-						if F.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (F.UserInputType == Enum.UserInputType.MouseButton1 or F.UserInputType == Enum.UserInputType.Touch) then
 							J:press(true)
 							J:Set(not J.state)
-						elseif F.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (F.UserInputType == Enum.UserInputType.MouseMovement or F.UserInputType == Enum.UserInputType.Touch) then
 							if Z.blocks(J.interest) then
 								return
 							end
@@ -102668,9 +102672,9 @@ return function(p)
 						end
 					end, "toggle/begin")
 					u.signal(J.interest.InputEnded, function(u)
-						if u.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (u.UserInputType == Enum.UserInputType.MouseButton1 or u.UserInputType == Enum.UserInputType.Touch) then
 							J:press(false)
-						elseif u.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (u.UserInputType == Enum.UserInputType.MouseMovement or u.UserInputType == Enum.UserInputType.Touch) then
 							J:press(false)
 							J:highlight(false)
 						end
@@ -105189,7 +105193,8 @@ return function(p)
 						}
 					)
 					O.signal(r:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-						p.main.CanvasSize = UDim2.new(0, 0, 0, r.AbsoluteContentSize.Y + 14)
+						local scale = d.main and d.main:FindFirstChild("MobileWindowScale")
+						p.main.CanvasSize = UDim2.new(0, 0, 0, r.AbsoluteContentSize.Y / (scale and math.max(scale.Scale, 0.01) or 1) + 14)
 					end, "column/canvas")
 					for T, T in ipairs(p.sections) do
 						T:Init()
@@ -105271,11 +105276,11 @@ return function(p)
 						end
 					end, "tab/fit")
 					O.signal(p.button.InputBegan, function(Z)
-						if Z.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (Z.UserInputType == Enum.UserInputType.MouseButton1 or Z.UserInputType == Enum.UserInputType.Touch) then
 							p.pressed = true
 							p:paint()
 							d.selectTab(p)
-						elseif Z.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (Z.UserInputType == Enum.UserInputType.MouseMovement or Z.UserInputType == Enum.UserInputType.Touch) then
 							if Q.blocks(p.button) then
 								return
 							end
@@ -105284,10 +105289,10 @@ return function(p)
 						end
 					end, "tab/click")
 					O.signal(p.button.InputEnded, function(Z)
-						if Z.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (Z.UserInputType == Enum.UserInputType.MouseButton1 or Z.UserInputType == Enum.UserInputType.Touch) then
 							p.pressed = false
 							p:paint()
-						elseif Z.UserInputType == Enum.UserInputType.MouseMovement then
+						elseif (Z.UserInputType == Enum.UserInputType.MouseMovement or Z.UserInputType == Enum.UserInputType.Touch) then
 							p.hovered = false
 							p.pressed = false
 							p:paint()
@@ -105365,37 +105370,33 @@ return function(p)
 					)
 					return d
 				end
-				local function p(r, S)
-					local c, R, e = false
-					O.signal(r.InputBegan, function(G)
-						if G.UserInputType ~= Enum.UserInputType.MouseButton1 then
-							return
-						end
-						local B, z
-						B, z, c = G.Position, S.Position, true
-						R, e = B, z
-					end, "drag/begin")
-					O.signal(r.InputEnded, function(r)
-						if r.UserInputType ~= Enum.UserInputType.MouseButton1 then
-							return
-						end
-						c = false
-						if d.onChanged then
-							d.onChanged("window", S.Position)
-						end
-					end, "drag/end")
-					O.signal(x.InputChanged, function(r)
-						local G = c
-						if not G then
-							return
-						end
-						if r.UserInputType ~= Enum.UserInputType.MouseMovement then
-							return
-						end
-						G = r.Position - R
-						S.Position = UDim2.new(e.X.Scale, e.X.Offset + G.X, e.Y.Scale, e.Y.Offset + G.Y)
-					end, "drag/move")
-				end
+                local function p(handle, window)
+                    local active, start, initial
+                    O.signal(handle.InputBegan, function(input)
+                        if active then return end
+                        if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+                        active, start, initial = input, input.Position, window.Position
+                    end, "drag/begin")
+                    O.signal(x.InputChanged, function(input)
+                        if not active then return end
+                        local isTouch = active.UserInputType == Enum.UserInputType.Touch and input == active
+                        local isMouse = active.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseMovement
+                        if not isTouch and not isMouse then return end
+                        local delta = input.Position - start
+                        local camera = workspace.CurrentCamera
+                        if not camera then return end
+                        local viewport = camera.ViewportSize
+                        local width, height = window.AbsoluteSize.X, window.AbsoluteSize.Y
+                        local nx = math.clamp(initial.X.Offset + delta.X, 0, math.max(0, viewport.X - width))
+                        local ny = math.clamp(initial.Y.Offset + delta.Y, 0, math.max(0, viewport.Y - height))
+                        window.Position = UDim2.fromOffset(nx, ny)
+                    end, "drag/move")
+                    O.signal(x.InputEnded, function(input)
+                        if input ~= active then return end
+                        active = nil
+                        if d.onChanged then d.onChanged("window", window.Position) end
+                    end, "drag/end")
+                end
 				local function r()
 					O.signal(x.InputBegan, function(S)
 						if i.typing() then
@@ -105485,7 +105486,22 @@ return function(p)
 							Parent = c,
 						}
 					)
-					p(c, d.main)
+                    local dragHandle = f.new("TextButton", {
+                        Name = "MobileDragHandle", Text = "≡", TextSize = 23,
+                        TextColor3 = Color3.fromRGB(230, 200, 235), Font = Enum.Font.GothamBold,
+                        BackgroundTransparency = 1, AutoButtonColor = false,
+                        Position = UDim2.fromOffset(6, 5), Size = UDim2.fromOffset(34, 42),
+                        ZIndex = W.TOP, Parent = d.main,
+                    })
+                    p(dragHandle, d.main)
+                    local closeButton = f.new("TextButton", {
+                        Name = "MobileClose", Text = "×", TextSize = 24,
+                        TextColor3 = Color3.fromRGB(235, 235, 235), Font = Enum.Font.GothamBold,
+                        BackgroundTransparency = 1, AutoButtonColor = false,
+                        AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -4, 0, 5),
+                        Size = UDim2.fromOffset(38, 42), ZIndex = W.TOP, Parent = d.main,
+                    })
+                    O.signal(closeButton.Activated, function() d.SetOpen(false) end, "mobile/close")
 					b.attach(d.main, S.holderBottom + d.footerHeight() + 2)
 					b.setEnabled(d.features.aurora)
 					d.headerShadow = f.new(
@@ -105546,6 +105562,8 @@ return function(p)
 					)
 					Y.attach(d.rule).setEnabled(d.features.rainbow)
 					s.attach(d.main, S.headerPad, S.titleY)
+                    if s.frame then s.frame.Position = UDim2.new(1, -48, 0, S.titleY) end
+                    d.brand.Position = UDim2.new(0, 44, 0, S.titleY)
 					s.onQuery = d.Search
 					d.beamHost = f.new(
 						"Frame",
@@ -105685,6 +105703,16 @@ return function(p)
 						end
 						k.reapply()
 					end)
+                    d.mobileOpen = f.new("TextButton", {
+                        Name = "MobileOpenMenu", Text = "MENU", TextSize = 15,
+                        TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBold,
+                        BackgroundColor3 = Color3.fromRGB(32, 28, 35), AutoButtonColor = true,
+                        AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0),
+                        Size = UDim2.fromOffset(72, 38), ZIndex = W.TOP,
+                        Visible = not d.open, Parent = d.chrome,
+                    })
+                    f.new("UICorner", {CornerRadius = UDim.new(0, 8), Parent = d.mobileOpen})
+                    O.signal(d.mobileOpen.Activated, function() d.SetOpen(true) end, "mobile/open")
 					h.attach(d.base, d.main)
 					h.setEnabled(d.features.bubbles)
 					y.attach(d.chrome)
@@ -105694,8 +105722,35 @@ return function(p)
 					j.attach(d.main)
 					u.attach(d.menu)
 					r()
-					d.centerWindow()
-					return d
+                    d.centerWindow()
+                    if x.TouchEnabled and d.main then
+                        local scale = f.new("UIScale", { Name = "MobileWindowScale", Scale = 1, Parent = d.main })
+                        local function fitMobile(center)
+                            if not d.main or not d.main.Parent or not scale then return end
+                            local camera = workspace.CurrentCamera
+                            if not camera then return end
+                            local viewport, size = camera.ViewportSize, d.main.Size
+                            local width, height = size.X.Offset, size.Y.Offset
+                            if viewport.X <= 0 or viewport.Y <= 0 or width <= 0 or height <= 0 then return end
+                            scale.Scale = math.min(1, math.max(1, viewport.X - 24) / width, math.max(1, viewport.Y - 24) / height)
+                            local maxX, maxY = math.max(0, viewport.X - width * scale.Scale), math.max(0, viewport.Y - height * scale.Scale)
+                            local pos = d.main.Position
+                            local px = center and maxX / 2 or math.clamp(pos.X.Offset, 0, maxX)
+                            local py = center and maxY / 2 or math.clamp(pos.Y.Offset, 0, maxY)
+                            d.main.Position = UDim2.fromOffset(px, py)
+                        end
+                        O.signal(d.main:GetPropertyChangedSignal("Size"), function() fitMobile(false) end, "mobile/resize")
+                        local cameraConnection
+                        local function watchCamera()
+                            if cameraConnection then cameraConnection:Disconnect() end
+                            local camera = workspace.CurrentCamera
+                            if camera then cameraConnection = O.signal(camera:GetPropertyChangedSignal("ViewportSize"), function() fitMobile(true) end, "mobile/viewport") end
+                            fitMobile(true)
+                        end
+                        O.signal(workspace:GetPropertyChangedSignal("CurrentCamera"), watchCamera, "mobile/camera")
+                        watchCamera()
+                    end
+                    return d
 				end
 				d.selectTab = function(p, T)
 					if not p then
@@ -105982,6 +106037,7 @@ return function(p)
 				end
 				d.SetOpen = function(p)
 					d.open = p and true or false
+                    if d.mobileOpen then d.mobileOpen.Visible = not d.open end
 					if d.main then
 						d.main.Modal = d.open
 						if d.open then
@@ -107302,7 +107358,7 @@ return function(p)
 						if not y.current then
 							return
 						end
-						if p.UserInputType ~= Enum.UserInputType.MouseButton1 then
+						if (p.UserInputType ~= Enum.UserInputType.MouseButton1 and p.UserInputType ~= Enum.UserInputType.Touch) then
 							return
 						end
 						local p, i = y.current, false
@@ -107395,7 +107451,7 @@ return function(p)
 						end
 					end, "popup/fade")
 					J.signal(Z.frame.InputBegan, function(p)
-						if p.UserInputType == Enum.UserInputType.MouseButton1 then
+						if (p.UserInputType == Enum.UserInputType.MouseButton1 or p.UserInputType == Enum.UserInputType.Touch) then
 							y.hold(Z)
 						end
 					end, "popup/inside")
