@@ -21252,6 +21252,8 @@ function xDTaraZ.Combat.Unload()
     end
 end
 
+xDTaraZ.World = {}
+
 function xDTaraZ.World.Rejoin()
     local ak = xDTaraZ.Guard.antiKick
     if ak then ak._allowTpUntil = os.clock() + 5 end
