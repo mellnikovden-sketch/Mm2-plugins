@@ -1,3 +1,4 @@
+local miscTab
 local controlValueA = 3238
 local controlValueB = 1420
 local controlFlagA = true
@@ -532,14 +533,14 @@ do
                                 local oxyWindow = lib:AddWindow("Oxy Mod", "Oxy Mod")
                                 local combat = oxyWindow:AddTab("combat", "rbxassetid://10734951847")
                                 local visual2 = oxyWindow:AddTab("visual", "rbxassetid://10723346959")
-                                local misc2 = oxyWindow:AddTab("misc", "rbxassetid://10709797985")
+                                miscTab = oxyWindow:AddTab("misc", "rbxassetid://10709797985")
                                 fflagsTab = oxyWindow:AddTab("fflags", "rbxassetid://10723364435")
                                 parrySection = combat:AddSection("parry", "left")
                                 curve = combat:AddSection("curve", "right")
                                 spam = combat:AddSection("spam", "left")
                                 hotkeys = combat:AddSection("hotkeys", "right")
                                 visual = visual2:AddSection("visual", "left")
-                                misc = misc2:AddSection("misc", "left")
+                                misc = miscTab:AddSection("misc", "left")
                             end
                         end
                         local profile, fflagsSection, profileNameInput, flagsJsonInput
@@ -3736,185 +3737,96 @@ do
                         end)
                     end
                     do
-                        local antiLagConnection = nil
+                        local antiLagConnections = {}
                         local antiLagOriginals = {}
+                        local antiLagRoots = {}
                         local antiLagEffects = {
                             BloomEffect = true,
                             BlurEffect = true,
                             DepthOfFieldEffect = true,
                             SunRaysEffect = true,
-                            Atmosphere = true,
                             Clouds = true,
                         }
-                        local antiLagLightingProps = {
-                            GlobalShadows = false,
-                            EnvironmentDiffuseScale = 0,
-                            EnvironmentSpecularScale = 0,
-                        }
-                        local antiLagTerrainProps = {
-                            WaterWaveSize = 0,
-                            WaterWaveSpeed = 0,
-                            WaterReflectance = 0,
-                        }
-                        local function restoreAntiLag()
+
+                        local function storeAntiLagProp(obj, prop, value)
+                            if not obj then return end
+                            local props = antiLagOriginals[obj]
+                            if props and props[prop] ~= nil then return end
+                            local ok, original = pcall(function() return obj[prop] end)
+                            if not ok then return end
+                            local changed = pcall(function() obj[prop] = value end)
+                            if changed then
+                                props = props or {}
+                                props[prop] = original
+                                antiLagOriginals[obj] = props
+                            end
+                        end
+
+                        local function applyAntiLagEffect(obj)
+                            if obj:IsA("Atmosphere") then
+                                -- Atmosphere has Density, not Enabled.
+                                storeAntiLagProp(obj, "Density", 0)
+                            elseif antiLagEffects[obj.ClassName] then
+                                storeAntiLagProp(obj, "Enabled", false)
+                            end
+                        end
+
+                        local function watchAntiLagRoot(root)
+                            if not root or antiLagRoots[root] then return end
+                            antiLagRoots[root] = true
+                            for _, obj in ipairs(root:GetDescendants()) do
+                                applyAntiLagEffect(obj)
+                            end
+                            antiLagConnections[#antiLagConnections + 1] = root.DescendantAdded:Connect(function(obj)
+                                if config.antilag then applyAntiLagEffect(obj) end
+                            end)
+                        end
+
+                        local function unhookAntiLag()
+                            for _, conn in ipairs(antiLagConnections) do
+                                conn:Disconnect()
+                            end
+                            table.clear(antiLagConnections)
+                            table.clear(antiLagRoots)
                             for instance, props in pairs(antiLagOriginals) do
-                                if instance.Parent then
-                                    for prop, value in pairs(props) do
-                                        pcall(function()
-                                            instance[prop] = value
-                                        end)
-                                    end
+                                for prop, value in pairs(props) do
+                                    pcall(function() instance[prop] = value end)
                                 end
                             end
                             table.clear(antiLagOriginals)
                         end
+
                         local function hookAntiLag()
-                            if not config.antilag then
-                                return
-                            end
-                            local lighting = Workspace:FindFirstChildOfClass("Lighting") or game:GetService("Lighting")
-                            for prop, value in pairs(antiLagLightingProps) do
-                                if not antiLagOriginals[lighting] then
-                                    antiLagOriginals[lighting] = {}
-                                end
-                                antiLagOriginals[lighting][prop] = lighting[prop]
-                                pcall(function()
-                                    lighting[prop] = value
-                                end)
-                            end
-                            local terrain = Workspace:FindFirstChildOfClass("Terrain")
-                            if terrain then
-                                for prop, value in pairs(antiLagTerrainProps) do
-                                    if not antiLagOriginals[terrain] then
-                                        antiLagOriginals[terrain] = {}
-                                    end
-                                    antiLagOriginals[terrain][prop] = terrain[prop]
-                                    pcall(function()
-                                        terrain[prop] = value
-                                    end)
-                                end
-                            end
-                            for _, obj in ipairs(lighting:GetDescendants()) do
-                                if antiLagEffects[obj.ClassName] then
-                                    if not antiLagOriginals[obj] then
-                                        antiLagOriginals[obj] = {}
-                                    end
-                                    antiLagOriginals[obj].Enabled = obj.Enabled
-                                    pcall(function()
-                                        obj.Enabled = false
-                                    end)
-                                end
-                            end
-                            antiLagConnection = lighting.DescendantAdded:Connect(function(obj)
-                                if config.antilag and antiLagEffects[obj.ClassName] then
-                                    if not antiLagOriginals[obj] then
-                                        antiLagOriginals[obj] = {}
-                                    end
-                                    antiLagOriginals[obj].Enabled = obj.Enabled
-                                    pcall(function()
-                                        obj.Enabled = false
-                                    end)
-                                end
-                            end)
-                        end
-                        local function unhookAntiLag()
-                            if antiLagConnection then
-                                antiLagConnection:Disconnect()
-                                antiLagConnection = nil
-                            end
-                            restoreAntiLag()
-                        end
-                        local chaoticAntiLag = function(enabled)
-                            if enabled then
-                                hookAntiLag()
-                            else
-                                unhookAntiLag()
-                            end
-                        end
-                        local flyteAntiLagOriginals = {}
-                        local flyteAntiLagConnections = {}
-                        local function flyteRestoreAntiLag()
-                            for vertex, particle in pairs(flyteAntiLagOriginals) do
-                                if vertex.Parent then
-                                    for prop, value in pairs(particle) do
-                                        pcall(function()
-                                            vertex[prop] = value
-                                        end)
-                                    end
-                                end
-                            end
-                            table.clear(flyteAntiLagOriginals)
-                        end
-                        local function flyteHookAntiLag()
-                            if not config.antilag then
-                                return
-                            end
+                            unhookAntiLag()
+                            if not config.antilag then return end
                             local lighting = game:GetService("Lighting")
-                            local terrain = workspace.Terrain
-                            local function storeProp(obj, prop, value)
-                                if not flyteAntiLagOriginals[obj] then
-                                    flyteAntiLagOriginals[obj] = {}
-                                end
-                                flyteAntiLagOriginals[obj][prop] = obj[prop]
-                                pcall(function()
-                                    obj[prop] = value
-                                end)
-                            end
-                            storeProp(lighting, "GlobalShadows", false)
-                            storeProp(lighting, "EnvironmentDiffuseScale", 0)
-                            storeProp(lighting, "EnvironmentSpecularScale", 0)
-                            storeProp(terrain, "WaterWaveSize", 0)
-                            storeProp(terrain, "WaterWaveSpeed", 0)
-                            storeProp(terrain, "WaterReflectance", 0)
-                            local function processLighting(lighting)
-                                for _, obj in ipairs(lighting:GetDescendants()) do
-                                    if antiLagEffects[obj.ClassName] then
-                                        storeProp(obj, "Enabled", false)
-                                    end
-                                end
-                                flyteAntiLagConnections[#flyteAntiLagConnections + 1] = lighting.DescendantAdded:Connect(function(obj)
-                                    if config.antilag and antiLagEffects[obj.ClassName] then
-                                        storeProp(obj, "Enabled", false)
-                                    end
-                                end)
-                            end
-                            processLighting(lighting)
-                            processLighting(terrain)
-                            processLighting(workspace.CurrentCamera)
-                            flyteAntiLagConnections[#flyteAntiLagConnections + 1] = workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
-                                processLighting(workspace.CurrentCamera)
+                            local terrain = Workspace:FindFirstChildOfClass("Terrain")
+                            storeAntiLagProp(lighting, "GlobalShadows", false)
+                            storeAntiLagProp(lighting, "EnvironmentDiffuseScale", 0)
+                            storeAntiLagProp(lighting, "EnvironmentSpecularScale", 0)
+                            storeAntiLagProp(terrain, "WaterWaveSize", 0)
+                            storeAntiLagProp(terrain, "WaterWaveSpeed", 0)
+                            storeAntiLagProp(terrain, "WaterReflectance", 0)
+                            watchAntiLagRoot(lighting)
+                            watchAntiLagRoot(terrain)
+                            watchAntiLagRoot(Workspace.CurrentCamera)
+                            antiLagConnections[#antiLagConnections + 1] = Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+                                if config.antilag then watchAntiLagRoot(Workspace.CurrentCamera) end
                             end)
                         end
-                        local function flyteUnhookAntiLag()
-                            for _, conn in ipairs(flyteAntiLagConnections) do
-                                if conn.Connected then
-                                    conn:Disconnect()
-                                end
-                            end
-                            table.clear(flyteAntiLagConnections)
-                            flyteRestoreAntiLag()
-                        end
-                        local flyteAntiLag = function(enabled)
-                            if enabled then
-                                flyteHookAntiLag()
-                            else
-                                flyteUnhookAntiLag()
-                            end
-                        end
+
                         misc:AddToggle("anti-lag", config.antilag or false, function(antiLag)
                             config.antilag = antiLag
                             if antiLag then
-                                chaoticAntiLag(true)
-                                flyteAntiLag(true)
+                                hookAntiLag()
                             else
-                                chaoticAntiLag(false)
-                                flyteAntiLag(false)
+                                unhookAntiLag()
                             end
                         end)
                     end
                     do
                         local deviceSpoofDropdown, deviceSpoofButton
-                        local deviceSpoofTab = misc:AddSection("device spoof", "left")
+                        local deviceSpoofTab = miscTab:AddSection("device spoof", "right")
                         deviceSpoofDropdown = deviceSpoofTab:AddDropdown("device", {"PC", "Mobile", "Console"}, config.device_spoof_type or "PC", function(device)
                             config.device_spoof_type = device
                             configStorage.save()
