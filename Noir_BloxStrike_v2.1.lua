@@ -32,16 +32,14 @@
     (message.txt): выстрел ровно в кадр готовности оружия (Properties.
     FireRate / NextShotDue). Visuals — мобильный ESP из raw(2): чамсы
     Highlight AlwaysOnTop + BoxHandleAdornment, группа «Визуалы».
-    Wallbang-режим и Piercer-пуля удалены полностью (не работали):
-    остался честный Auto wall — реальный бюджет пробития оружия, стены
-    по материалам, гейт Wall min damage. Force origin до 20 студов с
-    маркером точки вылета. Instant auto shoot вызывает тот же find, что
-    и конвейер: одна цель на всё (min damage / авто-стена / форс-ориджин).
+    Piercer — Wallbang mode и Piercer bullet (magic) пробуждают
+    движковые пути прострелов оригинала (через-стенные цели по урону),
+    Force origin до 20 студов.
     Visuals fix — чамсы сквозь стены: глушим чужие Highlight редкости
     скинов, reassert DepthMode; Billboard-теги (имя+HP+дистанция) сквозь
     стены. Third person — полный порт ZamlbloxThirdPerson из raw(2):
     коллизия, видимое тело, вьюмодель спрятана, restore при смерти.
-    Пресет «Против читеров» одной кнопкой (AA+движение+авто-стена).
+    Пресет «Против читеров» одной кнопкой (AA+движение+пирсер).
     Antiaim + Movement — модули T/U/V/W дословно из оригинала
     (движок анти-аима U: yaw/pitch/spin/jitter/мануал; контроллер
     движения W с хуком MovementV2: bhop/strafe/edge jump/jump bug/
@@ -21232,25 +21230,39 @@ function xDTaraZ.Guns.UnbindFov()
     pcall(RunService.UnbindFromRenderStep, RunService, "xDTaraZFov")
 end
 
-function xDTaraZ.Guns.FindClass()
-    if not xDTaraZ.Caps.Gc or not xDTaraZ.Caps.HookFunction then return nil end
+-- ONE full-heap scan finds both classes. Every getgc(true) stalls a phone for seconds, so a result is cached and a
+-- failed scan is not repeated for 20 s (it used to run three times per hook install and again on every toggle).
+function xDTaraZ.Guns.ScanHeap()
+    local guns = xDTaraZ.Guns
+    if guns._heapClass and guns._heapBullet then return end
+    local now = osClock()
+    if guns._scanAt and now - guns._scanAt < 20 then return end
+    guns._scanAt = now
+    if not xDTaraZ.Caps.Gc or not xDTaraZ.Caps.HookFunction then return end
+    local mark = xDTaraZ.Shitaro and xDTaraZ.Shitaro.WatchMark
+    if mark then mark("getgc scan") end
     local ok, heap = pcall(getgc, true)
-    if not ok or type(heap) ~= "table" then return nil end
-    for _, entry in pairs(heap) do
-        if type(entry) == "table" and rawget(entry, "getSpread") and rawget(entry, "shoot") and rawget(entry, "setupRecoil") then return entry end
+    if ok and type(heap) == "table" then
+        for _, entry in pairs(heap) do
+            if type(entry) == "table" then
+                if not guns._heapClass and rawget(entry, "getSpread") and rawget(entry, "shoot") and rawget(entry, "setupRecoil") then guns._heapClass = entry end
+                if not guns._heapBullet and rawget(entry, "getTrueSpread") and rawget(entry, "getSpreadForConfig") then guns._heapBullet = entry end
+                if guns._heapClass and guns._heapBullet then break end
+            end
+        end
     end
-    return nil
+    if mark then mark("idle") end
+end
+
+function xDTaraZ.Guns.FindClass()
+    xDTaraZ.Guns.ScanHeap()
+    return xDTaraZ.Guns._heapClass
 end
 
 ---@return table?  the bullet class that rolls spread for every shot
 function xDTaraZ.Guns.FindBullet()
-    if not xDTaraZ.Caps.Gc or not xDTaraZ.Caps.HookFunction then return nil end
-    local ok, heap = pcall(getgc, true)
-    if not ok or type(heap) ~= "table" then return nil end
-    for _, entry in pairs(heap) do
-        if type(entry) == "table" and rawget(entry, "getTrueSpread") and rawget(entry, "getSpreadForConfig") then return entry end
-    end
-    return nil
+    xDTaraZ.Guns.ScanHeap()
+    return xDTaraZ.Guns._heapBullet
 end
 
 ---Every spread roll the bullet class makes returns 0 with No Spread, and while a silent aim shot is being built.
@@ -22517,6 +22529,7 @@ xDTaraZ.Shitaro.legitStage = {
 }
 function xDTaraZ.Shitaro.SetLegit(key, value)
     local s = xDTaraZ.Shitaro
+    if key == "magic" or key == "wallbang" then return end -- Piercer bullet / Wallbang mode were removed
     s.legitStage[key] = value
     -- авто-стрельба тянет за собой включение конвейера (t.on гейтит find
     -- и подмену луча пули; отдельного аимбот-тоггла больше нет)
@@ -25568,7 +25581,7 @@ end);
 return A;
 end;
         D.ag=function()local m=D.load("q").white;
-        return{on=false,team_check=true,boxes={head=true,chest=true},prefer="head",auto_shoot=false,auto_scope=false,auto_wall=false,auto_revolver=false,auto_switch=false,double_tap=false,rapid=false,no_recoil=false,no_spread=false,insta_reload=false,min_damage=0,wall_min_damage=0,fov=8,draw_fov=false,fov_col=m,fov_grad=false,fov_col2=m,fov_fill=false,fov_fill_col=m,fov_fill_grad=false,fov_fill_col2=m,multipoint=false,origin_shift=0,head_size=65,chest_size=60,stomach_size=60,arms_size=55,legs_size=55,reg_hits=0,reg_miss=0,reg_lead=0};
+        return{on=false,team_check=true,boxes={head=true,chest=true},prefer="head",auto_shoot=false,auto_scope=false,auto_wall=false,wallbang=false,wall_power=3,magic=false,auto_revolver=false,auto_switch=false,double_tap=false,rapid=false,no_recoil=false,no_spread=false,insta_reload=false,min_damage=0,wall_min_damage=0,fov=8,draw_fov=false,fov_col=m,fov_grad=false,fov_col2=m,fov_fill=false,fov_fill_col=m,fov_fill_grad=false,fov_fill_col2=m,multipoint=false,origin_shift=0,head_size=65,chest_size=60,stomach_size=60,arms_size=55,legs_size=55,reg_hits=0,reg_miss=0,reg_lead=0};
     end;
     D.ah=function()local m,j=D.load("b"),D.load("a");
     local h=m.lp;
@@ -26384,6 +26397,8 @@ K.prefer=b("prefer");
 K.auto_shoot=h and b("auto")or false;
 K.auto_scope=h and b("autoscope")==true or false;
 K.auto_wall=h and b("aw")or false;
+K.wallbang=false;
+K.magic=false;
 K.auto_revolver=h and b("autorev")or false;
 K.auto_switch=h and b("autoswitch")or false;
 K.double_tap=h and b("dt")or false;
@@ -26939,7 +26954,7 @@ for BF=1,MF,1 do
                                 pF;
                                 q=-n;
                                 if U then
-                                    if false then -- [removed] piercer
+                                    if t.magic then
                                     else
                                         local U,AF=if xF>=z then
                                             xF+tF
@@ -27067,9 +27082,9 @@ for BF=1,MF,1 do
                                     return nil;
                                 end;
                                 local p,A,J=P or iF(z)or z.CFrame.Position,z.CFrame.LookVector,j(t.fov,0,180);
-                                local y,tF,GF,iF=E(d(J/2)),tonumber(M.Range)or 500,t.auto_wall,R(tonumber(M.Penetration)or 0,0);
+                                local y,tF,GF,iF=E(d(J/2)),tonumber(M.Range)or 500,t.auto_wall or t.wallbang,R(tonumber(M.Penetration)or 0,0);
                                 P,z=GF and iF or nil,t.prefer;
-                                local R,E,d,TF,xF=OF(z,t.boxes),a(),O.lead(),0,j(tonumber(t.origin_shift)or 0,0,20);
+                                local R,E,d,TF,xF=OF(z,t.boxes),a(),O.lead(),0,t.magic and 0 or j(tonumber(t.origin_shift)or 0,0,20);
                                 local j,a,OF=xF>=0.25,K(p,A,J,y,tF,q==true,U,d);
                                 if a==0 then
                                     return nil;
@@ -27108,7 +27123,7 @@ for BF=1,MF,1 do
                                                     local eF=VF.Magnitude;
                                                     if eF>=0.5 and eF<=tF+5 then
                                                         local lF,CF,WF,m7=VF/eF,cF*100+zF.slot+sF,false,false;
-                                                        if false then -- [removed] piercer
+                                                        if t.magic then
                                                             local cF,sF=G(gF,vF.Name,eF,0,M);
                                                             if cF>=N(gF,eF,M)then
                                                                 local VF=cF+JF+100000;
@@ -27170,7 +27185,7 @@ for BF=1,MF,1 do
                                                                 end;
                                                             end;
                                                         end;
-                                                        if t.multipoint and not WF and not HF and q<40 then
+                                                        if t.multipoint and not WF and not t.magic and not HF and q<40 then
                                                             lF=I[UF];
                                                             for I=1,x(vF,UF,lF and t[lF]or 0),1 do
                                                                 if q>=40 then
@@ -27356,7 +27371,7 @@ for BF=1,MF,1 do
                                                                                 local B,L=O.hit(p,n,Y,A,I);
                                                                                 local YF,UF,zF,JF,yF=B or I,0,0;
                                                                                 local I,fF=LF,ZF;
-                                                                                if false then -- [removed] piercer
+                                                                                if t.magic then
                                                                                     LF,ZF=JF,yF;
                                                                                 else
                                                                                     UF,zF,LF,ZF=O.path(p,n,YF,P,O.filter(E,GF));
@@ -27411,7 +27426,7 @@ for BF=1,MF,1 do
                                                     R,z=O.hit(a,q,aF,U,GF);
                                                     y,J,iF,xF,A=R or GF,0,0;
                                                     local m,b=LF,ZF;
-                                                    if false then -- [removed] piercer
+                                                    if t.magic then
                                                         LF,ZF=xF,A;
                                                     else
                                                         J,iF,LF,ZF=O.path(a,q,y,P,O.filter(E,MF));
@@ -28523,7 +28538,7 @@ if E then
         end;
     end;
 end;
-E=O.find(R,n,false);
+E=O.find(R,n,t.magic==true);
 if E then
     if B(E)then
         return E;
@@ -28632,7 +28647,6 @@ if r then
             b.last_target[w]=X.char;
         end;
         G.reserve(X);
-        pcall(xDTaraZ.Shitaro.markShotOrigin,Z);
         return{Distance=L.dist,Origin=Z,Direction=L.dir,Hits=E};
     end;
 end);
@@ -30399,7 +30413,7 @@ local w=if s and I.bhop then
     end;
 end;
 j,G={cfg=I},b.character;
-if type(G)=="table"then if type(G.SampleInput)=="function"then b=h.field(G,"SampleInput",function(i)return function(T,x)local p=i(T,x);
+if type(G)=="table"then if type(G.SampleInput)=="function"then local mk=function(i)return function(T,x)local p=i(T,x);
 if type(p)~="table"then return p;
 end;
 local i,M,I=typeof(p.Move)=="Vector2"and p.Move or Vector2.zero,T~=nil and T.JumpInputDown==true,X(T,x,p);
@@ -30433,8 +30447,18 @@ end;
 O(T,x,p,i,M,I);
 return p;
 end;
-end);
-o.hooked=G.SampleInput~=b;
+end;
+b=h.field(G,"SampleInput",mk);
+if G.SampleInput==b and type(hookfunction)=="function"then
+    -- the game kept a direct reference to the original: hook the function itself (same approach as the readable reference)
+    do
+        local holder;
+        local okH,orig=pcall(hookfunction,b,mk(function(...)return holder(...)end));
+        if okH and type(orig)=="function"then holder=orig;o.hookfn=true;b=orig;end;
+    end;
+end;
+o.hooked=G.SampleInput~=b or o.hookfn==true;
+j.hooked=o.hooked;
 A(nil);
 h.connect(t.CharacterAdded,function(b)S.clear();
 o.release();
@@ -30454,6 +30478,38 @@ xDTaraZ.Shitaro.mods = D
 end
 
 -- ── Legit-драйвер: загрузка графа + шаги на Heartbeat ──────────────────────
+-- one console line that says which part of the legit subsystem (silent aim helpers, auto wall, auto shoot, force
+-- origin, antiaim hook) is alive; the game components it needs are listed with their type
+function xDTaraZ.Shitaro.LegitReport()
+    local s = xDTaraZ.Shitaro
+    local D = s.mods
+    if not D then print("[Noir] legit report: modules not started") return end
+    local function try(name)
+        local ok, m = pcall(D.load, name)
+        if ok then return m end
+        return nil, tostring(m)
+    end
+    local parts = {}
+    local j, jerr = try("j")
+    if j then
+        parts[#parts + 1] = "legit_ready=" .. tostring(j.legit_ready) .. " fire_ready=" .. tostring(j.fire_ready)
+        parts[#parts + 1] = "bullet=" .. typeof(j.bullet) .. " raycast=" .. typeof(j.raycast)
+            .. " ray_ignore=" .. typeof(j.ray_ignore) .. " weapon=" .. typeof(j.weapon)
+    else
+        parts[#parts + 1] = "components FAILED: " .. tostring(jerr)
+    end
+    for _, name in ipairs({ "aq", "ap", "ag", "W" }) do
+        local m, err = try(name)
+        parts[#parts + 1] = name .. "=" .. (m and "ok" or ("FAIL " .. tostring(err)))
+    end
+    local w = try("W")
+    parts[#parts + 1] = "aa_hooked=" .. tostring(type(w) == "table" and w.hooked)
+    local o = s.legitOptions
+    parts[#parts + 1] = "legit.on=" .. tostring(o and o.on) .. " auto_wall=" .. tostring(o and o.auto_wall)
+        .. " auto_shoot=" .. tostring(o and o.auto_shoot) .. " origin_shift=" .. tostring(o and o.origin_shift)
+    print("[Noir] legit report: " .. table.concat(parts, " | "))
+end
+
 function xDTaraZ.Shitaro.Legit()
     local self = xDTaraZ.Shitaro
     if self._legitStarted then return end
@@ -30470,13 +30526,15 @@ function xDTaraZ.Shitaro.Legit()
             return
         end
         if xDTaraZ.State.Alive == false then return end
-        local okW, wRet = pcall(function() return D.load("W") end)  -- antiaim + движение (тянет U/V/T; сбой не валит боевой граф)
-        if okW and type(wRet) == "table" and type(wRet.cfg) == "table" then
-            print("[Noir] antiaim/movement: module W loaded, AA apply + движение активны")
-        else
-            warn("[Noir] antiaim/movement: module W failed: " .. tostring(wRet)
-                .. " - анти-аим и движение выключены, настройки сохранены в stage")
+        do
+            local okW, errW = pcall(function() D.load("W") end)
+            if not okW then
+                self._modErr = self._modErr or {}
+                self._modErr.W = tostring(errW)
+                warn("[Noir] antiaim module (W) failed to load: " .. tostring(errW))
+            end
         end
+          -- antiaim + движение (тянет U/V/T; сбой не валит боевой граф)
         self.legitOptions = D.load("ag")
         -- применяем stage: настройки, выставленные до загрузки графа
         -- (иначе ранние SetLegit-вызовы терялись и аимбот оставался выключенным)
@@ -30491,9 +30549,10 @@ function xDTaraZ.Shitaro.Legit()
             self.SetMove(key, value)
         end
         self.Ready = true
+        task.delay(4, function() pcall(xDTaraZ.Shitaro.LegitReport) end)
         pcall(xDTaraZ.Shitaro.VisualsStart)
         pcall(xDTaraZ.Shitaro.TPStart)
-        pcall(xDTaraZ.Shitaro.AntiKickStart)
+        pcall(xDTaraZ.Shitaro.WatchdogStart)
         -- boot Shitaro: beat → aq.auto (auto shoot), early → p.step/ap.step
         xDTaraZ:Connect(RunService.Heartbeat, function()
             pcall(D.load("p").step)
@@ -30833,7 +30892,8 @@ end
 -- LocalPlayer:Kick (клиентские проверки игры) и телепорты TeleportService
 -- («перекидывает с сервера на сервер»). Свои Rejoin/ServerHop открываются
 -- одноразовым окном _allowTpUntil.
-xDTaraZ.Shitaro.antiKick = { on = false, blockTp = true, running = false, _blocked = 0, _blockedTp = 0, _allowTpUntil = 0, _tps = nil }
+xDTaraZ.Shitaro.antiKick = { on = false, blockTp = true, running = false, _blocked = 0, _blockedTp = 0, _allowTpUntil = 0, _tps = nil,
+    _winStart = 0, _winCount = 0, _lastLog = {} }
 
 function xDTaraZ.Shitaro.AntiKickStart()
     local self = xDTaraZ.Shitaro
@@ -30842,38 +30902,118 @@ function xDTaraZ.Shitaro.AntiKickStart()
     ak.running = true
     pcall(function() ak._tps = game:GetService("TeleportService") end)
     if type(hookmetamethod) ~= "function" or type(getnamecallmethod) ~= "function" or type(newcclosure) ~= "function" then
-        print("[Noir] AntiKick: у экзекутора нет namecall-хуков — модуль пассивен")
+        warn("[Noir] AntiKick: this executor has no namecall hooks, anti-kick is unavailable")
         return
+    end
+    local TP_METHODS = { Teleport = true, TeleportAsync = true, TeleportToPlaceInstance = true,
+        TeleportToPrivateServer = true, TeleportToSpawnByName = true, TeleportPartyAsync = true }
+    local function ours() return type(checkcaller) == "function" and checkcaller() end
+    local function say(kind, text)
+        -- one console line per kind every 2 s: a game that retries a blocked call must not flood the console
+        local now = os.clock()
+        if now - (ak._lastLog[kind] or 0) < 2 then return end
+        ak._lastLog[kind] = now
+        print(text)
+    end
+    -- A blocked call returns at once while the real one would end the session / yield. A game that retries it in a
+    -- tight loop would therefore hang the client. Past 25 calls a second the caller is made to wait; where the
+    -- executor cannot yield inside this hook the call goes through instead of freezing the game.
+    local function pace()
+        local now = os.clock()
+        if now - ak._winStart > 1 then ak._winStart, ak._winCount = now, 0 end
+        ak._winCount = ak._winCount + 1
+        if ak._winCount > 25 then
+            local okWait = pcall(task.wait, 0.25)
+            if not okWait then ak._winCount = 0 return false end
+        end
+        return true
     end
     local old
     old = hookmetamethod(game, "__namecall", newcclosure(function(inst, ...)
         local method = getnamecallmethod()
-        if ak.on then
-            -- клиентский кик: игра вызвала LocalPlayer:Kick из LocalScript
-            if method == "Kick" and self.LocalPlayer ~= nil and inst == self.LocalPlayer then
+        if ak.on and not ours() then
+            local lower = type(method) == "string" and string.lower(method) or ""
+            if lower == "kick" and self.LocalPlayer ~= nil and inst == self.LocalPlayer then
                 ak._blocked = ak._blocked + 1
-                local reason = (...)
-                print("[Noir] AntiKick: заблокирован клиентский Kick: " .. tostring(reason == nil and "(без причины)" or reason))
-                return nil
-            end
-            -- телепорт: блокируем чужие, свои (rejoin/hop) открывает окно 5 с
-            if ak.blockTp and ak._tps ~= nil and inst == ak._tps
-                and (method == "TeleportToPlaceInstance" or method == "TeleportAsync" or method == "Teleport") then
+                say("kick", "[Noir] AntiKick: blocked Kick: " .. tostring((...)))
+                if pace() then return nil end
+            elseif lower == "shutdown" and inst == game then
+                ak._blocked = ak._blocked + 1
+                say("shutdown", "[Noir] AntiKick: blocked game:Shutdown()")
+                if pace() then return nil end
+            elseif ak.blockTp and ak._tps ~= nil and inst == ak._tps and TP_METHODS[method] then
                 if os.clock() <= ak._allowTpUntil then
-                    ak._allowTpUntil = 0 -- одноразовое окно: пропускаем только наш вызов
+                    ak._allowTpUntil = 0 -- our own Rejoin / ServerHop passes once
                 else
                     ak._blockedTp = ak._blockedTp + 1
-                    print("[Noir] AntiKick: заблокирован телепорт (" .. tostring(method) .. "), всего: " .. tostring(ak._blockedTp))
-                    return nil
+                    say("tp", "[Noir] AntiKick: blocked teleport (" .. tostring(method) .. "), total: " .. tostring(ak._blockedTp))
+                    if pace() then return nil end
                 end
             end
         end
+        if type(setnamecallmethod) == "function" then setnamecallmethod(method) end
         return old(inst, ...)
     end))
-    print("[Noir] AntiKick: namecall-хук установлен")
+    -- LocalPlayer.Kick(LocalPlayer, ...) called without the colon never reaches the namecall hook
+    pcall(function()
+        local kick = self.LocalPlayer and self.LocalPlayer.Kick
+        if type(kick) ~= "function" or type(hookfunction) ~= "function" then return end
+        local oldKick
+        oldKick = hookfunction(kick, newcclosure(function(target, ...)
+            if ak.on and not ours() and target == self.LocalPlayer then
+                ak._blocked = ak._blocked + 1
+                say("kick", "[Noir] AntiKick: blocked Kick: " .. tostring((...)))
+                if pace() then return nil end
+            end
+            return oldKick(target, ...)
+        end))
+    end)
+    print("[Noir] AntiKick: namecall hook installed")
 end
 
 -- ── Пресеты: ApplyPreset — готовые конфиги против читеров одной строкой ─────
+function xDTaraZ.Shitaro.SetAntiKick(on)
+    local ak = xDTaraZ.Shitaro.antiKick
+    ak.on = on == true
+    -- the __namecall hook is installed only once the feature is switched on: a permanent hook taxes every engine call
+    -- of the game for nothing while the toggle is off
+    if ak.on then xDTaraZ.Shitaro.AntiKickStart() end
+end
+
+-- freeze diagnostics: the last state is written to <Noir>/watchdog.txt once a second, so after a hang and a restart
+-- the file says what the client was doing (phase), how fast it ran and how much memory it used
+xDTaraZ.Shitaro.watch = { phase = "idle", at = 0 }
+function xDTaraZ.Shitaro.WatchMark(text)
+    local w = xDTaraZ.Shitaro.watch
+    w.phase, w.at = text, os.clock()
+end
+function xDTaraZ.Shitaro.WatchdogStart()
+    local s = xDTaraZ.Shitaro
+    if s._watchRunning or type(writefile) ~= "function" then return end
+    s._watchRunning = true
+    task.spawn(function()
+        local folder = xDTaraZ.Config.SaveFolder
+        if type(makefolder) == "function" and type(isfolder) == "function" then
+            pcall(function() if not isfolder(folder) then makefolder(folder) end end)
+        end
+        local frames, last = 0, os.clock()
+        local beat = RunService.Heartbeat:Connect(function() frames = frames + 1 end)
+        while xDTaraZ.State.Alive ~= false do
+            task.wait(1)
+            local now = os.clock()
+            local fps = frames / math.max(now - last, 0.001)
+            frames, last = 0, now
+            local memory = 0
+            pcall(function() memory = game:GetService("Stats"):GetTotalMemoryUsageMb() end)
+            local ak = s.antiKick
+            local line = string.format("time=%d fps=%.0f memory=%.0fMB phase=%s phase_age=%.0fs kicks_blocked=%d teleports_blocked=%d",
+                os.time(), fps, memory, s.watch.phase, now - (s.watch.at > 0 and s.watch.at or now), ak._blocked, ak._blockedTp)
+            pcall(writefile, folder .. "/watchdog.txt", line)
+        end
+        beat:Disconnect()
+    end)
+end
+
 function xDTaraZ.Shitaro.ApplyPreset(name)
     local s = xDTaraZ.Shitaro
     if name == "anti" then
@@ -30936,6 +31076,7 @@ function xDTaraZ.Shitaro.SetAA(key, value)
         end
         pcall(u.reset)
         if key == "on" then
+            if value then task.defer(function() pcall(xDTaraZ.Shitaro.LegitReport) end) end
             print("[Noir] antiaim " .. (value and "ON" or "OFF") .. ": module loaded, yaw=" .. tostring(u.cfg.yaw)
                 .. " pitch=" .. tostring(u.cfg.pitch) .. " spin=" .. tostring(u.cfg.spin_rate))
         end
@@ -30952,41 +31093,6 @@ function xDTaraZ.Shitaro.SetMove(key, value)
     if w and type(w.cfg) == "table" then
         w.cfg[key] = value
     end
-end
-
--- ── Force origin marker: неоновая точка в месте вылета пули ────────────────
--- Показывается только когда конвейер реально сместил origin (сдвиг >= 0.25
--- и точка дальше 0.5 студа от камеры). Одна переиспользуемая сфера, гаснет за 0.6 с.
-function xDTaraZ.Shitaro.markShotOrigin(pos)
-    local self = xDTaraZ.Shitaro
-    local opts = self.legitOptions
-    local shift = opts and tonumber(opts.origin_shift) or 0
-    if shift < 0.25 then return end
-    if typeof(pos) ~= "Vector3" then return end
-    local cam = workspace.CurrentCamera
-    if not (cam and cam.CFrame) then return end
-    if (pos - cam.CFrame.Position).Magnitude < 0.5 then return end
-    local mark = self._originMark
-    if not (mark and mark.Parent) then
-        mark = Instance.new("Part")
-        mark.Name = "NoirShotOrigin"
-        mark.Shape = Enum.PartType.Ball
-        mark.Size = Vector3.new(0.3, 0.3, 0.3)
-        mark.Material = Enum.Material.Neon
-        mark.Color = Color3.fromRGB(255, 170, 0)
-        mark.Anchored = true
-        mark.CanCollide = false
-        mark.CanQuery = false
-        mark.CanTouch = false
-        mark.CastShadow = false
-        mark.Parent = workspace
-        self._originMark = mark
-    end
-    mark.CFrame = CFrame.new(pos)
-    mark.Transparency = 0.3
-    task.delay(0.6, function()
-        if mark.Parent then mark.Transparency = 1 end
-    end)
 end
 
 -- Instant auto shoot: выстрел в кадр готовности (гейты в стиле Atlas)
@@ -31040,13 +31146,32 @@ function xDTaraZ.Shitaro.stepInstantFire(now)
     local interval = tonumber(weapon.Properties.FireRate)
     if interval and interval > 0 and now - self.instantFire.lastFire < interval then return false end
     if weapon.NextShotDue and now < weapon.NextShotDue then return false end
-    -- [fix] цель выбирает ТОЛЬКО движок (тот же find, что и у конвейера аимбота):
-    -- мин. урон, авто-стена и форс-ориджин теперь учитываются и здесь; свой
-    -- FOV/LOS-подбор удалён — он стрелял по другой цели, чем конвейер
-    local an = (self.mods and type(self.mods.load) == "function") and self.mods.load("an") or nil
-    if not (an and type(an.find) == "function") then return false end
-    local okF, locked = pcall(an.find, weapon.Properties, nil, false, nil)
-    if not (okF and type(locked) == "table" and type(locked.shot) == "table") then return false end
+    local getterCam = self.getCamera or self.defaultGetCamera
+    local okC, camera = pcall(getterCam, self)
+    if not (okC and camera and camera.CFrame) then return false end
+    local lister = self.getEnemies or self.enemies
+    local okE, chars = pcall(lister, self)
+    if not okE or type(chars) ~= "table" then return false end
+    local fov = math.clamp(tonumber(opts.fov) or 120, 1, 180)
+    local minDot = math.cos(math.rad(fov))
+    local cf = camera.CFrame
+    local best = nil
+    for _, char in ipairs(chars) do
+        local hum = char.FindFirstChildOfClass and char:FindFirstChildOfClass("Humanoid")
+        local head = char.FindFirstChild and char:FindFirstChild("Head")
+        if hum and head and hum.Health and hum.Health > 0 and head.Position then
+            local dir = head.Position - cf.Position
+            if dir.Magnitude > 0.01 then
+                local u = dir.Unit
+                local dot = cf.LookVector.X * u.X + cf.LookVector.Y * u.Y + cf.LookVector.Z * u.Z
+                if dot >= minDot and self.hasLOS(camera, head.Position) then
+                    best = char
+                    break
+                end
+            end
+        end
+    end
+    if not best then return false end
     self.instantFire.lastFire = now
     local okS = pcall(function() weapon:shoot() end)
     if okS then
@@ -31561,7 +31686,7 @@ function xDTaraZ.UI.BuildSilent(tab)
 
     -- Anti-Aim — дословный движок оригинала (модуль U): рысканье/наклон/вращение/мануал.
     local aag = tab:AddLeftGroupbox({ Name = T("Anti-Aim", "Анти-аим"), Icon = "shield-off" })
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.Preset", { Name = T("Preset", "Пресет"), Options = { "выкл", "Против читеров", "Обычная" }, Default = "выкл", Desc = T("anti-cheater: AA spin + strafe/edge jump + auto wall with real penetration budget (bhop and Force origin stay manual - they can trigger speed/fire kicks); normal: everything off", "anti-cheater: анти-аим спин + страйф/прыжок с края + авто-стена с реальным бюджетом пробития (бхоп и форс-ориджин включай вручную - они могут дать кик за скорость/выстрелы); Обычная: всё выключить") }), function(value) xDTaraZ.Shitaro.ApplyPreset(value == "Против читеров" and "anti" or (value == "Обычная" and "normal" or nil)) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.Preset", { Name = T("Preset", "Пресет"), Options = { "выкл", "Против читеров", "Обычная" }, Default = "выкл", Desc = T("anti-cheater: AA spin + strafe/edge jump + auto wall through walls (bhop and Force origin stay manual - they can trigger speed/fire kicks); normal: everything off", "anti-cheater: анти-аим спин + страйф/прыжок с края + пирсер сквозь стены (бхоп и форс-ориджин включай вручную - они могут дать кик за скорость/выстрелы); Обычная: всё выключить") }), function(value) xDTaraZ.Shitaro.ApplyPreset(value == "Против читеров" and "anti" or (value == "Обычная" and "normal" or nil)) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(aag, "AA.On", { Name = T("Enable", "Включить"), Desc = T("Master antiaim switch (yaw/pitch desync)", "Главный выключатель анти-аима (десинк рысканья/наклона)"), Default = false }), function(value) xDTaraZ.Shitaro.SetAA("on", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Dropdown(aag, "AA.Yaw", { Name = T("Yaw", "Рысканье"), Options = { "backward", "spin", "jitter", "off" }, Default = "off", Desc = T("Yaw antiaim mode", "Режим анти-аима по рысканью") }), function(value) xDTaraZ.Shitaro.SetAA("yaw", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(aag, "AA.Jitter", { Name = T("Jitter", "Джиттер"), Min = 0, Max = 180, Default = 45, Suffix = "°" }), function(value) xDTaraZ.Shitaro.SetAA("jitter", value) end)
@@ -31803,7 +31928,7 @@ function xDTaraZ.UI.BuildMisc(window)
     -- подменю «...» оригинала развёрнуты в плоские виджеты той же группы.
     local acc = tab:AddRightGroupbox({ Name = T("Accuracy", "Точность"), Icon = "crosshair" })
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.MinDamage", { Name = T("Min damage", "Мин. урон"), Desc = T("Only fire when the predicted damage at the point is at least this", "Стрелять, только если предсказанный урон по точке не ниже этого"), Min = 0, Max = 150, Default = 0, Suffix = "" }), function(value) xDTaraZ.Shitaro.SetLegit("min_damage", value) end)
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.AutoWall", { Name = T("Auto wall", "Авто-стена"), Desc = T("Shots pass through crates, wood and thin walls when the weapon's penetration budget allows; pair with Wall min damage", "Выстрелы проходят сквозь ящики, дерево и тонкие стены, когда хватает бюджета пробития оружия; ставь вместе с мин. уроном через стену"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_wall", value) end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.AutoWall", { Name = T("Auto wall", "Авто-стена"), Desc = T("Wallbangs through crates, wood and thin walls - the enemy's trick from the screenshot; pair with Wall min damage", "Прострелы через ящики, дерево и тонкие стены - приём противника со скриншота; ставь вместе с мин. уроном через стену"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("auto_wall", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.WallMinDamage", { Name = T("Wall min damage", "Мин. урон через стену"), Desc = T("Minimum damage that must remain after penetrating a wall", "Минимальный урон, который должен остаться после прострела стены"), Min = 0, Max = 150, Default = 0, Suffix = "" }), function(value) xDTaraZ.Shitaro.SetLegit("wall_min_damage", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(acc, "Legit.Multipoints", { Name = T("Multipoints", "Мультипоинты"), Desc = T("Scan several points per hitbox and pick the best one", "Сканирует несколько точек на хитбоксе и выбирает лучшую"), Default = false }), function(value) xDTaraZ.Shitaro.SetLegit("multipoint", value) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Slider(acc, "Legit.HeadSize", { Name = T("Head scale", "Скейл головы"), Desc = T("Multipoint spread over the head hitbox", "Разброс точек по хитбоксу головы"), Min = 0, Max = 100, Default = 65, Suffix = "%" }), function(value) xDTaraZ.Shitaro.SetLegit("head_size", value) end)
@@ -31840,7 +31965,7 @@ function xDTaraZ.UI.BuildMisc(window)
 
     -- AntiKick — клиентские кики и телепорты игры; серверный кик не блокируется
     local akg = tab:AddRightGroupbox({ Name = T("AntiKick", "Анти-кик"), Icon = "shield" })
-    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(akg, "AntiKick.Enable", { Name = T("Block kicks", "Блокировать кики"), Desc = T("Blocks LOCAL Kick attempts (client-side checks). Server-side kicks cannot be blocked - they come over the network.", "Блокирует ЛОКАЛЬНЫЕ кики (клиентские проверки игры). Серверный кик заблокировать нельзя - он идёт по сети."), Default = false }), function(value) xDTaraZ.Shitaro.antiKick.on = value == true end)
+    xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(akg, "AntiKick.Enable", { Name = T("Block kicks", "Блокировать кики"), Desc = T("Blocks LOCAL Kick attempts (client-side checks). Server-side kicks cannot be blocked - they come over the network.", "Блокирует ЛОКАЛЬНЫЕ кики (клиентские проверки игры). Серверный кик заблокировать нельзя - он идёт по сети."), Default = false }), function(value) xDTaraZ.Shitaro.SetAntiKick(value == true) end)
     xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(akg, "AntiKick.BlockTp", { Name = T("Block server hopping", "Блокировать перекидывание"), Desc = T("Blocks game-initiated TeleportService moves. Our Rejoin/ServerHop still work.", "Блокирует телепорты игры (перекидывание между серверами). Наши Rejoin/ServerHop работают как раньше."), Default = true }), function(value) xDTaraZ.Shitaro.antiKick.blockTp = value == true end)
 
     local util = tab:AddRightGroupbox({ Name = T("Utility", "อรรถประโยชน์"), Icon = "settings-2" })
