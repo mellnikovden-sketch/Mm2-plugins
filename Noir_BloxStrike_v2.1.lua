@@ -20071,6 +20071,7 @@ for _, class in ipairs({ Library, Window, Tab }) do
     end
 end
 
+(function()
 -- ══════════════════════════════════════════════════════════════════════════════
 --  CORE → NOIR BRIDGE (full feature port)
 --  The whole game module is embedded below and executed as-is. Its own
@@ -50806,5 +50807,6 @@ return true;
 
     print("[Noir] core loaded. RightControl / on-screen button.")
 end
+end)()
 
 return Library
