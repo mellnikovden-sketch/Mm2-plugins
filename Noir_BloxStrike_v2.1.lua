@@ -20,10 +20,12 @@
   ⚡ AUTO START
     Running this file opens the menu IMMEDIATELY. The CORE BLOCK is at the
     bottom of the file: the game module is embedded in full and loaded as is,
-    its native window is hidden and locked, and ALL of its features (aim,
-    trigger, visuals, world, skins, misc, settings) are rebuilt inside this
-    Noir menu under new names. Value edits go through the bridge straight
-    into its logic. Noir configs (Settings tab) persist every ported flag.
+    its native window is hidden and locked, and its features (aim, trigger,
+    visuals, world, misc, settings) are rebuilt inside this Noir menu under
+    new names. Value edits go through the bridge straight into its logic.
+    On top of that the user's own BloxStrike systems run natively: the full
+    Skin Changer tab, AntiKick / Anti Rejoin and the Obsidian Aimbot.
+    Noir configs (Settings tab) persist every flag, extras included.
 
   ТРЕБОВАНИЯ (опционально)
     • writefile / readfile / isfile / isfolder / makefolder / getcustomasset —
@@ -20076,7 +20078,2032 @@ end
 --  of it is rebuilt here in Noir with the same names. Values flow through
 --  a bridge: Noir Set -> el:set() -> original callbacks and logic.
 --  Re-execute safe: previous Noir window and previous core are unloaded.
--- ══════════════════════════════════════════════════════════════════════════════
+-- ═════════════════════════════════════════════════════════════════════════════
+
+-- ═════════════════════════════════════════════════════════════════════════════
+--  EXTRA FEATURES — taken from the user's own Noir BloxStrike build:
+--  full Skin Changer tab, AntiKick + Anti Rejoin, Obsidian Aimbot.
+--  Self-contained xDTaraZ runtime; everything sleeps until toggled on.
+-- ═════════════════════════════════════════════════════════════════════════════
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
+local StarterGui = game:GetService("StarterGui")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local VirtualUser = game:GetService("VirtualUser")
+local LocalPlayer = Players.LocalPlayer
+local vector2New, cframeLookAt, osClock = Vector2.new, CFrame.lookAt, os.clock
+local T
+if not LPH_OBFUSCATED then
+    local function Passthrough(fn) return fn end
+    LPH_JIT, LPH_JIT_MAX, LPH_NO_VIRTUALIZE = Passthrough, Passthrough, Passthrough
+end
+
+
+local xDTaraZ = setmetatable({}, {
+    __newindex = function(self, key, value)
+        rawset(self, key, type(value) == "function" and LPH_JIT(value) or value)
+    end,
+})
+
+xDTaraZ.Config = {
+    Discord = "https://discord.gg/S5nwsKG4uc",
+    UpdateLog = {
+        { "2026-10-10", "Silent Aim and Ragebot hit again after the game update\nFixed the game crashing when you shoot\nFixed ESP Team Check and health\nAim and ESP now include bots\nSkin pictures, turning skins off restores the stock look\nAuto Rebuy works from round 1, No Flash/No Smoke/FOV restore when off" },
+        { "2026-10-03", "Noir UI is back\nBetter executor support\nImproved Combat & Movement" },
+    },
+    SaveFolder = "Noir",
+    StatusInterval = 1,
+    AimRenderPriority = Enum.RenderPriority.Camera.Value + 1,
+    RefireGap = 0.12,
+    TriggerRay = 2000,
+    SilentFocusTime = 1,
+    SeeThrough = { "Characters", "Debris", "ThirdPersonWeaponStash" },
+    EspCacheMax = 256,
+    SoundSelfRange = 6,
+    GhostSnap = 45,
+    LeadExtra = 0.02,
+    LeadMaxSpeed = 60,
+    SpreadMethods = { "getTrueSpread", "getSpreadForConfig", "getMovementSpreadForConfig", "getBaseSpreadForConfig", "getBaseSpread" },
+    SoundMaxMarks = 24,
+    SoundColor = Color3.fromRGB(255, 196, 64),
+    RedeemGap = 1.1,
+    RebuyGap = 0.25,
+    AlertTries = 20,
+    AlertGap = 0.5,
+    RequireTimeout = 5,
+    MaxFails = 5,
+    FailWindow = 10,
+    CombatToggles = { "Aimbot", "Triggerbot", "Ragebot", "AimbotShowFov", "SilentShowFov" },
+    ModuleFeatures = {
+        Net = { "AutoRebuy" },
+        Character = { "BunnyHop" },
+        Skins = { "SkinChanger" },
+    },
+    Codes = {
+        "1MGROUPMEMBERS", "MYFAULTYALL", "RIANOMINATED2026", "LORE", "DUST_II", "MICHAELSRETURN",
+        "FREEDOM", "HAPPYBDAYYUUTO", "GAMEBROKE318", "OHNEPIXEL", "NEBULA", "REACTORDELAY", "BUTTERFLYCASE", "TRADEUPS",
+    },
+    BoneParts = {
+        Head = { "Head" },
+        Torso = { "UpperTorso", "Torso", "HumanoidRootPart" },
+    },
+    BuyStates = { ["Buy Period"] = true, ["Warmup"] = true },
+    StickySlack = 1.5,
+    HopGap = 0.05,
+    HookSettle = 1,
+    SkinFile = "Noir/skins.json",
+    SettingsFile = "Noir/settings.json",
+    SkinWears = { "Factory New", "Minimal Wear", "Field-Tested", "Well-Worn", "Battle-Scarred" },
+    SkinKinds = { Melee = "Knives", Glove = "Gloves", Grenade = "Grenades", C4 = "Gear", ["Zeus x27"] = "Gear" },
+    SkinOrder = { "Pistol", "SMG", "Rifle", "Sniper", "Heavy", "Shotgun", "Machine Gun", "Knives", "Gloves", "Grenades", "Gear" },
+    SkinRanks = { Forbidden = 9, Special = 8, Red = 7, Pink = 6, Purple = 5, Blue = 4, LightBlue = 3, Gray = 2, White = 1 },
+    SkinMainRows = 5,
+    SkinArms = { ["Left Arm"] = true, ["Right Arm"] = true },
+    GloveKey = "@Glove",
+    FovColors = {
+        Aimbot = Color3.fromRGB(232, 160, 76),
+        Silent = Color3.fromRGB(110, 170, 255),
+        Obsidian = Color3.fromRGB(170, 110, 255),
+    },
+    EspFocusColor = Color3.fromRGB(255, 214, 64),
+    FovLayer = 50,
+}
+
+xDTaraZ.State = {
+    Alive = true,
+    Connections = {},
+    Halted = {},
+    Notices = {},
+    AimTarget = nil,
+    AimPart = nil,
+    ObsidianAimTarget = nil,
+    ObsidianAimPart = nil,
+    ObsidianTouchActive = false,
+    ObsidianTouchPos = nil,
+    ObsidianDragGui = nil,
+    ObsidianDragBox = nil,
+    ObsidianBoxDrag = nil,
+    ObsidianDragStroke = nil,
+    ObsidianDragTitle = nil,
+    ObsidianDragGrip = nil,
+    ObsidianDragHandles = {},
+    ObsidianShieldGui = nil,
+    ObsidianShieldPanels = {},
+    ObsidianShieldLabel = nil,
+    RageTarget = nil,
+    RagePart = nil,
+    SilentTarget = nil,
+    Firing = false,
+    PressedAt = 0,
+    LastShot = 0,
+    Shots = 0,
+    Redirected = 0,
+    Bought = {},
+    LightSaved = nil,
+    FovSaved = nil,
+    ViewSaved = nil,
+    Hooks = {},
+    TriggerWarned = false,
+    HopAt = 0,
+    HopCrouched = false,
+    SpaceHeld = false,
+    FovBound = false,
+    FovBase = 0,
+}
+
+xDTaraZ.Options = {
+    Aimbot = false,
+    AimbotSmooth = 1,
+    AimbotBone = "Head",
+    AimbotPriority = "Crosshair",
+    AimbotFov = 150,
+    AimbotShowFov = false,
+    AimbotVisible = true,
+    AimbotSticky = true,
+    AimbotMaxDistance = 1500,
+    -- Separate Obsidian-style touch aimbot; target selection still uses xDTaraZ.Target.
+    ObsidianAimbot = false,
+    ObsidianSmooth = 10,
+    ObsidianBone = "Head",
+    ObsidianPriority = "Crosshair",
+    ObsidianFov = 350,
+    ObsidianShowFov = true,
+    ObsidianVisible = true,
+    ObsidianSticky = true,
+    ObsidianMaxDistance = 1500,
+    ObsidianVerticalOffset = 0,
+    ObsidianDragVisible = true,
+    ObsidianDragControls = true,
+    ObsidianDragFill = 6,
+    ObsidianShieldBlock = true,
+    ObsidianShieldVisual = true,
+    ObsidianShieldLabel = true,
+    ObsidianShieldOpacity = 52,
+    SilentAim = false,
+    SilentHitChance = 100,
+    SilentHeadChance = 100,
+    SilentPriority = "Crosshair",
+    SilentFov = 220,
+    SilentShowFov = false,
+    SilentVisible = true,
+    SilentMaxDistance = 2000,
+    SilentPredict = false,
+    Triggerbot = false,
+    TriggerDelay = 0,
+    TriggerHitChance = 100,
+    Ragebot = false,
+    RageVisible = true,
+    RageMaxDistance = 2000,
+    NoRecoil = false,
+    NoSpread = false,
+    Fullbright = false,
+    NoFlash = false,
+    NoSmoke = false,
+    SoundEsp = false,
+    SoundEspLife = 3,
+    EspMemory = 5,
+    CameraFov = false,
+    CameraFovValue = 100,
+    InfiniteJump = false,
+    BunnyHop = false,
+    BhopMobile = false,
+    BunnyCrouch = true,
+    SkinChanger = false,
+    AutoRebuy = false,
+    AntiAfk = false,
+    -- Auto Counter Strafe
+    AutoCounterStrafe      = false,
+    CounterStrafeHoldMs   = 300,  -- ms to hold the counter key
+    CounterStrafeCooldown = 500,  -- ms base cooldown between counters (added on top of hold time)
+    AimbotDependency       = false, -- only counter-strafe when Obsidian FOV has a target
+}
+
+---Executor capability probes. The old UI library shipped these; AirFlow does not, so the script owns them now.
+---Every probe runs the API on a throwaway fixture, because some executors ship stubs that pass type() but do nothing.
+xDTaraZ.Compat = { Probes = {} }
+
+xDTaraZ.Compat.Api = {
+    HookFunction = hookfunction or replaceclosure,
+    RestoreFunction = restorefunction,
+    IsFunctionHooked = isfunctionhooked,
+    GetGc = getgc,
+    GetUpvalue = getupvalue or (debug and debug.getupvalue),
+}
+
+---Probes run inline (this __index cannot yield), so a probe that yields counts as unsupported.
+xDTaraZ.Compat.Caps = setmetatable({}, {
+    __index = function(caps, name)
+        local probe = xDTaraZ.Compat.Probes[name]
+        if not probe then return false end
+        local thread = coroutine.create(probe)
+        local ok, works = coroutine.resume(thread)
+        local has = ok and coroutine.status(thread) == "dead" and works == true
+        if coroutine.status(thread) == "suspended" then pcall(coroutine.close, thread) end
+        rawset(caps, name, has)
+        return has
+    end,
+})
+
+function xDTaraZ.Compat.Probes.HookFunction()
+    local hook = xDTaraZ.Compat.Api.HookFunction
+    if not hook then return false end
+    local function Target() return "plain" end
+    local original = hook(Target, function() return "hooked" end)
+    local works = Target() == "hooked" and type(original) == "function" and original() == "plain"
+    if type(original) == "function" then pcall(hook, Target, original) end
+    return works
+end
+
+-- Delta's getgc(false) hides freshly created closures and can be sparse, so
+-- probe what the features actually scan: getgc(true), hole-tolerant. A heap
+-- that exposes tables is enough — every Gc-gated feature scans for tables.
+function xDTaraZ.Compat.Probes.Gc()
+    local getGc = xDTaraZ.Compat.Api.GetGc
+    if not getGc then return false end
+    local marker = { NoirGcProbe = true }
+    local ok, heap = pcall(getGc, true)
+    if not ok or type(heap) ~= "table" then
+        ok, heap = pcall(getGc, false)
+        if not ok or type(heap) ~= "table" then return false end
+    end
+    local sawTable = false
+    for _, value in pairs(heap) do
+        if value == marker then return true end
+        if type(value) == "table" then sawTable = true end
+    end
+    return sawTable
+end
+
+function xDTaraZ.Compat.Probes.Upvalues()
+    local getUpvalue = xDTaraZ.Compat.Api.GetUpvalue
+    if not getUpvalue then return false end
+    local marker = {}
+    local function Holder() return marker end
+    return getUpvalue(Holder, 1) == marker
+end
+
+---The FOV circles set these every frame; a shim that only knows Line would throw.
+function xDTaraZ.Compat.Probes.Drawing()
+    if type(Drawing) ~= "table" and type(Drawing) ~= "userdata" then return false end
+    local okNew, circle = pcall(Drawing.new, "Circle")
+    if not okNew or circle == nil then return false end
+    local ok = pcall(function()
+        circle.Thickness, circle.NumSides, circle.Filled = 1.5, 64, false
+        circle.Position, circle.Radius, circle.Visible = Vector2.new(-100, -100), 10, false
+    end)
+    pcall(circle.Remove or circle.Destroy, circle)
+    return ok
+end
+
+---@param caps string|string[]
+---@return boolean, string?  false + the first missing cap
+function xDTaraZ.Compat.Has(caps)
+    for _, name in ipairs(type(caps) == "table" and caps or { caps }) do
+        if not xDTaraZ.Compat.Caps[name] then return false, name end
+    end
+    return true
+end
+
+---Undoes a hook: the executor's restorefunction first, else `rehook`.
+function xDTaraZ.Compat.Unhook(target, rehook)
+    local api = xDTaraZ.Compat.Api
+    if target and api.RestoreFunction and pcall(api.RestoreFunction, target) then
+        if not api.IsFunctionHooked then return end
+        local ok, still = pcall(api.IsFunctionHooked, target)
+        if ok and not still then return end
+    end
+    rehook()
+end
+
+xDTaraZ.Caps = setmetatable({}, {
+    __index = function(_, name)
+        return xDTaraZ.Compat.Caps[name] == true
+    end,
+})
+
+xDTaraZ.Util = {}
+
+---@param detail any  extra context for the warn; the player only sees `text`
+function xDTaraZ.Util.Alert(text, detail)
+    warn("[BloxStrike] menu:", detail or text)
+    task.spawn(function()
+        for _ = 1, xDTaraZ.Config.AlertTries do
+            if pcall(StarterGui.SetCore, StarterGui, "SendNotification", { Title = "Noir", Text = text, Duration = 10 }) then return end
+            task.wait(xDTaraZ.Config.AlertGap)
+        end
+    end)
+end
+
+---@return table?  nil after the player was told on screen
+function xDTaraZ.Util.LoadLibrary()
+    return Library -- this file already carries the Noir library up top
+end
+
+function xDTaraZ.Util.Try(label, fn, ...)
+    local ok, err = pcall(fn, ...)
+    if not ok then warn("[BloxStrike] " .. label .. ":", err) end
+    return ok
+end
+
+function xDTaraZ.Util.Copy(text)
+    local fn = setclipboard or toclipboard
+    if not fn then return false end
+    return pcall(fn, text)
+end
+
+---@return function?  original, nil when already hooked or the executor can't hook it
+function xDTaraZ.Util.Hook(key, fn, replacement)
+    if type(fn) ~= "function" or xDTaraZ.State.Hooks[key] or not xDTaraZ.Caps.HookFunction then return nil end
+    local ok, original = pcall(hookfunction, fn, replacement)
+    if not ok or type(original) ~= "function" then
+        warn("[BloxStrike] hook " .. key .. ":", ok and "executor returned no original" or original)
+        return nil
+    end
+    xDTaraZ.State.Hooks[key] = { Fn = fn, Original = original }
+    return original
+end
+
+function xDTaraZ.Util.UnhookAll()
+    for key, hook in pairs(xDTaraZ.State.Hooks) do
+        local ok, err = pcall(xDTaraZ.Compat.Unhook, hook.Fn, function() hookfunction(hook.Fn, hook.Original) end)
+        if not ok then warn("[BloxStrike] unhook " .. key .. ":", err) end
+    end
+    table.clear(xDTaraZ.State.Hooks)
+end
+
+function xDTaraZ.Util.Decode(raw)
+    if type(raw) ~= "string" then return nil end
+    local ok, decoded = pcall(HttpService.JSONDecode, HttpService, raw)
+    return ok and decoded or nil
+end
+
+function xDTaraZ:Connect(signal, handler)
+    local conn = signal:Connect(handler)
+    table.insert(self.State.Connections, conn)
+    return conn
+end
+
+xDTaraZ.GameLib = { Missing = {} }
+
+---@param parent Instance?     where it lives today
+---@param home string          parent name a moved copy must still have
+---@return Instance?           nil after a warning that names it
+function xDTaraZ.GameLib.Find(parent, name, class, home)
+    local found = parent and parent:FindFirstChild(name)
+    if found and found:IsA(class) then return found end
+    for _, desc in ipairs(ReplicatedStorage:GetDescendants()) do
+        if desc.Name == name and desc:IsA(class) and desc.Parent and desc.Parent.Name == home then return desc end
+    end
+    xDTaraZ.GameLib.Missing[name] = "Absent"
+    warn("[BloxStrike] " .. home .. "." .. name .. " not found, features that need it are blocked")
+    return nil
+end
+
+---@return any  module, or nil when this executor can't require it (never throws)
+function xDTaraZ.GameLib.Require(inst)
+    if not (inst and inst:IsA("ModuleScript")) then return nil end
+    local ok, mod = pcall(require, inst)
+    if ok then return mod end
+
+    local done, okAgain, again = false, false, nil
+    task.spawn(function()
+        pcall(setthreadidentity, 2)
+        local read, identity = pcall(getthreadidentity)
+        if read and identity == 2 then okAgain, again = pcall(require, inst) end
+        done = true
+    end)
+    local deadline = osClock() + xDTaraZ.Config.RequireTimeout
+    while not done and osClock() < deadline do task.wait() end
+    if okAgain then return again end
+    warn("[BloxStrike] require " .. inst.Name .. ":", mod)
+    return nil
+end
+
+do
+    local database = ReplicatedStorage:FindFirstChild("Database")
+    local security = database and database:FindFirstChild("Security")
+    local custom = database and database:FindFirstChild("Custom")
+    local controllers = ReplicatedStorage:FindFirstChild("Controllers")
+    local find = xDTaraZ.GameLib.Find
+    xDTaraZ.GameLib.Net = xDTaraZ.GameLib.Require(find(security, "Remotes", "ModuleScript", "Security"))
+    xDTaraZ.GameLib.Character = xDTaraZ.GameLib.Require(find(controllers, "CharacterController", "ModuleScript", "Controllers"))
+    xDTaraZ.GameLib.Camera = xDTaraZ.GameLib.Require(find(controllers, "CameraController", "ModuleScript", "Controllers"))
+    xDTaraZ.GameLib.WeaponFolder = find(custom, "Weapons", "Folder", "Custom")
+    xDTaraZ.GameLib.Rarities = xDTaraZ.GameLib.Require(find(custom, "Rarities", "ModuleScript", "GameStats"))
+    local vfx = ReplicatedStorage:FindFirstChild("Components") and ReplicatedStorage.Components:FindFirstChild("VFXLibary", true)
+    xDTaraZ.GameLib.Smoke = xDTaraZ.GameLib.Require(find(vfx, "CreateVoxelSmoke", "ModuleScript", "VFXLibary"))
+    xDTaraZ.GameLib.Flash = xDTaraZ.GameLib.Require(find(vfx, "FlashEffect", "ModuleScript", "VFXLibary"))
+    -- CounterStrafe: RuntimeKinematics for velocity, ControlModule for movement injection
+    local movementV2 = ReplicatedStorage:FindFirstChild("MovementV2")
+    local rkInst     = movementV2 and movementV2:FindFirstChild("RuntimeKinematics")
+    xDTaraZ.GameLib.RuntimeKinematics = rkInst and xDTaraZ.GameLib.Require(rkInst)
+    local psInst = LocalPlayer:FindFirstChild("PlayerScripts")
+    local pmInst = psInst and psInst:FindFirstChild("PlayerModule")
+    local cmInst = pmInst and pmInst:FindFirstChild("ControlModule")
+    xDTaraZ.GameLib.ControlModule = cmInst and xDTaraZ.GameLib.Require(cmInst)
+end
+
+xDTaraZ.Weapons = {}
+do
+    local folder = xDTaraZ.GameLib.WeaponFolder
+    for _, module in ipairs(folder and folder:GetChildren() or {}) do
+        local data = module:IsA("ModuleScript") and xDTaraZ.GameLib.Require(module)
+        if type(data) == "table" and data.FireRate then xDTaraZ.Weapons[module.Name] = data end
+    end
+end
+
+xDTaraZ.Player = {}
+
+function xDTaraZ.Player.Character()
+    local chars = Workspace:FindFirstChild("Characters")
+    return (chars and chars:FindFirstChild(LocalPlayer.Name)) or LocalPlayer.Character
+end
+
+function xDTaraZ.Player.Alive()
+    local char = xDTaraZ.Player.Character()
+    return char ~= nil and char.Parent ~= nil and tostring(LocalPlayer:GetAttribute("Dead")) ~= "true"
+end
+
+function xDTaraZ.Player.Humanoid()
+    local char = xDTaraZ.Player.Character()
+    return char and char:FindFirstChildOfClass("Humanoid")
+end
+
+---@return table?  the game's own local character state; nil outside a round
+function xDTaraZ.Player.Body()
+    local controller = xDTaraZ.GameLib.Character
+    if not controller then return nil end
+    local ok, body = pcall(controller.getCurrentCharacter)
+    return ok and body or nil
+end
+
+function xDTaraZ.Player.Equipped()
+    return xDTaraZ.Util.Decode(LocalPlayer:GetAttribute("CurrentEquipped"))
+end
+
+xDTaraZ.Target = { Motion = setmetatable({}, { __mode = "k" }) }
+
+local losParams = RaycastParams.new()
+losParams.FilterType = Enum.RaycastFilterType.Exclude
+local losFilter = table.create(3)
+local wallParams = RaycastParams.new()
+wallParams.FilterType = Enum.RaycastFilterType.Exclude
+
+function xDTaraZ.Target.Candidates()
+    local list = {}
+    local chars = Workspace:FindFirstChild("Characters")
+    if not chars then return list end
+    for _, model in ipairs(chars:GetChildren()) do
+        if model.Name ~= LocalPlayer.Name and model:IsA("Model") then list[#list + 1] = model end
+    end
+    return list
+end
+
+function xDTaraZ.Target.Owner(model)
+    return Players:FindFirstChild(model.Name)
+end
+
+---@return string?  team of a character: owner's Team attribute, else the team that wears this character model
+function xDTaraZ.Target.TeamOf(model)
+    local owner = model and xDTaraZ.Target.Owner(model)
+    local team = owner and owner:GetAttribute("Team")
+    if team then return team end
+    local look = model and model:GetAttribute("CharacterName")
+    if not look then return nil end
+    if look == Workspace:GetAttribute("CTCharacter") then return "Counter-Terrorists" end
+    if look == Workspace:GetAttribute("TCharacter") then return "Terrorists" end
+    return nil
+end
+
+function xDTaraZ.Target.MyTeam()
+    return LocalPlayer:GetAttribute("Team") or xDTaraZ.Target.TeamOf(xDTaraZ.Player.Character())
+end
+
+function xDTaraZ.Target.IsEnemy(model)
+    if tostring(model:GetAttribute("Dead")) == "true" then return false end
+    if not xDTaraZ.Target.Owner(model) and model:GetAttribute("Health") == nil then return false end
+    if xDTaraZ.Target.FreeForAll() then return true end
+    local mine = xDTaraZ.Target.MyTeam()
+    if mine == nil then return false end
+    return xDTaraZ.Target.TeamOf(model) ~= mine
+end
+
+---Samples every enemy's head each frame so shots can lead a moving target.
+function xDTaraZ.Target.Track()
+    local motion, now = xDTaraZ.Target.Motion, osClock()
+    for _, model in ipairs(xDTaraZ.Target.Candidates()) do
+        local head = model:FindFirstChild("Head")
+        if not head then continue end
+        local last = motion[head]
+        if last and now > last.Time then
+            local step = (head.Position - last.Pos) / (now - last.Time)
+            last.Vel = last.Vel and last.Vel:Lerp(step, 0.5) or step
+            last.Pos, last.Time = head.Position, now
+        else
+            motion[head] = { Pos = head.Position, Time = now, Vel = Vector3.zero }
+        end
+    end
+end
+
+---@return Vector3  where the part will be once the shot reaches the server
+function xDTaraZ.Target.Lead(part)
+    if not xDTaraZ.Options.SilentPredict then return part.Position end
+    local track = xDTaraZ.Target.Motion[part] or xDTaraZ.Target.Motion[part.Parent and part.Parent:FindFirstChild("Head")]
+    local vel = track and track.Vel or Vector3.zero
+    if vel.Magnitude > xDTaraZ.Config.LeadMaxSpeed then return part.Position end
+    local ok, ping = pcall(LocalPlayer.GetNetworkPing, LocalPlayer)
+    return part.Position + vel * ((ok and ping or 0.05) + xDTaraZ.Config.LeadExtra)
+end
+
+---@return boolean  true in Deathmatch, where the team picker is only cosmetic
+function xDTaraZ.Target.FreeForAll()
+    return tostring(Workspace:GetAttribute("Gamemode")):find("Deathmatch") ~= nil
+end
+
+function xDTaraZ.Target.Part(model, bone)
+    for _, name in ipairs(xDTaraZ.Config.BoneParts[bone] or xDTaraZ.Config.BoneParts.Head) do
+        local part = model:FindFirstChild(name)
+        if part and part:IsA("BasePart") then return part end
+    end
+    return model:FindFirstChild("HumanoidRootPart")
+end
+
+function xDTaraZ.Target.Visible(from, model, point)
+    local skip = { Workspace.CurrentCamera, model }
+    for _, name in ipairs(xDTaraZ.Config.SeeThrough) do
+        local folder = Workspace:FindFirstChild(name)
+        if folder then skip[#skip + 1] = folder end
+    end
+    wallParams.FilterDescendantsInstances = skip
+    return Workspace:Raycast(from, point - from, wallParams) == nil
+end
+
+---@param cfg table  { Bone, Fov?, Visible, MaxDistance, Priority }  Fov nil = whole map
+---@return Model?, BasePart?
+function xDTaraZ.Target.Pick(cfg)
+    local cam = Workspace.CurrentCamera
+    local origin = cam.CFrame.Position
+    local center = cam.ViewportSize / 2
+    local best, bestPart, bestScore
+
+    for _, model in ipairs(xDTaraZ.Target.Candidates()) do
+        if not xDTaraZ.Target.IsEnemy(model) then continue end
+        local part = xDTaraZ.Target.Part(model, cfg.Bone)
+        if not part then continue end
+        local dist = (part.Position - origin).Magnitude
+        if dist > cfg.MaxDistance then continue end
+
+        local screen, onScreen = cam:WorldToViewportPoint(part.Position)
+        local screenDist = (vector2New(screen.X, screen.Y) - center).Magnitude
+        if cfg.Fov and (not onScreen or screenDist > cfg.Fov) then continue end
+        if cfg.Visible and not xDTaraZ.Target.Visible(origin, model, part.Position) then continue end
+
+        local score = dist
+        if cfg.Priority == "Crosshair" then
+            score = onScreen and screenDist or 1e6 + dist
+        elseif cfg.Priority == "Health" then
+            score = (tonumber(model:GetAttribute("Health")) or 100) * 1e4 + dist
+        end
+        if not bestScore or score < bestScore then best, bestPart, bestScore = model, part, score end
+    end
+    return best, bestPart
+end
+
+---@return boolean  still a valid lock, with a looser fov
+function xDTaraZ.Target.StillValid(model, part, cfg)
+    if not (model and part and part.Parent and xDTaraZ.Target.IsEnemy(model)) then return false end
+    local cam = Workspace.CurrentCamera
+    local origin = cam.CFrame.Position
+    if (part.Position - origin).Magnitude > cfg.MaxDistance then return false end
+    if cfg.Visible and not xDTaraZ.Target.Visible(origin, model, part.Position) then return false end
+    if not cfg.Fov then return true end
+    local screen, onScreen = cam:WorldToViewportPoint(part.Position)
+    local center = cam.ViewportSize / 2
+    return onScreen and (vector2New(screen.X, screen.Y) - center).Magnitude <= cfg.Fov * xDTaraZ.Config.StickySlack
+end
+
+---@return Model?  enemy under the crosshair right now
+function xDTaraZ.Target.UnderCrosshair()
+    local cam = Workspace.CurrentCamera
+    losFilter[1], losFilter[2], losFilter[3] = xDTaraZ.Player.Character(), cam, nil
+    losParams.FilterDescendantsInstances = losFilter
+    local hit = Workspace:Raycast(cam.CFrame.Position, cam.CFrame.LookVector * xDTaraZ.Config.TriggerRay, losParams)
+    if not hit then return nil end
+    local chars = Workspace:FindFirstChild("Characters")
+    local model = hit.Instance
+    while model and model.Parent ~= chars do model = model.Parent end
+    if model and model:IsA("Model") and xDTaraZ.Target.IsEnemy(model) then return model end
+    return nil
+end
+
+local function roll(percent)
+    return percent >= 100 or math.random() * 100 < percent
+end
+
+xDTaraZ.Aimbot = {}
+
+function xDTaraZ.Aimbot.Config()
+    local o = xDTaraZ.Options
+    return { Bone = o.AimbotBone, Fov = o.AimbotFov, Visible = o.AimbotVisible, MaxDistance = o.AimbotMaxDistance, Priority = o.AimbotPriority }
+end
+
+function xDTaraZ.Aimbot.Step()
+    local state, o = xDTaraZ.State, xDTaraZ.Options
+    if not o.Aimbot then state.AimTarget, state.AimPart = nil, nil return end
+    local cfg = xDTaraZ.Aimbot.Config()
+    if o.AimbotSticky and xDTaraZ.Target.StillValid(state.AimTarget, state.AimPart, cfg) then return end
+    state.AimTarget, state.AimPart = xDTaraZ.Target.Pick(cfg)
+end
+
+---@param dt number  frame time from RenderStep
+function xDTaraZ.Aimbot.Lock(dt)
+    local o, state = xDTaraZ.Options, xDTaraZ.State
+    local part, smooth = nil, 1
+    if o.Ragebot and state.RagePart and state.RagePart.Parent then
+        part = state.RagePart
+    elseif o.Aimbot and state.AimPart and state.AimPart.Parent then
+        part, smooth = state.AimPart, math.max(o.AimbotSmooth, 1)
+    end
+    if not part then return end
+    local cam = Workspace.CurrentCamera
+    local origin = cam.CFrame.Position
+    local want = (part.Position - origin).Unit
+    local alpha = 1 - (1 - 1 / smooth) ^ ((dt or 1 / 60) * 60)
+    local look = smooth <= 1 and want or cam.CFrame.LookVector:Lerp(want, alpha).Unit
+    cam.CFrame = cframeLookAt(origin, origin + look)
+end
+
+-- Obsidian-style touch movement with Z86's target acquisition/validation.
+-- This is a separate mode: it does not reuse Obsidian's GetNearestTarget or
+-- replace the original Z86 camera aimbot.
+xDTaraZ.ObsidianAimbot = {}
+local OBSIDIAN_TOUCH_SLOT = 10
+local TOUCH_BEGIN, TOUCH_CHANGE, TOUCH_END = 0, 1, 2
+
+function xDTaraZ.ObsidianAimbot.CreateDragBox()
+    local state = xDTaraZ.State
+    if state.ObsidianDragBox and state.ObsidianDragBox.Parent then return end
+    local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui")
+    local gui = Instance.new("ScreenGui")
+    gui.Name, gui.IgnoreGuiInset, gui.ResetOnSpawn = "Z86ObsidianAimBounds", true, false
+    gui.DisplayOrder, gui.ZIndexBehavior, gui.Parent = 9, Enum.ZIndexBehavior.Sibling, playerGui
+
+    local box = Instance.new("Frame")
+    box.Name = "AimDragBounds"
+    box.Position, box.Size = UDim2.fromScale(0.56, 0.16), UDim2.fromScale(0.38, 0.68)
+    box.BackgroundColor3, box.BackgroundTransparency = Color3.fromRGB(127, 90, 240), 0.94
+    box.BorderSizePixel, box.Active, box.ZIndex, box.Parent = 0, false, 3, gui
+    local stroke = Instance.new("UIStroke")
+    stroke.Color, stroke.Thickness, stroke.Parent = Color3.fromRGB(180, 140, 255), 2, box
+
+    local title = Instance.new("TextLabel")
+    title.Name, title.BackgroundTransparency = "BoundsLabel", 1
+    title.Size, title.Position = UDim2.new(1, 0, 0, 18), UDim2.fromOffset(0, 3)
+    title.Font, title.Text = Enum.Font.GothamBold, "AIM DRAG AREA"
+    title.TextColor3, title.TextSize, title.TextStrokeTransparency = Color3.fromRGB(180, 140, 255), 10, 0.5
+    title.ZIndex, title.Parent = 4, box
+
+    local grip = Instance.new("TextButton")
+    grip.Name, grip.AnchorPoint = "MoveGrip", Vector2.new(0.5, 0)
+    grip.Position, grip.Size = UDim2.new(0.5, 0, 0, 22), UDim2.fromOffset(76, 18)
+    grip.BackgroundColor3, grip.BackgroundTransparency = Color3.fromRGB(36, 33, 54), 0.1
+    grip.BorderSizePixel, grip.Text, grip.TextColor3 = 0, "MOVE", Color3.fromRGB(230, 220, 255)
+    grip.Font, grip.TextSize, grip.Active, grip.ZIndex, grip.Parent = Enum.Font.GothamBold, 9, true, 5, box
+    Instance.new("UICorner", grip).CornerRadius = UDim.new(0, 5)
+
+    local handles = {}
+    local defs = {
+        { "TopLeft", Vector2.new(0, 0), UDim2.new(0, 0, 0, 0), -1, -1 },
+        { "TopRight", Vector2.new(1, 0), UDim2.new(1, 0, 0, 0), 1, -1 },
+        { "BottomLeft", Vector2.new(0, 1), UDim2.new(0, 0, 1, 0), -1, 1 },
+        { "BottomRight", Vector2.new(1, 1), UDim2.new(1, 0, 1, 0), 1, 1 },
+    }
+    for _, def in ipairs(defs) do
+        local h = Instance.new("TextButton")
+        h.Name, h.Parent, h.AnchorPoint, h.Position = def[1], box, def[2], def[3]
+        h.Size, h.BackgroundColor3, h.BorderSizePixel = UDim2.fromOffset(20, 20), Color3.fromRGB(180, 140, 255), 0
+        h.Text, h.AutoButtonColor, h.Active, h.ZIndex = "", false, true, 7
+        Instance.new("UICorner", h).CornerRadius = UDim.new(1, 0)
+        handles[#handles + 1] = { Button = h, SX = def[4], SY = def[5] }
+    end
+
+    state.ObsidianDragGui, state.ObsidianDragBox = gui, box
+    state.ObsidianDragStroke, state.ObsidianDragTitle = stroke, title
+    state.ObsidianDragGrip, state.ObsidianDragHandles = grip, handles
+
+    local function beginEdit(input, mode, sx, sy)
+        if input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+        state.ObsidianBoxDrag = {
+            Mode = mode, SX = sx or 0, SY = sy or 0,
+            Pointer = Vector2.new(input.Position.X, input.Position.Y),
+            Position = box.AbsolutePosition, Size = box.AbsoluteSize,
+        }
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then state.ObsidianBoxDrag = nil end
+        end)
+    end
+    grip.InputBegan:Connect(function(input) beginEdit(input, "move") end)
+    for _, item in ipairs(handles) do
+        item.Button.InputBegan:Connect(function(input) beginEdit(input, "resize", item.SX, item.SY) end)
+    end
+    xDTaraZ:Connect(UserInputService.InputChanged, function(input)
+        local drag = state.ObsidianBoxDrag
+        if not drag then return end
+        if input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+        local viewport = Workspace.CurrentCamera.ViewportSize
+        local delta = Vector2.new(input.Position.X, input.Position.Y) - drag.Pointer
+        if drag.Mode == "move" then
+            local x = math.clamp(drag.Position.X + delta.X, viewport.X * 0.5, math.max(viewport.X * 0.5, viewport.X - drag.Size.X))
+            local y = math.clamp(drag.Position.Y + delta.Y, 0, math.max(0, viewport.Y - drag.Size.Y))
+            box.Position = UDim2.fromOffset(x, y)
+        else
+            local left, top = drag.Position.X, drag.Position.Y
+            local right, bottom = left + drag.Size.X, top + drag.Size.Y
+            if drag.SX < 0 then left = math.clamp(left + delta.X, viewport.X * 0.5, right - 100)
+            elseif drag.SX > 0 then right = math.clamp(right + delta.X, left + 100, viewport.X) end
+            if drag.SY < 0 then top = math.clamp(top + delta.Y, 0, bottom - 100)
+            elseif drag.SY > 0 then bottom = math.clamp(bottom + delta.Y, top + 100, viewport.Y) end
+            box.Position, box.Size = UDim2.fromOffset(left, top), UDim2.fromOffset(right - left, bottom - top)
+        end
+    end)
+    xDTaraZ.ObsidianAimbot.UpdateDragAppearance()
+end
+
+function xDTaraZ.ObsidianAimbot.UpdateDragAppearance()
+    local state, o = xDTaraZ.State, xDTaraZ.Options
+    local box = state.ObsidianDragBox
+    if not box then return end
+    local visible = o.ObsidianDragVisible ~= false
+    box.BackgroundTransparency = 1 - (math.clamp(tonumber(o.ObsidianDragFill) or 6, 0, 35) / 100)
+    if state.ObsidianDragStroke then state.ObsidianDragStroke.Enabled = visible end
+    if state.ObsidianDragTitle then state.ObsidianDragTitle.Visible = visible end
+    if state.ObsidianDragGrip then state.ObsidianDragGrip.Visible = o.ObsidianDragControls ~= false end
+    for _, item in ipairs(state.ObsidianDragHandles or {}) do
+        item.Button.Visible = o.ObsidianDragControls ~= false
+    end
+    box.Visible = visible or (o.ObsidianDragControls ~= false)
+end
+
+function xDTaraZ.ObsidianAimbot.CreateInputShield()
+    local state = xDTaraZ.State
+    if state.ObsidianShieldGui and state.ObsidianShieldGui.Parent then return end
+    local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui")
+    local gui = Instance.new("ScreenGui")
+    gui.Name, gui.IgnoreGuiInset, gui.ResetOnSpawn = "Z86ObsidianInputShield", true, false
+    gui.DisplayOrder, gui.ZIndexBehavior, gui.Parent = 8, Enum.ZIndexBehavior.Sibling, playerGui
+    local panels = {}
+    for _, name in ipairs({ "Top", "Bottom", "Left", "Right" }) do
+        local panel = Instance.new("Frame")
+        panel.Name, panel.Parent = name .. "InputBlocker", gui
+        panel.BackgroundColor3, panel.BackgroundTransparency = Color3.fromRGB(190, 45, 55), 0.48
+        panel.BorderSizePixel, panel.Active, panel.Selectable = 0, true, false
+        panel.Visible, panel.ZIndex = false, 20
+        local outline = Instance.new("UIStroke", panel)
+        outline.Color, outline.Thickness, outline.Transparency = Color3.fromRGB(255, 105, 115), 1, 0.15
+        panels[name] = panel
+    end
+    local label = Instance.new("TextLabel")
+    label.Name, label.Parent = "ShieldStatus", gui
+    label.BackgroundTransparency, label.Size = 1, UDim2.new(0.5, 0, 0, 24)
+    label.Position, label.Font = UDim2.new(0.5, 0, 0, 8), Enum.Font.GothamBold
+    label.Text, label.TextColor3 = "INPUT SHIELD ACTIVE — TOUCH OUTSIDE DRAG BOX BLOCKED", Color3.fromRGB(255, 220, 220)
+    label.TextStrokeTransparency, label.TextSize, label.Visible, label.ZIndex = 0.4, 11, false, 21
+    state.ObsidianShieldGui, state.ObsidianShieldPanels, state.ObsidianShieldLabel = gui, panels, label
+end
+
+function xDTaraZ.ObsidianAimbot.UpdateInputShield(enabled)
+    local state, o = xDTaraZ.State, xDTaraZ.Options
+    if not state.ObsidianShieldGui then xDTaraZ.ObsidianAimbot.CreateInputShield() end
+    local camera = Workspace.CurrentCamera
+    local box = state.ObsidianDragBox
+    if not (camera and box) then return end
+    local viewport = camera.ViewportSize
+    local p, z = box.AbsolutePosition, box.AbsoluteSize
+    local left, top = math.clamp(p.X, 0, viewport.X), math.clamp(p.Y, 0, viewport.Y)
+    local right, bottom = math.clamp(p.X + z.X, left, viewport.X), math.clamp(p.Y + z.Y, top, viewport.Y)
+    local midX = viewport.X * 0.5
+    local regions = {
+        Top = { midX, 0, viewport.X - midX, top },
+        Bottom = { midX, bottom, viewport.X - midX, viewport.Y - bottom },
+        Left = { midX, top, math.max(0, left - midX), bottom - top },
+        Right = { right, top, math.max(0, viewport.X - right), bottom - top },
+    }
+    local active = enabled and o.ObsidianShieldBlock ~= false
+    for name, rect in pairs(regions) do
+        local panel = state.ObsidianShieldPanels[name]
+        local visual = o.ObsidianShieldVisual ~= false
+        panel.Position, panel.Size = UDim2.fromOffset(rect[1], rect[2]), UDim2.fromOffset(math.max(0, rect[3]), math.max(0, rect[4]))
+        panel.Active = active
+        panel.Visible = active and rect[3] > 0 and rect[4] > 0
+        panel.BackgroundTransparency = visual and (1 - math.clamp(tonumber(o.ObsidianShieldOpacity) or 52, 10, 95) / 100) or 1
+        local outline = panel:FindFirstChildOfClass("UIStroke")
+        if outline then outline.Enabled = visual end
+    end
+    state.ObsidianShieldLabel.Visible = active and o.ObsidianShieldLabel ~= false
+end
+
+function xDTaraZ.ObsidianAimbot.Bounds()
+    local box = xDTaraZ.State.ObsidianDragBox
+    if box and box.Parent then
+        local p, z = box.AbsolutePosition, box.AbsoluteSize
+        return p.X, p.Y, p.X + z.X, p.Y + z.Y
+    end
+    local viewport = Workspace.CurrentCamera.ViewportSize
+    return viewport.X * 0.5, 0, viewport.X, viewport.Y
+end
+
+function xDTaraZ.ObsidianAimbot.ClampPoint(point)
+    local left, top, right, bottom = xDTaraZ.ObsidianAimbot.Bounds()
+    return Vector2.new(math.clamp(point.X, left, right), math.clamp(point.Y, top, bottom))
+end
+
+function xDTaraZ.ObsidianAimbot.Stop()
+    local state = xDTaraZ.State
+    if state.ObsidianTouchActive then
+        pcall(VirtualInputManager.SendTouchEvent, VirtualInputManager, OBSIDIAN_TOUCH_SLOT, TOUCH_END,
+            state.ObsidianTouchPos and xDTaraZ.ObsidianAimbot.ClampPoint(state.ObsidianTouchPos).X or 0,
+            state.ObsidianTouchPos and xDTaraZ.ObsidianAimbot.ClampPoint(state.ObsidianTouchPos).Y or 0)
+    end
+    state.ObsidianTouchActive = false
+    state.ObsidianTouchPos = nil
+    state.ObsidianAimTarget, state.ObsidianAimPart = nil, nil
+end
+
+function xDTaraZ.ObsidianAimbot.Config()
+    local o = xDTaraZ.Options
+    return {
+        Bone = o.ObsidianBone,
+        Fov = o.ObsidianFov,
+        Visible = o.ObsidianVisible,
+        MaxDistance = o.ObsidianMaxDistance,
+        Priority = o.ObsidianPriority,
+    }
+end
+
+function xDTaraZ.ObsidianAimbot.Step()
+    local o, state = xDTaraZ.Options, xDTaraZ.State
+    xDTaraZ.ObsidianAimbot.UpdateInputShield(o.ObsidianAimbot and state.ObsidianTouchActive)
+    if not o.ObsidianAimbot or not xDTaraZ.Player.Alive() then
+        xDTaraZ.ObsidianAimbot.Stop()
+        return
+    end
+    local sendTouch = VirtualInputManager and VirtualInputManager.SendTouchEvent
+    if type(sendTouch) ~= "function" then
+        xDTaraZ.ObsidianAimbot.Stop()
+        return
+    end
+
+    local cfg = xDTaraZ.ObsidianAimbot.Config()
+    if not (o.ObsidianSticky and xDTaraZ.Target.StillValid(state.ObsidianAimTarget, state.ObsidianAimPart, cfg)) then
+        state.ObsidianAimTarget, state.ObsidianAimPart = xDTaraZ.Target.Pick(cfg)
+    end
+    local target, part = state.ObsidianAimTarget, state.ObsidianAimPart
+    local cam = Workspace.CurrentCamera
+    if not (target and part and part.Parent and cam) then
+        if state.ObsidianTouchActive then
+            pcall(sendTouch, VirtualInputManager, OBSIDIAN_TOUCH_SLOT, TOUCH_END,
+                state.ObsidianTouchPos.X, state.ObsidianTouchPos.Y)
+        end
+        state.ObsidianTouchActive, state.ObsidianTouchPos = false, nil
+        return
+    end
+
+    local projected, onScreen = cam:WorldToViewportPoint(part.Position)
+    if not onScreen then
+        if state.ObsidianTouchActive then
+            pcall(sendTouch, VirtualInputManager, OBSIDIAN_TOUCH_SLOT, TOUCH_END,
+                state.ObsidianTouchPos.X, state.ObsidianTouchPos.Y)
+        end
+        state.ObsidianTouchActive, state.ObsidianTouchPos = false, nil
+        return
+    end
+
+    local viewport = cam.ViewportSize
+    local center = Vector2.new(viewport.X * 0.5, viewport.Y * 0.5)
+    if not state.ObsidianTouchActive then
+        local left, top, right, bottom = xDTaraZ.ObsidianAimbot.Bounds()
+        local boxCenter = Vector2.new((left + right) * 0.5, (top + bottom) * 0.5)
+        state.ObsidianTouchPos = xDTaraZ.ObsidianAimbot.ClampPoint(boxCenter)
+        local began = pcall(sendTouch, VirtualInputManager, OBSIDIAN_TOUCH_SLOT, TOUCH_BEGIN, state.ObsidianTouchPos.X, state.ObsidianTouchPos.Y)
+        if not began then
+            state.ObsidianTouchPos = nil
+            return
+        end
+        state.ObsidianTouchActive = true
+    end
+
+    local aimPos = Vector2.new(projected.X, projected.Y + o.ObsidianVerticalOffset)
+    local delta = aimPos - center
+    local smoothing = math.clamp((tonumber(o.ObsidianSmooth) or 10) / 100, 0.01, 0.30)
+    local nextPos = xDTaraZ.ObsidianAimbot.ClampPoint(state.ObsidianTouchPos + delta * smoothing)
+    state.ObsidianTouchPos = nextPos
+    pcall(sendTouch, VirtualInputManager, OBSIDIAN_TOUCH_SLOT, TOUCH_CHANGE, nextPos.X, nextPos.Y)
+end
+
+xDTaraZ.Silent = {}
+
+---@param forced boolean  ragebot shot: always hits, no fov
+function xDTaraZ.Silent.Config(bone, forced)
+    local o = xDTaraZ.Options
+    if forced then return { Bone = bone, Visible = o.RageVisible, MaxDistance = o.RageMaxDistance, Priority = "Distance" } end
+    return { Bone = bone, Fov = o.SilentFov, Visible = o.SilentVisible, MaxDistance = o.SilentMaxDistance, Priority = o.SilentPriority }
+end
+
+---@return BasePart?  part this shot should go to, nil = shoot where you look
+function xDTaraZ.Silent.Aim()
+    local o, state = xDTaraZ.Options, xDTaraZ.State
+    state.SilentTarget = nil
+    if not (o.SilentAim or o.Ragebot) then return nil end
+    local forced = o.Ragebot
+    if not forced and not roll(o.SilentHitChance) then return nil end
+    local bone = (forced or roll(o.SilentHeadChance)) and "Head" or "Torso"
+    local target, part = xDTaraZ.Target.Pick(xDTaraZ.Silent.Config(bone, forced))
+    state.SilentTarget = target
+    return part
+end
+
+---The server checks bullets against where you really look, so each new bullet turns the camera to the target and the view goes back as the shot is sent, before anything is drawn.
+function xDTaraZ.Silent.InstallHook()
+    local gun = xDTaraZ.Guns.FindClass()
+    if gun then
+        local original
+        original = xDTaraZ.Util.Hook("Shoot", gun.shoot, function(...)
+            local state = xDTaraZ.State
+            state.LastShot = osClock()
+            state.Shots += 1
+            return original(...)
+        end)
+    end
+    local bullet = xDTaraZ.Guns.FindBullet()
+    if bullet and type(bullet.create) == "function" then
+        local create
+        create = xDTaraZ.Util.Hook("Bullet", bullet.create, function(...)
+            xDTaraZ.Silent.Flick()
+            return create(...)
+        end)
+    end
+    xDTaraZ.Guns.HookSpread()
+
+    local net = xDTaraZ.GameLib.Net
+    local packet = net and net.Inventory and net.Inventory.ShootWeapon
+    if not packet then return end
+    local send
+    send = xDTaraZ.Util.Hook("Send", packet.Send, function(...)
+        xDTaraZ.Silent.RestoreView()
+        return send(...)
+    end)
+end
+
+---Turns the camera onto the silent aim target for this bullet.
+function xDTaraZ.Silent.Flick()
+    local ok, part = pcall(xDTaraZ.Silent.Aim)
+    local cam, state = Workspace.CurrentCamera, xDTaraZ.State
+    if not (ok and part and cam) then return end
+    state.ViewSaved = state.ViewSaved or cam.CFrame
+    cam.CFrame = cframeLookAt(cam.CFrame.Position, xDTaraZ.Target.Lead(part))
+    state.Redirected += 1
+end
+
+---Puts your view back before the game's camera runs, so silent aim never moves what you see.
+function xDTaraZ.Silent.RestoreView()
+    local state, cam = xDTaraZ.State, Workspace.CurrentCamera
+    if not state.ViewSaved then return end
+    if cam then cam.CFrame = state.ViewSaved end
+    state.ViewSaved = nil
+end
+
+xDTaraZ.Trigger = {}
+
+function xDTaraZ.Trigger.Press(down)
+    if down and xDTaraZ.UI.MenuOpen() then return end
+    xDTaraZ.State.Firing = down
+    if down then xDTaraZ.State.PressedAt = osClock() end
+    local center = Workspace.CurrentCamera.ViewportSize / 2
+    pcall(VirtualInputManager.SendMouseButtonEvent, VirtualInputManager, center.X, center.Y, 0, down, game, 0)
+end
+
+---@param want boolean  holds auto guns and re-clicks semi-auto ones
+function xDTaraZ.Trigger.Fire(want)
+    local state, now = xDTaraZ.State, osClock()
+    if not want then
+        if state.Firing then xDTaraZ.Trigger.Press(false) end
+        return
+    end
+    if not state.Firing then
+        xDTaraZ.Trigger.Press(true)
+        return
+    end
+    local gap = xDTaraZ.Config.RefireGap
+    if now - state.PressedAt > gap and now - state.LastShot > gap then xDTaraZ.Trigger.Press(false) end
+end
+
+function xDTaraZ.Trigger.Wanted()
+    local o, state = xDTaraZ.Options, xDTaraZ.State
+    if not o.Triggerbot then return false end
+    local model = xDTaraZ.Target.UnderCrosshair()
+    if model ~= state.TriggerModel then
+        state.TriggerModel = model
+        state.TriggerSeen = model and osClock() or nil
+        state.TriggerRoll = model ~= nil and roll(o.TriggerHitChance)
+    end
+    if not model or not state.TriggerRoll then return false end
+    return osClock() - state.TriggerSeen >= o.TriggerDelay / 1000
+end
+
+xDTaraZ.Rage = {}
+
+function xDTaraZ.Rage.Step()
+    local state = xDTaraZ.State
+    if not xDTaraZ.Options.Ragebot then state.RageTarget, state.RagePart = nil, nil return false end
+    state.RageTarget, state.RagePart = xDTaraZ.Target.Pick(xDTaraZ.Silent.Config("Head", true))
+    return state.RageTarget ~= nil
+end
+
+xDTaraZ.Combat = { Circles = {} }
+
+---@return ScreenGui  made once; hidden gui first, then CoreGui, then PlayerGui
+function xDTaraZ.Combat.Screen()
+    local screen = xDTaraZ.Combat.Gui
+    if screen and screen.Parent then return screen end
+
+    screen = Instance.new("ScreenGui")
+    screen.Name = "NoirFov"
+    screen.IgnoreGuiInset = true
+    screen.ResetOnSpawn = false
+    screen.DisplayOrder = xDTaraZ.Config.FovLayer
+
+    local function Mount(parent) screen.Parent = parent end
+    local okHui, hui = pcall(gethui)
+    local mounted = okHui and hui ~= nil and pcall(Mount, hui)
+    if not mounted then mounted = pcall(Mount, game:GetService("CoreGui")) end
+    if not mounted then Mount(LocalPlayer:FindFirstChildOfClass("PlayerGui")) end
+
+    xDTaraZ.Combat.Gui = screen
+    return screen
+end
+
+---@return table  { Drawing = circle }, or { Frame = ring } drawn with Gui when Drawing is missing
+function xDTaraZ.Combat.NewCircle(color)
+    if xDTaraZ.Caps.Drawing then
+        local circle = Drawing.new("Circle")
+        circle.Thickness, circle.NumSides, circle.Filled, circle.Color = 1.5, 64, false, color
+        return { Drawing = circle }
+    end
+    local frame = Instance.new("Frame")
+    frame.AnchorPoint = vector2New(0.5, 0.5)
+    frame.BackgroundTransparency = 1
+    local round = Instance.new("UICorner")
+    round.CornerRadius = UDim.new(1, 0)
+    round.Parent = frame
+    local edge = Instance.new("UIStroke")
+    edge.Thickness, edge.Color = 1.5, color
+    edge.Parent = frame
+    frame.Parent = xDTaraZ.Combat.Screen()
+    return { Frame = frame }
+end
+
+function xDTaraZ.Combat.Circle(key, show, radius)
+    local circle = xDTaraZ.Combat.Circles[key]
+    if not circle then
+        if not show then return end
+        circle = xDTaraZ.Combat.NewCircle(xDTaraZ.Config.FovColors[key])
+        xDTaraZ.Combat.Circles[key] = circle
+    end
+    local center = Workspace.CurrentCamera.ViewportSize / 2
+    local drawing, frame = circle.Drawing, circle.Frame
+    if drawing then
+        drawing.Visible, drawing.Position, drawing.Radius = show, center, radius
+        return
+    end
+    frame.Visible = show
+    frame.Position = UDim2.fromOffset(center.X, center.Y)
+    frame.Size = UDim2.fromOffset(radius * 2, radius * 2)
+end
+
+function xDTaraZ.Combat.Step()
+    local o, state = xDTaraZ.Options, xDTaraZ.State
+    xDTaraZ.Combat.Circle("Aimbot", o.AimbotShowFov, o.AimbotFov)
+    xDTaraZ.Combat.Circle("Silent", o.SilentShowFov, o.SilentFov)
+    xDTaraZ.Combat.Circle("Obsidian", o.ObsidianAimbot and o.ObsidianShowFov, o.ObsidianFov)
+    if not xDTaraZ.Player.Alive() then
+        state.AimTarget, state.AimPart, state.RageTarget, state.RagePart, state.SilentTarget = nil, nil, nil, nil, nil
+        xDTaraZ.Trigger.Fire(false)
+        return
+    end
+    if o.SilentAim or o.Ragebot then xDTaraZ.Target.Track() end
+    xDTaraZ.Aimbot.Step()
+    local rage = xDTaraZ.Rage.Step()
+    xDTaraZ.Trigger.Fire(rage or xDTaraZ.Trigger.Wanted())
+end
+
+function xDTaraZ.Combat.Rest()
+    local state = xDTaraZ.State
+    state.AimTarget, state.AimPart, state.RageTarget, state.RagePart, state.SilentTarget = nil, nil, nil, nil, nil
+    xDTaraZ.Trigger.Fire(false)
+    for key in pairs(xDTaraZ.Combat.Circles) do
+        xDTaraZ.Combat.Circle(key, false, 0)
+    end
+end
+
+function xDTaraZ.Combat.Start()
+    RunService:BindToRenderStep("xDTaraZView", Enum.RenderPriority.First.Value, xDTaraZ.Silent.RestoreView)
+    RunService:BindToRenderStep("xDTaraZAim", xDTaraZ.Config.AimRenderPriority, xDTaraZ.Aimbot.Lock)
+    RunService:BindToRenderStep("xDTaraZObsidianAim", Enum.RenderPriority.Camera.Value + 2, xDTaraZ.ObsidianAimbot.Step)
+    xDTaraZ:Connect(RunService.Heartbeat, function()
+        local ok, err = pcall(xDTaraZ.Combat.Step)
+        if ok then
+            xDTaraZ.Faults.Clear("Combat")
+        else
+            xDTaraZ.Faults.Report("Combat", err, xDTaraZ.Config.CombatToggles, xDTaraZ.Combat.Rest)
+        end
+    end)
+end
+
+function xDTaraZ.Combat.Unload()
+    xDTaraZ.Trigger.Fire(false)
+    pcall(RunService.UnbindFromRenderStep, RunService, "xDTaraZAim")
+    pcall(RunService.UnbindFromRenderStep, RunService, "xDTaraZCounterStrafe")
+    pcall(RunService.UnbindFromRenderStep, RunService, "xDTaraZObsidianAim")
+    pcall(xDTaraZ.ObsidianAimbot.Stop)
+    local dragGui = xDTaraZ.State.ObsidianDragGui
+    if dragGui then pcall(function() dragGui:Destroy() end) end
+    local shieldGui = xDTaraZ.State.ObsidianShieldGui
+    if shieldGui then pcall(function() shieldGui:Destroy() end) end
+    xDTaraZ.State.ObsidianDragGui, xDTaraZ.State.ObsidianDragBox = nil, nil
+    xDTaraZ.State.ObsidianShieldGui, xDTaraZ.State.ObsidianShieldPanels, xDTaraZ.State.ObsidianShieldLabel = nil, {}, nil
+    pcall(RunService.UnbindFromRenderStep, RunService, "xDTaraZView")
+    for key, circle in pairs(xDTaraZ.Combat.Circles) do
+        xDTaraZ.Combat.Circles[key] = nil
+        if circle.Frame then
+            circle.Frame:Destroy()
+        else
+            pcall(function() circle.Drawing:Remove() end)
+        end
+    end
+    if xDTaraZ.Combat.Gui then
+        xDTaraZ.Combat.Gui:Destroy()
+        xDTaraZ.Combat.Gui = nil
+    end
+end
+
+function xDTaraZ.World.Rejoin()
+    local ak = xDTaraZ.Guard.antiKick
+    if ak then ak._allowTpUntil = os.clock() + 5 end
+    pcall(TeleportService.TeleportToPlaceInstance, TeleportService, game.PlaceId, game.JobId, LocalPlayer)
+end
+
+function xDTaraZ.World.ServerHop()
+    local ak = xDTaraZ.Guard.antiKick
+    if ak then ak._allowTpUntil = os.clock() + 5 end
+    pcall(TeleportService.Teleport, TeleportService, game.PlaceId, LocalPlayer)
+end
+
+xDTaraZ.Skins = { Map = {}, Applied = setmetatable({}, { __mode = "k" }), Catalog = nil, Rarity = {}, Images = {}, Colors = {}, Originals = setmetatable({}, { __mode = "k" }) }
+
+function xDTaraZ.Skins.Folder()
+    local assets = ReplicatedStorage:FindFirstChild("Assets")
+    return assets and assets:FindFirstChild("Skins")
+end
+
+---@return string?  category name, nil = not a weapon look
+function xDTaraZ.Skins.CategoryOf(name, kind)
+    local mapped = xDTaraZ.Config.SkinKinds[kind]
+    if mapped then return mapped end
+    if kind ~= "Weapon" then return nil end
+    local gun = xDTaraZ.Weapons[name]
+    return gun and gun.Type or "Other"
+end
+
+function xDTaraZ.Skins.Build()
+    local skins = xDTaraZ.Skins
+    local folder = skins.Folder()
+    local listing = xDTaraZ.Util.Decode(ReplicatedStorage:GetAttribute("AvaiableSkins")) or {}
+    local ranks = xDTaraZ.Config.SkinRanks
+    local catalog = {}
+    for name, entries in pairs(listing) do
+        if type(entries) ~= "table" or not (folder and folder:FindFirstChild(name)) then continue end
+        local _, first = next(entries)
+        local category = skins.CategoryOf(name, type(first) == "table" and first.type)
+        if not category then continue end
+        catalog[category] = catalog[category] or {}
+        table.insert(catalog[category], name)
+        skins.Rarity[name], skins.Images[name], skins.Colors[name] = {}, {}, {}
+        for skin, entry in pairs(entries) do
+            if type(entry) ~= "table" then continue end
+            skins.Rarity[name][skin] = ranks[entry.rarity] or 0
+            local look = type(entry.wearImages) == "table" and entry.wearImages[1]
+            skins.Images[name][skin] = look and look.assetId
+            local rarity = xDTaraZ.GameLib.Rarities and xDTaraZ.GameLib.Rarities[entry.rarity]
+            skins.Colors[name][skin] = type(rarity) == "table" and rarity.Color or nil
+        end
+    end
+    for _, names in pairs(catalog) do table.sort(names) end
+    skins.Catalog = catalog
+end
+
+---@return string[]  categories in display order
+function xDTaraZ.Skins.Categories()
+    if not xDTaraZ.Skins.Catalog then xDTaraZ.Skins.Build() end
+    local list, seen = {}, {}
+    for _, category in ipairs(xDTaraZ.Config.SkinOrder) do
+        if xDTaraZ.Skins.Catalog[category] then list[#list + 1] = category seen[category] = true end
+    end
+    for category in pairs(xDTaraZ.Skins.Catalog) do
+        if not seen[category] then list[#list + 1] = category end
+    end
+    if #list == 0 then list[1] = "-" end
+    return list
+end
+
+function xDTaraZ.Skins.Items(category)
+    if not xDTaraZ.Skins.Catalog then xDTaraZ.Skins.Build() end
+    local names = xDTaraZ.Skins.Catalog[category or ""]
+    return (names and #names > 0) and names or { "-" }
+end
+
+---@return string[]  rarest first
+function xDTaraZ.Skins.List(weapon)
+    local folder = xDTaraZ.Skins.Folder()
+    local holder = folder and folder:FindFirstChild(weapon or "")
+    if not holder then return { "-" } end
+    local ranks = xDTaraZ.Skins.Rarity[weapon] or {}
+    local names = {}
+    for _, child in ipairs(holder:GetChildren()) do names[#names + 1] = child.Name end
+    table.sort(names, function(a, b)
+        local ra, rb = ranks[a] or 0, ranks[b] or 0
+        if ra ~= rb then return ra > rb end
+        return a < b
+    end)
+    return #names > 0 and names or { "-" }
+end
+
+---@param view string  "Camera" or "Character"
+---@return Folder?     best wear available
+function xDTaraZ.Skins.Source(weapon, skin, view)
+    local folder = xDTaraZ.Skins.Folder()
+    local paint = folder and folder:FindFirstChild(weapon) and folder[weapon]:FindFirstChild(skin)
+    local side = paint and paint:FindFirstChild(view)
+    if not side then return nil end
+    for _, wear in ipairs(xDTaraZ.Config.SkinWears) do
+        if side:FindFirstChild(wear) then return side[wear] end
+    end
+    return side:FindFirstChildOfClass("Folder")
+end
+
+function xDTaraZ.Skins.Paint(model, weapon, skin, view)
+    local source = xDTaraZ.Skins.Source(weapon, skin, view)
+    if not source then return false end
+    local whole = source:FindFirstChild("SurfaceAppearance")
+    local arms = xDTaraZ.Config.SkinArms
+    for _, part in ipairs(model:GetDescendants()) do
+        if not part:IsA("BasePart") then continue end
+        local old = part:FindFirstChildOfClass("SurfaceAppearance")
+        local look = source:FindFirstChild(part.Name)
+        if not look and whole and old and not arms[part.Name] then look = whole end
+        if not look then continue end
+        local originals = xDTaraZ.Skins.Originals
+        if originals[part] == nil then originals[part] = old and old:Clone() or false end
+        if old then old:Destroy() end
+        look:Clone().Parent = part
+    end
+    return true
+end
+
+---Puts back the look each part had before we painted it.
+function xDTaraZ.Skins.Reset(model)
+    local originals = xDTaraZ.Skins.Originals
+    for _, part in ipairs(model:GetDescendants()) do
+        local saved = part:IsA("BasePart") and originals[part]
+        if saved == nil then continue end
+        local current = part:FindFirstChildOfClass("SurfaceAppearance")
+        if current then current:Destroy() end
+        if saved then saved:Clone().Parent = part end
+        originals[part] = nil
+    end
+end
+
+function xDTaraZ.Skins.WeaponOf(model)
+    local folder = xDTaraZ.Skins.Folder()
+    if folder and folder:FindFirstChild(model.Name) then return model.Name end
+    local equipped = xDTaraZ.Player.Equipped()
+    return equipped and (equipped.Weapon or equipped.Name)
+end
+
+function xDTaraZ.Skins.Models()
+    local list = {}
+    for _, child in ipairs(Workspace.CurrentCamera:GetChildren()) do
+        if child:IsA("Model") then list[#list + 1] = { child, "Camera" } end
+    end
+    local char = xDTaraZ.Player.Character()
+    local folder = xDTaraZ.Skins.Folder()
+    if char and folder then
+        for _, child in ipairs(char:GetChildren()) do
+            if child:IsA("Model") and folder:FindFirstChild(child.Name) then list[#list + 1] = { child, "Character" } end
+        end
+    end
+    return list
+end
+
+function xDTaraZ.Skins.Step()
+    local skins = xDTaraZ.Skins
+    local on = xDTaraZ.Options.SkinChanger
+    local glove = on and skins.Map[xDTaraZ.Config.GloveKey]
+    local gloveSkin = glove and skins.Map[glove]
+    for _, entry in ipairs(skins.Models()) do
+        local model, view = entry[1], entry[2]
+        local weapon = skins.WeaponOf(model)
+        local skin = on and weapon and skins.Map[weapon] or nil
+        local key = (skin or gloveSkin) and (tostring(weapon) .. "|" .. tostring(skin) .. "|" .. tostring(gloveSkin)) or nil
+        if skins.Applied[model] == key then continue end
+        if skins.Applied[model] then skins.Reset(model) end
+        if skin then skins.Paint(model, weapon, skin, view) end
+        if gloveSkin and view == "Camera" then skins.Paint(model, glove, gloveSkin, view) end
+        skins.Applied[model] = key
+    end
+end
+
+function xDTaraZ.Skins.Set(weapon, skin, quiet)
+    if not weapon or weapon == "-" or not skin or skin == "-" then return false end
+    local map, gloveKey = xDTaraZ.Skins.Map, xDTaraZ.Config.GloveKey
+    local isGlove = xDTaraZ.Skins.Catalog and table.find(xDTaraZ.Skins.Catalog.Gloves or {}, weapon)
+    if skin == "Default" then
+        if map[weapon] == nil then return false end
+        map[weapon] = nil
+        if map[gloveKey] == weapon then map[gloveKey] = nil end
+    else
+        if map[weapon] == skin then return false end
+        map[weapon] = skin
+        if isGlove then map[gloveKey] = weapon end
+    end
+    if not quiet then xDTaraZ.Skins.Save() end
+    return true
+end
+
+---@param pick fun(list: string[]): string  chooses one skin per item
+---@return number  items changed
+function xDTaraZ.Skins.SetAll(pick)
+    local count = 0
+    for _, category in ipairs(xDTaraZ.Skins.Categories()) do
+        if category == "Gloves" then continue end
+        for _, weapon in ipairs(xDTaraZ.Skins.Items(category)) do
+            xDTaraZ.Skins.Set(weapon, pick(xDTaraZ.Skins.List(weapon)), true)
+            count += 1
+        end
+    end
+    xDTaraZ.Skins.Save()
+    return count
+end
+
+function xDTaraZ.Skins.Save()
+    if type(writefile) ~= "function" then return end
+    local ok, err = pcall(function()
+        if type(isfolder) == "function" and not isfolder(xDTaraZ.Config.SaveFolder) then makefolder(xDTaraZ.Config.SaveFolder) end
+        writefile(xDTaraZ.Config.SkinFile, HttpService:JSONEncode(xDTaraZ.Skins.Map))
+    end)
+    if not ok then warn("[BloxStrike] skins save:", err) end
+end
+
+function xDTaraZ.Skins.Load()
+    if type(readfile) ~= "function" or type(isfile) ~= "function" then return end
+    local ok, raw = pcall(function()
+        if isfile(xDTaraZ.Config.SkinFile) then
+            return readfile(xDTaraZ.Config.SkinFile)
+        elseif isfile("BloxStrike/skins.json") then
+            return readfile("BloxStrike/skins.json")
+        end
+    end)
+    local map = ok and xDTaraZ.Util.Decode(raw)
+    if type(map) == "table" then xDTaraZ.Skins.Map = map end
+end
+
+xDTaraZ.Faults = { Streaks = {} }
+
+function xDTaraZ.Faults.Clear(name)
+    xDTaraZ.Faults.Streaks[name] = nil
+end
+
+function xDTaraZ.Faults.AnyOn(toggles)
+    for _, key in ipairs(toggles) do
+        if xDTaraZ.Options[key] then return true end
+    end
+    return false
+end
+
+---@param restore function?  the feature's own off path
+function xDTaraZ.Faults.Halt(name, err, toggles, restore)
+    warn("[BloxStrike] " .. name .. " stopped:", err)
+    for _, key in ipairs(toggles) do
+        xDTaraZ.Options[key] = false
+    end
+    if restore then xDTaraZ.Util.Try(name .. " restore", restore) end
+    local halted = xDTaraZ.State.Halted
+    halted[#halted + 1] = { name, tostring(err):match("^[^\n]*"), toggles }
+end
+
+---@param toggles string[]   turned off once the feature keeps failing; empty = keeps running, warns once per streak
+---@param restore function?  run once when the feature is stopped
+---@return boolean           true while the feature is stopped
+function xDTaraZ.Faults.Report(name, err, toggles, restore)
+    local now, streaks = osClock(), xDTaraZ.Faults.Streaks
+    local streak = streaks[name]
+    if not streak or (streak.Halted and xDTaraZ.Faults.AnyOn(toggles)) then
+        streak = { Count = 0, First = now, Warned = false, Halted = false }
+        streaks[name] = streak
+    end
+    streak.Count += 1
+    if streak.Warned then return streak.Halted end
+    if streak.Count < xDTaraZ.Config.MaxFails or now - streak.First < xDTaraZ.Config.FailWindow then return false end
+
+    streak.Warned = true
+    if #toggles == 0 then
+        warn("[BloxStrike] " .. name .. " keeps failing:", err)
+        return false
+    end
+    streak.Halted = true
+    xDTaraZ.Faults.Halt(name, err, toggles, restore)
+    return true
+end
+
+xDTaraZ.Scheduler = { Jobs = {} }
+
+---@param toggles string[]   options the job serves; switched off if it keeps failing
+---@param restore function?  the job's off path, run once if it gets stopped
+function xDTaraZ.Scheduler.Every(name, interval, fn, toggles, restore)
+    xDTaraZ.Scheduler.Jobs[name] = { Interval = interval, Fn = fn, Next = 0, Toggles = toggles, Restore = restore }
+end
+
+---@return boolean  a halted job runs again once one of its toggles is back on
+function xDTaraZ.Scheduler.Resume(name, job)
+    if not xDTaraZ.Faults.AnyOn(job.Toggles) then return false end
+    job.Halted = false
+    xDTaraZ.Faults.Clear(name)
+    return true
+end
+
+function xDTaraZ.Scheduler.Boot()
+    xDTaraZ:Connect(RunService.Heartbeat, function()
+        local now = osClock()
+        for name, job in pairs(xDTaraZ.Scheduler.Jobs) do
+            if now < job.Next then continue end
+            job.Next = now + job.Interval
+            if job.Halted and not xDTaraZ.Scheduler.Resume(name, job) then continue end
+
+            local ok, err = pcall(job.Fn)
+            if ok then
+                xDTaraZ.Faults.Clear(name)
+            else
+                job.Halted = xDTaraZ.Faults.Report(name, err, job.Toggles, job.Restore)
+            end
+        end
+    end)
+end
+
+xDTaraZ.Guard = {
+    misc = { auto_plant = false, auto_defuse = false, auto_reload = false, auto_reload_min = 1 },
+    Ready = false,
+    Stop = nil,
+}
+
+do
+    local okP, players = pcall(game.GetService, game, "Players")
+    if okP and typeof(players) == "Instance" then -- services are userdata, never tables: the old check left LocalPlayer nil
+        xDTaraZ.Guard.Players = players
+        xDTaraZ.Guard.LocalPlayer = players.LocalPlayer
+    end
+    local okR, rs = pcall(game.GetService, game, "ReplicatedStorage")
+    if okR and typeof(rs) == "Instance" then
+        xDTaraZ.Guard.ReplicatedStorage = rs
+    end
+end
+
+function xDTaraZ.Guard.Stop()
+    local tp = xDTaraZ.Guard.tp
+    if tp and tp.stop then pcall(tp.stop) end
+end
+
+-- ── AntiKick: блокировка клиентских киков и игровых телепортов ─────────────
+-- По скинутым файлам: ни один из читов кик не блокирует (там Kick = отдача
+-- оружия). Серверный Player:Kick клиент заблокировать не может — он приходит
+-- по сети. Перехватываем то, что живёт на клиенте: ЛОКАЛЬНЫЕ вызовы
+-- LocalPlayer:Kick (клиентские проверки игры) и телепорты TeleportService
+-- («перекидывает с сервера на сервер»). Свои Rejoin/ServerHop открываются
+-- одноразовым окном _allowTpUntil.
+xDTaraZ.Guard.antiKick = { on = false, blockTp = true, running = false, _blocked = 0, _blockedTp = 0, _allowTpUntil = 0, _tps = nil,
+    _winStart = 0, _winCount = 0, _lastLog = {} }
+
+function xDTaraZ.Guard.AntiKickStart()
+    local self = xDTaraZ.Guard
+    local ak = self.antiKick
+    if ak.running then return end
+    ak.running = true
+    pcall(function() ak._tps = game:GetService("TeleportService") end)
+    if type(hookmetamethod) ~= "function" or type(getnamecallmethod) ~= "function" or type(newcclosure) ~= "function" then
+        warn("[Noir] AntiKick: this executor has no namecall hooks, anti-kick is unavailable")
+        return
+    end
+    local TP_METHODS = { Teleport = true, TeleportAsync = true, TeleportToPlaceInstance = true,
+        TeleportToPrivateServer = true, TeleportToSpawnByName = true, TeleportPartyAsync = true }
+    local function ours() return type(checkcaller) == "function" and checkcaller() end
+    local function say(kind, text)
+        -- one console line per kind every 2 s: a game that retries a blocked call must not flood the console
+        local now = os.clock()
+        if now - (ak._lastLog[kind] or 0) < 2 then return end
+        ak._lastLog[kind] = now
+        print(text)
+    end
+    -- A blocked call returns at once while the real one would end the session / yield. A game that retries it in a
+    -- tight loop would therefore hang the client. Past 25 calls a second the caller is made to wait; where the
+    -- executor cannot yield inside this hook the call goes through instead of freezing the game.
+    local function pace()
+        local now = os.clock()
+        if now - ak._winStart > 1 then ak._winStart, ak._winCount = now, 0 end
+        ak._winCount = ak._winCount + 1
+        if ak._winCount > 25 then
+            local okWait = pcall(task.wait, 0.25)
+            if not okWait then ak._winCount = 0 return false end
+        end
+        return true
+    end
+    local old
+    old = hookmetamethod(game, "__namecall", newcclosure(function(inst, ...)
+        local method = getnamecallmethod()
+        if ak.on and not ours() then
+            local lower = type(method) == "string" and string.lower(method) or ""
+            if lower == "kick" and self.LocalPlayer ~= nil and inst == self.LocalPlayer then
+                ak._blocked = ak._blocked + 1
+                say("kick", "[Noir] AntiKick: blocked Kick: " .. tostring((...)))
+                if pace() then return nil end
+            elseif lower == "shutdown" and inst == game then
+                ak._blocked = ak._blocked + 1
+                say("shutdown", "[Noir] AntiKick: blocked game:Shutdown()")
+                if pace() then return nil end
+            elseif ak.blockTp and ak._tps ~= nil and inst == ak._tps and TP_METHODS[method] then
+                if os.clock() <= ak._allowTpUntil then
+                    ak._allowTpUntil = 0 -- our own Rejoin / ServerHop passes once
+                else
+                    ak._blockedTp = ak._blockedTp + 1
+                    say("tp", "[Noir] AntiKick: blocked teleport (" .. tostring(method) .. "), total: " .. tostring(ak._blockedTp))
+                    if pace() then return nil end
+                end
+            end
+        end
+        if type(setnamecallmethod) == "function" then setnamecallmethod(method) end
+        return old(inst, ...)
+    end))
+    -- LocalPlayer.Kick(LocalPlayer, ...) called without the colon never reaches the namecall hook
+    pcall(function()
+        local kick = self.LocalPlayer and self.LocalPlayer.Kick
+        if type(kick) ~= "function" or type(hookfunction) ~= "function" then return end
+        local oldKick
+        oldKick = hookfunction(kick, newcclosure(function(target, ...)
+            if ak.on and not ours() and target == self.LocalPlayer then
+                ak._blocked = ak._blocked + 1
+                say("kick", "[Noir] AntiKick: blocked Kick: " .. tostring((...)))
+                if pace() then return nil end
+            end
+            return oldKick(target, ...)
+        end))
+    end)
+    print("[Noir] AntiKick: namecall hook installed")
+end
+
+-- ── Пресеты: ApplyPreset — готовые конфиги против читеров одной строкой ─────
+function xDTaraZ.Guard.SetAntiKick(on)
+    local ak = xDTaraZ.Guard.antiKick
+    ak.on = on == true
+    -- the __namecall hook is installed only once the feature is switched on: a permanent hook taxes every engine call
+    -- of the game for nothing while the toggle is off
+    if ak.on then xDTaraZ.Guard.AntiKickStart() end
+end
+
+-- persistence for these features rides on this menu's Noir flags (the
+-- "autosave" config), so the build's own settings.json writer is not needed
+xDTaraZ.AutoSave = {
+    get = function(kind, idx, default) return default end,
+    record = function(idx, value) end,
+    flush = function() end,
+}
+
+xDTaraZ.UI = { Labels = {}, Widgets = {}, Binds = {}, Window = nil }
+
+---Thai when the Roblox locale is Thai, else English (the old library's Language = "Auto").
+xDTaraZ.UI.Thai = tostring(LocalPlayer.LocaleId):lower():sub(1, 2) == "th"
+T = function(en, th) return xDTaraZ.UI.Thai and th or en end
+
+function xDTaraZ.UI.Detach(fn)
+    return function(...)
+        local packed = table.pack(...)
+        task.defer(function()
+            local ok, err = pcall(fn, table.unpack(packed, 1, packed.n))
+            if not ok then warn("[BloxStrike] ui:", err) end
+        end)
+    end
+end
+
+---Runs `fn` every `interval` seconds until the script unloads.
+function xDTaraZ.UI.Every(interval, fn)
+    task.spawn(function()
+        while xDTaraZ.State.Alive do
+            local ok, err = pcall(fn)
+            if not ok then warn("[BloxStrike] ui loop:", err) end
+            task.wait(interval)
+        end
+    end)
+end
+
+---@return boolean  true while the menu covers the screen
+function xDTaraZ.UI.MenuOpen()
+    local window = xDTaraZ.UI.Window
+    return window ~= nil and not window._destroyed and window.Open == true and not window.Minimized
+end
+
+local notifyIcons = { Info = "info", Coin = "coins" }
+local notifyTypes = { Success = "Success", Warning = "Warning", Warn = "Warning", Error = "Error" }
+
+function xDTaraZ.UI.Notify(title, content, duration, kind)
+    if not Library then return end
+    local ok, err = pcall(Library.Notify, Library, {
+        Title = tostring(title),
+        Content = tostring(content),
+        Duration = duration or 4,
+        Type = notifyTypes[kind],
+        Icon = notifyIcons[kind],
+    })
+    if not ok then warn("[BloxStrike] notify:", err) end
+end
+
+---One control the script reads and writes. AirFlow elements only take a single Callback, so this adds
+---OnChanged listeners and guards (a guard returning false vetoes the value before any listener sees it).
+function xDTaraZ.UI.Widget(idx, name)
+    local widget = { Idx = idx, Name = name or idx, Listeners = {}, Guards = {}, Value = nil, Element = nil }
+    function widget:OnChanged(fn) table.insert(self.Listeners, fn) end
+    function widget:AddGuard(fn) table.insert(self.Guards, fn) end
+    function widget:SetValue(value)
+        if self.Element then self.Element:Set(value) end
+    end
+    function widget:Dispatch(value)
+        for _, guard in ipairs(self.Guards) do
+            local ok, allowed = pcall(guard, value)
+            if ok and allowed == false then return end
+        end
+        self.Value = value
+        for _, fn in ipairs(self.Listeners) do
+            local ok, err = pcall(fn, value)
+            if not ok then warn("[BloxStrike] " .. idx .. ":", err) end
+        end
+    end
+    xDTaraZ.UI.Widgets[idx] = widget
+    return widget
+end
+
+---@param info table  { Name, Desc, Default }
+function xDTaraZ.UI.Toggle(group, idx, info)
+    local widget = xDTaraZ.UI.Widget(idx, info.Name)
+    local saved = xDTaraZ.AutoSave.get("toggle", idx, info.Default == true)
+    widget.Element = group:CreateToggle({
+        Name = info.Name,
+        Desc = info.Desc,
+        CurrentValue = saved,
+        Flag = idx,
+        Callback = function(value)
+            widget:Dispatch(value)
+            xDTaraZ.AutoSave.record(idx, value)
+        end,
+    })
+    -- фабрика AirFlow берёт состояние из opts.Default, а CurrentValue пускает
+    -- только на рендер: без Set(saved) Get() вернёт дефолт и Bind включит
+    -- функцию при выключенном тумблере
+    pcall(widget.Element.Set, widget.Element, saved, true)
+    widget.Value = widget.Element:Get()
+    return widget
+end
+
+---@param info table  { Name, Desc, Min, Max, Default, Increment, Suffix }
+function xDTaraZ.UI.Slider(group, idx, info)
+    local widget = xDTaraZ.UI.Widget(idx, info.Name)
+    local saved = xDTaraZ.AutoSave.get("slider", idx, info.Default)
+    widget.Element = group:CreateSlider({
+        Name = info.Name,
+        Min = info.Min, Max = info.Max,
+        Increment = info.Increment or 1,
+        Suffix = info.Suffix,
+        CurrentValue = saved,
+        Tooltip = info.Desc,
+        Flag = idx,
+        Callback = function(value)
+            widget:Dispatch(value)
+            xDTaraZ.AutoSave.record(idx, value)
+        end,
+    })
+    pcall(widget.Element.Set, widget.Element, saved, true)
+    widget.Value = widget.Element:Get()
+    return widget
+end
+
+---@param info table  { Name, Desc, Options, Default, Searchable, NoSave }
+function xDTaraZ.UI.Dropdown(group, idx, info)
+    local widget = xDTaraZ.UI.Widget(idx, info.Name)
+    local saved = xDTaraZ.AutoSave.get("dropdown", idx, info.Default)
+    widget.Element = group:CreateDropdown({
+        Name = info.Name,
+        Options = info.Options,
+        CurrentOption = saved,
+        AllowNone = false,
+        Searchable = info.Searchable == true,
+        Tooltip = info.Desc,
+        Flag = not info.NoSave and idx or nil,
+        Callback = function(value)
+            widget:Dispatch(value)
+            if not info.NoSave then xDTaraZ.AutoSave.record(idx, value) end
+        end,
+    })
+    pcall(widget.Element.Set, widget.Element, saved, true)
+    widget.Value = widget.Element:Get()
+    return widget
+end
+
+function xDTaraZ.UI.Color(group, idx, info)
+    local widget = xDTaraZ.UI.Widget(idx, info.Name)
+    local saved = xDTaraZ.AutoSave.get("color", idx, info.Default)
+    widget.Element = group:CreateColorPicker({
+        Name = info.Name,
+        Color = saved,
+        Flag = idx,
+        Callback = function(value)
+            widget:Dispatch(value)
+            xDTaraZ.AutoSave.record(idx, value)
+        end,
+    })
+    pcall(widget.Element.Set, widget.Element, saved, true)
+    widget.Value = widget.Element:Get()
+    return widget
+end
+
+---Feeds a widget's current value and every change into `fn`.
+function xDTaraZ.UI.Feed(widget, fn)
+    pcall(fn, widget.Value)
+    widget:OnChanged(fn)
+end
+
+---Vetoes turning `idx` on and tells the player why.
+local function Veto(idx, message)
+    local widget = xDTaraZ.UI.Widgets[idx]
+    if not widget then return end
+    widget:AddGuard(function(value)
+        if value ~= true then return true end
+        local text = message()
+        if not text then return true end
+        xDTaraZ.UI.Notify("Noir", text, 4, "Warning")
+        task.defer(widget.SetValue, widget, false)
+        return false
+    end)
+end
+
+---Blocks a hook-only feature on executors that cannot run it.
+function xDTaraZ.UI.NeedCap(idx, caps)
+    local widget = xDTaraZ.UI.Widgets[idx]
+    Veto(idx, function()
+        if xDTaraZ.Compat.Has(caps) then return nil end
+        local feature = widget and widget.Name or idx
+        return T(feature .. " is not supported on this executor", feature .. " ใช้กับ executor นี้ไม่ได้")
+    end)
+end
+
+---Blocks a feature for good (missing game module, unsupported executor).
+function xDTaraZ.UI.Block(idx, reason)
+    local widget = xDTaraZ.UI.Widgets[idx]
+    if widget then widget.Blocked = reason end
+    Veto(idx, function()
+        return (widget and widget.Name or idx) .. ": " .. tostring(reason)
+    end)
+end
+
+function xDTaraZ.UI.Bind(widget, key)
+    local function Apply(value) xDTaraZ.Options[key] = value end
+    Apply(widget.Value)
+    widget:OnChanged(Apply)
+end
+
+local skinTitles = {
+    Pistol = { "Pistols", "ปืนพก", "coins" },
+    SMG = { "SMGs", "ปืนกลมือ", "zap" },
+    Rifle = { "Rifles", "ปืนไรเฟิล", "crosshair" },
+    Sniper = { "Snipers", "สไนเปอร์", "target" },
+    Heavy = { "Heavy", "ปืนหนัก", "bomb" },
+    Shotgun = { "Shotguns", "ลูกซอง", "bomb" },
+    ["Machine Gun"] = { "Machine Guns", "ปืนกล", "zap" },
+    Knives = { "Knives", "มีด", "swords" },
+    Gloves = { "Gloves", "ถุงมือ", "shield" },
+    Grenades = { "Grenades", "ระเบิด", "bomb" },
+    Gear = { "Gear", "อุปกรณ์", "settings" },
+}
+
+---Skin pickers save to their own skins.json, so they carry no config flag.
+function xDTaraZ.UI.SkinGroup(tab, category, side)
+    local title = skinTitles[category] or { category, category, "star" }
+    local group = tab:AddGroupbox({ Name = T(title[1], title[2]), Icon = title[3], Side = side })
+    for _, weapon in ipairs(xDTaraZ.Skins.Items(category)) do
+        if weapon == "-" then continue end
+        local values = { "Default" }
+        for _, skin in ipairs(xDTaraZ.Skins.List(weapon)) do values[#values + 1] = skin end
+        local widget = xDTaraZ.UI.Dropdown(group, "Skin_" .. weapon, { Name = weapon, Options = values, Default = xDTaraZ.Skins.Map[weapon] or "Default", Searchable = #values > 8, NoSave = true })
+        widget:OnChanged(function(skin)
+            if skin then xDTaraZ.Skins.Set(weapon, skin) end
+        end)
+    end
+end
+
+---@param heights table  rows used per side so far, updated in place
+function xDTaraZ.UI.PlaceSkinGroup(tab, category, heights)
+    local side = heights.Left <= heights.Right and "Left" or "Right"
+    local rows = 1
+    for _, weapon in ipairs(xDTaraZ.Skins.Items(category)) do
+        if weapon ~= "-" then rows += 1 end
+    end
+    if rows == 1 then return end
+    heights[side] += rows
+    xDTaraZ.Util.Try("skins " .. category, xDTaraZ.UI.SkinGroup, tab, category, side)
+end
+
+---Shows the saved skin in every picker without setting it again.
+function xDTaraZ.UI.SyncSkins()
+    for _, category in ipairs(xDTaraZ.Skins.Categories()) do
+        for _, weapon in ipairs(xDTaraZ.Skins.Items(category)) do
+            local widget = xDTaraZ.UI.Widgets["Skin_" .. weapon]
+            if widget and widget.Element then
+                local skin = xDTaraZ.Skins.Map[weapon] or "Default"
+                pcall(widget.Element.Set, widget.Element, skin, true)
+                widget.Value = skin
+            end
+        end
+    end
+end
+
+function xDTaraZ.UI.BuildSkins(window)
+    local tab = window:CreateTab({ Name = T("Skins", "สกิน"), Icon = "sparkles", Desc = T("Any skin, only on your screen", "ใส่สกินไหนก็ได้ เห็นแค่บนจอคุณ") })
+    local gearPage = tab:CreateSubTab({ Name = T("Knives & Gear", "มีดและอุปกรณ์") })
+
+    local main = gearPage:AddLeftGroupbox({ Name = T("Skin Changer", "เปลี่ยนสกิน"), Icon = "sparkles" })
+    xDTaraZ.UI.Toggle(main, "SkinChanger", { Name = T("Skin changer", "เปลี่ยนสกิน"), Desc = T("Pick a skin below and it shows right away", "เลือกสกินด้านล่างแล้วขึ้นทันที") })
+    main:CreateButton({ Name = T("Rarest On Everything", "หายากสุดทุกอัน"), Style = "Primary", Callback = xDTaraZ.UI.Detach(function()
+        local count = xDTaraZ.Skins.SetAll(function(list) return list[1] end)
+        xDTaraZ.UI.SyncSkins()
+        xDTaraZ.UI.Notify("Skins", "Set " .. count .. " items", 3, "Success")
+    end) })
+    main:CreateButtonRow({
+        { Name = T("Random", "สุ่ม"), Callback = xDTaraZ.UI.Detach(function()
+            xDTaraZ.Skins.SetAll(function(list) return list[math.random(#list)] end)
+            xDTaraZ.UI.SyncSkins()
+        end) },
+        { Name = T("Reset All", "ล้างทั้งหมด"), Style = "Danger", Callback = xDTaraZ.UI.Detach(function()
+            table.clear(xDTaraZ.Skins.Map)
+            xDTaraZ.Skins.Save()
+            xDTaraZ.UI.SyncSkins()
+        end) },
+    })
+
+    local gear = { Knives = true, Gloves = true, Grenades = true, Gear = true }
+    local heights = { Left = xDTaraZ.Config.SkinMainRows, Right = 0 }
+    for _, category in ipairs({ "Knives", "Gloves", "Grenades", "Gear" }) do
+        xDTaraZ.UI.PlaceSkinGroup(gearPage, category, heights)
+    end
+
+    local guns = tab:CreateSubTab({ Name = T("Gun Skins", "สกินปืน") })
+    heights = { Left = 0, Right = 0 }
+    local ok, categories = pcall(xDTaraZ.Skins.Categories)
+    for _, category in ipairs(ok and categories or {}) do
+        if gear[category] then continue end
+        xDTaraZ.UI.PlaceSkinGroup(guns, category, heights)
+    end
+end
+
+-- Obsidian touch aimbot controls, now living inside the custom AirFlow UI as
+-- a native "Obsidian Aimbot" subtab under Combat — no second window, no network
+-- fetch of the Obsidian library.  Target picking still runs through Z86's own
+-- xDTaraZ.Target.Pick / StillValid; the touch movement loop is unchanged.
+function xDTaraZ.UI.BuildObsidianAimbot(tab)
+    -- Spin up the drag-box and input-shield GUIs exactly once; Combat.Unload
+    -- already tears them down on script reload, so this is safe to call here.
+    xDTaraZ.ObsidianAimbot.CreateDragBox()
+    xDTaraZ.ObsidianAimbot.CreateInputShield()
+    xDTaraZ.ObsidianAimbot.UpdateDragAppearance()
+
+    local o = xDTaraZ.Options
+
+    -- ── Left column: aim controls + drag-box settings ──────────────────────
+    local aim = tab:AddLeftGroupbox({ Name = "Aimbot", Icon = "crosshair" })
+
+    local enabledWidget = xDTaraZ.UI.Toggle(aim, "ObsidianAimbot", {
+        Name = "Enable Obsidian Aimbot",
+        Desc = "Touch-movement aimbot using Z86 target selection",
+        Default = o.ObsidianAimbot,
+    })
+    -- Stop any active touch sequence the moment the feature is turned off.
+    enabledWidget:OnChanged(function(value)
+        if not value then task.defer(xDTaraZ.ObsidianAimbot.Stop) end
+    end)
+
+    xDTaraZ.UI.Slider(aim, "ObsidianSmooth", {
+        Name = "Smoothing",
+        Desc = "Higher = slower, more natural approach to target",
+        Min = 1, Max = 30, Default = o.ObsidianSmooth,
+    })
+    xDTaraZ.UI.Slider(aim, "ObsidianVerticalOffset", {
+        Name = "Vertical Offset",
+        Desc = "Nudges the aim point up or down on screen",
+        Min = -150, Max = 150, Default = o.ObsidianVerticalOffset, Suffix = " px",
+    })
+    xDTaraZ.UI.Toggle(aim, "ObsidianSticky", {
+        Name = "Sticky Target",
+        Desc = "Keeps the same enemy until it is lost",
+        Default = o.ObsidianSticky,
+    })
+
+    -- Drag-box appearance — each change must call UpdateDragAppearance after
+    -- the Bind loop has committed the new value, so use task.defer.
+    local dragVisWidget = xDTaraZ.UI.Toggle(aim, "ObsidianDragVisible", {
+        Name = "Show / Hide Drag Area",
+        Default = o.ObsidianDragVisible,
+    })
+    dragVisWidget:OnChanged(function()
+        task.defer(xDTaraZ.ObsidianAimbot.UpdateDragAppearance)
+    end)
+
+    local dragCtrlWidget = xDTaraZ.UI.Toggle(aim, "ObsidianDragControls", {
+        Name = "Show Move / Resize Handles",
+        Default = o.ObsidianDragControls,
+    })
+    dragCtrlWidget:OnChanged(function()
+        task.defer(xDTaraZ.ObsidianAimbot.UpdateDragAppearance)
+    end)
+
+    local dragFillWidget = xDTaraZ.UI.Slider(aim, "ObsidianDragFill", {
+        Name = "Drag Area Fill",
+        Min = 0, Max = 35, Default = o.ObsidianDragFill, Suffix = "%",
+    })
+    dragFillWidget:OnChanged(function()
+        task.defer(xDTaraZ.ObsidianAimbot.UpdateDragAppearance)
+    end)
+
+    -- ── Right column top: input shield ──────────────────────────────────────
+    local shield = tab:AddRightGroupbox({ Name = "Input Shield", Icon = "shield" })
+
+    xDTaraZ.UI.Toggle(shield, "ObsidianShieldBlock", {
+        Name = "Shield Block",
+        Desc = "Blocks touch input outside the drag area while aiming",
+        Default = o.ObsidianShieldBlock,
+    })
+    xDTaraZ.UI.Toggle(shield, "ObsidianShieldVisual", {
+        Name = "Shield Visual",
+        Desc = "Shows the red blocking panels on screen",
+        Default = o.ObsidianShieldVisual,
+    })
+    xDTaraZ.UI.Toggle(shield, "ObsidianShieldLabel", {
+        Name = "Shield Label",
+        Desc = "Shows the INPUT SHIELD ACTIVE status text",
+        Default = o.ObsidianShieldLabel,
+    })
+    xDTaraZ.UI.Slider(shield, "ObsidianShieldOpacity", {
+        Name = "Shield Opacity",
+        Min = 10, Max = 95, Default = o.ObsidianShieldOpacity, Suffix = "%",
+    })
+
+    -- ── Right column bottom: Z86 target selection ───────────────────────────
+    local targeting = tab:AddRightGroupbox({ Name = "Z86 Targeting", Icon = "target" })
+
+    xDTaraZ.UI.Dropdown(targeting, "ObsidianBone", {
+        Name = "Aim Part",
+        Options = { "Head", "Torso" },
+        Default = o.ObsidianBone,
+    })
+    xDTaraZ.UI.Dropdown(targeting, "ObsidianPriority", {
+        Name = "Target Priority",
+        Options = { "Crosshair", "Distance", "Health" },
+        Default = o.ObsidianPriority,
+    })
+    xDTaraZ.UI.Toggle(targeting, "ObsidianVisible", {
+        Name = "Visible Targets Only",
+        Default = o.ObsidianVisible,
+    })
+    xDTaraZ.UI.Slider(targeting, "ObsidianFov", {
+        Name = "FOV Radius",
+        Min = 50, Max = 600, Default = o.ObsidianFov, Suffix = " px",
+    })
+    xDTaraZ.UI.Toggle(targeting, "ObsidianShowFov", {
+        Name = "Show FOV Circle",
+        Default = o.ObsidianShowFov,
+    })
+    xDTaraZ.UI.Slider(targeting, "ObsidianMaxDistance", {
+        Name = "Maximum Distance",
+        Min = 50, Max = 3000, Default = o.ObsidianMaxDistance, Suffix = " studs",
+    })
+end
 
 do
     local genv = (type(getgenv) == "function" and getgenv()) or _G
@@ -48068,6 +50095,14 @@ return true;
 
     genv.NoirAutoUnload = function()
         pcall(function() window:Destroy() end)
+        pcall(function()
+            -- stop this run's extra-feature runtime (rebind-safe re-execute)
+            xDTaraZ.State.Alive = false
+            xDTaraZ.Combat.Unload()
+            for _, c in ipairs(xDTaraZ.State.Connections) do
+                pcall(function() c:Disconnect() end)
+            end
+        end)
     end
 
     -- ── load the embedded core logic ──────────────────────────────────────────
@@ -48231,111 +50266,84 @@ return true;
                 end
             end
 
-            -- ── my own tab layout: his tabs regrouped and renamed ─────────────
+            -- ── my own tab layout: tabs reshuffled, sections truly scattered ──
             local MY_TABS = {
-                { name = "Visuals",  icon = "eye",       src = { "visuals" } },
-                { name = "Combat",   icon = "crosshair", src = { "trigger", "aim" } },
-                { name = "Skins",    icon = "shirt",     src = { "skins" } },
-                { name = "Misc",     icon = "wrench",    src = { "misc", "movement", "utility", "feedback", "players" } },
-                { name = "Settings", icon = "settings",  src = { "settings" } },
+                { name = "Combat",   icon = "crosshair", subs = { "General", "Extra" } },
+                { name = "Misc",     icon = "wrench",    subs = { "General", "Extra" } },
+                { name = "Visuals",  icon = "eye",       subs = { "General", "Extra" } },
+                { name = "Settings", icon = "settings",  subs = nil },
             }
-            local MY_FALLBACK = 4 -- unmapped his tabs land in "Misc"
+            local CONTENT = { 1, 2, 3 } -- MY_TABS indices that take scattered secs
+            -- the Skins tab is NOT ported from the core: the real skin changer
+            -- from the user's own build is appended as the last tab below
 
-            local SUB_NAMES = {
-                aim = "Aimbot", trigger = "Trigger", visuals = "ESP",
-                misc = "General", skins = "Skins", world = "World",
-                map = "Map", bomb = "Bomb", movement = "Movement",
-                utility = "Utility", feedback = "Feedback", players = "Players",
-                settings = "Core",
-            }
-
-            local tabByName = {}
-            for ti = 1, #tabList do
-                tabByName[string.lower(tabList[ti].name)] = tabList[ti]
-            end
-
-            -- any his tab not mapped explicitly goes to the fallback bucket
-            local mapped = {}
-            for mi = 1, #MY_TABS do
-                for si = 1, #MY_TABS[mi].src do mapped[MY_TABS[mi].src[si]] = true end
-            end
-            for ti = 1, #tabList do
-                local ln = string.lower(tabList[ti].name)
-                if not mapped[ln] then
-                    table.insert(MY_TABS[MY_FALLBACK].src, ln)
-                end
-            end
-
-            local noirTabs, noirPage = {}, {}
-
+            local noirTabs = {}
             for mi = 1, #MY_TABS do
                 local mine = MY_TABS[mi]
-                local group, seenG = {}, {}
-                for si = 1, #mine.src do
-                    local t = tabByName[mine.src[si]]
-                    if t and not seenG[t] then
-                        seenG[t] = true
-                        group[#group + 1] = t
+                local ntab = window:CreateTab({ Name = mine.name, Icon = mine.icon })
+                noirTabs[mine.name] = ntab
+                if mine.subs then
+                    mine.tabs = {}
+                    for sIdx = 1, #mine.subs do
+                        mine.tabs[sIdx] = ntab:CreateSubTab({ Name = mine.subs[sIdx] })
                     end
                 end
-                if #group > 0 then
-                    local ntab = window:CreateTab({ Name = mine.name, Icon = mine.icon })
-                    noirTabs[mine.name] = ntab
-                    if #group > 1 then
-                        -- one subtab per merged his-tab, pages stack inside
-                        for gi = 1, #group do
-                            local tab = group[gi]
-                            local st = ntab:CreateSubTab({
-                                Name = SUB_NAMES[string.lower(tab.name)] or tab.name,
-                            })
-                            for pi = 1, #pageOfTab[tab] do
-                                noirPage[pageOfTab[tab][pi]] = st
-                            end
-                        end
-                    else
-                        local tab = group[1]
-                        local pages = pageOfTab[tab]
-                        local real = 0
-                        for pi = 1, #pages do
-                            if pages[pi] ~= tab then real = real + 1 end
-                        end
-                        if real > 1 then
-                            -- single his-tab with several pages: subtab per page
-                            for pi = 1, #pages do
-                                local page = pages[pi]
-                                local nm = (page ~= tab and page.name) or "General"
-                                noirPage[page] = ntab:CreateSubTab({ Name = nm })
-                            end
-                        else
-                            for pi = 1, #pages do
-                                noirPage[pages[pi]] = ntab
+            end
+
+            -- pool every section of every his tab; his settings stays whole,
+            -- his skins port is dropped entirely (replaced by the real system)
+            local pool, coreSecs = {}, {}
+            for ti = 1, #tabList do
+                local tab = tabList[ti]
+                local ln = string.lower(tab.name)
+                local isSet = ln == "settings"
+                local isDrop = ln == "skins"
+                for pi = 1, #pageOfTab[tab] do
+                    local page = pageOfTab[tab][pi]
+                    local secs = secOfPage[page]
+                    if secs then
+                        for si = 1, #secs do
+                            local sec = secs[si]
+                            if isSet then
+                                coreSecs[#coreSecs + 1] = sec
+                            elseif not isDrop then
+                                pool[#pool + 1] = sec
                             end
                         end
                     end
                 end
             end
 
+            -- deal sections round-robin: consecutive secs land in different tabs,
+            -- and inside each tab they alternate subtab and side
             local groupOfSec = {}
-            for ti = 1, #tabList do
-                local tab = tabList[ti]
-                for pi = 1, #pageOfTab[tab] do
-                    local page = pageOfTab[tab][pi]
-                    local target = noirPage[page]
-                    local secs = secOfPage[page]
-                    if target and secs then
-                        -- reshuffled: sections run in reverse and sides are flipped
-                        for si = #secs, 1, -1 do
-                            local sec = secs[si]
-                            local meta = secMeta[sec]
-                            local nm = (meta.name ~= "" and meta.name) or "Settings"
-                            local gb
-                            if si % 2 == 1 then
-                                gb = target:AddRightGroupbox({ Name = nm })
-                            else
-                                gb = target:AddLeftGroupbox({ Name = nm })
-                            end
-                            groupOfSec[sec] = gb
-                        end
+            for si = 1, #pool do
+                local sec = pool[si]
+                local mine = MY_TABS[CONTENT[(si - 1) % #CONTENT + 1]]
+                local j = math.floor((si - 1) / #CONTENT)
+                local host = mine.tabs[j % #mine.subs + 1]
+                local meta = secMeta[sec]
+                local nm = (meta.name ~= "" and meta.name) or "Settings"
+                local gb
+                if j % 2 == 0 then
+                    gb = host:AddLeftGroupbox({ Name = nm })
+                else
+                    gb = host:AddRightGroupbox({ Name = nm })
+                end
+                groupOfSec[sec] = gb
+            end
+
+            -- his settings sections live straight on the Settings tab
+            do
+                local st = noirTabs["Settings"]
+                for si = 1, #coreSecs do
+                    local sec = coreSecs[si]
+                    local meta = secMeta[sec]
+                    local nm = (meta.name ~= "" and meta.name) or "Settings"
+                    if si % 2 == 1 then
+                        groupOfSec[sec] = st:AddLeftGroupbox({ Name = nm })
+                    else
+                        groupOfSec[sec] = st:AddRightGroupbox({ Name = nm })
                     end
                 end
             end
@@ -48655,12 +50663,119 @@ return true;
                 end
             end)
 
-            -- Noir config manager on the settings tab
+            -- ── extra features from the user's own BloxStrike build ──────────
+            -- each feature is isolated: one failing must not take the rest down
+            local function extra(name, fn)
+                xDTaraZ.Util.Try(name, fn)
+            end
+            extra("ui window", function()
+                xDTaraZ.UI.Window = window
+            end)
+            extra("skins load", xDTaraZ.Skins.Load)
+            -- full skin changer tab (creates its own tab, lands last)
+            extra("skins tab", function()
+                xDTaraZ.UI.BuildSkins(window)
+            end)
+            -- obsidian aimbot: subtab under Combat
+            extra("obsidian aimbot", function()
+                xDTaraZ.UI.BuildObsidianAimbot(
+                    noirTabs["Combat"]:CreateSubTab({ Name = "Obsidian Aimbot" }))
+            end)
+            -- protection: subtab under Misc
+            extra("protection", function()
+                local protSub = noirTabs["Misc"]:CreateSubTab({ Name = "Protection" })
+                local akg = protSub:AddRightGroupbox({ Name = "AntiKick", Icon = "shield" })
+                xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(akg, "AntiKick.Enable", {
+                    Name = "Block kicks",
+                    Desc = "Blocks LOCAL Kick attempts (client-side checks). Server-side kicks cannot be blocked - they come over the network.",
+                    Default = false,
+                }), function(value) xDTaraZ.Guard.SetAntiKick(value == true) end)
+                xDTaraZ.UI.Feed(xDTaraZ.UI.Toggle(akg, "AntiKick.BlockTp", {
+                    Name = "Anti Rejoin (block server hop)",
+                    Desc = "Blocks game-initiated TeleportService moves, so the game cannot throw you to another server. Our Rejoin / Server Hop buttons still work.",
+                    Default = true,
+                }), function(value) xDTaraZ.Guard.antiKick.blockTp = value == true end)
+                local ugb = protSub:AddRightGroupbox({ Name = "Utility", Icon = "folder" })
+                ugb:CreateButtonRow({
+                    { Name = "Rejoin", Callback = xDTaraZ.UI.Detach(xDTaraZ.World.Rejoin) },
+                    { Name = "Server Hop", Callback = xDTaraZ.UI.Detach(xDTaraZ.World.ServerHop) },
+                })
+            end)
+            -- every widget whose idx is an Options key mirrors into Options
+            extra("options bind", function()
+                for key in pairs(xDTaraZ.Options) do
+                    local w = xDTaraZ.UI.Widgets[key]
+                    if w then xDTaraZ.Util.Try("bind " .. key, xDTaraZ.UI.Bind, w, key) end
+                end
+            end)
+            -- keep the loops alive: obsidian step + fov circle + skin job
+            extra("combat boot", function()
+                xDTaraZ.Combat.Start()
+                xDTaraZ.Scheduler.Every("Skin Changer", 0.15, xDTaraZ.Skins.Step,
+                    { "SkinChanger" }, xDTaraZ.Skins.Step)
+                xDTaraZ.Scheduler.Boot()
+            end)
+
+            -- menu settings (themes, background, scale) + config manager
             local setTab = noirTabs["Settings"]
             if setTab then
                 pcall(function()
                     setTab:CreateConfigManager({ Name = "Noir configs", Side = "Left" })
                 end)
+                pcall(function()
+                    setTab:ThemeManager({ Name = "Menu settings", Side = "Right" })
+                end)
+            end
+
+            -- ── auto-save: every change persists to the "autosave" config ─────
+            pcall(function()
+                window:LoadConfig("autosave", true) -- restore last session
+            end)
+            do
+                local saveTimer = 0
+                local function saveSoon()
+                    saveTimer = saveTimer + 1
+                    local t = saveTimer
+                    task.delay(1.2, function()
+                        if t ~= saveTimer then return end
+                        pcall(function()
+                            window:SaveConfig("autosave")
+                        end)
+                    end)
+                end
+                local function wrap(el)
+                    if type(el) == "table" and type(el.Set) == "function"
+                        and el._noirAuto ~= true then
+                        el._noirAuto = true
+                        local orig = el.Set
+                        el.Set = function(self, ...)
+                            saveSoon()
+                            return orig(self, ...)
+                        end
+                    end
+                end
+                for _, el in pairs(Library.Flags) do
+                    pcall(wrap, el)
+                end
+                -- elements created later (dynamic lists) get wrapped too
+                local origFC = window._flagCreated
+                window._flagCreated = function(self, flag, el)
+                    if origFC then origFC(self, flag, el) end
+                    pcall(wrap, el)
+                end
+
+                -- restored flag values must flow into the extra-feature
+                -- options: a silent Set skips element callbacks, so the
+                -- widget layer is pushed by hand after the config load
+                for idx, widget in pairs(xDTaraZ.UI.Widgets) do
+                    if Library.Flags[idx] and widget.Element
+                        and type(widget.Element.Get) == "function" then
+                        local ok, v = pcall(widget.Element.Get, widget.Element)
+                        if ok and v ~= nil then
+                            pcall(function() widget:Dispatch(v) end)
+                        end
+                    end
+                end
             end
 
             pcall(function()
