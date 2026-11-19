@@ -17,13 +17,13 @@
     -- или по ссылке (залей на GitHub raw / pastebin):
     local Noir = loadstring(game:HttpGet("https://.../Noir_Menu.lua"))()
 
-  ⚡ АВТОЗАПУСК
-    При выполнении файла меню открывается СРАЗУ. Внизу файла — БЛОК ЯДРА:
-    игровой модуль вшит в файл целиком и загружается как есть, его родное
-    окно скрывается и блокируется, а ВСЕ его функции (aim, trigger, visuals,
-    world, skins, misc, настройки) пересобираются в этом Noir-меню с теми же
-    названиями. Правка значений идёт мостом напрямую в его логику.
-    Конфиги Noir (вкладка settings) сохраняют все перенесённые флаги.
+  ⚡ AUTO START
+    Running this file opens the menu IMMEDIATELY. The CORE BLOCK is at the
+    bottom of the file: the game module is embedded in full and loaded as is,
+    its native window is hidden and locked, and ALL of its features (aim,
+    trigger, visuals, world, skins, misc, settings) are rebuilt inside this
+    Noir menu under new names. Value edits go through the bridge straight
+    into its logic. Noir configs (Settings tab) persist every ported flag.
 
   ТРЕБОВАНИЯ (опционально)
     • writefile / readfile / isfile / isfolder / makefolder / getcustomasset —
@@ -21225,7 +21225,7 @@ end;
 local function tF(cF,HF)local _F,sF=cF.AbsolutePosition,cF.AbsoluteSize;
 return HF.X>=_F.X and HF.Y>=_F.Y and HF.X<=_F.X+sF.X and HF.Y<=_F.Y+sF.Y;
 end;
-local cF,HF={flags={},els={},fl={},profs={},dir="polar",thm=SF,fnt=ZF,ico=IF,ver="1.0.0"},{};
+local cF,HF={flags={},els={},fl={},profs={},dir="noir",thm=SF,fnt=ZF,ico=IF,ver="1.0.0"},{};
 HF.md=AF.new();
 HF.pops={};
 HF.bmap={};
@@ -24786,7 +24786,7 @@ end;
 end;
 j();
 end;
-R={on=true,show={"User","FPS","Ping","RAM","Time"},title="polar",v={},n=0};
+R={on=true,show={"User","FPS","Ping","RAM","Time"},title="noir",v={},n=0};
 local e={FPS="layers",Ping="wifi",CPU="cpu",RAM="ram",Time="clock"};
 local function mF()local hF,AF=pcall(function()return x.PerformanceStats.CPU:GetValue();
 end);
@@ -24909,7 +24909,7 @@ x.Visible=false;
 QF(f,0);
 E7(f,"code",1,lF,18,0.15);
 d7(f,8,2);
-b({Text=HF.brand or"polar",LayoutOrder=3,Parent=f},{TextColor3=lF});
+b({Text=HF.brand or"noir",LayoutOrder=3,Parent=f},{TextColor3=lF});
 t7(f,4);
 b({Text=PF(tostring(mF),SF.acc),RichText=true,LayoutOrder=5,Parent=f});
 hF();
@@ -25849,7 +25849,7 @@ z();
 end;
 f=Z;
 end;
-local Z={key="polar"};
+local Z={key="noir"};
 Z.rk=i:GenerateGUID(false);
 local q;
 do
@@ -26272,7 +26272,7 @@ for s=1,#_,1 do
     end;
 end;
 HF.pads=H;
-NF.write(cF.dir.."/prefs.json",aF({key=g.ps_key,acc=typeof(g.ps_acc)=="Color3"and dF(g.ps_acc)or nil,blur=g.ps_blur,op=g.ps_op,fscale=g.ps_fscale,scale=g.ps_scale,wm=g.ps_wm,wms=g.ps_wms,kb=g.ps_kb,spec=g.ps_spec,logs=g.ps_logs,pads=H,size=HF.hold and{HF.hold.Size.X.Offset,HF.hold.Size.Y.Offset},mob=Q(HF.mob),kbp=Q(N.g),wmp=Q(R.g),spp=Q(I.g)})or"{}");
+NF.write(cF.dir.."/prefs.json",aF({key=g.ps_key,acc=typeof(g.ps_acc)=="Color3"and dF(g.ps_acc)or nil,blur=g.ps_blur,op=g.ps_op,fscale=g.ps_fscale,scale=g.ps_scale,logs=g.ps_logs,pads=H,size=HF.hold and{HF.hold.Size.X.Offset,HF.hold.Size.Y.Offset},mob=Q(HF.mob),kbp=Q(N.g),wmp=Q(R.g),spp=Q(I.g)})or"{}");
 end);
 end;
 local function g(Q)if type(Q)=="table"then if#Q==4 then
@@ -26323,27 +26323,9 @@ eF();
 end
 }):dep(Q);
 Q=h:section({name="Overlay",side=2});
-Q:toggle({name="Watermark",flag="ps_wm",nocfg=true,default=R.on,cb=function(P)R.on=P;
-A7(R.g,P);
-eF();
-end
-}):dropdown({flag="ps_wms",nocfg=true,multi=true,values=K,default=R.show,w=112,cb=function(P)R.show=P;
-L();
-eF();
-end
-});
-Q:toggle({name="Keybind list",flag="ps_kb",nocfg=true,default=N.on,cb=function(P)N.on=P;
-vF();
-eF();
-end
-});
-if I.use then
-    Q:toggle({name="Spectator list",flag="ps_spec",nocfg=true,default=I.on,cb=function(P)I.on=P;
-    j();
-    eF();
-end
-});
-end;
+
+
+
 Q:toggle({name="Event logs",flag="ps_logs",nocfg=true,default=c.on,cb=function(j)c.on=j;
 eF();
 end
@@ -26411,7 +26393,7 @@ else
     F;
     local L=UF("ImageButton",{Size=A(_,_),Position=g(Q.mob)or A(16,d(w(s.Y,400)*0.3)),Image=H or qF("code"),ImageTransparency=1,ZIndex=30,Visible=false,Parent=HF.gui});
     local Q,H=UF("UIScale",{Parent=L}),0;
-    function HF.mobv(s)H+=1;
+    function HF.mobv(s)if true then return;end;H+=1;
     local u=H;
     if s then
         L.Visible=true;
@@ -26455,16 +26437,16 @@ end;
 return L;
 end;
 cF.window=function(L,Q)Q=Q or{};
-L=TF.polar_lib;
+L=TF.noir_lib;
 if L then
     if L~=cF then
         if type(L.unload)=="function"then pcall(L.unload,L);
     end;
 end;
 end;
-TF.polar_lib=cF;
+TF.noir_lib=cF;
 cF.dir=Q.folder or cF.dir;
-HF.brand=Q.title or"polar";
+HF.brand=Q.title or"noir";
 HF.share=type(Q.share)=="table"and type(Q.share.put)=="function"and type(Q.share.get)=="function"and Q.share or nil;
 NF.dir(cF.dir);
 NF.dir(r());
@@ -26487,7 +26469,7 @@ HF.blur=L.blur~=false;
 if tonumber(L.op)then
     HF.bgt=E(1-tonumber(L.op)/100,0,0.5);
 end;
-R.on=L.wm~=false;
+R.on=false;
 if type(L.wms)=="table"then T={};
 for x=1,#L.wms,1 do
     local E=L.wms[x]=="Name"and"User"or L.wms[x];
@@ -26500,9 +26482,9 @@ end;
 R.show=T;
 end;
 R.title=Q.script or HF.brand;
-N.on=L.kb~=false;
-I.on=L.spec~=false;
-I.use=Q.spectators==true;
+N.on=false;
+I.on=false;
+I.use=false;
 c.on=L.logs~=false;
 T=Q.key;
 T=if typeof(T)=="EnumItem"then T.Name
@@ -26713,14 +26695,14 @@ c.f=nil;
 k(c.l);
 Z.t=nil;
 function a()end;
-if TF.polar_lib==j then
-    TF.polar_lib=nil;
+if TF.noir_lib==j then
+    TF.noir_lib=nil;
 end;
 end;
 return cF;
 end;
 D.e=function()local j,h,b=D.load("a"),D.load("c"),D.load("d");
-local K=b:window({title="noir",script="noir",folder="noircore",key="Insert",spectators=true,share={put=h.share_put,get=h.share_get}});
+local K=b:window({title="noir",script="noir",folder="noircore",key="Insert",spectators=false,share={put=h.share_put,get=h.share_get}});
 h={lib=b,win=K,tabs={aim=K:tab({name="aim",icon="crosshair"}),trigger=K:tab({name="trigger",icon="trigger"}),visuals=K:tab({name="visuals",icon="eye"}),misc=K:tab({name="misc",icon="gear"}),skins=K:tab({name="skins",icon="skins"})},finish=function()local S=b.els;
 for o=1,#S,1 do
     S[o]:fire();
@@ -48115,13 +48097,13 @@ return true;
 
     if loadErr then
         -- graceful failure: Noir stays usable and explains what happened
-        local tb = window:CreateTab({ Name = "Ошибка", Icon = "triangle-alert" })
-        local gb = tb:AddLeftGroupbox({ Name = "ЯДРО" })
+        local tb = window:CreateTab({ Name = "Error", Icon = "triangle-alert" })
+        local gb = tb:AddLeftGroupbox({ Name = "CORE" })
         gb:CreateParagraph({
-            Title = "Не удалось загрузить ядро",
+            Title = "Failed to load core",
             Content = loadErr,
         })
-        gb:CreateLabel("Вшитый модуль не запустился. Сообщи автору сборки и приложи текст ошибки из консоли.")
+        gb:CreateLabel("The embedded module did not start. Tell the build author and attach the error text from the console.")
         window:Toggle(true)
         warn("[Noir] core: " .. loadErr)
     else
@@ -48251,21 +48233,20 @@ return true;
 
             -- ── my own tab layout: his tabs regrouped and renamed ─────────────
             local MY_TABS = {
-                { name = "Бой",       icon = "crosshair", src = { "aim", "trigger", "weapon" } },
-                { name = "Визуал",    icon = "eye",       src = { "visuals" } },
-                { name = "Скины",     icon = "shirt",     src = { "skins" } },
-                { name = "Мир",       icon = "globe",     src = { "world", "map", "bomb" } },
-                { name = "Прочее",    icon = "wrench",    src = { "misc", "movement", "utility", "feedback", "players" } },
-                { name = "Настройки", icon = "settings",  src = { "settings" } },
+                { name = "Visuals",  icon = "eye",       src = { "visuals" } },
+                { name = "Combat",   icon = "crosshair", src = { "trigger", "aim" } },
+                { name = "Skins",    icon = "shirt",     src = { "skins" } },
+                { name = "Misc",     icon = "wrench",    src = { "misc", "movement", "utility", "feedback", "players" } },
+                { name = "Settings", icon = "settings",  src = { "settings" } },
             }
-            local MY_FALLBACK = 5 -- unmapped his tabs land in "Прочее"
+            local MY_FALLBACK = 4 -- unmapped his tabs land in "Misc"
 
             local SUB_NAMES = {
-                aim = "Aimbot", trigger = "Триггер", visuals = "ESP",
-                misc = "Разное", skins = "Скины", world = "Мир",
-                map = "Карта", bomb = "Бомба", movement = "Движение",
-                utility = "Утилиты", feedback = "Фидбек", players = "Игроки",
-                settings = "Ядро",
+                aim = "Aimbot", trigger = "Trigger", visuals = "ESP",
+                misc = "General", skins = "Skins", world = "World",
+                map = "Map", bomb = "Bomb", movement = "Movement",
+                utility = "Utility", feedback = "Feedback", players = "Players",
+                settings = "Core",
             }
 
             local tabByName = {}
@@ -48322,7 +48303,7 @@ return true;
                             -- single his-tab with several pages: subtab per page
                             for pi = 1, #pages do
                                 local page = pages[pi]
-                                local nm = (page ~= tab and page.name) or "Общее"
+                                local nm = (page ~= tab and page.name) or "General"
                                 noirPage[page] = ntab:CreateSubTab({ Name = nm })
                             end
                         else
@@ -48342,15 +48323,16 @@ return true;
                     local target = noirPage[page]
                     local secs = secOfPage[page]
                     if target and secs then
-                        for si = 1, #secs do
+                        -- reshuffled: sections run in reverse and sides are flipped
+                        for si = #secs, 1, -1 do
                             local sec = secs[si]
                             local meta = secMeta[sec]
-                            local nm = (meta.name ~= "" and meta.name) or "Настройки"
+                            local nm = (meta.name ~= "" and meta.name) or "Settings"
                             local gb
                             if si % 2 == 1 then
-                                gb = target:AddLeftGroupbox({ Name = nm })
-                            else
                                 gb = target:AddRightGroupbox({ Name = nm })
+                            else
+                                gb = target:AddLeftGroupbox({ Name = nm })
                             end
                             groupOfSec[sec] = gb
                         end
@@ -48402,7 +48384,7 @@ return true;
                 if name == "" and kind ~= "btn" and kind ~= "lbl" and kind ~= "sub" then
                     local host = el.host
                     local hn = host and tostring(host.name or "") or ""
-                    name = (hn ~= "" and (hn .. " · параметр")) or "Параметр"
+                    name = (hn ~= "" and (hn .. " · option")) or "Setting"
                 end
 
                 if kind == "tgl" then
@@ -48475,7 +48457,7 @@ return true;
                     local cur = eff(el)
                     if typeof and typeof(cur) ~= "Color3" then cur = Color3.new(1, 1, 1) end
                     rec.ui = gb:CreateColorPicker({
-                        Name = (name ~= "" and name) or "Цвет",
+                        Name = (name ~= "" and name) or "Color",
                         Default = cur,
                         Flag = nflag(el),
                         Callback = function(col)
@@ -48674,17 +48656,17 @@ return true;
             end)
 
             -- Noir config manager on the settings tab
-            local setTab = noirTabs["Настройки"]
+            local setTab = noirTabs["Settings"]
             if setTab then
                 pcall(function()
-                    setTab:CreateConfigManager({ Name = "Noir конфиги", Side = "Left" })
+                    setTab:CreateConfigManager({ Name = "Noir configs", Side = "Left" })
                 end)
             end
 
             pcall(function()
                 window:Notify({
                     Title = "NOIR",
-                    Content = "Перенесено элементов: " .. tostring(#records),
+                    Content = "Ported elements: " .. tostring(#records),
                     Type = "Success",
                     Duration = 4,
                 })
@@ -48696,7 +48678,7 @@ return true;
             pcall(function()
                 window:Notify({
                     Title = "NOIR",
-                    Content = "Ошибка сборки: " .. tostring(errb),
+                    Content = "Build error: " .. tostring(errb),
                     Type = "Error",
                     Duration = 6,
                 })
@@ -48705,7 +48687,7 @@ return true;
         window:Toggle(true)
     end
 
-    print("[Noir] ядро загружено. RightControl / кнопка на экране.")
+    print("[Noir] core loaded. RightControl / on-screen button.")
 end
 
 return Library
