@@ -1,15 +1,4 @@
-local ProtectionConfig = {
-    SecretKey = "2009",
-    HubName = "Noir"
-}
-if false then  
-    local player = game:GetService("Players").LocalPlayer
-    if player then
-        player:Kick("\n🛡️ Unauthorized Execution 🛡️\n\nPlease use the official Key System to run " .. ProtectionConfig.HubName)
-    end
-    return  
-end
-print(ProtectionConfig.HubName .. " Loaded Successfully!")
+print("Noir Loaded Successfully!")
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
@@ -25,10 +14,6 @@ local StarterGui = game:GetService("StarterGui")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
-if false then  
-    LocalPlayer:Kick("Noir: this script is for BloxStrike only")
-    return
-end
 local function RuntimePrint()
     local ok, renv = pcall(getrenv)
     return ok and type(renv) == "table" and type(renv.print) == "function" and renv.print or print
@@ -23028,15 +23013,19 @@ end;
 local function x(w,P,r,L)r=r or M;
 r.FilterDescendantsInstances=L or Y;
 local M=(K:Raycast(w,P,r));
+local lastInstance=nil;
+local attempts=0;
 while M do
     local L=M.Instance;
-    if not(d(L))then
+    attempts+=1;
+    if not(d(L)) or L==lastInstance or attempts>=64 then
         E.instance=L;
         E.position=M.Position;
         E.normal=M.Normal;
         E.material=M.Material;
         return E;
     end;
+    lastInstance=L;
     r:AddToFilter(L);
     M=(K:Raycast(w,P,r));
 end;
@@ -23054,7 +23043,8 @@ G(I);
 G(R);
 Z=r.Unit;
 local Y,U,z,J,y=Z*1000,{},false,P,0;
-for f=1,100,1 do
+local lastInstance=nil;
+for f=1,64,1 do
     if z then
         break;
     end;
@@ -23071,6 +23061,8 @@ for f=1,100,1 do
         break;
     end;
     local i=f.Instance;
+    if i==lastInstance then break end;
+    lastInstance=i;
     a:AddToFilter(i);
     if d(i)then
     else
@@ -23749,7 +23741,7 @@ if T<Y.shield_stamp then
     return Y.shield;
 end;
 local x=i:FindFirstChildWhichIsA("ForceField",true)~=nil;
-Y.shield_stamp=T+0.1;
+Y.shield_stamp=T+0.03;
 Y.shield=x;
 return x;
 end;
@@ -23783,7 +23775,7 @@ elseif  p<=0 then
 end;
 local A=j();
 if A>=x.shield_stamp then
-    x.shield_stamp=A+0.1;
+    x.shield_stamp=A+0.03;
     x.shield=T:FindFirstChildWhichIsA("ForceField",true)~=nil;
 end;
 if x.shield then
@@ -28416,6 +28408,9 @@ function xDTaraZ.Shitaro.Legit()
             auto_shoot_pulses = self._autoPulseStats and self._autoPulseStats.pulses or 0,
             auto_shoot_signals = self._autoPulseStats and table.concat(self._autoPulseStats.signals, ", ") or "none",
             auto_shoot_skipped = self._autoPulseStats and self._autoPulseStats.skipped or 0,
+            auto_shoot_last_ms = self._autoPulseStats and math.floor(self._autoPulseStats.duration * 1000 + 0.5) or 0,
+            auto_shoot_max_ms = self._autoPulseStats and math.floor(self._autoPulseStats.maxDuration * 1000 + 0.5) or 0,
+            auto_shoot_interval_ms = self._autoPulseStats and math.floor(self._autoPulseStats.interval * 1000 + 0.5) or 0,
             auto_wall = self.legitStage.auto_wall == true,
             origin_shift = self.legitStage.origin_shift or 0,
         }
@@ -28472,9 +28467,9 @@ function xDTaraZ.Shitaro.Legit()
         local revolverStep = D.load("ap").step
         local autoStep = D.load("aq").auto
         self._stepErrors = {}
-        self._autoPulseStats = { pulses = 0, skipped = 0, last = 0, signals = {} }
-        local running = false
-        local lastPulse = -math.huge
+        self._autoPulseStats = { pulses = 0, skipped = 0, last = 0, signals = {"Heartbeat"}, duration = 0, maxDuration = 0, interval = 1 / 90 }
+        local pending = false
+        local nextPulse = 0
         local function runStep(name, step)
             local worked, message = pcall(step)
             if not worked and not self._stepErrors[name] then
@@ -28485,39 +28480,35 @@ function xDTaraZ.Shitaro.Legit()
         local function pulse(force)
             if xDTaraZ.State.Alive == false or not self.Ready or not self.legitOptions or not self.legitOptions.auto_shoot then return end
             local now = os.clock()
-            if running or (not force and now - lastPulse < 1 / 180) then
+            if pending or (not force and now < nextPulse) then
                 self._autoPulseStats.skipped += 1
                 return
             end
-            running = true
-            lastPulse = now
-            self._autoPulseStats.last = now
-            self._autoPulseStats.pulses += 1
-            runStep("auto_shoot", autoStep)
-            running = false
+            pending = true
+            task.defer(function()
+                if xDTaraZ.State.Alive ~= false and self.Ready and self.legitOptions and self.legitOptions.auto_shoot then
+                    local started = os.clock()
+                    self._autoPulseStats.last = started
+                    self._autoPulseStats.pulses += 1
+                    runStep("auto_shoot", autoStep)
+                    local finished = os.clock()
+                    local elapsed = math.max(0, finished - started)
+                    local interval = math.clamp(elapsed * 2, 1 / 90, 0.1)
+                    self._autoPulseStats.duration = elapsed
+                    self._autoPulseStats.maxDuration = math.max(self._autoPulseStats.maxDuration, elapsed)
+                    self._autoPulseStats.interval = interval
+                    nextPulse = started + interval
+                end
+                pending = false
+            end)
         end
         self._autoPulse = pulse
-        local function connectAuto(name, fallback)
-            local okSignal, signal = pcall(function() return RunService[name] end)
-            if (not okSignal or not signal) and fallback then
-                name = fallback
-                okSignal, signal = pcall(function() return RunService[name] end)
-            end
-            if not okSignal or not signal then return false end
-            local ok = pcall(function()
-                xDTaraZ:Connect(signal, function() pulse(false) end)
-            end)
-            if ok then table.insert(self._autoPulseStats.signals, name) end
-            return ok
-        end
-        local hasSimulation = connectAuto("PreSimulation")
-        local hasRender = connectAuto("PreRender", "RenderStepped")
         xDTaraZ:Connect(RunService.Heartbeat, function()
             runStep("movement", movementStep)
             runStep("revolver", revolverStep)
-            if not hasSimulation and not hasRender then pulse(false) end
+            pulse(false)
         end)
-        if self.legitOptions.auto_shoot then task.defer(pulse, true) end
+        if self.legitOptions.auto_shoot then pulse(true) end
     end)
 end
 do
