@@ -20522,6 +20522,9 @@ function xDTaraZ.Shitaro.SetLegit(key, value)
         if key ~= "on" then s.legitOptions[key] = value end
         s.legitOptions.on = s.legitStage.on
     end
+    if key == "auto_shoot" and value == true and type(s._autoPulse) == "function" then
+        task.defer(s._autoPulse, true)
+    end
 end
 function xDTaraZ.Shitaro.Start()
     local self = xDTaraZ.Shitaro
@@ -26642,9 +26645,6 @@ if P then
             if o.wait(G,i,K)>0 then
                 return;
             end;
-            if K-b.last_scan<0.033 then
-                return;
-            end;
             b.last_scan=K;
             local Y,x,p=m(G);
             if not(p)then
@@ -28413,6 +28413,9 @@ function xDTaraZ.Shitaro.Legit()
             weapon_held = controller and controller.held() ~= nil or false,
             targeting_on = self.legitStage.on == true,
             auto_shoot = self.legitStage.auto_shoot == true,
+            auto_shoot_pulses = self._autoPulseStats and self._autoPulseStats.pulses or 0,
+            auto_shoot_signals = self._autoPulseStats and table.concat(self._autoPulseStats.signals, ", ") or "none",
+            auto_shoot_skipped = self._autoPulseStats and self._autoPulseStats.skipped or 0,
             auto_wall = self.legitStage.auto_wall == true,
             origin_shift = self.legitStage.origin_shift or 0,
         }
@@ -28465,17 +28468,56 @@ function xDTaraZ.Shitaro.Legit()
         self.Ready = true
         pcall(xDTaraZ.Shitaro.VisualsStart)
         pcall(xDTaraZ.Shitaro.TPStart)
-        local steps = { movement = D.load("p").step, revolver = D.load("ap").step, auto_shoot = D.load("aq").auto }
+        local movementStep = D.load("p").step
+        local revolverStep = D.load("ap").step
+        local autoStep = D.load("aq").auto
         self._stepErrors = {}
-        xDTaraZ:Connect(RunService.Heartbeat, function()
-            for name, step in pairs(steps) do
-                local worked, message = pcall(step)
-                if not worked and not self._stepErrors[name] then
-                    self._stepErrors[name] = tostring(message)
-                    warn("[Noir] " .. name .. ": " .. tostring(message))
-                end
+        self._autoPulseStats = { pulses = 0, skipped = 0, last = 0, signals = {} }
+        local running = false
+        local lastPulse = -math.huge
+        local function runStep(name, step)
+            local worked, message = pcall(step)
+            if not worked and not self._stepErrors[name] then
+                self._stepErrors[name] = tostring(message)
+                warn("[Noir] " .. name .. ": " .. tostring(message))
             end
+        end
+        local function pulse(force)
+            if xDTaraZ.State.Alive == false or not self.Ready or not self.legitOptions or not self.legitOptions.auto_shoot then return end
+            local now = os.clock()
+            if running or (not force and now - lastPulse < 1 / 180) then
+                self._autoPulseStats.skipped += 1
+                return
+            end
+            running = true
+            lastPulse = now
+            self._autoPulseStats.last = now
+            self._autoPulseStats.pulses += 1
+            runStep("auto_shoot", autoStep)
+            running = false
+        end
+        self._autoPulse = pulse
+        local function connectAuto(name, fallback)
+            local okSignal, signal = pcall(function() return RunService[name] end)
+            if (not okSignal or not signal) and fallback then
+                name = fallback
+                okSignal, signal = pcall(function() return RunService[name] end)
+            end
+            if not okSignal or not signal then return false end
+            local ok = pcall(function()
+                xDTaraZ:Connect(signal, function() pulse(false) end)
+            end)
+            if ok then table.insert(self._autoPulseStats.signals, name) end
+            return ok
+        end
+        local hasSimulation = connectAuto("PreSimulation")
+        local hasRender = connectAuto("PreRender", "RenderStepped")
+        xDTaraZ:Connect(RunService.Heartbeat, function()
+            runStep("movement", movementStep)
+            runStep("revolver", revolverStep)
+            if not hasSimulation and not hasRender then pulse(false) end
         end)
+        if self.legitOptions.auto_shoot then task.defer(pulse, true) end
     end)
 end
 do
