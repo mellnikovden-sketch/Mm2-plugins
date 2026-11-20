@@ -18325,7 +18325,7 @@ local System = {
         __connections = {},  
         __reverted_remotes = {},  
         __spam_accumulator = 0,  
-        __spam_rate = 340,  
+        __spam_rate = 240,  
         __infinity_active = false,  
         __deathslash_active = false,  
         __timehole_active = false,  
@@ -18998,7 +18998,8 @@ function System.auto_spam.start()
     if System.__properties.__connections.__auto_spam then  
         System.__properties.__connections.__auto_spam:Disconnect()  
     end  
-    System.__properties.__auto_spam_enabled = true  
+    System.__properties.__auto_spam_enabled = true
+    local lastSpamAttempt = nil
     System.__properties.__connections.__auto_spam = RunService.PreSimulation:Connect(function()  
         if not System.__properties.__auto_spam_enabled then return end  
         local ball = System.ball.get()  
@@ -19025,7 +19026,11 @@ function System.auto_spam.start()
         if not ball_target or target_distance > spam_accuracy or distance > spam_accuracy then return end  
         if LocalPlayer.Character:GetAttribute("Pulsed") then return end  
         if ball_target == LocalPlayer.Name and target_distance > 30 and distance > 30 then return end  
-        if distance <= spam_accuracy and System.__properties.__parries > System.__properties.__spam_threshold then  
+        if distance <= spam_accuracy and System.__properties.__parries > System.__properties.__spam_threshold then
+            local rate = math.clamp(tonumber(System.__properties.__spam_rate) or 240, 60, 5000)
+            local now = os.clock()
+            if lastSpamAttempt and now - lastSpamAttempt < 60 / rate then return end
+            lastSpamAttempt = now
             if getgenv().AutoSpamMode == "Keypress" then  
                 System.parry.keypress()  
             else  
@@ -20201,8 +20206,8 @@ AutoSpamGroup:create_toggle("NOIR_AutoSpam_Notify", {
     end  
 })  
 AutoSpamGroup:create_slider("NOIR_AutoSpam_Rate", {  
-    title = "Spam Rate",
-    description = "The supplied Noir backend does not use this setting.",
+    title = "Spam Rate (per minute)",
+    description = "Maximum Auto Spam attempts per minute; limited by FPS and server.",
     minimum = 60,  
     maximum = 5000,  
     default = 240,  
