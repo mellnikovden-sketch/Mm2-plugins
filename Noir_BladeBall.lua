@@ -6476,6 +6476,69 @@ function Window:SaveConfig(name)
     end
     return ok, err
 end
+function Window:StartAutoSave()
+    if self._autoSaveStarted then return end
+    self._autoSaveStarted = true
+    if not fileApiAvailable() or type(isfolder) ~= "function" or type(makefolder) ~= "function" then
+        warn("[Noir] Auto-save unavailable: executor file API is missing")
+        pcall(function() self:Notify({Title="Auto-save unavailable", Content="Executor file API is missing", Duration=5}) end)
+        return
+    end
+    local name = "autosave_" .. tostring(LocalPlayer and LocalPlayer.UserId or 0)
+    local path = configPath(self, name)
+    local checkOk, exists = pcall(isfile, path)
+    if not checkOk then warn("[Noir] Auto-save cannot access storage: " .. tostring(exists)); return end
+    if exists then
+        local readOk, data, err = pcall(readConfig, self, name)
+        if not readOk or not data then
+            warn("[Noir] Auto-save could not load; existing file was kept: " .. tostring(readOk and err or data))
+            return
+        end
+        self:_applyFlags(data, false)
+    end
+    task.spawn(function()
+        local lastSnapshot = nil
+        local warned = false
+        while not self._destroyed do
+            task.wait(2)
+            if self._destroyed then break end
+            local data = collectFlags(self)
+            local snapshot = {}
+            local valid = true
+            for flag, entry in pairs(data) do
+                local ok, encoded = pcall(function() return HttpService:JSONEncode(entry) end)
+                if not ok then valid = false; break end
+                snapshot[flag] = encoded
+            end
+            if valid then
+                local changed = lastSnapshot == nil
+                if not changed then
+                    for flag, value in pairs(snapshot) do
+                        if lastSnapshot[flag] ~= value then changed = true; break end
+                    end
+                end
+                if not changed then
+                    for flag in pairs(lastSnapshot) do
+                        if snapshot[flag] == nil then changed = true; break end
+                    end
+                end
+                if changed then
+                    local ok, saved, err = pcall(writeConfig, self, name, data)
+                    if ok and saved then
+                        lastSnapshot = snapshot
+                        warned = false
+                    elseif not warned then
+                        warn("[Noir] Auto-save failed: " .. tostring(ok and err or saved))
+                        warned = true
+                    end
+                end
+            elseif not warned then
+                warn("[Noir] Auto-save could not serialize settings")
+                warned = true
+            end
+        end
+    end)
+end
 function Window:LoadConfig(name, silent)
     name = name or self.ConfigName
     if not name then
@@ -18236,6 +18299,7 @@ local fn, err = compiler(NOIR_LIBRARY_SOURCE, "Noir_Menu")
 if not fn then error("[Noir] " .. tostring(err)) end
 local Library = fn()
 local window = Library:CreateWindow({Name="Noir Blade Ball", Title="Noir", Theme="Noir", DefaultTheme="Noir", Weather="Rain", Size=UDim2.fromOffset(680,480), UIScale=0.85, AdaptiveSize=true, ToggleUIKeybind="RightControl", ToggleButton={Platform="Both",Icon="layout-grid"}, ConfigurationSaving={Enabled=true,FolderName="Noir/BladeBall"}})
+window:StartAutoSave()
 genv.__NoirBladePreviewStarted = true
 local NoirTabs = {}
 local UI = {}
@@ -18642,8 +18706,17 @@ function System.player.get_closest()
     Closest_Entity=closest_entity; return closest_entity  
 end  
 local CURVE_NAMES = {"Camera","Random","Accelerated","Backwards","Slow","High","Normal","Speed","Down","Left","Right"}  
-local Selected_Parry_Type = "Camera"  
-local CurveType = "Camera"  
+local Selected_Parry_Type = "Camera"
+local CurveType = "Camera"
+local curveSetting = {_type="Dropdown"}
+function curveSetting:Get() return CurveType end
+function curveSetting:Set(value)
+    if type(value) ~= "string" or not table.find(CURVE_NAMES, value) then return end
+    CurveType = value
+    Selected_Parry_Type = value
+end
+Library.Flags.NOIR_Curve_Selection = curveSetting
+window:_flagCreated("NOIR_Curve_Selection", curveSetting)  
 System.curve = {}  
 function System.curve.get_cframe()  
     local Camera = Workspace.CurrentCamera  
@@ -27593,22 +27666,29 @@ function host.CreateTab()
         local settings = { Name = title or name, Desc = description }
         local box = sideCounts[tabName] % 2 == 0 and tab:AddRightGroupbox(settings) or tab:AddLeftGroupbox(settings)
         local sec = {}
+        local flagCounts = {}
+        local function persistFlag(kind, label, flag)
+            if flag then return "Legacy_" .. tostring(name) .. "_" .. tostring(flag) end
+            local base = "LegacyAuto_" .. tostring(name) .. "_" .. kind .. "_" .. tostring(label)
+            flagCounts[base] = (flagCounts[base] or 0) + 1
+            return base .. "_" .. tostring(flagCounts[base])
+        end
         function sec:AddToggle(label, cb, flag)
-            local ctl = box:CreateToggle({Name=label,Flag=flag and ("Legacy_" .. tostring(name) .. "_" .. tostring(flag)) or nil,Default=false,Callback=cb})
+            local ctl = box:CreateToggle({Name=label,Flag=persistFlag("Toggle", label, flag),Default=false,Callback=cb})
             return function(value) ctl:Set(value == true) end
         end
         function sec:AddSlider(label, min, max, default, cb, flag, round)
             local step = round == false and 0.01 or 1
-            local ctl = box:CreateSlider({Name=label,Flag=flag and ("Legacy_" .. tostring(name) .. "_" .. tostring(flag)) or nil,Min=min,Max=max,Default=default,Step=step,Callback=cb})
+            local ctl = box:CreateSlider({Name=label,Flag=persistFlag("Slider", label, flag),Min=min,Max=max,Default=default,Step=step,Callback=cb})
             return {SetValue=function(_, v) ctl:Set(v) end,GetValue=function() return ctl:Get() end}
         end
         function sec:AddTextBox(label, cb, flag)
-            local ctl = box:CreateInput({Name=label,Flag=flag and ("Legacy_" .. tostring(name) .. "_" .. tostring(flag)) or nil,Callback=cb})
+            local ctl = box:CreateInput({Name=label,Flag=persistFlag("Input", label, flag),Callback=cb})
             return {SetValue=function(_,v) ctl:Set(v) end}
         end
         function sec:AddDropdown(label, options, cb, flag)
             options = type(options)=="table" and options or {}
-            local ctl = box:CreateDropdown({Name=label,Flag=flag and ("Legacy_" .. tostring(name) .. "_" .. tostring(flag)) or nil,Options=options,Default=options[1],Callback=cb})
+            local ctl = box:CreateDropdown({Name=label,Flag=persistFlag("Dropdown", label, flag),Options=options,Default=options[1],Callback=cb})
             return { SetValue=function(_,v) ctl:Set(v) end, ChangeItems=function(_,v) ctl:Refresh(v,true) end,
                 Refresh=function(_,v,pick) ctl:Refresh(v,true); if pick then ctl:Set(pick) end end }
         end
@@ -27618,7 +27698,7 @@ function host.CreateTab()
             return {SetValue=function(_,v) ctl:Set(v) end}
         end
         function sec:AddParagraph(title,text) return box:CreateParagraph({Title=title,Content=text}) end
-        function sec:AddKeybind(label,default,cb) return box:CreateKeybind({Name=label,Default=default,Callback=cb}) end
+        function sec:AddKeybind(label,default,cb) return box:CreateKeybind({Name=label,Flag=persistFlag("Keybind", label),Default=default,Callback=cb}) end
         return sec
     end
     return api
@@ -30931,9 +31011,9 @@ do
     local settings = window:CreateTab({Name="Settings", Icon="settings"})
     NoirTabs.Settings = settings
     local ui = settings:AddLeftGroupbox({Name="Interface",Icon="monitor"})
-    ui:CreateSlider({Name="Scale",Min=60,Max=150,Default=85,Suffix="%",Callback=function(v) window:SetUIScale(v/100) end})
-    ui:CreateDropdown({Name="Weather",Options={"None","Snow","Rain","Hell Fire","Sakura","Fireflies","Matrix"},Default="Rain",Callback=function(v) window:SetWeather(v) end})
-    ui:CreateKeybind({Name="Menu key",Default="RightControl",OnChanged=function(key) if key then window:SetKeybind(key) end end})
+    ui:CreateSlider({Name="Scale",Flag="Noir_Settings_Scale",Min=60,Max=150,Default=85,Suffix="%",Callback=function(v) window:SetUIScale(v/100) end})
+    ui:CreateDropdown({Name="Weather",Flag="Noir_Settings_Weather",Options={"None","Snow","Rain","Hell Fire","Sakura","Fireflies","Matrix"},Default="Rain",Callback=function(v) window:SetWeather(v) end})
+    ui:CreateKeybind({Name="Menu key",Flag="Noir_Settings_MenuKey",Default="RightControl",OnChanged=function(key) if key then window:SetKeybind(key) end end})
     settings:CreateConfigManager({Name="Configs",Side="Left"})
     settings:CreateThemeManager({Name="Themes",Side="Right"})
 end
