@@ -18464,7 +18464,7 @@ task.spawn(function()
         task.wait(1)  
     end  
     if _capturedRemote then  
-        Notify("VIREX", "Anti-cheat Bypassed", 3)  
+        Notify("Noir", "Parry remote captured", 3)  
     end  
 end)  
 local function fireParryRemote(curveCF)  
@@ -19183,7 +19183,7 @@ end
 local function stopManualKeyboardSpam()  
     if KeyboardSettings.ManualSpamMode == "Hold to Spam" and System.__properties.__manual_spam_enabled then  
         _G.manualSpamEnabled = false  
-        if _G.VIREX then _G.VIREX.manualSpamEnabled = false end  
+        if _G.NOIR then _G.NOIR.manualSpamEnabled = false end  
         System.manual_spam.stop()  
         macroSpamActive = false  
     end  
@@ -19191,8 +19191,8 @@ end
 local function toggleManualKeyboardSpam()  
     local state = not System.__properties.__manual_spam_enabled  
     _G.manualSpamEnabled = state  
-    _G.VIREX = _G.VIREX or {}  
-    _G.VIREX.manualSpamEnabled = state  
+    _G.NOIR = _G.NOIR or {}  
+    _G.NOIR.manualSpamEnabled = state  
     System.__properties.__manual_spam_enabled = state  
     macroSpamActive = state  
     if state then  
@@ -19211,7 +19211,7 @@ local function CreateKeyboardUI()
         return  
     end  
     local gui = Instance.new("ScreenGui")  
-    gui.Name = "VIREX_KeyboardUI"  
+    gui.Name = "NOIR_KeyboardUI"  
     gui.ResetOnSpawn = false  
     gui.IgnoreGuiInset = true  
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling  
@@ -19436,8 +19436,8 @@ local function CreateKeyboardUI()
             else  
                 if not System.__properties.__manual_spam_enabled then  
                     _G.manualSpamEnabled = true  
-                    _G.VIREX = _G.VIREX or {}  
-                    _G.VIREX.manualSpamEnabled = true  
+                    _G.NOIR = _G.NOIR or {}  
+                    _G.NOIR.manualSpamEnabled = true  
                     System.manual_spam.start()  
                 end  
             end  
@@ -19493,7 +19493,7 @@ local function CreateSmallActionUI(kind)
         return  
     end  
     local gui = Instance.new("ScreenGui")  
-    gui.Name = isTrigger and "VIREX_TriggerUI" or "VIREX_SpamUI"  
+    gui.Name = isTrigger and "NOIR_TriggerUI" or "NOIR_SpamUI"  
     gui.ResetOnSpawn = false  
     gui.IgnoreGuiInset = true  
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling  
@@ -19503,8 +19503,8 @@ local function CreateSmallActionUI(kind)
     else  
         ManualSpamGui = gui  
         _G.manualSpamEnabled = false  
-        _G.VIREX = _G.VIREX or {}  
-        _G.VIREX.manualSpamEnabled = false  
+        _G.NOIR = _G.NOIR or {}  
+        _G.NOIR.manualSpamEnabled = false  
     end  
     local Main = Instance.new("Frame")  
     Main.Size = UDim2.fromOffset(180, 60)  
@@ -19570,7 +19570,7 @@ local function CreateSmallActionUI(kind)
         connections.button = Button.MouseButton1Click:Connect(function()  
             local state = not _G.manualSpamEnabled  
             _G.manualSpamEnabled = state  
-            _G.VIREX.manualSpamEnabled = state  
+            _G.NOIR.manualSpamEnabled = state  
             System.__properties.__manual_spam_enabled = state  
             macroSpamActive = state  
             if state then  
@@ -19627,7 +19627,7 @@ local function CreateCurveUI()
         return  
     end  
     local gui = Instance.new("ScreenGui")  
-    gui.Name = "VIREX_CurveUI"  
+    gui.Name = "NOIR_CurveUI"  
     gui.ResetOnSpawn = false  
     gui.IgnoreGuiInset = true  
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling  
@@ -19644,18 +19644,21 @@ local function CreateCurveUI()
     Main.ClipsDescendants = true  
     Main.Active = true  
     Main.ZIndex = 2000  
-    Main.Parent = gui  
+    Main.Parent = gui
+    local mobileScale = Instance.new("UIScale")
+    mobileScale.Parent = Main
+    local function fitCurve()
+        local camera = workspace.CurrentCamera
+        if not camera then return end
+        local viewport = camera.ViewportSize
+        mobileScale.Scale = math.min(1, math.max(0.2, math.min((viewport.X - 24) / 296, (viewport.Y - 32) / 268)))
+    end
+    fitCurve()
+    local camera = workspace.CurrentCamera
+    if camera then CurveConnections.viewport = camera:GetPropertyChangedSignal("ViewportSize"):Connect(fitCurve) end
     local Corner = Instance.new("UICorner")  
     Corner.CornerRadius = UDim.new(0, 14)  
     Corner.Parent = Main  
-    local Gradient = Instance.new("UIGradient")  
-    Gradient.Rotation = 0  
-    Gradient.Color = ColorSequence.new({  
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(45, 14, 18)),  
-        ColorSequenceKeypoint.new(0.48, Color3.fromRGB(30, 8, 12)),  
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 15))  
-    })  
-    Gradient.Parent = Main  
     local Stroke = Instance.new("UIStroke")  
     Stroke.Thickness = 1.5  
     Stroke.Color = Color3.fromRGB(228, 52, 66)  
@@ -19692,20 +19695,27 @@ local function CreateCurveUI()
     local CLOSED_WIDTH = 118  
     local OPEN_WIDTH = 296  
     local OPEN_HEIGHT = 268  
-    local function setHeader()  
-        Header.Text = tostring(current)  
+    local function setHeader()
+        Header.Text = tostring(current)
+        for _, child in ipairs(OptionsHolder:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = child.Name == current and Color3.fromRGB(86, 34, 40) or Color3.fromRGB(28, 28, 34)
+                child.TextColor3 = Color3.fromRGB(240, 240, 244)
+            end
+        end
     end  
-    local function closeUI()  
-        expanded = false  
-        OptionsHolder.Visible = false  
-        local heightTween = TweenService:Create(Main, TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {  
-            Size = UDim2.fromOffset(OPEN_WIDTH, 42)  
-        })  
-        heightTween:Play()  
-        heightTween.Completed:Wait()  
-        TweenService:Create(Main, TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {  
-            Size = UDim2.fromOffset(CLOSED_WIDTH, 42)  
-        }):Play()  
+    local sizeTween
+    local function resize(width, height)
+        if sizeTween then sizeTween:Cancel() end
+        sizeTween = TweenService:Create(Main, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Size = UDim2.fromOffset(width, height)
+        })
+        sizeTween:Play()
+    end
+    local function closeUI()
+        expanded = false
+        OptionsHolder.Visible = false
+        resize(CLOSED_WIDTH, 42)
     end  
     local function setSelected(value)  
         current = value  
@@ -19718,7 +19728,7 @@ local function CreateCurveUI()
         local Option = Instance.new("TextButton")  
         Option.Name = name  
         Option.Size = UDim2.fromOffset(136, 29)  
-        Option.BackgroundColor3 = Color3.fromRGB(22, 22, 28)  
+        Option.BackgroundColor3 = Color3.fromRGB(28, 28, 34)  
         Option.BackgroundTransparency = 0.18  
         Option.BorderSizePixel = 0  
         Option.Text = name  
@@ -19731,33 +19741,24 @@ local function CreateCurveUI()
         local OptionCorner = Instance.new("UICorner")  
         OptionCorner.CornerRadius = UDim.new(0, 9)  
         OptionCorner.Parent = Option  
-        local OptionGradient = Instance.new("UIGradient")  
-        OptionGradient.Color = ColorSequence.new({  
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(45, 14, 18)),  
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(30, 8, 12)),  
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(14, 14, 18))  
-        })  
-        OptionGradient.Parent = Option  
         CurveConnections["option_" .. name] = Option.MouseButton1Click:Connect(function()  
             setSelected(name)  
         end)  
     end  
+    setHeader()
+    CurveConnections.sync = RunService.Heartbeat:Connect(function()
+        local selected = Selected_Parry_Type or "Camera"
+        if selected ~= current then current = selected; setHeader() end
+    end)
     CurveConnections.selected = Header.MouseButton1Click:Connect(function()  
         if expanded then  
             closeUI()  
             return  
         end  
         expanded = true  
-        Header.Text = tostring(current)  
-        TweenService:Create(Main, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {  
-            Size = UDim2.fromOffset(OPEN_WIDTH, 42)  
-        }):Play()  
-        task.wait(0.32)  
-        if not expanded then return end  
-        OptionsHolder.Visible = true  
-        TweenService:Create(Main, TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {  
-            Size = UDim2.fromOffset(OPEN_WIDTH, OPEN_HEIGHT)  
-        }):Play()  
+        setHeader()
+        OptionsHolder.Visible = true
+        resize(OPEN_WIDTH, OPEN_HEIGHT)  
     end)  
     local dragging = false  
     local dragStart  
@@ -19812,7 +19813,7 @@ local function CreateTriggerUI()
 end  
 local function DestroySpamUI()  
     _G.manualSpamEnabled = false  
-    if _G.VIREX then _G.VIREX.manualSpamEnabled = false end  
+    if _G.NOIR then _G.NOIR.manualSpamEnabled = false end  
     System.__properties.__manual_spam_enabled = false  
     macroSpamActive = false  
     System.manual_spam.stop()  
@@ -20033,10 +20034,10 @@ end
 animation_system.load_animations()  
 local emotes_data = animation_system.get_emotes_list()  
 local selected_animation = emotes_data[1]  
-local Category = UI:create_category("VIREX")  
+local Category = UI:create_category("NOIR")  
 local CombatTab = Category:create_tab("Combat", "76499042599127")  
 local AutoParryGroup = CombatTab:create_group("Auto Parry", "left")  
-AutoParryGroup:create_toggle("VIREX_AutoParry", {  
+AutoParryGroup:create_toggle("NOIR_AutoParry", {  
     title = "Auto Parry",  
     default = false,  
     callback = function(state)  
@@ -20045,7 +20046,7 @@ AutoParryGroup:create_toggle("VIREX_AutoParry", {
         if state then System.autoparry.start() else System.autoparry.stop() end  
     end  
 })  
-AutoParryGroup:create_dropdown("VIREX_AutoParry_Mode", {  
+AutoParryGroup:create_dropdown("NOIR_AutoParry_Mode", {  
     title = "Parry Mode",  
     options = {"Remote", "Keypress"},  
     default = "Remote",  
@@ -20054,7 +20055,7 @@ AutoParryGroup:create_dropdown("VIREX_AutoParry_Mode", {
     end  
 })  
 local CurveUIGroup = CombatTab:create_group("Curve UI", "right")  
-CurveUIGroup:create_toggle("VIREX_CurveUI", {  
+CurveUIGroup:create_toggle("NOIR_CurveUI", {  
     title = "Curve UI",  
     default = false,  
     callback = function(state)  
@@ -20067,7 +20068,7 @@ CurveUIGroup:create_toggle("VIREX_CurveUI", {
         end  
     end  
 })  
-CurveUIGroup:create_toggle("VIREX_CurveUI_Random", {  
+CurveUIGroup:create_toggle("NOIR_CurveUI_Random", {  
     title = "Random Curve",  
     default = false,  
     callback = function(state)  
@@ -20084,7 +20085,7 @@ CurveUIGroup:create_toggle("VIREX_CurveUI_Random", {
         end  
     end  
 })  
-AutoParryGroup:create_slider("VIREX_AutoParry_Accuracy", {  
+AutoParryGroup:create_slider("NOIR_AutoParry_Accuracy", {  
     title = "Accuracy",  
     minimum = 1,  
     maximum = 100,  
@@ -20095,7 +20096,7 @@ AutoParryGroup:create_slider("VIREX_AutoParry_Accuracy", {
         update_divisor()  
     end  
 })  
-AutoParryGroup:create_toggle("VIREX_AutoParry_RandomAccuracy", {  
+AutoParryGroup:create_toggle("NOIR_AutoParry_RandomAccuracy", {  
     title = "Randomize Accuracy",  
     default = false,  
     callback = function(state)  
@@ -20103,7 +20104,7 @@ AutoParryGroup:create_toggle("VIREX_AutoParry_RandomAccuracy", {
         if state then update_randomized_accuracy() end  
     end  
 })  
-AutoParryGroup:create_toggle("VIREX_AutoParry_AutoAbility", {  
+AutoParryGroup:create_toggle("NOIR_AutoParry_AutoAbility", {  
     title = "Auto Ability",  
     default = false,  
     callback = function(state)  
@@ -20111,7 +20112,7 @@ AutoParryGroup:create_toggle("VIREX_AutoParry_AutoAbility", {
     end  
 })  
 local KeyboardGroup = CombatTab:create_group("Keyboard", "left")  
-KeyboardGroup:create_toggle("VIREX_Keyboard_ShowUI", {  
+KeyboardGroup:create_toggle("NOIR_Keyboard_ShowUI", {  
     title = "Keyboard",  
     default = false,  
     callback = function(state)  
@@ -20125,7 +20126,7 @@ KeyboardGroup:create_toggle("VIREX_Keyboard_ShowUI", {
     end  
 })  
 local TriggerbotGroup = CombatTab:create_group("Triggerbot", "right")  
-TriggerbotGroup:create_toggle("VIREX_Triggerbot", {  
+TriggerbotGroup:create_toggle("NOIR_Triggerbot", {  
     title = "Triggerbot",  
     default = false,  
     callback = function(state)  
@@ -20139,33 +20140,33 @@ TriggerbotGroup:create_toggle("VIREX_Triggerbot", {
     end  
 })  
 local DetectGroup = CombatTab:create_group("Detection", "right")  
-DetectGroup:create_toggle("VIREX_Detect_Infinity", {  
+DetectGroup:create_toggle("NOIR_Detect_Infinity", {  
     title = "Infinity",  
     default = false,  
     callback = function(state) System.__config.__detections.__infinity = state end  
 })  
-DetectGroup:create_toggle("VIREX_Detect_Deathslash", {  
+DetectGroup:create_toggle("NOIR_Detect_Deathslash", {  
     title = "Death Slash",  
     default = false,  
     callback = function(state) System.__config.__detections.__deathslash = state end  
 })  
-DetectGroup:create_toggle("VIREX_Detect_Timehole", {  
+DetectGroup:create_toggle("NOIR_Detect_Timehole", {  
     title = "Time Hole",  
     default = false,  
     callback = function(state) System.__config.__detections.__timehole = state end  
 })  
-DetectGroup:create_toggle("VIREX_Detect_Slashesoffury", {  
+DetectGroup:create_toggle("NOIR_Detect_Slashesoffury", {  
     title = "Slashes Of Fury",  
     default = false,  
     callback = function(state) System.__config.__detections.__slashesoffury = state end  
 })  
-DetectGroup:create_toggle("VIREX_Detect_Phantom", {  
+DetectGroup:create_toggle("NOIR_Detect_Phantom", {  
     title = "Phantom",  
     default = false,  
     callback = function(state) System.__config.__detections.__phantom = state end  
 })  
 local AutoSpamGroup = CombatTab:create_group("Auto Spam", "left")  
-AutoSpamGroup:create_toggle("VIREX_AutoSpam", {  
+AutoSpamGroup:create_toggle("NOIR_AutoSpam", {  
     title = "Auto Spam",  
     default = false,  
     callback = function(state)  
@@ -20177,7 +20178,7 @@ AutoSpamGroup:create_toggle("VIREX_AutoSpam", {
         end  
     end  
 })  
-AutoSpamGroup:create_dropdown("VIREX_AutoSpam_Mode", {  
+AutoSpamGroup:create_dropdown("NOIR_AutoSpam_Mode", {  
     title = "Spam Mode",  
     options = {"Remote", "Keypress"},  
     default = "Remote",  
@@ -20185,23 +20186,23 @@ AutoSpamGroup:create_dropdown("VIREX_AutoSpam_Mode", {
         getgenv().AutoSpamMode = value  
     end  
 })  
-AutoSpamGroup:create_toggle("VIREX_AutoSpam_AnimationFix", {  
+AutoSpamGroup:create_toggle("NOIR_AutoSpam_AnimationFix", {  
     title = "Animation Fix",  
     default = true,  
     callback = function(state)  
         getgenv().AutoSpamAnimationFix = state  
     end  
 })  
-AutoSpamGroup:create_toggle("VIREX_AutoSpam_Notify", {  
+AutoSpamGroup:create_toggle("NOIR_AutoSpam_Notify", {  
     title = "Notify",  
     default = false,  
     callback = function(state)  
         getgenv().AutoSpamNotify = state  
     end  
 })  
-AutoSpamGroup:create_slider("VIREX_AutoSpam_Rate", {  
+AutoSpamGroup:create_slider("NOIR_AutoSpam_Rate", {  
     title = "Spam Rate",
-    description = "The supplied Virex backend does not use this setting.",
+    description = "The supplied Noir backend does not use this setting.",
     minimum = 60,  
     maximum = 5000,  
     default = 240,  
@@ -20211,14 +20212,14 @@ AutoSpamGroup:create_slider("VIREX_AutoSpam_Rate", {
     end  
 })  
 local ManualSpamGroup = CombatTab:create_group("Manual Spam", "right")  
-ManualSpamGroup:create_toggle("VIREX_ManualSpam_ShowUI", {  
+ManualSpamGroup:create_toggle("NOIR_ManualSpam_ShowUI", {  
     title = "Show Spam Button",  
     default = false,  
     callback = function(state)  
         if state then CreateSpamUI() else DestroySpamUI() end  
     end  
 })  
-ManualSpamGroup:create_dropdown("VIREX_ManualSpam_Mode", {  
+ManualSpamGroup:create_dropdown("NOIR_ManualSpam_Mode", {  
     title = "Spam Mode",  
     options = {"Remote", "Keypress"},  
     default = "Remote",  
@@ -20226,7 +20227,7 @@ ManualSpamGroup:create_dropdown("VIREX_ManualSpam_Mode", {
         getgenv().ManualSpamMode = value  
     end  
 })  
-ManualSpamGroup:create_toggle("VIREX_ManualSpam_AnimationFix", {  
+ManualSpamGroup:create_toggle("NOIR_ManualSpam_AnimationFix", {  
     title = "Animation Fix",  
     default = true,  
     callback = function(state)  
@@ -22742,7 +22743,6 @@ local function __initUnlockAllBackend()
                         end)  
                         pcall(function() if (math.floor(1.5)==1) and (ctrl and ctrl.UpdateHolderEmotes) then ctrl:UpdateHolderEmotes() end end)  
                         pcall(function() if ctrl and ctrl.UpdateMenuContentEmotes then ctrl:UpdateMenuContentEmotes() end end)  
-                        print("[US] slot", slot, "index", index, "->", tostring(emoteId))  
                         return true  
                     end  
                     getgenv().getNativeSelectedSlot = function()  
@@ -26831,7 +26831,7 @@ local WorldPresets = {
 }  
 local function ClearKittyWorldEffects()  
     for _,object in ipairs(game:GetService("Lighting"):GetChildren()) do  
-        if object.Name=="VIREXSky" or object.Name=="VIREXAtmosphere" or object.Name=="VIREXColorCorrection" or object.Name=="VIREXBloom" then  
+        if object.Name=="NOIRSky" or object.Name=="NOIRAtmosphere" or object.Name=="NOIRColorCorrection" or object.Name=="NOIRBloom" then  
             object:Destroy()  
         end  
     end  
@@ -26841,7 +26841,7 @@ local function ApplyWorldPreset(preset)
     local Lighting=game:GetService("Lighting")  
     ClearKittyWorldEffects()  
     local sky=Instance.new("Sky")  
-    sky.Name="VIREXSky"  
+    sky.Name="NOIRSky"  
     sky.SkyboxBk=preset.Sky[1]  
     sky.SkyboxDn=preset.Sky[2]  
     sky.SkyboxFt=preset.Sky[3]  
@@ -26860,7 +26860,7 @@ local function ApplyWorldPreset(preset)
     Lighting.FogStart=0  
     Lighting.FogEnd=preset.FogEnd  
     local atmosphere=Instance.new("Atmosphere")  
-    atmosphere.Name="VIREXAtmosphere"  
+    atmosphere.Name="NOIRAtmosphere"  
     atmosphere.Color=preset.AtmosColor  
     atmosphere.Decay=preset.AtmosDecay  
     atmosphere.Density=preset.Density  
@@ -26868,14 +26868,14 @@ local function ApplyWorldPreset(preset)
     atmosphere.Glare=preset.Glare  
     atmosphere.Parent=Lighting  
     local correction=Instance.new("ColorCorrectionEffect")  
-    correction.Name="VIREXColorCorrection"  
+    correction.Name="NOIRColorCorrection"  
     correction.Brightness=0.03  
     correction.Contrast=preset.Contrast  
     correction.Saturation=preset.Saturation  
     correction.TintColor=preset.Tint  
     correction.Parent=Lighting  
     local bloom=Instance.new("BloomEffect")  
-    bloom.Name="VIREXBloom"  
+    bloom.Name="NOIRBloom"  
     bloom.Intensity=0.12  
     bloom.Size=24  
     bloom.Threshold=1.2  
@@ -27296,7 +27296,7 @@ do
 end  
 local Connections_Manager = {}  
 local NoRenderGroup = MiscTab:create_group("No Render", "left")  
-NoRenderGroup:create_toggle("VIREX_Misc_NoRender", {  
+NoRenderGroup:create_toggle("NOIR_Misc_NoRender", {  
     title = "No Render",  
     default = false,  
     callback = function(state)  
@@ -27319,7 +27319,7 @@ NoRenderGroup:create_toggle("VIREX_Misc_NoRender", {
     end  
 })  
 local EmotesGroup = MiscTab:create_group("Emotes", "left")  
-EmotesGroup:create_toggle("VIREX_Misc_Emotes", {  
+EmotesGroup:create_toggle("NOIR_Misc_Emotes", {  
     title = "Emotes",  
     default = false,  
     callback = function(value)  
@@ -27334,14 +27334,14 @@ EmotesGroup:create_toggle("VIREX_Misc_Emotes", {
         end  
     end  
 })  
-EmotesGroup:create_toggle("VIREX_Misc_Emotes_AutoStop", {  
+EmotesGroup:create_toggle("NOIR_Misc_Emotes_AutoStop", {  
     title = "Auto Stop",  
     default = false,  
     callback = function(value)  
         getgenv().AutoStop = value  
     end  
 })  
-EmotesGroup:create_dropdown("VIREX_Misc_Emotes_Selected", {  
+EmotesGroup:create_dropdown("NOIR_Misc_Emotes_Selected", {  
     title = "Emote Type",  
     options = emotes_data,  
     default = selected_animation,  
@@ -27353,7 +27353,7 @@ EmotesGroup:create_dropdown("VIREX_Misc_Emotes_Selected", {
     end  
 })  
 local FOVGroup = MiscTab:create_group("FOV", "left")  
-FOVGroup:create_toggle("VIREX_Misc_FOV", {  
+FOVGroup:create_toggle("NOIR_Misc_FOV", {  
     title = "FOV",  
     default = false,  
     callback = function(value)  
@@ -27378,7 +27378,7 @@ FOVGroup:create_toggle("VIREX_Misc_FOV", {
         end  
     end  
 })  
-FOVGroup:create_slider("VIREX_Misc_FOV_Value", {  
+FOVGroup:create_slider("NOIR_Misc_FOV_Value", {  
     title = 'Camera FOV',  
     flag = 'Camera_FOV',  
     maximum = 120,  
@@ -27393,23 +27393,23 @@ FOVGroup:create_slider("VIREX_Misc_FOV_Value", {
     end  
 })  
 local CharacterGroup = MiscTab:create_group("Character", "right")  
-CharacterGroup:create_toggle("VIREX_Misc_Character", {  
+CharacterGroup:create_toggle("NOIR_Misc_Character", {  
     title = "Character",  
     default = false,  
     callback = function(value)  
         CharacterBackendSetEnabled(value)  
     end  
 })  
-CharacterGroup:create_toggle("VIREX_Misc_Character_InfiniteJump", {  
+CharacterGroup:create_toggle("NOIR_Misc_Character_InfiniteJump", {  
     title = "Infinite Jump",  
-    flag = "VIREX_Misc_Character_InfiniteJump",  
+    flag = "NOIR_Misc_Character_InfiniteJump",  
     callback = function(value)  
         CharacterBackendSetInfiniteJump(value)  
     end  
 })  
-CharacterGroup:create_toggle("VIREX_Misc_Character_Spin", {  
+CharacterGroup:create_toggle("NOIR_Misc_Character_Spin", {  
     title = "Spin",  
-    flag = "VIREX_Misc_Character_Spin",  
+    flag = "NOIR_Misc_Character_Spin",  
     callback = function(value)  
         getgenv().SpinbotCheckboxEnabled = value  
         if not value and getgenv().CharacterModifierEnabled then  
@@ -27420,9 +27420,9 @@ CharacterGroup:create_toggle("VIREX_Misc_Character_Spin", {
         end  
     end  
 })  
-CharacterGroup:create_slider("VIREX_Misc_Character_SpinSpeed", {  
+CharacterGroup:create_slider("NOIR_Misc_Character_SpinSpeed", {  
     title = 'Spin Speed',  
-    flag = 'VIREX_Misc_Character_SpinSpeed',  
+    flag = 'NOIR_Misc_Character_SpinSpeed',  
     maximum = 50,  
     minimum = 1,  
     default = 5,  
@@ -27431,9 +27431,9 @@ CharacterGroup:create_slider("VIREX_Misc_Character_SpinSpeed", {
         getgenv().CustomSpinSpeed = value  
     end  
 })  
-CharacterGroup:create_toggle("VIREX_Misc_Character_WalkSpeed", {  
+CharacterGroup:create_toggle("NOIR_Misc_Character_WalkSpeed", {  
     title = "Walk Speed",  
-    flag = "VIREX_Misc_Character_WalkSpeed",  
+    flag = "NOIR_Misc_Character_WalkSpeed",  
     callback = function(value)  
         getgenv().WalkspeedCheckboxEnabled = value  
         if not value and getgenv().CharacterModifierEnabled then  
@@ -27444,9 +27444,9 @@ CharacterGroup:create_toggle("VIREX_Misc_Character_WalkSpeed", {
         end  
     end  
 })  
-CharacterGroup:create_slider("VIREX_Misc_Character_WalkSpeedValue", {  
+CharacterGroup:create_slider("NOIR_Misc_Character_WalkSpeedValue", {  
     title = 'Walk Speed Value',  
-    flag = 'VIREX_Misc_Character_WalkSpeedValue',  
+    flag = 'NOIR_Misc_Character_WalkSpeedValue',  
     maximum = 500,  
     minimum = 16,  
     default = 36,  
@@ -27461,9 +27461,9 @@ CharacterGroup:create_slider("VIREX_Misc_Character_WalkSpeedValue", {
         end  
     end  
 })  
-CharacterGroup:create_toggle("VIREX_Misc_Character_JumpPower", {  
+CharacterGroup:create_toggle("NOIR_Misc_Character_JumpPower", {  
     title = "Jump Power",  
-    flag = "VIREX_Misc_Character_JumpPower",  
+    flag = "NOIR_Misc_Character_JumpPower",  
     callback = function(value)  
         getgenv().JumpPowerCheckboxEnabled = value  
         if not value and getgenv().CharacterModifierEnabled then  
@@ -27479,9 +27479,9 @@ CharacterGroup:create_toggle("VIREX_Misc_Character_JumpPower", {
         end  
     end  
 })  
-CharacterGroup:create_slider("VIREX_Misc_Character_JumpPowerValue", {  
+CharacterGroup:create_slider("NOIR_Misc_Character_JumpPowerValue", {  
     title = 'Jump Power Value',  
-    flag = 'VIREX_Misc_Character_JumpPowerValue',  
+    flag = 'NOIR_Misc_Character_JumpPowerValue',  
     maximum = 200,  
     minimum = 50,  
     default = 50,  
@@ -27502,9 +27502,9 @@ CharacterGroup:create_slider("VIREX_Misc_Character_JumpPowerValue", {
         end  
     end  
 })  
-CharacterGroup:create_toggle("VIREX_Misc_Character_Gravity", {  
+CharacterGroup:create_toggle("NOIR_Misc_Character_Gravity", {  
     title = "Gravity",  
-    flag = "VIREX_Misc_Character_Gravity",  
+    flag = "NOIR_Misc_Character_Gravity",  
     callback = function(value)  
         getgenv().GravityCheckboxEnabled = value  
         if not value and getgenv().CharacterModifierEnabled then  
@@ -27512,9 +27512,9 @@ CharacterGroup:create_toggle("VIREX_Misc_Character_Gravity", {
         end  
     end  
 })  
-CharacterGroup:create_slider("VIREX_Misc_Character_GravityValue", {  
+CharacterGroup:create_slider("NOIR_Misc_Character_GravityValue", {  
     title = 'Gravity Value',  
-    flag = 'VIREX_Misc_Character_GravityValue',  
+    flag = 'NOIR_Misc_Character_GravityValue',  
     maximum = 400.0,  
     minimum = 0,  
     default = 196.2,  
@@ -27526,9 +27526,9 @@ CharacterGroup:create_slider("VIREX_Misc_Character_GravityValue", {
         end  
     end  
 })  
-CharacterGroup:create_toggle("VIREX_Misc_Character_HipHeight", {  
+CharacterGroup:create_toggle("NOIR_Misc_Character_HipHeight", {  
     title = "Hip Height",  
-    flag = "VIREX_Misc_Character_HipHeight",  
+    flag = "NOIR_Misc_Character_HipHeight",  
     callback = function(value)  
         getgenv().HipHeightCheckboxEnabled = value  
         if not value and getgenv().CharacterModifierEnabled then  
@@ -27539,9 +27539,9 @@ CharacterGroup:create_toggle("VIREX_Misc_Character_HipHeight", {
         end  
     end  
 })  
-CharacterGroup:create_slider("VIREX_Misc_Character_HipHeightValue", {  
+CharacterGroup:create_slider("NOIR_Misc_Character_HipHeightValue", {  
     title = 'Hip Height Value',  
-    flag = 'VIREX_Misc_Character_HipHeightValue',  
+    flag = 'NOIR_Misc_Character_HipHeightValue',  
     maximum = 20,  
     minimum = -5,  
     default = 0,  
@@ -27556,8 +27556,8 @@ CharacterGroup:create_slider("VIREX_Misc_Character_HipHeightValue", {
         end  
     end  
 })  
-ImmortalGroup:create_toggle("virex_immortal", {  
-    title = "VIREX Immortal",  
+ImmortalGroup:create_toggle("noir_immortal", {  
+    title = "NOIR Immortal",  
     default = false,  
     callback = function(state)  
         if state then  
@@ -27567,10 +27567,10 @@ ImmortalGroup:create_toggle("virex_immortal", {
         end  
     end,  
 })  
-print("VIREX  1/3")  
-print("VIREX  2/3")  
-print("VIREX  3/3")  
-print("VIREX  success")  
+  
+  
+  
+  
 local host = {}
 function host.Notify(text, duration)
     Notify("Noir", tostring(text), duration)
@@ -27583,7 +27583,7 @@ function host.CreateTab()
         local route, title = tostring(name):match("^(%u+)%s+•%s+(.+)$")
         local tabName = routeTab[route] or "Main"
         local tab = NoirTabs[tabName]
-        if not tab then tab = window:CreateTab({Name=tabName,Icon="grid"}); NoirTabs[tabName] = tab end
+        if not tab then tab = window:CreateTab({Name=tabName,Icon="layout-grid"}); NoirTabs[tabName] = tab end
         sideCounts[tabName] = (sideCounts[tabName] or 0) + 1
         local settings = { Name = title or name, Desc = description }
         local box = sideCounts[tabName] % 2 == 0 and tab:AddRightGroupbox(settings) or tab:AddLeftGroupbox(settings)
@@ -28048,10 +28048,8 @@ local original_fog_start = Lighting.FogStart
 local postprocessing_backup = {}
 local decals_backup = {}
 local scene_backup = {}
-local sound_backup = nil
 local lighting_backup = nil
 local fog_backup = nil
-local sound_service = cloneref(game:GetService('SoundService'))
 if ((1/1)==0) then for _i=1,0 do end end
 local fps_boost_loop = nil
 local fps_boost_enabled = false
@@ -28145,17 +28143,19 @@ if (#"">2) then local _q={} _q[1]=2 end
     return false
 end
 local function apply_fps_boost(state)
+    state = state == true
+    if fps_boost_enabled == state then return end
     fps_boost_enabled = state
     if (0==0) and (fps_boost_loop) then
         fps_boost_loop:Disconnect()
         fps_boost_loop = nil
     end
     if not state then
-        apply_disable_fog(false)
         apply_disable_postprocessing(false)
+        apply_disable_fog(false)
         apply_remove_decals(false)
         if lighting_backup then
-            Lighting.Technology = lighting_backup.Technology
+            pcall(function() Lighting.Technology = lighting_backup.Technology end)
             Lighting.Brightness = lighting_backup.Brightness
             Lighting.ExposureCompensation = lighting_backup.ExposureCompensation
             Lighting.GlobalShadows = lighting_backup.GlobalShadows
@@ -28184,17 +28184,13 @@ local function apply_fps_boost(state)
 if (#"">2) then local _n=math.floor(3.14) end
         end
         scene_backup = {}
-        if sound_service and sound_backup ~= nil then
-            sound_service.Volume = sound_backup
-            sound_backup = nil
-        end
         return
     end
     apply_disable_fog(true)
     apply_disable_postprocessing(true)
     apply_remove_decals(true)
     lighting_backup = {
-        Technology = Lighting.Technology,
+        Technology = (function() local ok, value = pcall(function() return Lighting.Technology end); return ok and value or nil end)(),
         Brightness = Lighting.Brightness,
         ExposureCompensation = Lighting.ExposureCompensation,
         GlobalShadows = Lighting.GlobalShadows,
@@ -28205,7 +28201,7 @@ if (#"">2) then local _n=math.floor(3.14) end
         ClockTime = Lighting.ClockTime,
         ShadowSoftness = Lighting.ShadowSoftness
     }
-    Lighting.Technology = Enum.Technology.Compatibility
+    pcall(function() Lighting.Technology = Enum.Technology.Compatibility end)
     Lighting.Brightness = 0.18
     Lighting.ExposureCompensation = -1.2
     Lighting.GlobalShadows = false
@@ -28216,37 +28212,31 @@ if (#"">2) then local _n=math.floor(3.14) end
     Lighting.ColorShift_Top = Color3.new(0, 0, 0)
     Lighting.ClockTime = (2*7)
     Lighting.ShadowSoftness = 0
-    if sound_service and sound_backup == nil then
-        sound_backup = sound_service.Volume
-        sound_service.Volume = 0.03
-    end
+    local scan, cursor, nextScan = {}, 1, 0
     fps_boost_loop = RunService.Heartbeat:Connect(function()
-        if (math.floor(1.5)==1) and (not fps_boost_enabled) then
-            return
+        if not fps_boost_enabled then return end
+        if cursor > #scan then
+            if os.clock() < nextScan then return end
+            local ok, list = pcall(workspace.GetDescendants, workspace)
+            if not ok or type(list) ~= "table" then nextScan = os.clock() + 2; return end
+            scan, cursor, nextScan = list, 1, os.clock() + 2
         end
-        for _, obj in pairs(workspace:GetDescendants()) do
+        local last = math.min(cursor + 39, #scan)
+        for i = cursor, last do
+            local obj = scan[i]
             pcall(function()
-                if is_character_object(obj) then
-                    return
-                end
-                if obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Highlight") or obj:IsA("SurfaceGui") or obj:IsA("BillboardGui") or obj:IsA("ParticleEmitter") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") or obj:IsA("Explosion") or obj:IsA("Weld") or obj:IsA("UIStroke") or obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("ImageLabel") then
-                    local stored = scene_backup[obj]
-                    if (#{1}==1) and (not stored) then
-                        scene_backup[obj] = {Enabled = obj.Enabled}
-                    end
+                if not obj.Parent or is_character_object(obj) then return end
+                if obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Highlight") or obj:IsA("SurfaceGui") or obj:IsA("BillboardGui") or obj:IsA("ParticleEmitter") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") or obj:IsA("UIStroke") then
+                    if not scene_backup[obj] then scene_backup[obj] = {Enabled = obj.Enabled} end
                     obj.Enabled = false
                 elseif obj:IsA("Part") then
-                    local stored = scene_backup[obj]
-                    if not stored then
-                        scene_backup[obj] = {CastShadow = obj.CastShadow, Material = obj.Material}
-                    end
+                    if not scene_backup[obj] then scene_backup[obj] = {CastShadow = obj.CastShadow, Material = obj.Material} end
                     obj.CastShadow = false
                     obj.Material = Enum.Material.SmoothPlastic
-                elseif obj:IsA("Atmosphere") then
-                    obj.Density = 0
                 end
             end)
         end
+        cursor = last + 1
     end)
 end
 MiscTab:create_module({
