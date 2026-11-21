@@ -113,6 +113,7 @@ end
 local c17 = fn_pcall
 local c18 = c17()
 local function fn_instance(c0, c1)
+    local _m3 = c1
     local new = Instance.new(c0)
     if c1 then
     else
@@ -134,6 +135,7 @@ local function fn_instance(c0, c1)
 end
 local c19 = fn_instance
 local function fn_create(c0, c1, c2, c3, c4)
+    local _m6 = c2
     if c2 then
     else
         v0 = 0
@@ -589,6 +591,7 @@ local function fn_list()
     end
     c0.displayForKey = fn_ipairs3
     local function fn_instance3(c0, c1, c2, c3)
+        local _m0 = not (c0)
             local function fn_glint()
                 if (c0 == "Glint") then
                     c8(c1, c2, c3, new)
@@ -1665,6 +1668,7 @@ local function fn_order()
                 local c17 = false
                 local Connect = nil
                             local function fn_parent(c0)
+                                local _m0 = not (c1.Parent)
                                 if not (c1.Parent) then
                                 else
                                     v8 = 0
@@ -1834,6 +1838,7 @@ local function fn_order()
         local Connect = nil
         local c4 = {}
             local function fn_parent(c0)
+                local _m0 = not (new.Parent)
                 if not (new.Parent) then
                 else
                     v3 = 0
@@ -1986,6 +1991,7 @@ local function fn_order()
         local Connect = nil
         local c3 = {}
             local function fn_parent(c0)
+                local _m0 = not (new.Parent)
                 if not (new.Parent) then
                 else
                     v10 = 0
@@ -2045,6 +2051,7 @@ local function fn_order()
                     c9 = false
                     Connect = nil
                                 local function fn_parent(c0)
+                                    local _m0 = not (c1.Parent)
                                     if not (c1.Parent) then
                                     else
                                         v8 = 0
@@ -3724,6 +3731,7 @@ for getgenv = 1, 14 do
                     _st.c175 = (c93 .. "/aqua_hub_autoload_place.json")
                     _st.c176 = (c93 .. "/Colors.json")
                     _st.fn_instance2 = function(c0, c1)
+                        local _m3 = c1
                         local new = Instance.new(c0)
                         if c1 then
                         else
@@ -3745,6 +3753,7 @@ for getgenv = 1, 14 do
                     end
                     _st.c177 = _st.fn_instance2
                     _st.fn_create6 = function(c0, c1, c2, c3, c4)
+                        local _m6 = c2
                         if c2 then
                         else
                             v0 = 0
@@ -3869,6 +3878,7 @@ for getgenv = 1, 14 do
                     _st.c184 = _st.fn_string
                     _st.fn_gsub3 = function(gsub)
                                             local function fn_tonumber()
+                                                local _m1 = tonumber(gsub:sub(1, 2), 16)
                                                 if tonumber(gsub:sub(1, 2), 16) then
                                                 else
                                                     v0 = 0
@@ -3913,6 +3923,7 @@ for getgenv = 1, 14 do
                                             end
                         c0.InputBegan:Connect(fn_userinputtype)
                                             local function fn_userinputtype2(c0)
+                                                local _m0 = (c0.UserInputType == Enum.UserInputType.MouseButton1)
                                                 if (c0.UserInputType == Enum.UserInputType.MouseButton1) then
                                                 else
                                                     v0 = 0
@@ -4104,6 +4115,7 @@ for getgenv = 1, 14 do
                                             end
                         UserInputService.InputChanged:Connect(fn_userinputtype)
                                             local function fn_userinputtype2(c0)
+                                                local _m0 = (c0.UserInputType == Enum.UserInputType.MouseButton1)
                                                 if (c0.UserInputType == Enum.UserInputType.MouseButton1) then
                                                 else
                                                     v0 = 0
@@ -4136,6 +4148,7 @@ for getgenv = 1, 14 do
                                                 while c4.Parent do
                                                     task.wait(3)
                                                                                                 local function fn_network()
+                                                                                                    local _m2 = tonumber(GetValueString:match("%d+"))
                                                                                                     local GetValueString = Stats.Network.ServerStatsItem["Data Ping"]:GetValueString()
                                                                                                     if tonumber(GetValueString:match("%d+")) then
                                                                                                     else
@@ -4542,6 +4555,7 @@ for getgenv = 1, 14 do
                         local c31 = fn_type
                         local c32 = {}
                                             local function fn_type2(c0)
+                                                local _m0 = c0
                                                 if c0 then
                                                 else
                                                     v3 = 0
@@ -4562,6 +4576,7 @@ for getgenv = 1, 14 do
                                             end
                         c32.Info = fn_type2
                                             local function fn_type3(c0)
+                                                local _m0 = c0
                                                 if c0 then
                                                 else
                                                     v3 = 0
@@ -4588,6 +4603,7 @@ for getgenv = 1, 14 do
                                             end
                         c32.Confirm = fn_type3
                                             local function fn_type4(c0)
+                                                local _m0 = c0
                                                 if c0 then
                                                 else
                                                     v3 = 0
@@ -4614,6 +4630,7 @@ for getgenv = 1, 14 do
                                             end
                         c32.Warning = fn_type4
                                             local function fn_type5(c0)
+                                                local _m0 = c0
                                                 if c0 then
                                                 else
                                                     v3 = 0
@@ -4634,6 +4651,7 @@ for getgenv = 1, 14 do
                                             end
                         c32.Success = fn_type5
                                             local function fn_type6(c0)
+                                                local _m0 = c0
                                                 if c0 then
                                                 else
                                                     v3 = 0
@@ -4667,6 +4685,7 @@ for getgenv = 1, 14 do
                                             end
                         c32.Prompt = fn_type6
                                             local function fn_type7(c0)
+                                                local _m0 = c0
                                                 if c0 then
                                                 else
                                                     v8 = 0
@@ -4791,6 +4810,7 @@ for getgenv = 1, 14 do
                                             end
                         c32.ListSelect = fn_type7
                                             local function fn_type8(c0)
+                                                local _m0 = c0
                                                 if c0 then
                                                 else
                                                     v3 = 0
@@ -4806,6 +4826,7 @@ for getgenv = 1, 14 do
                                                 c26.PlaceholderText = _m2
                                                 local _m4 = c0.okText and c0.okText
                                                                                             local function fn_text()
+                                                                                                local _m1 = c0.confirmWord
                                                                                                 if c0.confirmWord then
                                                                                                 else
                                                                                                     v3 = 0
@@ -5103,6 +5124,7 @@ for getgenv = 1, 14 do
                     end
                     _st4 = _st.fn_buttons2
                     _st.fn_global = function(c0)
+                        local _m0 = c196.buttons[c0.id]
                         local c1 = c196.global
                         if c196.buttons[c0.id] then
                         else
@@ -5201,6 +5223,7 @@ for getgenv = 1, 14 do
                     end
                     _st5 = _st.fn_ipairs2
                     _st.fn_btn = function(c0, c1, c2)
+                        local _m0 = c2
                         if c2 then
                         else
                             v0 = 0
@@ -5266,6 +5289,7 @@ for getgenv = 1, 14 do
                                             end
                         local c7 = f408
                                             local function fn_isa(c0)
+                                                local _m0 = not (c0)
                                                 if not (c0) then
                                                 else
                                                     v0 = 0
@@ -5281,6 +5305,7 @@ for getgenv = 1, 14 do
                                             end
                         local c8 = fn_isa
                                             local function fn_isa2(c0)
+                                                local _m0 = not (c0)
                                                 if not (c0) then
                                                 else
                                                     v0 = 0
@@ -5469,6 +5494,7 @@ for getgenv = 1, 14 do
                         local c26 = fn_character4
                         local c27 = { murderer = "Murderer", sheriff = "Sheriff", hero = "Hero", innocent = "Innocent", zombie = "Zombie", unknown = "Unknown" }
                                             local function fn_type(c0)
+                                                local _m0 = (type(c0) ~= "string")
                                                 if (type(c0) ~= "string") then
                                                 else
                                                     v0 = 0
@@ -5491,6 +5517,7 @@ for getgenv = 1, 14 do
                                             end
                         local c29 = fn_type2
                                             local function fn_type3(c0, c1)
+                                                local _m0 = c0
                                                 if c0 then
                                                 else
                                                     v13 = 0
@@ -5546,6 +5573,7 @@ for getgenv = 1, 14 do
                                             end
                         local c31 = fn_name2
                                             local function fn_name3(c0, c1)
+                                                local _m0 = (c2 == "Sheriff")
                                                 if not (c0) then
                                                     return nil
                                                 end
@@ -5757,6 +5785,7 @@ for getgenv = 1, 14 do
                                                     if _m0 then
                                                         local c3 = c0:FindFirstChild("Backpack")
                                                                                                     local function fn_ipairs(c0)
+                                                                                                        local _m0 = c4:FindFirstChild("KnifeThrown")
                                                                                                         if not (c0) then
                                                                                                             return false
                                                                                                         end
@@ -6521,6 +6550,7 @@ for getgenv = 1, 14 do
                                                 local _10209803 = "10209803"
                                                 local c6 = { revolver_shoot = true, gunshot = true, [string.lower("Gunshot")] = true }
                                                                                             local function fn_tostring(c0)
+                                                                                                local _m0 = not (c0)
                                                                                                 if not (c0) then
                                                                                                 else
                                                                                                     v0 = 0
@@ -7160,6 +7190,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c10 = fn_cframe2
                                                                                             local function fn_cframe3(c0, c1, c2, c3)
+                                                                                                local _m0 = c3
                                                                                                 if c3 then
                                                                                                 else
                                                                                                     v4 = 0
@@ -7525,6 +7556,7 @@ for getgenv = 1, 14 do
                                             end
                         local c59 = fn_ipairs2
                                             local function fn_magnitude(c0, c1, c2)
+                                                local _m3 = c2
                                                 local c3 = (c1 - c0)
                                                 local c4 = c3.Magnitude
                                                 if (c4 < 0.2) then
@@ -7701,6 +7733,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c9 = fn_pcall
                                                                                             local function fn_step_seen(c0)
+                                                                                                local _m0 = (c0 <= 0)
                                                                                                 if (c0 <= 0) then
                                                                                                 else
                                                                                                     v3 = 0
@@ -7845,6 +7878,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c18 = f543
                                                                                             local function fn_snap_n4(c0)
+                                                                                                local _m2 = not (c1)
                                                                                                 if (c0.snap_n < 3) then
                                                                                                     return nil
                                                                                                 end
@@ -7887,6 +7921,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c20 = fn_snap_n5
                                                                                             local function fn_pcall2(c0, c1)
+                                                                                                local _m0 = not (c0)
                                                                                                                                                                                             local function fn_size()
                                                                                                                                                                                                 return ((c0.Size.Y * 0.5) + c1.HipHeight)
                                                                                                                                                                                             end
@@ -7984,6 +8019,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c25 = fn_vector3
                                                                                             local function fn_vector32(c0, c1, c2, c3)
+                                                                                                local _m4 = c1
                                                                                                 if not (c0) then
                                                                                                     return nil
                                                                                                 end
@@ -8307,6 +8343,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c33 = fn_pcall3
                                                                                             local function fn_math2()
+                                                                                                local _m0 = not (clamp)
                                                                                                 local clamp = c33()
                                                                                                 if not (clamp) then
                                                                                                 else
@@ -8968,6 +9005,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c32 = fn_arcs
                                                                                             local function fn_arcs2(c0, c1, c2)
+                                                                                                local _m0 = (c1 < 1)
                                                                                                 local c3 = c32(c0)
                                                                                                 if (c1 < 1) then
                                                                                                 else
@@ -9010,6 +9048,7 @@ for getgenv = 1, 14 do
                                                 local c35 = fn_pos
                                                 local c36 = { ping = 0, rtt = 0, jitter = 0, seen = false, step = 0, step_seen = false, rtt_buf = c17(16, 0), rtt_n = 0, rtt_i = 0 }
                                                                                             local function fn_step_seen(c0)
+                                                                                                local _m0 = (c0 <= 0)
                                                                                                 if (c0 <= 0) then
                                                                                                 else
                                                                                                     v3 = 0
@@ -9261,6 +9300,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c49 = fn_vector32
                                                                                             local function fn_vector33(c0, c1, c2)
+                                                                                                local _m0 = not (c2)
                                                                                                 if not (c2) then
                                                                                                 else
                                                                                                     v3 = 0
@@ -9283,6 +9323,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c50 = fn_vector33
                                                                                             local function fn_snap_n4(c0)
+                                                                                                local _m2 = not (c1)
                                                                                                 if (c0.snap_n < 3) then
                                                                                                     return nil
                                                                                                 end
@@ -9342,6 +9383,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c54 = fn_table
                                                                                             local function fn_gc_seen(c0, c1, c2)
+                                                                                                local _m0 = not (c1)
                                                                                                                                                                                             local function fn_size()
                                                                                                                                                                                                 return ((c1.Size.Y * 0.5) + c2.HipHeight)
                                                                                                                                                                                             end
@@ -9915,6 +9957,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c72 = fn_pcall2
                                                                                             local function fn_rtt_i()
+                                                                                                local _m0 = not (c0)
                                                                                                 local c0 = c72()
                                                                                                 if not (c0) then
                                                                                                 else
@@ -10479,6 +10522,7 @@ for getgenv = 1, 14 do
                                             end
                         local c73 = fn_touchenabled
                                             local function fn_name2(c0)
+                                                local _m0 = not (c0)
                                                 if not (c0) then
                                                 else
                                                     v0 = 0
@@ -10506,6 +10550,7 @@ for getgenv = 1, 14 do
                                             end
                         local c75 = fn_ipairs3
                                             local function fn_isa(c0)
+                                                local _m0 = not (c0)
                                                 if not (c0) then
                                                 else
                                                     v3 = 0
@@ -10667,6 +10712,7 @@ for getgenv = 1, 14 do
                                             end
                         UserInputService.InputBegan:Connect(fn_mobile2)
                                             local function fn_mobile3(c0, c1)
+                                                local _m0 = not (c66)
                                                 if (c71 ~= "Mobile") then
                                                     return
                                                 end
@@ -11326,6 +11372,7 @@ for getgenv = 1, 14 do
                                             end
                         local c102 = fn_clock2
                                             local function fn_knifetraveltime()
+                                                local _m0 = not (c9)
                                                 if not (c9) then
                                                 else
                                                     v0 = 0
@@ -11572,6 +11619,7 @@ for getgenv = 1, 14 do
                                             end
                         RunService.Heartbeat:Connect(fn_knifesilentaim)
                                             local function fn_pcall2(c0)
+                                                local _m0 = not (c0)
                                                 if not (c0) then
                                                 else
                                                     v0 = 0
@@ -11639,6 +11687,7 @@ for getgenv = 1, 14 do
                                                     return
                                                 end
                                                                                             local function fn_findfirstchildwhichisa()
+                                                                                                local _m0 = c1:FindFirstChildWhichIsA("Weld")
                                                                                                 if c1:FindFirstChildWhichIsA("Weld") then
                                                                                                 else
                                                                                                     v8 = 0
@@ -11760,6 +11809,7 @@ for getgenv = 1, 14 do
                                             end
                         _st.c113 = _st.fn_autoequipknife
                                             _st.fn_findfirstchild7 = function()
+                                                local _m0 = not (c9)
                                                 if not (c9) then
                                                 else
                                                     v0 = 0
@@ -12188,6 +12238,7 @@ for getgenv = 1, 14 do
                                             end
                         _st.c141 = _st.fn_autogetgun
                                             local function fn_name4(c0)
+                                                local _m0 = lower:find("gundrop")
                                                 local c1 = c0.Name
                                                 local lower = string.lower(c1)
                                                 if lower:find("gundrop") then
@@ -12217,6 +12268,7 @@ for getgenv = 1, 14 do
                                                     _st.c143:Disconnect()
                                                 end
                                                                                             local function fn_autogetgun()
+                                                                                                local _m0 = not (c8.AutoGetGun)
                                                                                                 if not (c8.AutoGetGun) then
                                                                                                 else
                                                                                                     v0 = 0
@@ -12245,6 +12297,7 @@ for getgenv = 1, 14 do
                                             end
                         _st.c145 = _st.fn_disconnect
                                             _st.fn_getgunauraenabled = function()
+                                                local _m0 = not (c8.GetGunAuraEnabled)
                                                 if not (c8.GetGunAuraEnabled) then
                                                 else
                                                     v0 = 0
@@ -12264,6 +12317,7 @@ for getgenv = 1, 14 do
                                             end
                         _st.c146 = _st.fn_getgunauraenabled
                                             _st.f760 = function()
+                                                local _m0 = not (c9)
                                                 if not (c9) then
                                                 else
                                                     v0 = 0
@@ -12289,6 +12343,7 @@ for getgenv = 1, 14 do
                                                 local c5 = 0
                                                 local Connect = nil
                                                                                             local function fn_name(c0)
+                                                                                                local _m0 = not (c0)
                                                                                                 if not (c0) then
                                                                                                 else
                                                                                                     v0 = 0
@@ -12369,6 +12424,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c10 = fn_character
                                                                                             local function fn_pcall2()
+                                                                                                local _m0 = not (c11)
                                                                                                 if not (c11) then
                                                                                                 else
                                                                                                     v0 = 0
@@ -12435,6 +12491,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 local c12 = fn_math
                                                                                             local function fn_task()
+                                                                                                local _m0 = not (c1)
                                                                                                 if not (c1) then
                                                                                                 else
                                                                                                     v0 = 0
@@ -13244,6 +13301,7 @@ for getgenv = 1, 14 do
                                                 local c5 = c15()
                                                 local c6 = (c5 / 1000)
                                                                                             local function fn_character()
+                                                                                                local _m0 = not (c1)
                                                                                                 local c0 = c14.Character
                                                                                                 if not (c0) then
                                                                                                     return
@@ -13299,6 +13357,7 @@ for getgenv = 1, 14 do
                                             end
                         UserInputService.InputBegan:Connect(fn_userinputtype)
                                             local function fn_vector2(c0, c1)
+                                                local _m0 = not (c20)
                                                 if not (c20) then
                                                 else
                                                     v3 = 0
@@ -13427,6 +13486,7 @@ for getgenv = 1, 14 do
                                             end
                         local c26 = fn_task2
                                             local function fn_character3(c0)
+                                                local _m0 = not (c2)
                                                 local c1 = c14.Character
                                                 if not (c1) then
                                                     return
@@ -13529,6 +13589,7 @@ for getgenv = 1, 14 do
                                             end
                         UserInputService.InputBegan:Connect(fn_throwbombcenter2)
                                             local function fn_vector22(c0, c1)
+                                                local _m0 = not (c32)
                                                 if not (c32) then
                                                 else
                                                     v3 = 0
@@ -13775,6 +13836,7 @@ for getgenv = 1, 14 do
                                             end
                         local c44 = fn_character4
                                             local function fn_cfg(c0)
+                                                local _m0 = not (c3)
                                                 local c1 = c0.cfg
                                                 if c0.cooldown then
                                                     return
@@ -14297,6 +14359,7 @@ for getgenv = 1, 14 do
                                                     if _m0 then
                                                         local c3 = c0:FindFirstChild("Backpack")
                                                                                                     local function fn_ipairs(c0)
+                                                                                                        local _m0 = c4:FindFirstChild("KnifeThrown")
                                                                                                         if not (c0) then
                                                                                                             return false
                                                                                                         end
@@ -14395,6 +14458,7 @@ for getgenv = 1, 14 do
                         local c21 = fn_character
                                             local function fn_ipairs()
                                                                                             local function fn_ipairs(c0)
+                                                                                                local _m0 = c4:FindFirstChild("KnifeThrown")
                                                                                                 if not (c0) then
                                                                                                     return false
                                                                                                 end
@@ -15073,6 +15137,7 @@ for getgenv = 1, 14 do
                         c33.setEnabled(c1.JumpEffectEnabled)
                         c33.setTypes(c1.JumpEffectTypes)
                                             local function fn_waitforchild2(c0)
+                                                local _m0 = not (c1)
                                                 if not (c0) then
                                                     return
                                                 end
@@ -15691,6 +15756,7 @@ for getgenv = 1, 14 do
                                                     c3 = {}
                                                     c4 = {}
                                                                                                 local function fn_name(c0)
+                                                                                                    local _m0 = not (c0)
                                                                                                     if not (c0) then
                                                                                                     else
                                                                                                         v0 = 0
@@ -15743,6 +15809,7 @@ for getgenv = 1, 14 do
                                                                                                 end
                                                     c6 = fn_tostring
                                                                                                 local function fn_findfirstchild(c0)
+                                                                                                    local _m1 = c0:FindFirstChild("RightHand")
                                                                                                     if not (c0) then
                                                                                                         return nil
                                                                                                     end
@@ -15803,6 +15870,7 @@ for getgenv = 1, 14 do
                                                                                                 end
                                                     c10 = fn_character
                                                                                                 local function fn_instance(c0)
+                                                                                                    local _m0 = c0:IsA("BasePart")
                                                                                                     local new = Instance.new("Model")
                                                                                                     new.Name = "CustomModel"
                                                                                                                                                                                                     local function fn_ipairs(c0)
@@ -15936,12 +16004,54 @@ for getgenv = 1, 14 do
                                                                                                     end
                                                                                                     local c2 = {}
                                                                                                     for v3, v4 in ipairs(c0), select(2, ipairs(c0)), select(3, ipairs(c0)) do
-                                                                                                        for v8, v9 in ipairs(c4:GetChildren()), select(2, ipairs(c4:GetChildren())), select(3, ipairs(c4:GetChildren())) do
+                                                                                                        for v8, v9 in ipairs(c4:GetDescendants()), select(2, ipairs(c4:GetDescendants())), select(3, ipairs(c4:GetDescendants())) do
+                                                                                                            c5 = v8
+                                                                                                            c6 = v9
+                                                                                                            if c6:IsA("Tool") then
+                                                                                                                if not (c2[c6]) then
+                                                                                                                    c2[c6] = true
+                                                                                                                    if c1.CustomGunSkinEnabled then
+                                                                                                                        if c5(c6) then
+                                                                                                                            c13(c6)
+                                                                                                                            c12(c6)
+                                                                                                                        else
+                                                                                                                            c13(c6)
+                                                                                                                        end
+                                                                                                                    else
+                                                                                                                        local _m0 = c5(c6)
+                                                                                                                    end
+                                                                                                                else
+                                                                                                                end
+                                                                                                            else
+                                                                                                                _m0 = not (c2[c6])
+                                                                                                            end
+                                                                                                            for v8, v9 in ipairs(c4:GetDescendants()), select(2, ipairs(c4:GetDescendants())), select(3, ipairs(c4:GetDescendants())) do
+                                                                                                            end
+                                                                                                            if c14.Character then
+                                                                                                                for v3, v4 in ipairs(c14.Character:GetDescendants()), select(2, ipairs(c14.Character:GetDescendants())), select(3, ipairs(c14.Character:GetDescendants())) do
+                                                                                                                    c9 = v3
+                                                                                                                    c10 = v4
+                                                                                                                    if (c10.Name == "CustomModel") then
+                                                                                                                        if not (c10.Parent:IsA("Tool")) then
+                                                                                                                                                                                                                            local function fn_destroy()
+                                                                                                                                                                                                                                c10:Destroy()
+                                                                                                                                                                                                                                return
+                                                                                                                                                                                                                            end
+                                                                                                                            pcall(fn_destroy)
+                                                                                                                        else
+                                                                                                                        end
+                                                                                                                    else
+                                                                                                                        _m0 = not (c10.Parent:IsA("Tool"))
+                                                                                                                    end
+                                                                                                                end
+                                                                                                            end
+                                                                                                            return
                                                                                                         end
                                                                                                     end
                                                                                                 end
                                                     c14 = fn_findfirstchildofclass
                                                                                                 local function fn_customgunskinenabled2(c0)
+                                                                                                    local _m0 = not (c0)
                                                                                                     if not (c0) then
                                                                                                     else
                                                                                                         v0 = 0
@@ -15975,6 +16085,7 @@ for getgenv = 1, 14 do
                                                                                                 end
                                                     c16 = fn_ipairs
                                                                                                 local function fn_findfirstchildofclass2()
+                                                                                                    local _m0 = c14:FindFirstChildOfClass("Backpack")
                                                                                                     if c14:FindFirstChildOfClass("Backpack") then
                                                                                                     else
                                                                                                         v0 = 0
@@ -16397,6 +16508,7 @@ for getgenv = 1, 14 do
                                             end
                         RunService.RenderStepped:Connect(fn_dualgunenabled)
                                             local function fn_tracersstyle()
+                                                local _m0 = not (c2)
                                                 if not (c2) then
                                                 else
                                                     v5 = 0
@@ -18002,6 +18114,7 @@ for getgenv = 1, 14 do
                                             end
                         local c17 = fn_usejumppower
                                             local function fn_jumphackenabled()
+                                                local _m0 = not (c1.JumpHackEnabled)
                                                 if not (c1.JumpHackEnabled) then
                                                 else
                                                     v0 = 0
@@ -18072,6 +18185,7 @@ for getgenv = 1, 14 do
                                             end
                         RunService.RenderStepped:Connect(fn_flyjumpenabled)
                                             local function fn_waterglitchenabled()
+                                                local _m0 = not (c11)
                                                 if not (c1.WaterGlitchEnabled) then
                                                     return
                                                 end
@@ -18241,6 +18355,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 c1.Jumping:Connect(fn_bhopenabled)
                                                                                             local function fn_bhopenabled2(c0, c1)
+                                                                                                local _m0 = not (c1.BhopEnabled)
                                                                                                 if not (c1.BhopEnabled) then
                                                                                                 else
                                                                                                     v0 = 0
@@ -18521,6 +18636,7 @@ for getgenv = 1, 14 do
                                                 local c18 = c17()
                                                 local c19 = c17()
                                                                                             local function fn_findfirstchild(c0)
+                                                                                                local _m1 = c0:FindFirstChild("HumanoidRootPart")
                                                                                                 if not (c0) then
                                                                                                     return nil
                                                                                                 end
@@ -18982,6 +19098,7 @@ for getgenv = 1, 14 do
                                                                                                                                                                                                                                                                                                                                                                                             end
                                                                                                                                                                                                 c6 = UserInputService.InputChanged:Connect(fn_userinputtype)
                                                                                                                                                                                                                                                                                                                                                                                             local function fn_userinputtype2(c0)
+                                                                                                                                                                                                                                                                                                                                                                                                local _m0 = not (c10)
                                                                                                                                                                                                                                                                                                                                                                                                 if (c0.UserInputType ~= c0.UserInputType) then
                                                                                                                                                                                                                                                                                                                                                                                                     return
                                                                                                                                                                                                                                                                                                                                                                                                 end
@@ -19275,6 +19392,7 @@ for getgenv = 1, 14 do
                                                                                                                                                                                                                                                                                                                                                                                             end
                                                                                                                                                                                                 c6 = UserInputService.InputChanged:Connect(fn_userinputtype)
                                                                                                                                                                                                                                                                                                                                                                                             local function fn_userinputtype2(c0)
+                                                                                                                                                                                                                                                                                                                                                                                                local _m0 = not (c9)
                                                                                                                                                                                                                                                                                                                                                                                                 if (c0.UserInputType ~= c0.UserInputType) then
                                                                                                                                                                                                                                                                                                                                                                                                     return
                                                                                                                                                                                                                                                                                                                                                                                                 end
@@ -20016,6 +20134,7 @@ for getgenv = 1, 14 do
                                             end
                         c26.InputBegan:Connect(fn_userinputtype2)
                                             local function fn_userinputtype3(c0)
+                                                local _m0 = (c0.UserInputType == Enum.UserInputType.MouseButton1)
                                                 if (c0.UserInputType == Enum.UserInputType.MouseButton1) then
                                                 else
                                                     v0 = 0
@@ -20192,6 +20311,7 @@ for getgenv = 1, 14 do
                                             end
                         c9.flushPageFadeables = fn_pagefadeables
                                             local function fn_flushpagefadeables(c0)
+                                                local _m1 = c9.pageAnimGen[c0]
                                                 if not (c0) then
                                                     return
                                                 end
@@ -20519,6 +20639,7 @@ for getgenv = 1, 14 do
                                             end
                         UserInputService.InputChanged:Connect(fn_userinputtype2)
                                             local function fn_userinputtype3(c0)
+                                                local _m0 = (c0.UserInputType == Enum.UserInputType.MouseButton1)
                                                 if (c0.UserInputType == Enum.UserInputType.MouseButton1) then
                                                 else
                                                     v0 = 0
@@ -20566,6 +20687,7 @@ for getgenv = 1, 14 do
                                             end
                         UserInputService.InputChanged:Connect(fn_userinputtype5)
                                             local function fn_userinputtype6(c0)
+                                                local _m0 = (c0.UserInputType == Enum.UserInputType.MouseButton1)
                                                 if (c0.UserInputType == Enum.UserInputType.MouseButton1) then
                                                 else
                                                     v0 = 0
@@ -20871,6 +20993,7 @@ for getgenv = 1, 14 do
                                                                                             end
                                                 UserInputService.InputChanged:Connect(fn_userinputtype2)
                                                                                             local function fn_userinputtype3(c0)
+                                                                                                local _m0 = (c0.UserInputType == Enum.UserInputType.MouseButton1)
                                                                                                 if (c0.UserInputType == Enum.UserInputType.MouseButton1) then
                                                                                                 else
                                                                                                     v0 = 0
@@ -21384,6 +21507,7 @@ for getgenv = 1, 14 do
                                                                                                 end
                                                                                             end
                                                                                             local function fn_table(c0)
+                                                                                                local _m0 = c0
                                                                                                 if c0 then
                                                                                                 else
                                                                                                     v4 = 0
@@ -23665,6 +23789,7 @@ for getgenv = 1, 14 do
                                                 end
                             c0.dragBtn.InputBegan:Connect(fn_userinputtype)
                                                 local function fn_userinputtype2(c0)
+                                                    local _m0 = (c0.UserInputType == Enum.UserInputType.MouseButton1)
                                                     if (c0.UserInputType == Enum.UserInputType.MouseButton1) then
                                                     else
                                                         v0 = 0
@@ -23694,6 +23819,7 @@ for getgenv = 1, 14 do
                                                 end
                             c0.dragBtn.InputBegan:Connect(fn_userinputtype3)
                                                 local function fn_userinputtype4(c0)
+                                                    local _m0 = (c0.UserInputType == Enum.UserInputType.MouseButton1)
                                                     if (c0.UserInputType == Enum.UserInputType.MouseButton1) then
                                                     else
                                                         v0 = 0
@@ -23837,6 +23963,7 @@ for getgenv = 1, 14 do
                     _st.c220 = _st.fn_settings6
                     _st.fn_game2 = function(c0, c1, c2, c3)
                         local _st = {}
+                        local _m8 = c123.Search
                         local AssetService = game:GetService("AssetService")
                         local c5 = false
                         local c6 = true
@@ -23873,6 +24000,7 @@ for getgenv = 1, 14 do
                                             end
                         local c20 = fn_ondirty
                                             local function fn_clock(c0, c1)
+                                                local _m1 = c1
                                                 if c1 then
                                                 else
                                                     v0 = 0
@@ -23889,6 +24017,7 @@ for getgenv = 1, 14 do
                                             end
                         local c21 = fn_clock
                                             local function fn_typeof(c0)
+                                                local _m0 = (type(c0) ~= "table")
                                                 if (typeof(c0) == "Vector3") then
                                                     return c0
                                                 end
@@ -23957,6 +24086,7 @@ for getgenv = 1, 14 do
                                                 return c22(c0)
                                             end
                                             local function fn_vector2(c0)
+                                                local _m3 = tonumber(c0[1])
                                                 if tonumber(c0[1]) then
                                                 else
                                                     v0 = 0
@@ -24024,6 +24154,7 @@ for getgenv = 1, 14 do
                                             end
                         local c27 = fn_string
                                             local function fn_type5(c0, c1)
+                                                local _m0 = (type == "number")
                                                 local type = type(c1)
                                                 if (type == "number") then
                                                 else
@@ -24122,6 +24253,7 @@ for getgenv = 1, 14 do
                         local c32 = { [1] = "https://raw.githubusercontent.com/custom-controls1/121-987-11.90/refs/heads/main/121/99/77/0.11.txt" }
                         local c33 = nil
                                             local function fn_type7(c0)
+                                                local _m0 = (type(c0) ~= "string")
                                                 if (type(c0) ~= "string") then
                                                 else
                                                     v0 = 0
@@ -25511,6 +25643,7 @@ for getgenv = 1, 14 do
                                                 end
                             c77 = fn_colors2
                                                 local function fn_type12(c0, c1)
+                                                    local _m0 = (type(c2) ~= "string")
                                                     local c2 = c1
                                                     if (type(c2) ~= "string") then
                                                     else
@@ -25770,6 +25903,7 @@ for getgenv = 1, 14 do
                                                 end
                             _st.c108 = _st.fn_picked2
                                                 _st.fn_token = function(c0, c1)
+                                                    local _m0 = not (c17.items)
                                                     if (c17.token ~= c0) then
                                                         return
                                                     end
@@ -25967,6 +26101,7 @@ for getgenv = 1, 14 do
                                                 end
                             c87.MouseButton1Click:Connect(_st.fn_text3)
                                                 _st.fn_loaded = function()
+                                                    local _m0 = c17.loaded
                                                     if c17.loaded then
                                                     else
                                                         v3 = 0
@@ -26137,6 +26272,7 @@ for getgenv = 1, 14 do
                         c229 = v4
                         c227[c229] = true
                         _st.fn_type = function(gsub)
+                            local _m0 = (type(gsub) ~= "string")
                             if (type(gsub) ~= "string") then
                             else
                                 v0 = 0
@@ -26167,6 +26303,7 @@ for getgenv = 1, 14 do
                         end
                         _st.c232 = _st.fn_math5
                         _st.fn_math6 = function(c0, max)
+                            local _m5 = tonumber(max)
                             if tonumber(max) then
                             else
                                 v0 = 0
@@ -26191,6 +26328,7 @@ for getgenv = 1, 14 do
                         end
                         _st.c233 = _st.fn_math6
                         _st.fn_math7 = function(c0, max)
+                            local _m5 = tonumber(max)
                             if tonumber(max) then
                             else
                                 v0 = 0
@@ -26206,6 +26344,7 @@ for getgenv = 1, 14 do
                         end
                         _st.c234 = _st.fn_math7
                         _st.fn_instance3 = function(c0, c1, c2, c3, c4, c5, c6, c7)
+                            local _m6 = c4
                             local new = Instance.new("Frame")
                             new.AnchorPoint = Vector2.new(0.5, 0.5)
                             new.Size = UDim2.fromOffset(math.max(1, math.floor(c1)), math.max(1, math.floor(c2)))
@@ -26276,6 +26415,7 @@ for getgenv = 1, 14 do
                         end
                         _st.c238 = _st.fn_findfirstchild3
                         _st.fn_isa = function(c0, c1)
+                            local _m0 = c0:IsA("TextButton")
                             local c2 = _st.c238(c0)
                             if c0:IsA("TextButton") then
                             else
@@ -26418,6 +26558,7 @@ for getgenv = 1, 14 do
                         _st.c244 = _st.fn_colorsequence
                         local fromRGB = Color3.fromRGB(225, 250, 255)
                         _st.fn_math8 = function(c0)
+                            local _m5 = c0.size
                             if c0.size then
                             else
                                 v3 = 0
@@ -27129,6 +27270,7 @@ for getgenv = 1, 14 do
                                                     end
                             local c20 = fn_task
                                                     local function fn_enabled(c0)
+                                                        local _m3 = tostring(_m5)
                                                         if c0 then
                                                             _m5 = c0.name and c0.name
                                                         else
@@ -27182,6 +27324,7 @@ for getgenv = 1, 14 do
                                                     end
                             local c23 = fn_buttonconfigs
                                                     local function fn_typeof(c0)
+                                                        local _m3 = c0.color[1]
                                                         if (typeof(c0.color) == "Color3") then
                                                             return c0.color
                                                         end
@@ -27607,6 +27750,7 @@ for getgenv = 1, 14 do
                             local c63 = fn_frame
                                                     local function fn_workspace(c0)
                                                                                                             local function fn_frame()
+                                                                                                                local _m7 = c0.name
                                                                                                                 local c0 = 68
                                                                                                                 local c1 = _st.c177("Frame", { Parent = c6, Size = UDim2.new(1, -16, 0, c0), Position = UDim2.new(0, 8, 0, 8), BackgroundColor3 = c2.colors.row, BackgroundTransparency = 0.3, BorderSizePixel = 0, ZIndex = 25001 })
                                                                                                                 _st.c177("UICorner", { Parent = c1, CornerRadius = UDim.new(0, 12) })
@@ -27618,6 +27762,7 @@ for getgenv = 1, 14 do
                                                                                                                 local c5 = _st.c177("UIStroke", { Parent = c3, Color = c24(c1), Transparency = 0.15, Thickness = 2 })
                                                                                                                 local c6 = _st.c177("TextLabel", { Parent = c3, Size = UDim2.new(1, -4, 1, -4), Position = UDim2.new(0, 2, 0, 2), BackgroundTransparency = 1, Text = "", TextColor3 = Color3.fromRGB(245, 252, 255), TextSize = 8, Font = Enum.Font.GothamBold, TextWrapped = true, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 25020 })
                                                                                                                                                                                                                             local function fn_shape()
+                                                                                                                                                                                                                                local _m4 = tonumber(c1.size)
                                                                                                                                                                                                                                 local c0 = c24(c1)
                                                                                                                                                                                                                                 local c1 = _st.c230(c1.shape)
                                                                                                                                                                                                                                 if tonumber(c1.size) then
@@ -27818,6 +27963,7 @@ for getgenv = 1, 14 do
                                                                                                                                                                                                                                                                                                                                                                                                                                                             end
                                                                                                                                                                                                                                 c16(UserInputService.InputChanged:Connect(fn_parent))
                                                                                                                                                                                                                                                                                                                                                                                                                                                             local function fn_userinputtype2(c0)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                local _m0 = (c0.UserInputType == Enum.UserInputType.MouseButton1)
                                                                                                                                                                                                                                                                                                                                                                                                                                                                 if (c0.UserInputType == Enum.UserInputType.MouseButton1) then
                                                                                                                                                                                                                                                                                                                                                                                                                                                                 else
                                                                                                                                                                                                                                                                                                                                                                                                                                                                     v0 = 0
@@ -28483,6 +28629,7 @@ for getgenv = 1, 14 do
                                                     end
                             local c77 = fn_readfile
                                                     local function fn_table(c0)
+                                                        local _m1 = not (pcall)
                                                                                                             local function fn_jsondecode()
                                                                                                                 return HttpService:JSONDecode(c4)
                                                                                                             end
@@ -28652,6 +28799,7 @@ for getgenv = 1, 14 do
                                                     end
                             local c86 = fn_renderlist2
                                                     local function fn_tostring4(c0)
+                                                        local _m1 = c5.layoutRetries
                                                         c68(("em_layout list=" .. (tostring(#c5.renderList) .. (" w=" .. tostring(math.floor(c54.AbsoluteSize.X))))))
                                                         c43()
                                                         local AbsoluteSize = c54.AbsoluteSize.X
@@ -28762,6 +28910,7 @@ for getgenv = 1, 14 do
                                                     end
                             local c88 = fn_isrebuilding
                                                     local function fn_lower(gsub)
+                                                        local _m1 = c5.filterToken
                                                         local gsub = gsub:lower():gsub("^%s+", ""):gsub("%s+$", "")
                                                         if c5.filterToken then
                                                         else
@@ -29270,6 +29419,7 @@ for getgenv = 1, 14 do
                                                     end
                             local c21 = fn_tostring2
                                                     local function fn_category(c0)
+                                                        local _m2 = c0.category
                                                         if c0.category then
                                                         else
                                                             v0 = 0
@@ -29355,6 +29505,7 @@ for getgenv = 1, 14 do
                                                     end
                             local c27 = fn_pairs
                                                     local function fn_character(c0)
+                                                        local _m0 = c0
                                                         if c0 then
                                                         else
                                                             v13 = 0
@@ -29405,22 +29556,28 @@ for getgenv = 1, 14 do
                                                             v14 = (v14 + 1)
                                                         end
                                                         for v0 = 1, _m1 do
-                                                            for v12, v13 in ipairs(c6:GetChildren()), select(2, ipairs(c6:GetChildren())), select(3, ipairs(c6:GetChildren())) do
-                                                                c7 = v12
-                                                                c8 = v13
-                                                                if c8:IsA("Animation") then
-                                                                    c4 = (c4 + 1)
-                                                                else
-                                                                end
+                                                            for v7, v8 in ipairs(c3:GetChildren()), select(2, ipairs(c3:GetChildren())), select(3, ipairs(c3:GetChildren())) do
                                                                 for v12, v13 in ipairs(c6:GetChildren()), select(2, ipairs(c6:GetChildren())), select(3, ipairs(c6:GetChildren())) do
+                                                                    c7 = v12
+                                                                    c8 = v13
+                                                                    if c8:IsA("Animation") then
+                                                                        c4 = (c4 + 1)
+                                                                    else
+                                                                    end
+                                                                    for v7, v8 in ipairs(c3:GetChildren()), select(2, ipairs(c3:GetChildren())), select(3, ipairs(c3:GetChildren())) do
+                                                                    end
+                                                                    _m1 = c0 and c0:FindFirstChild("Animate")
+                                                                    return _m1
                                                                 end
-                                                                _m1 = c0 and c0:FindFirstChild("Animate")
-                                                                return _m1
+                                                                if (c4 >= 2) then
+                                                                    return c3
+                                                                end
                                                             end
                                                         end
                                                     end
                             local c30 = fn_findfirstchild
                                                     local function fn_apply_retry_max_frames(c0, c1, c2)
+                                                        local _m1 = c2
                                                         if c2 then
                                                         else
                                                             v4 = 0
@@ -29460,6 +29617,7 @@ for getgenv = 1, 14 do
                                                     end
                             local c31 = fn_apply_retry_max_frames
                                                     local function fn_verify_max_frames(c0, c1, c2, c3, c4, c5)
+                                                        local _m1 = c3
                                                         local c6 = 0
                                                         if c3 then
                                                         else
@@ -29579,26 +29737,20 @@ for getgenv = 1, 14 do
                                                                 c3 = _m0
                                                                 if c3 then
                                                                     c4 = 0
-                                                                    for v3, v4 in ipairs(c3:GetChildren()), select(2, ipairs(c3:GetChildren())), select(3, ipairs(c3:GetChildren())) do
-                                                                        for v8, v9 in ipairs(c7:GetChildren()), select(2, ipairs(c7:GetChildren())), select(3, ipairs(c7:GetChildren())) do
-                                                                            c8 = v8
-                                                                            c9 = v9
-                                                                            if c9:IsA("Animation") then
-                                                                                c5 = (c5 + 1)
-                                                                            else
-                                                                            end
-                                                                            for v3, v4 in ipairs(c3:GetChildren()), select(2, ipairs(c3:GetChildren())), select(3, ipairs(c3:GetChildren())) do
-                                                                            end
-                                                                            local c10 = c25(c3)
-                                                                            _m0 = c10 and next(c10)
-                                                                            if _m0 then
-                                                                                c4.defaultSnapshot = c10
-                                                                                c4.snapshotTaken = true
-                                                                            end
+                                                                    for v8, v9 in ipairs(c7:GetChildren()), select(2, ipairs(c7:GetChildren())), select(3, ipairs(c7:GetChildren())) do
+                                                                        c8 = v8
+                                                                        c9 = v9
+                                                                        if c9:IsA("Animation") then
+                                                                            c5 = (c5 + 1)
+                                                                        else
                                                                         end
-                                                                        task.wait()
-                                                                        c4 = (c4 + 1)
-                                                                        for v3, v4 in ipairs(c3:GetChildren()), select(2, ipairs(c3:GetChildren())), select(3, ipairs(c3:GetChildren())) do
+                                                                        for v8, v9 in ipairs(c7:GetChildren()), select(2, ipairs(c7:GetChildren())), select(3, ipairs(c7:GetChildren())) do
+                                                                        end
+                                                                        local c10 = c25(c3)
+                                                                        _m0 = c10 and next(c10)
+                                                                        if _m0 then
+                                                                            c4.defaultSnapshot = c10
+                                                                            c4.snapshotTaken = true
                                                                         end
                                                                     end
                                                                 end
@@ -29760,6 +29912,7 @@ for getgenv = 1, 14 do
                                                             return
                                                         end
                                                                                                             local function fn_findfirstchildofclass()
+                                                                                                                local _m0 = c0:FindFirstChildOfClass("Humanoid")
                                                                                                                 if c0:FindFirstChildOfClass("Humanoid") then
                                                                                                                 else
                                                                                                                     v3 = 0
@@ -29961,6 +30114,7 @@ for getgenv = 1, 14 do
                                                                                                             end
                                                         local c26 = f2429
                                                                                                             local function fn_ipairs()
+                                                                                                                local _m3 = c25
                                                                                                                 if c25 then
                                                                                                                 else
                                                                                                                     v8 = 0
@@ -29978,6 +30132,7 @@ for getgenv = 1, 14 do
                                                                                                             end
                                                         c17.MouseButton1Click:Connect(fn_ipairs)
                                                                                                             local function fn_ipairs2()
+                                                                                                                local _m3 = c25
                                                                                                                 if c25 then
                                                                                                                 else
                                                                                                                     v8 = 0
@@ -29996,6 +30151,7 @@ for getgenv = 1, 14 do
                                                         c18.MouseButton1Click:Connect(fn_ipairs2)
                                                         c19.MouseButton1Click:Connect(c62)
                                                                                                             local function fn_ipairs3()
+                                                                                                                local _m3 = c25
                                                                                                                 local c0 = {}
                                                                                                                 if c25 then
                                                                                                                 else
@@ -30454,6 +30610,7 @@ for getgenv = 1, 14 do
                                                                                     pool.cell.Position = UDim2.new(cell2.X.Scale, cell2.X.Offset, cell2.Y.Scale, (cell2.Y.Offset + 10))
                                                                                     pool.cell.BackgroundTransparency = 1
                                                                                                                                         local function fn_entrytoken()
+                                                                                                                                            local _m0 = not (pool.showing)
                                                                                                                                             if (c7 ~= c4.entryToken) then
                                                                                                                                                 return
                                                                                                                                             end
@@ -30515,6 +30672,7 @@ for getgenv = 1, 14 do
                             local c73 = {}
                             local c74 = false
                                                     local function fn_table(c0, c1)
+                                                        local _m1 = not (pcall)
                                                                                                             local function fn_jsondecode()
                                                                                                                 return HttpService:JSONDecode(c4)
                                                                                                             end
@@ -30590,6 +30748,7 @@ for getgenv = 1, 14 do
                                                     end
                             local c77 = fn_task
                                                     local function fn_showing(c0)
+                                                        local _m0 = not (c0.showing)
                                                         if not (c0.showing) then
                                                         else
                                                             v3 = 0
@@ -30744,6 +30903,7 @@ for getgenv = 1, 14 do
                                                     end
                             local c81 = fn_isrebuilding
                                                     local function fn_lower(gsub)
+                                                        local _m1 = c4.filterToken
                                                         local gsub = gsub:lower():gsub("^%s+", ""):gsub("%s+$", "")
                                                         if c4.filterToken then
                                                         else
@@ -30974,6 +31134,7 @@ for getgenv = 1, 14 do
                                                                                                                 end
                                                                                                                 if not (c1) then
                                                                                                                                                                                                                                 local function fn_loadattempts()
+                                                                                                                                                                                                                                    local _m1 = c4.loadAttempts
                                                                                                                                                                                                                                     if not (c88) then
                                                                                                                                                                                                                                         if c4.loadAttempts then
                                                                                                                                                                                                                                         else
@@ -31212,6 +31373,7 @@ for getgenv = 1, 14 do
                                                                                                             end
                                                         local c18 = fn_sheriff
                                                                                                             local function fn_findfirstchild(c0)
+                                                                                                                local _m1 = c0:FindFirstChild("HumanoidRootPart")
                                                                                                                 if not (c0) then
                                                                                                                     return nil
                                                                                                                 end
@@ -32137,6 +32299,7 @@ for getgenv = 1, 14 do
                                                                                                                                     return
                                                                                                                                 end
                                                                                                                                                                                                                                                             local function fn_enabled()
+                                                                                                                                                                                                                                                                local _m0 = not (c2.Enabled)
                                                                                                                                                                                                                                                                 if not (c2.Enabled) then
                                                                                                                                                                                                                                                                 else
                                                                                                                                                                                                                                                                     v13 = 0
@@ -32218,6 +32381,7 @@ for getgenv = 1, 14 do
                                                                 c35.CreateToggle(makeScrollPage, "anti_fling", false, 2, fn_enabled3)
                                                                 local c20 = { [1] = c22("af_no_collision"), c22("af_with_collision") }
                                                                                                                             local function fn_af_with_collision(c0)
+                                                                                                                                local _m0 = (c0 == c22("af_with_collision"))
                                                                                                                                 if (c0 == c22("af_with_collision")) then
                                                                                                                                 else
                                                                                                                                     v3 = 0
