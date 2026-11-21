@@ -4154,8 +4154,7 @@ protos[2] = function(upvalues)
   v84_1 = new_table(2)
   v85_1 = env.gethui
   ss_0 = v84_1
-  ss_1 = v85_1 and ((env.gethui()))
-  ss_1 = ss_1 or slot_0
+  ss_1 = (v85_1 and ((env.gethui()))) or slot_0
   ss_0[1] = ss_1
   ss_1 = slot_2 and ((slot_2:FindFirstChild("PlayerGui")))
   ss_0[2] = ss_1
@@ -4178,9 +4177,7 @@ protos[2] = function(upvalues)
         slot_7 = new_cell()
         slot_6 = __loopKey_2_1
         slot_7 = cell_set_or_create(slot_7, __loopValue_2_1)
-        ss_0 = ((((cell_get(slot_7)).Name:sub(1, 7)) == "AquaHub")) or ((((cell_get(slot_7)).Name == "GoldBombButtonGui")))
-        ss_0 = ss_0 or ((((cell_get(slot_7)).Name == "FakeBombButtonGui")))
-        if ss_0 then
+        if ((((((cell_get(slot_7)).Name:sub(1, 7)) == "AquaHub")) or ((((cell_get(slot_7)).Name == "GoldBombButtonGui")))) or ((((cell_get(slot_7)).Name == "FakeBombButtonGui")))) then
           v711_1 = env.pcall
           v716_1 = closure(3, {capture_7()})
           v711_1(v716_1)
@@ -4394,8 +4391,8 @@ protos[17] = translateRole
 end
 
 protos[18] = function(upvalues)
-  local slot_0, slot_2, slot_3, slot_4, ss_0, ss_1, ss_2, ss_3, v112_1, v117_1, v137_1, v147_1, v152_1, v17_1, v183_1, v188_1, v208_1, v213_1, v218_1, v22_1, v235_1, v240_1, v27_1
-  local v321_1, v326_1, v362_1, v367_1, v372_1, v382_1, v397_1, v407_1
+  local slot_0, slot_2, slot_3, slot_4, ss_0, ss_1, ss_2, ss_3, v112_1, v117_1, v152_1, v17_1, v183_1, v188_1, v208_1, v213_1, v218_1, v22_1, v235_1, v240_1, v27_1
+  local v321_1, v326_1, v362_1, v367_1
   local vm_frame_random = math.random(0, 2147483646)
   local function capture_0()
     if not slot_0 then slot_0 = {} end
@@ -4425,8 +4422,7 @@ protos[18] = function(upvalues)
       ss_0, ss_1 = ss_2(ss_3)
       slot_2 = new_cell()
       slot_2 = cell_set_or_create(slot_2, ss_1)
-      ss_0 = ss_0 and ((cell_get(slot_2)))
-      if ss_0 then
+      if (ss_0 and ((cell_get(slot_2)))) then
         v321_1 = env.pcall
         v326_1 = closure(20, {upvalues[1], capture_2()})
         v321_1(v326_1)
@@ -4443,23 +4439,16 @@ protos[18] = function(upvalues)
     ss_2 = v112_1
     ss_3 = v117_1
     ss_0, ss_1 = ss_2(ss_3)
-    v137_1 = ss_1
-    slot_4 = v137_1
-    v147_1 = ss_0
-    slot_3 = v147_1
-    v152_1 = slot_3
+    slot_4 = ss_1
+    v152_1 = ss_0
     ss_0 = v152_1
     if v152_1 then
       v362_1 = env["type"]
       v367_1 = slot_4
-      v372_1 = v362_1(v367_1)
-      v382_1 = (v372_1 == "table")
-      ss_0 = v382_1
+      ss_0 = (((v362_1(v367_1)) == "table"))
     end
-    v397_1 = ss_0
-    if v397_1 then
-      v407_1 = slot_4
-      return v407_1
+    if ss_0 then
+      return slot_4
     end
     return nil
   end
@@ -4468,23 +4457,16 @@ protos[18] = function(upvalues)
   ss_2 = v112_1
   ss_3 = v117_1
   ss_0, ss_1 = ss_2(ss_3)
-  v137_1 = ss_1
-  slot_4 = v137_1
-  v147_1 = ss_0
-  slot_3 = v147_1
-  v152_1 = slot_3
+  slot_4 = ss_1
+  v152_1 = ss_0
   ss_0 = v152_1
   if v152_1 then
     v362_1 = env["type"]
     v367_1 = slot_4
-    v372_1 = v362_1(v367_1)
-    v382_1 = (v372_1 == "table")
-    ss_0 = v382_1
+    ss_0 = (((v362_1(v367_1)) == "table"))
   end
-  v397_1 = ss_0
-  if v397_1 then
-    v407_1 = slot_4
-    return v407_1
+  if ss_0 then
+    return slot_4
   end
   return nil
 end
@@ -4989,8 +4971,7 @@ protos[31] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     ss_2 = "part"
     ss_4 = v1742_1
     ss_5 = "Rail"
-    ss_6 = v1772_1 and slot_8
-    ss_6 = ss_6 or slot_7
+    ss_6 = (v1772_1 and slot_8) or slot_7
     ss_7 = (cell_get(slot_3))
     ss_3 = ss_4(ss_5, ss_6, ss_7)
     ss_1[ss_2] = ss_3
@@ -5002,8 +4983,7 @@ protos[31] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     v1997_1 = (env.math.pi / 4)
     v2002_1 = (v1976_1 + v1997_1)
     ss_1.angle = v2002_1
-    ss_0 = ss_1
-    temp_6 = ss_0
+    temp_6 = ss_1
     temp_4[temp_5] = temp_6
     temp_3 = ((temp_3 + temp_2))
   end
@@ -5024,8 +5004,7 @@ protos[31] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     ss_2 = "part"
     ss_4 = v2154_1
     ss_5 = "Dash"
-    ss_6 = v2184_1 and slot_7
-    ss_6 = ss_6 or slot_8
+    ss_6 = (v2184_1 and slot_7) or slot_8
     ss_7 = (cell_get(slot_3))
     ss_3 = ss_4(ss_5, ss_6, ss_7)
     ss_1[ss_2] = ss_3
@@ -5045,8 +5024,7 @@ protos[31] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     v2508_1 = (cell_get(slot_10)).MaxDelay
     v2509_1 = (v2493_1 * v2508_1)
     ss_1.delay = v2509_1
-    ss_0 = ss_1
-    temp_6 = ss_0
+    temp_6 = ss_1
     temp_4[temp_5] = temp_6
     temp_3 = ((temp_3 + temp_2))
   end
@@ -5512,8 +5490,7 @@ protos[33] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   v1154_1 = cell_get(slot_0)
   ss_2 = v1153_1
   ss_3 = v1154_1
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.CFrame = temp_2
   v1192_1 = cell_get(upvalues[3])
   v1197_1 = v1192_1.Create
@@ -5671,8 +5648,7 @@ protos[33] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     v2592_1.phase = regs.v2697_1
     v2728_1 = (((slot_29 % 2)) == 0)
     ss_0 = v2592_1
-    ss_2 = v2728_1 and (1)
-    ss_2 = ss_2 or ((-(1)))
+    ss_2 = (v2728_1 and (1)) or ((-(1)))
     ss_0.dir = ss_2
     regs.v2871_1 = new_table(0)
     ss_0.ghosts = regs.v2871_1
@@ -5688,8 +5664,7 @@ protos[33] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       v3061_1 = (slot_32 == 0)
       ss_2 = regs.v3041_1
       ss_3 = "Orb"
-      ss_4 = v3061_1 and slot_10
-      ss_4 = ss_4 or slot_30
+      ss_4 = (v3061_1 and slot_10) or slot_30
       regs.v3200_1 = cell_get(slot_3)
       ss_0 = ss_2(ss_3, ss_4, regs.v3200_1)
       temp_8[slot_32] = ss_0
@@ -6539,8 +6514,7 @@ protos[38] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   ss_3 = regs.v267_1
   ss_4 = 255
   ss_5 = 200
-  ss_0 = set_list_values(ss_0, 4, ss_3(ss_4, ss_5, (170)))
-  slot_6 = ss_0
+  slot_6 = (set_list_values(ss_0, 4, ss_3(ss_4, ss_5, (170))))
   regs.v330_1 = env.Color3.fromRGB(255, 226, 150)
   slot_7 = nil
   slot_7 = regs.v330_1
@@ -6740,8 +6714,7 @@ protos[38] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     while temp_7 <= temp_5 do
       slot_21 = nil
       slot_21 = temp_7
-      ss_0 = ((slot_20 == 1)) and (2)
-      ss_0 = ss_0 or (3)
+      ss_0 = (((slot_20 == 1)) and (2)) or (3)
       slot_22 = nil
       slot_22 = ss_0
       regs.v2973_1 = cell_get(upvalues[5])
@@ -6945,8 +6918,7 @@ protos[38] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     v5191_1 = (((slot_35 % 3)) == 0)
     ss_1 = regs.v5161_1
     ss_2 = "Sparkle"
-    ss_3 = v5191_1 and slot_8
-    ss_3 = ss_3 or slot_7
+    ss_3 = (v5191_1 and slot_8) or slot_7
     ss_4 = (cell_get(slot_3))
     ss_0 = ss_1(ss_2, ss_3, ss_4)
     slot_36 = nil
@@ -7462,8 +7434,7 @@ protos[39] = function(upvalues)
         ss_3 = slot_50
         ss_4 = slot_50
         ss_5 = slot_50
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_6 = ss_0
+        temp_6 = (ss_2(ss_3, ss_4, ss_5))
         temp_4.Size = temp_6
         temp_3 = ((temp_3 + temp_2))
       end
@@ -7705,8 +7676,7 @@ protos[40] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   ss_3 = 0.1
   ss_4 = 0.1
   ss_5 = v2073_1
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.Size = temp_2
   slot_13.CFrame = (cell_get(slot_4))
   slot_13.Parent = (cell_get(slot_3))
@@ -8025,8 +7995,7 @@ protos[43] = function(upvalues)
           ss_3 = v1222_1
           ss_4 = v1254_1
           ss_5 = v1279_1
-          ss_0 = ss_2(ss_3, ss_4, ss_5)
-          temp_10 = ss_0
+          temp_10 = (ss_2(ss_3, ss_4, ss_5))
           temp_8.Position = temp_10
           temp_7 = ((temp_7 + temp_6))
         end
@@ -8140,8 +8109,7 @@ protos[43] = function(upvalues)
         ss_3 = slot_26
         ss_4 = slot_26
         ss_5 = slot_26
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_6 = ss_0
+        temp_6 = (ss_2(ss_3, ss_4, ss_5))
         temp_4.Size = temp_6
         temp_3 = ((temp_3 + temp_2))
       end
@@ -8277,8 +8245,7 @@ protos[44] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   v618_1 = cell_get(slot_0)
   ss_2 = v617_1
   ss_3 = v618_1
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.CFrame = temp_2
   v656_1 = cell_get(upvalues[2])
   v661_1 = v656_1.Create
@@ -8297,8 +8264,7 @@ protos[44] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   temp_0, temp_1, temp_2, temp_3 = 1, v813_1, 1, 1
   while temp_3 <= temp_1 do
     slot_11 = nil
-    slot_11 = temp_3
-    v973_1 = (slot_11 - 1)
+    v973_1 = (temp_3 - 1)
     v989_1 = env.math.max
     v1006_1 = ((cell_get(slot_8)).Count - 1)
     v1016_1 = v989_1(v1006_1, 1)
@@ -8325,8 +8291,7 @@ protos[44] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     v1281_1 = (((slot_14 % 2)) == 0)
     ss_1 = v1251_1
     ss_2 = "Spark"
-    ss_3 = v1281_1 and ((cell_get(slot_5)))
-    ss_3 = ss_3 or slot_6
+    ss_3 = (v1281_1 and ((cell_get(slot_5)))) or slot_6
     ss_4 = (cell_get(slot_3))
     ss_0 = ss_1(ss_2, ss_3, ss_4)
     slot_15 = nil
@@ -8339,8 +8304,7 @@ protos[44] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     ss_3 = v1505_1
     ss_4 = v1516_1
     ss_5 = v1527_1
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_6 = ss_0
+    temp_6 = (ss_2(ss_3, ss_4, ss_5))
     slot_15.Size = temp_6
     temp_4 = (cell_get(slot_13))
     v1580_1 = new_table(0)
@@ -8357,11 +8321,9 @@ protos[44] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     v1717_1 = (((slot_14 % 2)) == 0)
     ss_1 = v1580_1
     ss_2 = "dir"
-    ss_3 = v1717_1 and (1)
-    ss_3 = ss_3 or ((-(1)))
+    ss_3 = (v1717_1 and (1)) or ((-(1)))
     ss_1[ss_2] = ss_3
-    ss_0 = ss_1
-    temp_6 = ss_0
+    temp_6 = ss_1
     temp_4[slot_14] = temp_6
     temp_3 = ((temp_3 + temp_2))
   end
@@ -8554,7 +8516,7 @@ protos[47] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   local v1618_1, v1644_1, v1645_1, v1660_1, v1661_1, v1666_1, v1706_1, v1707_1, v170_1, v1714_1, v1724_1, v1729_1, v1734_1, v1755_1, v1773_1, v1780_1, v1790_1, v1795_1, v1800_1, v1821_1
   local v1822_1, v1840_1, v1847_1, v1857_1, v1862_1, v1867_1, v1894_1, v18_1, v1926_1, v1952_1, v2079_1, v2094_1, v2105_1, v212_1, v2131_1, v2142_1, v2153_1, v2164_1, v2165_1, v2182_1
   local v2187_1, v2192_1, v2381_1, v269_1, v2945_1, v310_1, v3426_1, v3519_1, v420_1, v508_1, v585_1, v651_1, v750_1
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, slot_16, slot_17, slot_18, slot_19, slot_20, slot_21, slot_22, slot_23, slot_24, slot_25, slot_26, slot_27, slot_28, slot_29, slot_30, slot_31, slot_32, slot_33, ss_0
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, slot_16, slot_17, slot_18, slot_19, slot_20, slot_21, slot_22, slot_23, slot_24, slot_25, slot_26, slot_27, slot_28, slot_29, slot_30, slot_31, slot_32, slot_33
   local ss_1, ss_2, ss_3, ss_4, ss_6, ss_7, temp_0, temp_1, temp_2, temp_3, temp_4, temp_5, temp_6
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = {argument_1}
@@ -8785,8 +8747,7 @@ protos[47] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   v1092_1 = cell_get(slot_0)
   ss_2 = v1091_1
   ss_3 = v1092_1
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.CFrame = temp_2
   v1130_1 = cell_get(upvalues[3])
   v1135_1 = v1130_1.Create
@@ -9006,8 +8967,7 @@ protos[47] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     ss_1 = regs.v3389_1
     ss_2 = "part"
     ss_4 = regs.v3396_1
-    ss_6 = v3426_1 and ((cell_get(slot_6)))
-    ss_6 = ss_6 or ((cell_get(slot_7)))
+    ss_6 = (v3426_1 and ((cell_get(slot_6)))) or ((cell_get(slot_7)))
     ss_7 = (cell_get(slot_3))
     ss_3 = ss_4(("SpeedLine"), ss_6, ss_7)
     ss_1[ss_2] = ss_3
@@ -9027,8 +8987,7 @@ protos[47] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     regs.v3750_1 = (cell_get(slot_11)).MaxDelay
     regs.v3751_1 = (regs.v3735_1 * regs.v3750_1)
     ss_1.delay = regs.v3751_1
-    ss_0 = ss_1
-    temp_6 = ss_0
+    temp_6 = ss_1
     temp_4[temp_5] = temp_6
     temp_3 = ((temp_3 + temp_2))
   end
@@ -9123,11 +9082,8 @@ protos[50] = function(upvalues)
   v21_1 = (v11_1 * v16_1)
   v26_1 = (v6_1 * v21_1)
   slot_0 = ((v1_1 + v26_1))
-  ss_0 = (((((cell_get(upvalues[5])) % 2)) == 0)) and ((cell_get(upvalues[6])))
-  ss_0 = ss_0 or ((cell_get(upvalues[7])))
-  slot_1 = ss_0
-  ss_0 = (((((cell_get(upvalues[5])) % 2)) == 0)) and ((cell_get(upvalues[7])))
-  ss_0 = ss_0 or ((cell_get(upvalues[8])))
+  slot_1 = (((((((cell_get(upvalues[5])) % 2)) == 0)) and ((cell_get(upvalues[6])))) or ((cell_get(upvalues[7]))))
+  ss_0 = ((((((cell_get(upvalues[5])) % 2)) == 0)) and ((cell_get(upvalues[7])))) or ((cell_get(upvalues[8])))
   v256_1 = cell_get(upvalues[9])
   v277_1 = env.CFrame.lookAt
   v288_1 = cell_get(upvalues[2])
@@ -9629,8 +9585,7 @@ protos[55] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     return slot_4
   end
   v1_1 = cell_get(slot_0)
-  ss_0 = (not v1_1) or ((((cell_get(slot_0)) == "None")))
-  v102_1 = ss_0
+  v102_1 = ((not v1_1) or ((((cell_get(slot_0)) == "None"))))
   ss_0 = v102_1
   if not v102_1 then
     v113_1 = cell_get(slot_1)
@@ -9665,8 +9620,7 @@ protos[55] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       ss_0, ss_1 = v356_1(v361_1)
       slot_6 = ss_1
       if (not ss_0) then
-        ss_0 = (cell_get(slot_4)) and (cell_get(slot_4)).Parent
-        if ss_0 then
+        if ((cell_get(slot_4)) and (cell_get(slot_4)).Parent) then
           v473_1 = cell_get(slot_4)
           v473_1:Destroy()
         end
@@ -9921,8 +9875,7 @@ protos[58] = function(upvalues, argument_1, argument_2)
   for __loopKey_58_0, __loopValue_58_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_3 = __loopKey_58_0
     slot_4 = __loopValue_58_0
-    ss_0 = (slot_4:IsA("BasePart")) and (((slot_4.Transparency < 1)))
-    if ss_0 then
+    if ((slot_4:IsA("BasePart")) and (((slot_4.Transparency < 1)))) then
       temp_6 = (((#slot_2) + 1))
       slot_2[temp_6] = slot_4
     end
@@ -10343,8 +10296,7 @@ protos[66] = function(upvalues, argument_1)
     v82_1 = slot_1.Z
     v104_1 = (v55_1(v66_1, 0, v82_1)).Magnitude
     v119_1 = (cell_get(upvalues[4])).MinSpeed
-    ss_0 = ((v104_1 <= v119_1)) or ((((cell_get(upvalues[5])).Health <= 0)))
-    if ss_0 then
+    if (((v104_1 <= v119_1)) or ((((cell_get(upvalues[5])).Health <= 0)))) then
       v354_1 = (cell_get(upvalues[4])).Interval
       upvalues[6] = cell_set_or_create(upvalues[6], v354_1)
     else
@@ -10402,8 +10354,7 @@ protos[68] = function(upvalues)
     v212_1 = closure(70, {capture_1()})
     v207_1(v212_1)
   end
-  ss_0 = (cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent) then
     v284_1 = cell_get(upvalues[3])
     v284_1:Destroy()
   end
@@ -10622,8 +10573,7 @@ protos[71] = function(upvalues)
   temp_0, temp_1, temp_2, temp_3 = 0, 4, 1, 0
   while temp_3 <= temp_1 do
     slot_9 = nil
-    slot_9 = temp_3
-    v1226_1 = (slot_9 / 5)
+    v1226_1 = (temp_3 / 5)
     v1241_1 = env.math.pi
     v1252_1 = (((v1226_1 * v1241_1)) * 2)
     slot_10 = nil
@@ -11150,8 +11100,7 @@ protos[82] = function(upvalues, argument_1, argument_2, argument_3, argument_4, 
   ss_9 = v87_1
   ss_10 = 0.3
   ss_2 = ss_3(ss_4, ss_5, ss_7(ss_8, ss_9, ss_10))
-  ss_1 = ((ss_1 + ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 + ss_2)))
   slot_0.pos = ss_0
   v181_1 = (cell_get(upvalues[1])):NextNumber(3, 6)
   v186_1 = (slot_2 * v181_1)
@@ -11173,8 +11122,7 @@ protos[82] = function(upvalues, argument_1, argument_2, argument_3, argument_4, 
   ss_9 = v272_1
   ss_10 = 1.5
   ss_2 = ss_3(ss_4, ss_5, ss_7(ss_8, ss_9, ss_10))
-  ss_1 = ((ss_1 + ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 + ss_2)))
   slot_0.vel = ss_0
   slot_0.sink = slot_3
   slot_0.sway = slot_4
@@ -11689,8 +11637,7 @@ protos[91] = function(upvalues)
     v212_1 = closure(93, {capture_1()})
     v207_1(v212_1)
   end
-  ss_0 = (cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent) then
     v284_1 = cell_get(upvalues[3])
     v284_1:Destroy()
   end
@@ -11988,8 +11935,7 @@ protos[96] = function(upvalues, argument_1, argument_2)
     v166_1 = cell_get(upvalues[5])
     temp_0 = (cell_get(upvalues[6]))
     temp_1 = v166_1
-    temp_2 = v161_1
-    slot_2 = temp_2
+    slot_2 = v161_1
     slot_3 = temp_1
     slot_4 = temp_0
   end
@@ -12006,8 +11952,7 @@ protos[96] = function(upvalues, argument_1, argument_2)
     v385_1 = (((slot_6 - 1)) / 3)
     ss_2 = v355_1
     ss_3 = v350_1
-    ss_0 = ss_2(ss_3, slot_3, v385_1)
-    temp_6 = ss_0
+    temp_6 = (ss_2(ss_3, slot_3, v385_1))
     slot_5[temp_5] = temp_6
     temp_3 = ((temp_3 + temp_2))
   end
@@ -12366,8 +12311,7 @@ protos[102] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   ss_9 = v87_1
   ss_10 = 0.3
   ss_2 = ss_3(ss_4, ss_5, ss_7(ss_8, ss_9, ss_10))
-  ss_1 = ((ss_1 + ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 + ss_2)))
   slot_0.pos = ss_0
   v181_1 = (cell_get(upvalues[1])):NextNumber(slot_5, slot_6)
   v186_1 = (slot_2 * v181_1)
@@ -12389,8 +12333,7 @@ protos[102] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   ss_9 = v272_1
   ss_10 = 1.5
   ss_2 = ss_3(ss_4, ss_5, ss_7(ss_8, ss_9, ss_10))
-  ss_1 = ((ss_1 + ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 + ss_2)))
   slot_0.vel = ss_0
   slot_0.dir = slot_2
   slot_0.sink = slot_3
@@ -12399,7 +12342,7 @@ protos[102] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
 end
 
 protos[103] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_1, ss_2, ss_3, ss_4, temp_0, temp_1, temp_2, temp_3, v103_1, v11_1, v114_1, v121_1, v126_1, v131_1, v22_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_2, ss_3, ss_4, temp_0, temp_1, temp_2, temp_3, v103_1, v11_1, v114_1, v121_1, v126_1, v131_1, v22_1
   local v275_1, v291_1, v296_1, v326_1, v337_1, v342_1, v363_1, v380_1, v395_1, v396_1, v401_1, v406_1, v457_1, v469_1, v481_1, v492_1, v503_1, v524_1, v535_1, v546_1
   local v551_1, v619_1, v631_1, v642_1, v643_1, v648_1, v665_1, v676_1, v70_1, v71_1, v86_1
   math.random(0, 2147483646)
@@ -12462,10 +12405,7 @@ protos[103] = function(upvalues, argument_1, argument_2)
   ss_2 = v619_1
   ss_3 = v648_1
   ss_4 = 0.15
-  ss_1 = ss_2(ss_3, ss_4, v665_1(v676_1))
-  ss_1 = ss_1.Unit
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, v665_1(v676_1))).Unit
   temp_0.dir = temp_2
   return
 end
@@ -12816,8 +12756,7 @@ protos[110] = function(upvalues)
     v212_1 = closure(112, {capture_1()})
     v207_1(v212_1)
   end
-  ss_0 = (cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent) then
     v284_1 = cell_get(upvalues[3])
     v284_1:Destroy()
   end
@@ -13248,8 +13187,7 @@ protos[121] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   ss_4 = v61_1
   ss_5 = 0
   ss_2 = ss_3(ss_4, ss_5, v77_1(v72_1, v87_1, (0.3)))
-  ss_1 = ((ss_1 + ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 + ss_2)))
   slot_1.pos = ss_0
   slot_1.vel = slot_3
   slot_1.age = 0
@@ -13370,8 +13308,7 @@ protos[124] = function(upvalues, argument_1, argument_2)
   v322_1 = slot_0.pos
   ss_2 = v311_1
   ss_3 = v322_1
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.CFrame = temp_2
   slot_3.Transparency = 0.05
   v421_1 = (cell_get(upvalues[1])).TailSegments
@@ -13391,8 +13328,7 @@ protos[124] = function(upvalues, argument_1, argument_2)
     ss_3 = slot_6
     ss_4 = slot_6
     ss_5 = slot_6
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_6 = ss_0
+    temp_6 = (ss_2(ss_3, ss_4, ss_5))
     slot_5.Size = temp_6
     v973_1 = env.CFrame.new
     v990_1 = slot_0.samples[slot_4]
@@ -13596,8 +13532,7 @@ protos[127] = function(upvalues)
     v212_1 = closure(129, {capture_1()})
     v207_1(v212_1)
   end
-  ss_0 = (cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent) then
     v284_1 = cell_get(upvalues[3])
     v284_1:Destroy()
   end
@@ -14348,8 +14283,7 @@ protos[138] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   ss_9 = v87_1
   ss_10 = 0.3
   ss_2 = ss_3(ss_4, ss_5, ss_7(ss_8, ss_9, ss_10))
-  ss_1 = ((ss_1 + ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 + ss_2)))
   slot_0.pos = ss_0
   v181_1 = (cell_get(upvalues[1])):NextNumber(slot_3, slot_4)
   v186_1 = (slot_2 * v181_1)
@@ -14371,8 +14305,7 @@ protos[138] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   ss_9 = v272_1
   ss_10 = 1.5
   ss_2 = ss_3(ss_4, ss_5, ss_7(ss_8, ss_9, ss_10))
-  ss_1 = ((ss_1 + ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 + ss_2)))
   slot_0.vel = ss_0
   slot_0.sink = slot_7
   slot_0.sway = slot_8
@@ -14380,7 +14313,7 @@ protos[138] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
 end
 
 protos[139] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_1, ss_2, ss_3, ss_4, temp_0, temp_1, temp_2, temp_3, v103_1, v11_1, v114_1, v121_1, v126_1, v131_1, v22_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_2, ss_3, ss_4, temp_0, temp_1, temp_2, temp_3, v103_1, v11_1, v114_1, v121_1, v126_1, v131_1, v22_1
   local v275_1, v291_1, v296_1, v326_1, v343_1, v360_1, v375_1, v376_1, v381_1, v386_1, v437_1, v449_1, v461_1, v472_1, v483_1, v504_1, v515_1, v526_1, v531_1
   local v599_1, v611_1, v622_1, v623_1, v628_1, v645_1, v656_1, v70_1, v71_1, v86_1
   math.random(0, 2147483646)
@@ -14441,10 +14374,7 @@ protos[139] = function(upvalues, argument_1, argument_2)
   ss_2 = v599_1
   ss_3 = v628_1
   ss_4 = 0.1
-  ss_1 = ss_2(ss_3, ss_4, v645_1(v656_1))
-  ss_1 = ss_1.Unit
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, v645_1(v656_1))).Unit
   temp_0.dir = temp_2
   return
 end
@@ -14831,8 +14761,7 @@ protos[146] = function(upvalues)
     v212_1 = closure(148, {capture_1()})
     v207_1(v212_1)
   end
-  ss_0 = (cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent) then
     v284_1 = cell_get(upvalues[3])
     v284_1:Destroy()
   end
@@ -15240,8 +15169,7 @@ protos[153] = function(upvalues, argument_1)
           slot_3 = nil
           slot_4 = nil
           slot_3 = temp_7
-          slot_4 = temp_8
-          v1336_1 = slot_4
+          v1336_1 = temp_8
           v1341_1 = v1336_1.Destroy
           v1341_1(v1336_1)
         end
@@ -15359,8 +15287,7 @@ protos[153] = function(upvalues, argument_1)
           ss_3 = slot_8
           ss_4 = v1532_1
           ss_5 = v1547_1
-          ss_0 = ss_2(ss_3, ss_4, ss_5)
-          temp_11 = ss_0
+          temp_11 = (ss_2(ss_3, ss_4, ss_5))
           temp_9[temp_10] = temp_11
           temp_9 = slot_11
           temp_10 = "CFrame"
@@ -15474,8 +15401,7 @@ protos[153] = function(upvalues, argument_1)
         ss_3 = regs.v2581_1
         ss_4 = regs.v2586_1
         ss_5 = regs.v2607_1
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_6 = ss_0
+        temp_6 = (ss_2(ss_3, ss_4, ss_5))
         regs.v2627_1 = temp_4
         regs.v2632_1 = temp_5
         regs.v2637_1 = temp_6
@@ -15491,8 +15417,7 @@ protos[153] = function(upvalues, argument_1)
           ss_2 = regs.v2722_1
           ss_3 = regs.v2733_1
           ss_4 = regs.v2756_1
-          ss_0 = ss_2(ss_3, ss_4)
-          temp_6 = ss_0
+          temp_6 = (ss_2(ss_3, ss_4))
           regs.v2776_1 = temp_4
           regs.v2781_1 = temp_5
           regs.v2786_1 = temp_6
@@ -15504,8 +15429,7 @@ protos[153] = function(upvalues, argument_1)
           regs.v2846_1 = slot_13.pos
           ss_2 = regs.v2835_1
           ss_3 = regs.v2846_1
-          ss_0 = ss_2(ss_3)
-          temp_6 = ss_0
+          temp_6 = (ss_2(ss_3))
           regs.v2862_1 = temp_4
           regs.v2867_1 = temp_5
           regs.v2872_1 = temp_6
@@ -15545,8 +15469,7 @@ protos[153] = function(upvalues, argument_1)
     if not regs.v2983_1 then
       ss_1 = 0
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Rate = temp_2
     if (not slot_19) then
       regs.v3162_1 = (cell_get(upvalues[5])).FlakeInterval
@@ -15601,8 +15524,7 @@ protos[153] = function(upvalues, argument_1)
               ss_2 = regs.v3704_1
               ss_3 = regs.v3709_1
               ss_4 = slot_23
-              ss_0 = ss_2(ss_3, ss_4)
-              temp_10 = ss_0
+              temp_10 = (ss_2(ss_3, ss_4))
               temp_8[temp_9] = temp_10
               temp_7 = ((temp_7 + temp_6))
             end
@@ -15758,8 +15680,7 @@ protos[155] = function(upvalues)
     v207_1(v212_1)
   end
   slot_2 = (cell_get(upvalues[3])).Character
-  ss_0 = slot_2 and ((slot_2:FindFirstChild("HumanoidRootPart")))
-  slot_3 = ss_0
+  slot_3 = (slot_2 and ((slot_2:FindFirstChild("HumanoidRootPart"))))
   if slot_3 then
     v341_1 = env.ipairs
     v347_1 = slot_3
@@ -15779,8 +15700,7 @@ protos[155] = function(upvalues)
       end
     end
   end
-  ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent) then
     v588_1 = cell_get(upvalues[4])
     v588_1:Destroy()
   end
@@ -16139,8 +16059,7 @@ protos[163] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   ss_3 = slot_5
   ss_0 = ss_2(ss_3)
   slot_7.WidthScale = ss_0
-  ss_2 = (cell_get(upvalues[1]))
-  ss_0 = ss_2()
+  ss_0 = ((cell_get(upvalues[1])))()
   slot_7.Color = ss_0
   v660_1 = env.NumberSequence.new
   v661_1 = new_table(3)
@@ -16255,8 +16174,7 @@ protos[165] = function(upvalues, argument_1)
     return slot_18
   end
   v11_1 = (cell_get(upvalues[1])).Parent
-  ss_0 = (not v11_1) or ((not slot_0))
-  v163_1 = ss_0
+  v163_1 = ((not v11_1) or ((not slot_0)))
   ss_0 = v163_1
   if not v163_1 then
     v184_1 = slot_0.Parent
@@ -16335,8 +16253,7 @@ protos[165] = function(upvalues, argument_1)
         ss_3 = "VoltSparks"
         ss_4 = v624_1
         ss_5 = v629_1
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5))
         temp_0.sparks = temp_2
       end
       slot_10 = new_cell()
@@ -16376,8 +16293,7 @@ protos[165] = function(upvalues, argument_1)
         ss_3 = "VoltAura"
         ss_4 = v1073_1
         ss_5 = v1078_1
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5))
         temp_0.aura = temp_2
       end
       slot_11 = new_cell()
@@ -16417,8 +16333,7 @@ protos[165] = function(upvalues, argument_1)
         ss_3 = "VoltOrbit"
         ss_4 = v1656_1
         ss_5 = v1661_1
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5))
         temp_0.orbit = temp_2
       end
       slot_12 = new_cell()
@@ -16495,8 +16410,7 @@ protos[166] = function(upvalues, argument_1)
     v252_1 = (cell_get(upvalues[9])).MoveThreshold
     v253_1 = (v241_1 > v252_1)
     slot_1 = nil
-    slot_1 = v253_1
-    if slot_1 then
+    if v253_1 then
       v463_1 = env.math.min
       v469_1 = cell_get(upvalues[10])
       v489_1 = (cell_get(upvalues[9])).FadeInTime
@@ -16568,8 +16482,7 @@ protos[166] = function(upvalues, argument_1)
             v1592_1 = slot_5.Keypoints[1].Value
             ss_2 = v1569_1
             ss_3 = v1592_1
-            ss_0 = ss_2(ss_3)
-            temp_7 = ss_0
+            temp_7 = (ss_2(ss_3))
             temp_5.Color = temp_7
           end
         end
@@ -16614,18 +16527,15 @@ protos[166] = function(upvalues, argument_1)
       temp_0 = (cell_get(upvalues[2]))
       ss_2 = env.NumberSequence.new
       ss_3 = slot_11
-      ss_0 = ss_2(ss_3)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3))
       temp_0.WidthScale = temp_2
       temp_0 = (cell_get(upvalues[12]))
       temp_1 = "WidthScale"
       ss_2 = env.NumberSequence.new
       ss_3 = slot_12
-      ss_0 = ss_2(ss_3)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3))
       temp_0.WidthScale = temp_2
-      ss_0 = (cell_get(upvalues[15])) and (cell_get(upvalues[15])).Parent
-      if ss_0 then
+      if ((cell_get(upvalues[15])) and (cell_get(upvalues[15])).Parent) then
         temp_0 = (cell_get(upvalues[15]))
         temp_1 = "Position"
         v1990_1 = env.Vector3.new
@@ -16648,12 +16558,10 @@ protos[166] = function(upvalues, argument_1)
         ss_3 = v2024_1
         ss_4 = v2072_1
         ss_5 = v2110_1
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5))
         temp_0.Position = temp_2
       end
-      ss_0 = (cell_get(upvalues[16])) and (cell_get(upvalues[16])).Parent
-      if ss_0 then
+      if ((cell_get(upvalues[16])) and (cell_get(upvalues[16])).Parent) then
         temp_0 = (cell_get(upvalues[16]))
         temp_1 = "Orientation"
         v2219_1 = env.Vector3.new
@@ -16668,8 +16576,7 @@ protos[166] = function(upvalues, argument_1)
         ss_3 = v2247_1
         ss_4 = v2262_1
         ss_5 = v2294_1
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5))
         temp_0.Orientation = temp_2
       end
     end
@@ -16721,8 +16628,7 @@ protos[168] = function(upvalues)
     v207_1(v212_1)
   end
   slot_2 = (cell_get(upvalues[3])).Character
-  ss_0 = slot_2 and ((slot_2:FindFirstChild("HumanoidRootPart")))
-  slot_3 = ss_0
+  slot_3 = (slot_2 and ((slot_2:FindFirstChild("HumanoidRootPart"))))
   if slot_3 then
     v341_1 = env.ipairs
     v347_1 = slot_3
@@ -16742,8 +16648,7 @@ protos[168] = function(upvalues)
       end
     end
   end
-  ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent) then
     v609_1 = cell_get(upvalues[4])
     v609_1:Destroy()
   end
@@ -16987,8 +16892,7 @@ end
 protos[175] = function(upvalues, argument_1)
   local slot_0, ss_2, ss_3, ss_4, ss_5, v104_1, v129_1, v52_1, v57_1, v62_1, v77_1, v94_1, v99_1
   math.random(0, 2147483646)
-  slot_0 = argument_1
-  slot_0 = ((slot_0 % 1))
+  slot_0 = ((argument_1 % 1))
   if ((slot_0 < 0.5)) then
     v52_1 = cell_get(upvalues[1])
     v57_1 = cell_get(upvalues[2])
@@ -17038,8 +16942,7 @@ protos[176] = function(upvalues, argument_1)
     return slot_7
   end
   v11_1 = (cell_get(upvalues[1])).Parent
-  ss_0 = (not v11_1) or ((not slot_0))
-  v126_1 = ss_0
+  v126_1 = ((not v11_1) or ((not slot_0)))
   ss_0 = v126_1
   if not v126_1 then
     v147_1 = slot_0.Parent
@@ -17211,11 +17114,9 @@ protos[177] = function(upvalues, argument_1)
     v461_1 = ((cell_get(upvalues[5])).BaseWidth * slot_3)
     ss_2 = v444_1
     ss_3 = v461_1
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.WidthScale = temp_2
-    ss_0 = (cell_get(upvalues[7])) and (cell_get(upvalues[7])).Parent
-    if ss_0 then
+    if ((cell_get(upvalues[7])) and (cell_get(upvalues[7])).Parent) then
       v549_1 = cell_get(upvalues[8])
       v564_1 = (cell_get(upvalues[5])).GradientStart
       v575_1 = (cell_get(upvalues[5])).GradientEnd
@@ -17230,8 +17131,7 @@ protos[177] = function(upvalues, argument_1)
       temp_1 = "Color"
       ss_2 = env.ColorSequence.new
       ss_3 = slot_4
-      ss_0 = ss_2(ss_3)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3))
       temp_0.Color = temp_2
     end
   end
@@ -17282,8 +17182,7 @@ protos[179] = function(upvalues)
     v207_1(v212_1)
   end
   slot_2 = (cell_get(upvalues[3])).Character
-  ss_0 = slot_2 and ((slot_2:FindFirstChild("HumanoidRootPart")))
-  slot_3 = ss_0
+  slot_3 = (slot_2 and ((slot_2:FindFirstChild("HumanoidRootPart"))))
   if slot_3 then
     v341_1 = env.ipairs
     v347_1 = slot_3
@@ -17303,8 +17202,7 @@ protos[179] = function(upvalues)
       end
     end
   end
-  ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent) then
     v609_1 = cell_get(upvalues[4])
     v609_1:Destroy()
   end
@@ -17526,8 +17424,7 @@ protos[185] = function(upvalues, argument_1)
     return slot_10
   end
   v11_1 = (cell_get(upvalues[1])).Parent
-  ss_0 = (not v11_1) or ((not slot_0))
-  v126_1 = ss_0
+  v126_1 = ((not v11_1) or ((not slot_0)))
   ss_0 = v126_1
   if not v126_1 then
     v147_1 = slot_0.Parent
@@ -17700,12 +17597,10 @@ protos[186] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   ss_1 = "UmbraTrail_"
   ss_2 = v1529_1
   ss_3 = "_"
-  ss_5 = v1540_1
-  ss_4 = ss_5(v1556_1((1000), (9999)))
+  ss_4 = v1540_1(v1556_1((1000), (9999)))
   v1577_3 = (ss_3 .. ss_4)
   v1582_2 = (ss_2 .. v1577_3)
-  ss_1 = ((ss_1 .. v1582_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 .. v1582_2)))
   slot_13.Name = ss_0
   slot_13.Enabled = false
   slot_13.Parent = slot_0
@@ -17834,8 +17729,7 @@ protos[189] = function(upvalues)
       end
     end
   end
-  ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent) then
     v552_1 = cell_get(upvalues[4])
     v552_1:Destroy()
   end
@@ -18047,8 +17941,7 @@ protos[195] = function(upvalues, argument_1)
     return slot_6
   end
   v11_1 = (cell_get(upvalues[1])).Parent
-  ss_0 = (not v11_1) or ((not slot_0))
-  v163_1 = ss_0
+  v163_1 = ((not v11_1) or ((not slot_0)))
   ss_0 = v163_1
   if not v163_1 then
     v184_1 = slot_0.Parent
@@ -18106,8 +17999,7 @@ protos[195] = function(upvalues, argument_1)
           ss_5 = v633_1
           ss_6 = v644_1
           ss_7 = v655_1
-          ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6, ss_7)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4, ss_5, ss_6, ss_7))
           temp_5[temp_6] = temp_7
           temp_5 = (cell_get(slot_3))
           v697_1 = cell_get(slot_3)
@@ -18121,8 +18013,7 @@ protos[195] = function(upvalues, argument_1)
           ss_5 = 1
           ss_6 = v750_1
           ss_7 = 0
-          ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6, ss_7)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4, ss_5, ss_6, ss_7))
           temp_5[temp_6] = temp_7
         end
       end
@@ -18157,8 +18048,7 @@ protos[196] = function(upvalues)
     v81_1 = slot_0.Z
     v103_1 = (v54_1(v65_1, 0, v81_1)).Magnitude
     v118_1 = (cell_get(upvalues[3])).MinSpeed
-    ss_0 = ((v103_1 > v118_1)) and ((((cell_get(upvalues[4])).Health > 0)))
-    slot_2 = ss_0
+    slot_2 = (((v103_1 > v118_1)) and ((((cell_get(upvalues[4])).Health > 0))))
     v234_1 = env.ipairs
     v239_1 = cell_get(upvalues[5])
     ss_2 = v234_1
@@ -18235,8 +18125,7 @@ protos[198] = function(upvalues)
       end
     end
   end
-  ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent) then
     v552_1 = cell_get(upvalues[4])
     v552_1:Destroy()
   end
@@ -18429,8 +18318,7 @@ protos[205] = function(upvalues, argument_1)
     return slot_12
   end
   v11_1 = (cell_get(upvalues[1])).Parent
-  ss_0 = (not v11_1) or ((not slot_0))
-  v163_1 = ss_0
+  v163_1 = ((not v11_1) or ((not slot_0)))
   ss_0 = v163_1
   if not v163_1 then
     v184_1 = slot_0.Parent
@@ -18497,8 +18385,7 @@ protos[205] = function(upvalues, argument_1)
           ss_4 = slot_9
           ss_5 = slot_10
           ss_6 = v828_1
-          ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4, ss_5, ss_6))
           temp_5[temp_6] = temp_7
           temp_5 = (cell_get(slot_3))
           v874_1 = cell_get(slot_3)
@@ -18510,8 +18397,7 @@ protos[205] = function(upvalues, argument_1)
           ss_4 = slot_8
           ss_5 = slot_9
           ss_6 = v917_1
-          ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4, ss_5, ss_6))
           temp_5[temp_6] = temp_7
           temp_5 = (cell_get(slot_3))
           v963_1 = cell_get(slot_3)
@@ -18523,8 +18409,7 @@ protos[205] = function(upvalues, argument_1)
           ss_4 = slot_10
           ss_5 = slot_11
           ss_6 = v1006_1
-          ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4, ss_5, ss_6))
           temp_5[temp_6] = temp_7
         end
       end
@@ -18559,8 +18444,7 @@ protos[206] = function(upvalues)
     v81_1 = slot_0.Z
     v103_1 = (v54_1(v65_1, 0, v81_1)).Magnitude
     v118_1 = (cell_get(upvalues[3])).MinSpeed
-    ss_0 = ((v103_1 > v118_1)) and ((((cell_get(upvalues[4])).Health > 0)))
-    slot_2 = ss_0
+    slot_2 = (((v103_1 > v118_1)) and ((((cell_get(upvalues[4])).Health > 0))))
     v234_1 = env.ipairs
     v239_1 = cell_get(upvalues[5])
     ss_2 = v234_1
@@ -18637,8 +18521,7 @@ protos[208] = function(upvalues)
       end
     end
   end
-  ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent) then
     v552_1 = cell_get(upvalues[4])
     v552_1:Destroy()
   end
@@ -19233,8 +19116,7 @@ protos[217] = function(upvalues)
     temp_2 = temp_3
     slot_1 = temp_3
     slot_2 = temp_4
-    ss_0 = (slot_2:IsA("BasePart")) and (((slot_2.Transparency < 1)))
-    if ss_0 then
+    if ((slot_2:IsA("BasePart")) and (((slot_2.Transparency < 1)))) then
       temp_5 = slot_0
       temp_6 = (((#slot_0) + 1))
       temp_5[temp_6] = slot_2
@@ -19307,8 +19189,7 @@ protos[217] = function(upvalues)
     ss_2 = v965_1
     ss_4 = v780_1
     ss_5 = v917_1
-    ss_0 = ss_2(v970_1, ss_4, ss_5, v1018_1, v1029_1, v1067_1, (0))
-    temp_6 = ss_0
+    temp_6 = (ss_2(v970_1, ss_4, ss_5, v1018_1, v1029_1, v1067_1, (0)))
     temp_4[temp_5] = temp_6
     temp_3 = ((temp_3 + temp_2))
   end
@@ -19390,8 +19271,7 @@ protos[218] = function(upvalues, argument_1)
       regs.v666_1 = (slot_1 + 0.1)
       ss_0 = ((regs.v655_1 <= regs.v666_1)) and (((slot_3.vel.Y < 0)))
       slot_4 = nil
-      slot_4 = ss_0
-      v789_1 = slot_4
+      v789_1 = ss_0
       ss_0 = v789_1
       if not v789_1 then
         regs.v820_1 = slot_3.age
@@ -19443,8 +19323,7 @@ protos[218] = function(upvalues, argument_1)
         ss_2 = v1139_1
         ss_3 = slot_7
         ss_4 = slot_7
-        ss_0 = ss_2(ss_3, ss_4, v1160_1)
-        temp_6 = ss_0
+        temp_6 = (ss_2(ss_3, ss_4, v1160_1))
         temp_4[temp_5] = temp_6
         if ((slot_8 > 0.1)) then
           temp_4 = slot_3.part
@@ -19457,8 +19336,7 @@ protos[218] = function(upvalues, argument_1)
           ss_2 = v1343_1
           ss_3 = v1354_1
           ss_4 = v1377_1
-          ss_0 = ss_2(ss_3, ss_4)
-          temp_6 = ss_0
+          temp_6 = (ss_2(ss_3, ss_4))
           temp_4[temp_5] = temp_6
         else
           temp_4 = slot_3.part
@@ -19467,8 +19345,7 @@ protos[218] = function(upvalues, argument_1)
           v1467_1 = slot_3.pos
           ss_2 = v1456_1
           ss_3 = v1467_1
-          ss_0 = ss_2(ss_3)
-          temp_6 = ss_0
+          temp_6 = (ss_2(ss_3))
           temp_4[temp_5] = temp_6
         end
       end
@@ -19546,8 +19423,7 @@ protos[220] = function(upvalues)
     v212_1 = closure(222, {capture_1()})
     v207_1(v212_1)
   end
-  ss_0 = (cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent) then
     v284_1 = cell_get(upvalues[3])
     v284_1:Destroy()
   end
@@ -19792,8 +19668,7 @@ protos[229] = function(upvalues, argument_1, argument_2, argument_3)
   ss_6 = v156_1
   ss_7 = 0
   ss_8 = 6.28
-  ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-  slot_5 = ss_0
+  slot_5 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
   slot_6 = (((env.CFrame.new(slot_1)) * slot_5))
   v238_1 = cell_get(upvalues[4])
   v244_1 = cell_get(upvalues[2])
@@ -19924,8 +19799,7 @@ protos[232] = function(upvalues, argument_1)
     return slot_5
   end
   v11_1 = (cell_get(upvalues[1])).Parent
-  ss_0 = (not v11_1) or ((not slot_0))
-  v163_1 = ss_0
+  v163_1 = ((not v11_1) or ((not slot_0)))
   ss_0 = v163_1
   if not v163_1 then
     v184_1 = slot_0.Parent
@@ -20053,8 +19927,7 @@ protos[235] = function(upvalues)
     v212_1 = closure(237, {capture_1()})
     v207_1(v212_1)
   end
-  ss_0 = (cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent) then
     v284_1 = cell_get(upvalues[3])
     v284_1:Destroy()
   end
@@ -20255,8 +20128,7 @@ protos[238] = function(upvalues)
     ss_2 = regs.v893_1
     ss_3 = v898_1
     ss_4 = "role"
-    ss_5 = v935_1 and ("body")
-    ss_5 = ss_5 or ("bodyAlt")
+    ss_5 = (v935_1 and ("body")) or ("bodyAlt")
     ss_3[ss_4] = ss_5
     v1490_1 = env.CFrame.lookAt
     v1506_1 = (slot_13 * 2)
@@ -20447,8 +20319,7 @@ protos[240] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   slot_4.Material = ss_0
   slot_4.Color = slot_1
   temp_0 = slot_4
-  ss_0 = env.Vector3.new((0.05), (0.05), (0.05))
-  temp_2 = ss_0
+  temp_2 = (env.Vector3.new((0.05), (0.05), (0.05)))
   temp_0.Size = temp_2
   if slot_2 then
     slot_5 = (env.Instance.new("SpecialMesh"))
@@ -20573,8 +20444,7 @@ protos[243] = function(upvalues, argument_1)
   for __loopKey_243_0, __loopValue_243_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_4 = __loopKey_243_0
     slot_5 = __loopValue_243_0
-    ss_0 = ((slot_5.role == "glow")) and env.Enum.Material.Neon
-    ss_0 = ss_0 or env.Enum.Material.SmoothPlastic
+    ss_0 = (((slot_5.role == "glow")) and env.Enum.Material.Neon) or env.Enum.Material.SmoothPlastic
     v485_1 = new_table(0)
     v492_1 = cell_get(upvalues[7])
     v517_1 = slot_5.role
@@ -21013,8 +20883,7 @@ protos[249] = function(upvalues, argument_1)
         regs.v992_1 = temp_7
         temp_8 = ((regs.v987_1 + regs.v992_1))
         temp_5[temp_6] = temp_8
-        ss_0 = ((slot_2.vel.Magnitude > 0.1)) and slot_2.vel.Unit
-        v1088_1 = ss_0
+        v1088_1 = (((slot_2.vel.Magnitude > 0.1)) and slot_2.vel.Unit)
         ss_0 = v1088_1
         if not v1088_1 then
           v1110_1 = env.Vector3.new
@@ -21161,8 +21030,7 @@ protos[249] = function(upvalues, argument_1)
         temp_5 = (regs.v2299_1(0, 0, regs.v2369_1))
         regs.v2384_1 = temp_4
         regs.v2389_1 = temp_5
-        temp_6 = ((regs.v2384_1 * regs.v2389_1))
-        slot_12 = temp_6
+        slot_12 = (((regs.v2384_1 * regs.v2389_1)))
         regs.v2415_1 = cell_get(upvalues[8])
         regs.v2420_1 = slot_10
         regs.v2425_1 = slot_12
@@ -21257,8 +21125,7 @@ protos[249] = function(upvalues, argument_1)
           ss_9 = regs.v3242_1
           ss_10 = 3
           ss_2 = ss_3(ss_4, ss_5, ss_7(ss_8, ss_9, ss_10))
-          ss_1 = ((ss_1 + ss_2))
-          ss_0 = ss_1
+          ss_0 = (((ss_1 + ss_2)))
           slot_18.vel = ss_0
           slot_18.age = 0
           regs.v3363_1 = cell_get(upvalues[17])
@@ -21335,8 +21202,7 @@ protos[249] = function(upvalues, argument_1)
           ss_9 = regs.v3890_1
           ss_10 = 1.5
           ss_2 = ss_3(ss_4, ss_5, ss_7(ss_8, ss_9, ss_10))
-          ss_1 = ((ss_1 + ss_2))
-          ss_0 = ss_1
+          ss_0 = (((ss_1 + ss_2)))
           slot_20.vel = ss_0
           slot_20.age = 0
           regs.v4011_1 = cell_get(upvalues[17])
@@ -21405,8 +21271,7 @@ protos[251] = function(upvalues)
     v212_1 = closure(253, {capture_1()})
     v207_1(v212_1)
   end
-  ss_0 = (cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent
-  if ss_0 then
+  if ((cell_get(upvalues[3])) and (cell_get(upvalues[3])).Parent) then
     v284_1 = cell_get(upvalues[3])
     v284_1:Destroy()
   end
@@ -21688,8 +21553,7 @@ protos[261] = function(upvalues, argument_1)
         ss_3 = slot_10
         ss_0, ss_1 = ss_2(ss_3)
         slot_12 = ss_1
-        ss_0 = ss_0 and ((((env["type"](slot_12)) == "function")))
-        if ss_0 then
+        if (ss_0 and ((((env["type"](slot_12)) == "function")))) then
           temp_5 = (cell_get(upvalues[1]))
           temp_6 = slot_9.key
           temp_7 = slot_12
@@ -22190,8 +22054,7 @@ protos[274] = function(upvalues, argument_1, argument_2)
   v137_1.Position = v262_1
   v283_1 = (slot_1 == false)
   ss_3 = v137_1
-  ss_5 = v283_1 and ((env.Color3.fromRGB(255, 90, 90)))
-  ss_5 = ss_5 or ((env.Color3.fromRGB(60, 220, 140)))
+  ss_5 = (v283_1 and ((env.Color3.fromRGB(255, 90, 90)))) or ((env.Color3.fromRGB(60, 220, 140)))
   ss_3.BackgroundColor3 = ss_5
   ss_3.BorderSizePixel = 0
   ss_3.ZIndex = 6
@@ -22291,10 +22154,7 @@ protos[277] = function(upvalues, argument_1, argument_2)
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
-  ss_0 = env.isfile and env.writefile
-  ss_0 = ss_0 and env.readfile
-  ss_0 = ss_0 and ((env.isfile(slot_0)))
-  v135_1 = ss_0
+  v135_1 = (((env.isfile and env.writefile) and env.readfile) and ((env.isfile(slot_0))))
   ss_0 = v135_1
   if v135_1 then
     v157_1 = env.isfile(slot_1)
@@ -22305,8 +22165,7 @@ protos[277] = function(upvalues, argument_1, argument_2)
     v189_1 = env.readfile
     ss_0, ss_1 = v184_1(v189_1, slot_0)
     slot_3 = ss_1
-    ss_0 = ss_0 and slot_3
-    if ss_0 then
+    if (ss_0 and slot_3) then
       v275_1 = env.pcall
       v280_1 = env.writefile
       v275_1(v280_1, slot_1, slot_3)
@@ -22316,17 +22175,13 @@ protos[277] = function(upvalues, argument_1, argument_2)
 end
 
 protos[278] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_1, ss_2, ss_3, v142_1, v450_1
-  local v599_1, v671_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_1, ss_2, ss_3, v142_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = (not slot_0) or ((((#slot_0) < 100)))
-  if ss_0 then
+  if ((not slot_0) or ((((#slot_0) < 100)))) then
     return false
   end
-  ss_0 = (slot_0:find("<!DOCTYPE", 1, true)) or ((slot_0:find("<html", 1, true)))
-  ss_0 = ss_0 or ((slot_0:find("404: Not Found", 1, true)))
-  if ss_0 then
+  if (((slot_0:find("<!DOCTYPE", 1, true)) or ((slot_0:find("<html", 1, true)))) or ((slot_0:find("404: Not Found", 1, true)))) then
     return false
   end
   v142_1 = slot_0
@@ -22337,31 +22192,8 @@ protos[278] = function(upvalues, argument_1)
   slot_3 = ss_2
   slot_2 = ss_1
   slot_1 = ss_0
-  ss_1 = ((slot_1 == 137)) and (((slot_2 == 80)))
-  ss_1 = ss_1 and (((slot_3 == 78)))
-  ss_1 = ss_1 and (((slot_4 == 71)))
-  v450_1 = ss_1
-  ss_1 = v450_1
-  if not v450_1 then
-    ss_1 = ((slot_1 == 255)) and (((slot_2 == 216)))
-    ss_1 = ss_1 and (((slot_3 == 255)))
-  end
-  ss_1 = ss_1 or (((slot_1 == 66)) and (((slot_2 == 77))))
-  v599_1 = ss_1
-  ss_1 = v599_1
-  if not v599_1 then
-    ss_1 = ((slot_1 == 71)) and (((slot_2 == 73)))
-    ss_1 = ss_1 and (((slot_3 == 70)))
-    ss_1 = ss_1 and (((slot_4 == 56)))
-  end
-  v671_1 = ss_1
-  ss_1 = v671_1
-  if not v671_1 then
-    ss_1 = ((slot_1 == 82)) and (((slot_2 == 73)))
-    ss_1 = ss_1 and (((slot_3 == 70)))
-    ss_1 = ss_1 and (((slot_4 == 70)))
-  end
-  return ss_1
+  ss_1 = (((((((((slot_1 == 137)) and (((slot_2 == 80)))) and (((slot_3 == 78)))) and (((slot_4 == 71))))) or ((((slot_1 == 255)) and (((slot_2 == 216)))) and (((slot_3 == 255))))) or (((slot_1 == 66)) and (((slot_2 == 77)))))) or (((((slot_1 == 71)) and (((slot_2 == 73)))) and (((slot_3 == 70)))) and (((slot_4 == 56))))
+  return (ss_1 or (((((slot_1 == 82)) and (((slot_2 == 73)))) and (((slot_3 == 70)))) and (((slot_4 == 70)))))
 end
 
 protos[279] = function(upvalues, argument_1)
@@ -22405,9 +22237,7 @@ protos[281] = function(upvalues, argument_1, argument_2)
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
-  ss_0 = env.listfiles and env.isfolder
-  ss_0 = ss_0 and env.delfile
-  ss_0 = ss_0 and env.writefile
+  ss_0 = ((env.listfiles and env.isfolder) and env.delfile) and env.writefile
   if (not ss_0) then
     return
   end
@@ -22424,8 +22254,7 @@ protos[281] = function(upvalues, argument_1, argument_2)
   ss_3 = v167_1
   ss_0, ss_1 = ss_2(ss_3, v172_1)
   slot_3 = ss_1
-  ss_0 = (not ss_0) or ((((env["type"](slot_3)) ~= "table")))
-  if ss_0 then
+  if ((not ss_0) or ((((env["type"](slot_3)) ~= "table")))) then
     return
   end
   ss_2 = env.ipairs
@@ -22436,10 +22265,8 @@ protos[281] = function(upvalues, argument_1, argument_2)
   for __loopKey_281_0, __loopValue_281_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_4 = __loopKey_281_0
     slot_5 = __loopValue_281_0
-    ss_0 = (slot_5:match("([^/\\]+)$")) or ("")
-    slot_6 = ss_0
-    ss_0 = ((((slot_6:gsub("_v%d+%.png$", "")):gsub("^aqua_", "")) == slot_0)) and ((slot_6:match("_v%d+%.png$")))
-    if ss_0 then
+    slot_6 = ((slot_5:match("([^/\\]+)$")) or (""))
+    if (((((slot_6:gsub("_v%d+%.png$", "")):gsub("^aqua_", "")) == slot_0)) and ((slot_6:match("_v%d+%.png$")))) then
       exit_323 = 2
       break
     end
@@ -22505,8 +22332,7 @@ protos[282] = function(upvalues, argument_1, argument_2, argument_3)
     ss_4 = v278_1
     ss_0, ss_1 = ss_2(ss_3, ss_4)
     slot_7 = ss_1
-    ss_0 = ss_0 and slot_7
-    if ss_0 then
+    if (ss_0 and slot_7) then
       slot_5 = slot_7
     end
   end
@@ -22548,8 +22374,7 @@ protos[282] = function(upvalues, argument_1, argument_2, argument_3)
         ss_4 = v711_1
         ss_0, ss_1 = ss_2(ss_3, ss_4)
         slot_13 = ss_1
-        ss_0 = ss_0 and slot_13
-        if ss_0 then
+        if (ss_0 and slot_13) then
           exit_474 = 2
           break
         end
@@ -22613,11 +22438,9 @@ protos[286] = function(upvalues)
     ss_5 = v49_1
     ss_6 = v54_1
     ss_7 = "Transparency"
-    ss_8 = v70_1 and (0.15)
-    ss_8 = ss_8 or (0.4)
+    ss_8 = (v70_1 and (0.15)) or (0.4)
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v173_1 = ss_1
+    v173_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v173_1.Play
     ss_2 = v173_1
     ss_1(ss_2)
@@ -22633,11 +22456,9 @@ protos[286] = function(upvalues)
     ss_5 = v217_1
     ss_6 = v222_1
     ss_7 = "BackgroundTransparency"
-    ss_8 = v238_1 and (0.05)
-    ss_8 = ss_8 or (0.15)
+    ss_8 = (v238_1 and (0.05)) or (0.15)
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v301_1 = ss_1
+    v301_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v301_1.Play
     ss_2 = v301_1
     ss_1(ss_2)
@@ -22673,11 +22494,9 @@ protos[288] = function(upvalues)
     ss_5 = v49_1
     ss_6 = v54_1
     ss_7 = "Transparency"
-    ss_8 = v70_1 and (0.15)
-    ss_8 = ss_8 or (0.4)
+    ss_8 = (v70_1 and (0.15)) or (0.4)
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v173_1 = ss_1
+    v173_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v173_1.Play
     ss_2 = v173_1
     ss_1(ss_2)
@@ -22693,11 +22512,9 @@ protos[288] = function(upvalues)
     ss_5 = v217_1
     ss_6 = v222_1
     ss_7 = "BackgroundTransparency"
-    ss_8 = v238_1 and (0.05)
-    ss_8 = ss_8 or (0.15)
+    ss_8 = (v238_1 and (0.05)) or (0.15)
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v301_1 = ss_1
+    v301_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v301_1.Play
     ss_2 = v301_1
     ss_1(ss_2)
@@ -22793,8 +22610,7 @@ protos[293] = function(upvalues, argument_1)
     for __loopKey_293_0, __loopValue_293_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
       slot_3 = __loopKey_293_0
       slot_4 = __loopValue_293_0
-      ss_0 = (slot_4:IsA("GuiObject")) or ((slot_4:IsA("UIStroke")))
-      if ss_0 then
+      if ((slot_4:IsA("GuiObject")) or ((slot_4:IsA("UIStroke")))) then
         v496_1 = cell_get(slot_2)
         v496_1(slot_4)
       end
@@ -22825,9 +22641,7 @@ protos[294] = function(upvalues, argument_1)
     ss_0 = (not v59_1)
   end
   if not ss_0 then
-    ss_0 = (slot_0:IsA("TextLabel")) or ((slot_0:IsA("TextButton")))
-    ss_0 = ss_0 or ((slot_0:IsA("TextBox")))
-    if ss_0 then
+    if (((slot_0:IsA("TextLabel")) or ((slot_0:IsA("TextButton")))) or ((slot_0:IsA("TextBox")))) then
       v235_1 = cell_get(upvalues[1])
       v240_1 = v235_1.Create
       v250_1 = cell_get(upvalues[2])
@@ -22837,8 +22651,7 @@ protos[294] = function(upvalues, argument_1)
       v278_1 = v240_1(v235_1, slot_0, v250_1, v255_1)
       v278_1:Play()
     else
-      ss_0 = (slot_0:IsA("ImageLabel")) or ((slot_0:IsA("ImageButton")))
-      if ss_0 then
+      if ((slot_0:IsA("ImageLabel")) or ((slot_0:IsA("ImageButton")))) then
         v372_1 = cell_get(upvalues[1])
         v377_1 = v372_1.Create
         v387_1 = cell_get(upvalues[2])
@@ -22848,8 +22661,7 @@ protos[294] = function(upvalues, argument_1)
         v415_1 = v377_1(v372_1, slot_0, v387_1, v392_1)
         v415_1:Play()
       else
-        ss_0 = (slot_0:IsA("Frame")) or ((slot_0:IsA("ScrollingFrame")))
-        if ss_0 then
+        if ((slot_0:IsA("Frame")) or ((slot_0:IsA("ScrollingFrame")))) then
           v509_1 = cell_get(upvalues[1])
           v514_1 = v509_1.Create
           v524_1 = cell_get(upvalues[2])
@@ -23076,11 +22888,7 @@ protos[298] = function(upvalues, argument_1)
       v253_1(v254_1, 1)
     end
     upvalues[3] = cell_set_or_create(upvalues[3], true)
-    ss_0 = (((slot_1:sub(1, 6)) == "skins_")) or ((((slot_1:sub(1, 6)) == "equip_")))
-    ss_0 = ss_0 or ((((slot_1:sub(1, 8)) == "restore_")))
-    ss_0 = ss_0 or ((((slot_1:sub(1, 5)) == "mesh_")))
-    ss_0 = ss_0 or ((((slot_1:sub(1, 11)) == "apply_skin_")))
-    ss_0 = ss_0 or ((((slot_1:sub(1, 7)) == "chunk_s")))
+    ss_0 = (((((((slot_1:sub(1, 6)) == "skins_")) or ((((slot_1:sub(1, 6)) == "equip_")))) or ((((slot_1:sub(1, 8)) == "restore_")))) or ((((slot_1:sub(1, 5)) == "mesh_")))) or ((((slot_1:sub(1, 11)) == "apply_skin_")))) or ((((slot_1:sub(1, 7)) == "chunk_s")))
     slot_4 = (env.os.clock())
     v621_1 = ss_0
     ss_0 = v621_1
@@ -23106,7 +22914,7 @@ protos[299] = function(upvalues)
 end
 
 protos[300] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, ss_1, ss_2, ss_3, temp_0, temp_2, v101_1, v11_1, v123_1, v124_1, v129_1, v167_1, v173_1, v210_1, v226_1, v238_1, v259_1, v264_1
+  local slot_0, slot_1, ss_1, ss_2, ss_3, temp_0, temp_2, v101_1, v11_1, v123_1, v124_1, v129_1, v167_1, v173_1, v210_1, v226_1, v238_1, v259_1, v264_1
   local v32_1, v33_1, v38_1, v43_1, v75_1, v80_1, v85_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -23134,17 +22942,12 @@ protos[300] = function(upvalues, argument_1)
   v238_1 = env.math.floor
   v259_1 = (((slot_1 * 100)) + 0.5)
   v264_1 = v238_1(v259_1)
-  ss_2 = v210_1
-  ss_1 = ss_2(v226_1(v264_1, (0), (100)))
-  ss_1 = ((ss_1 .. "%"))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((((v210_1(v226_1(v264_1, (0), (100)))) .. "%"))))
   temp_0.Text = temp_2
   temp_0 = (cell_get(upvalues[6]))
   ss_2 = (cell_get(upvalues[7]))
   ss_3 = slot_0 or ("startup_loading")
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.Text = temp_2
   ss_1 = (cell_get(upvalues[8]))
   ss_2 = slot_0 or ("startup_loading")
@@ -23296,8 +23099,7 @@ protos[305] = function(upvalues, argument_1)
     end
     slot_7 = ((slot_7 / 6))
   end
-  ss_0 = ((slot_4 > 0)) and (((slot_6 / slot_4)))
-  ss_0 = ss_0 or (0)
+  ss_0 = (((slot_4 > 0)) and (((slot_6 / slot_4)))) or (0)
   return slot_7, ss_0, slot_4
 end
 
@@ -23342,8 +23144,7 @@ protos[307] = function(upvalues, argument_1)
   v121_1 = env.math.floor
   v148_1 = (((slot_0.B * 255)) + 0.5)
   ss_1 = v2_1
-  ss_1 = set_list_values(ss_1, 3, v121_1(v148_1))
-  return ss_1
+  return (set_list_values(ss_1, 3, v121_1(v148_1)))
 end
 
 protos[308] = function(upvalues, argument_1)
@@ -23539,9 +23340,7 @@ protos[317] = function(upvalues)
   ss_3 = v8_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_1 = ss_1
-  ss_0 = ss_0 and slot_1
-  ss_0 = ss_0 and slot_1.X
-  ss_0 = ss_0 and slot_1.Y
+  ss_0 = ((ss_0 and slot_1) and slot_1.X) and slot_1.Y
   if ss_0 then
     v227_1 = env.pcall
     v232_1 = closure(319, {})
@@ -23549,8 +23348,7 @@ protos[317] = function(upvalues)
     ss_3 = v232_1
     ss_0, ss_1 = ss_2(ss_3)
     slot_3 = ss_1
-    ss_0 = ss_0 and slot_3
-    if ss_0 then
+    if (ss_0 and slot_3) then
       v374_1 = env.UDim2.new
       v391_1 = env.math.clamp
       v402_1 = slot_1.X
@@ -23642,10 +23440,7 @@ protos[321] = function(upvalues)
   ss_3 = v8_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_1 = ss_1
-  ss_0 = ss_0 and slot_1
-  ss_0 = ss_0 and slot_1.X
-  ss_0 = ss_0 and slot_1.Y
-  if ss_0 then
+  if (((ss_0 and slot_1) and slot_1.X) and slot_1.Y) then
     v237_1 = env.UDim2.new
     v253_1 = slot_1.X
     v269_1 = slot_1.Y
@@ -23921,8 +23716,7 @@ protos[323] = function(upvalues, argument_1, argument_2, argument_3)
   v1277_1 = env.Enum.ScaleType.Fit
   ss_3.ScaleType = v1277_1
   ss_3.ZIndex = 2
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_8 = ss_0
+  slot_8 = (ss_1(ss_2, ss_3))
   v1306_1 = cell_get(upvalues[1])
   v1316_1 = new_table(0)
   v1316_1.Parent = slot_8
@@ -23996,8 +23790,7 @@ protos[323] = function(upvalues, argument_1, argument_2, argument_3)
   ss_3.ImageColor3 = v1971_1
   v1994_1 = env.Enum.ScaleType.Fit
   ss_3.ScaleType = v1994_1
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_12 = ss_0
+  slot_12 = (ss_1(ss_2, ss_3))
   v2012_1 = cell_get(upvalues[1])
   v2022_1 = new_table(0)
   v2028_1 = cell_get(slot_4)
@@ -24306,8 +24099,7 @@ protos[324] = function(upvalues)
 end
 
 protos[325] = function(upvalues)
-  local slot_0, ss_0, ss_1, temp_0, temp_2
-  local v511_1
+  local slot_0, ss_0, temp_0, temp_2
   local v936_1, v952_1
   local vm_frame_random = math.random(0, 2147483646)
   cell_get(upvalues[1]).Visible = (cell_get(upvalues[2])).wmShowLogo
@@ -24318,30 +24110,16 @@ protos[325] = function(upvalues)
   temp_2 = (cell_get(upvalues[2])).wmShowTime
   temp_0.Visible = temp_2
   temp_0 = (cell_get(upvalues[7]))
-  ss_1 = (cell_get(upvalues[2])).wmShowUser or (cell_get(upvalues[2])).wmShowPing
-  ss_1 = ss_1 or (cell_get(upvalues[2])).wmShowFps
-  ss_1 = ss_1 or (cell_get(upvalues[2])).wmShowTime
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((((cell_get(upvalues[2])).wmShowUser or (cell_get(upvalues[2])).wmShowPing) or (cell_get(upvalues[2])).wmShowFps) or (cell_get(upvalues[2])).wmShowTime))
   temp_0.Visible = temp_2
   temp_0 = (cell_get(upvalues[8]))
-  v511_1 = (cell_get(upvalues[2])).wmShowUser
-  ss_1 = v511_1
-  if v511_1 then
-    ss_1 = (cell_get(upvalues[2])).wmShowPing or (cell_get(upvalues[2])).wmShowFps
-    ss_1 = ss_1 or (cell_get(upvalues[2])).wmShowTime
-  end
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((cell_get(upvalues[2])).wmShowUser and (((cell_get(upvalues[2])).wmShowPing or (cell_get(upvalues[2])).wmShowFps) or (cell_get(upvalues[2])).wmShowTime))
   temp_0.Visible = temp_2
   temp_0 = (cell_get(upvalues[9]))
-  ss_1 = (cell_get(upvalues[2])).wmShowPing and ((cell_get(upvalues[2])).wmShowFps or (cell_get(upvalues[2])).wmShowTime)
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((cell_get(upvalues[2])).wmShowPing and ((cell_get(upvalues[2])).wmShowFps or (cell_get(upvalues[2])).wmShowTime)))
   temp_0.Visible = temp_2
   temp_0 = (cell_get(upvalues[10]))
-  ss_1 = (cell_get(upvalues[2])).wmShowFps and (cell_get(upvalues[2])).wmShowTime
-  ss_0 = ss_1
+  ss_0 = ((cell_get(upvalues[2])).wmShowFps and (cell_get(upvalues[2])).wmShowTime)
   temp_0.Visible = ss_0
   cell_get(upvalues[11]).BackgroundTransparency = (cell_get(upvalues[2])).wmBgTransparency
   temp_0 = (cell_get(upvalues[12]))
@@ -24483,8 +24261,7 @@ protos[329] = function(upvalues)
     v130_1 = cell_get(upvalues[2])
     v135_1 = (slot_0 - v130_1)
     v150_1 = (((v120_1 / v135_1)) + 0.5)
-    ss_1 = v103_1(v119_1(v150_1))
-    ss_1 = ((ss_1 .. " FPS"))
+    ss_1 = (((v103_1(v119_1(v150_1))) .. " FPS"))
     temp_0.Text = ss_1
     upvalues[1] = cell_set_or_create(upvalues[1], 0)
     upvalues[2] = cell_set_or_create(upvalues[2], slot_0)
@@ -24515,8 +24292,7 @@ protos[331] = function(upvalues)
   v58_1 = env.tonumber
   v64_1 = slot_0
   v69_1 = v64_1.match
-  ss_2 = v58_1(v69_1(v64_1, ("%d+")))
-  ss_2 = ss_2 or (0)
+  ss_2 = (v58_1(v69_1(v64_1, ("%d+")))) or (0)
   slot_1 = (v56_1(ss_2))
   temp_0 = (cell_get(upvalues[2]))
   temp_0.Text = ((((env.tostring(slot_1)) .. " ms")))
@@ -24637,7 +24413,7 @@ protos[333] = function(upvalues, argument_1, argument_2)
 end
 
 protos[334] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, ss_0, temp_0, v17_1, v188_1, v203_1, v204_1, v242_1, v270_1, v285_1, v286_1, v309_1, v324_1, v325_1, v348_1
+  local slot_0, slot_1, slot_2, temp_0, v17_1, v188_1, v203_1, v204_1, v242_1, v270_1, v285_1, v286_1, v309_1, v324_1, v325_1, v348_1
   local v363_1, v364_1, v387_1, v402_1, v403_1, v426_1, v441_1, v442_1, v465_1, v480_1, v481_1, v504_1, v519_1, v520_1, v553_1, v564_1, v569_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = {argument_1}
@@ -24650,9 +24426,7 @@ protos[334] = function(upvalues, argument_1, argument_2)
   if not ((not v17_1)) then
     temp_0 = (cell_get(slot_0))
     temp_0.closed = (true)
-    ss_0 = slot_1 and (0.2)
-    ss_0 = ss_0 or (0.35)
-    slot_2 = ss_0
+    slot_2 = ((slot_1 and (0.2)) or (0.35))
     v188_1 = cell_get(upvalues[1])
     v203_1 = (cell_get(slot_0)).card
     v204_1 = new_table(0)
@@ -24758,8 +24532,7 @@ protos[336] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   end
   ss_0 = (cell_get(slot_3)) or (3)
   slot_3 = cell_set_or_create(slot_3, ss_0)
-  ss_0 = slot_4 or ("info")
-  slot_4 = ss_0
+  slot_4 = (slot_4 or ("info"))
   v118_1 = ((cell_get(upvalues[1])) + 1)
   upvalues[1] = cell_set_or_create(upvalues[1], v118_1)
   v128_1 = cell_get(upvalues[1])
@@ -26379,40 +26152,32 @@ protos[351] = function(upvalues, argument_1)
     if not slot_2 then slot_2 = {} end
     return slot_2
   end
-  ss_0 = slot_0 or ((new_table(0)))
-  slot_0 = ss_0
-  ss_0 = slot_0["type"] or ("info")
-  slot_1 = ss_0
+  slot_0 = (slot_0 or ((new_table(0))))
+  slot_1 = (slot_0["type"] or ("info"))
   ss_0 = slot_0.accent or (cell_get(upvalues[1])).colors.accent
   slot_2 = new_cell()
   slot_2 = cell_set_or_create(slot_2, ss_0)
-  ss_0 = slot_0.icon or (cell_get(upvalues[2])).Info
-  slot_3 = ss_0
+  slot_3 = (slot_0.icon or (cell_get(upvalues[2])).Info)
   if ((slot_1 == "confirm")) then
-    ss_0 = slot_0.icon or (cell_get(upvalues[2])).Question
-    slot_3 = ss_0
+    slot_3 = (slot_0.icon or (cell_get(upvalues[2])).Question)
   end
   if ((slot_1 == "warning")) then
     v362_1 = (cell_get(upvalues[3])).Warn
     slot_2 = cell_set_or_create(slot_2, v362_1)
-    ss_0 = slot_0.icon or (cell_get(upvalues[2])).Warning2
-    slot_3 = ss_0
+    slot_3 = (slot_0.icon or (cell_get(upvalues[2])).Warning2)
   end
   if ((slot_1 == "success")) then
     v455_1 = (cell_get(upvalues[3])).Success
     slot_2 = cell_set_or_create(slot_2, v455_1)
-    ss_0 = slot_0.icon or (cell_get(upvalues[2])).Check
-    slot_3 = ss_0
+    slot_3 = (slot_0.icon or (cell_get(upvalues[2])).Check)
   end
   if ((slot_1 == "danger")) then
     v548_1 = (cell_get(upvalues[3])).Err
     slot_2 = cell_set_or_create(slot_2, v548_1)
-    ss_0 = slot_0.icon or (cell_get(upvalues[2])).Warning2
-    slot_3 = ss_0
+    slot_3 = (slot_0.icon or (cell_get(upvalues[2])).Warning2)
   end
   if ((slot_1 == "prompt")) then
-    ss_0 = slot_0.icon or (cell_get(upvalues[2])).Edit
-    slot_3 = ss_0
+    slot_3 = (slot_0.icon or (cell_get(upvalues[2])).Edit)
   end
   cell_get(upvalues[4]).Image = slot_3
   cell_get(upvalues[4]).ImageColor3 = (cell_get(slot_2))
@@ -26464,8 +26229,7 @@ protos[351] = function(upvalues, argument_1)
   ss_11 = v1862_1
   ss_8 = pack_values(ss_9(ss_10, ss_11, (0.35)))
   ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, unpack_values(ss_8, 1, ss_8.n)))
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.Color = temp_2
   temp_0 = (cell_get(upvalues[21]))
   v1950_1 = env.ColorSequence.new
@@ -26486,8 +26250,7 @@ protos[351] = function(upvalues, argument_1)
   ss_7 = 1
   ss_8 = v2046_1
   ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.Color = temp_2
   temp_0 = (cell_get(upvalues[22]))
   v2124_1 = env.ColorSequence.new
@@ -26504,19 +26267,14 @@ protos[351] = function(upvalues, argument_1)
   ss_7 = 1
   ss_8 = v2176_1
   ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.Color = temp_2
   temp_0 = (cell_get(upvalues[8]))
-  ss_1 = slot_0.title or (((cell_get(upvalues[23]))("dialog_default")))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((slot_0.title or (((cell_get(upvalues[23]))("dialog_default")))))
   temp_0.Text = temp_2
   temp_0 = (cell_get(upvalues[9]))
   temp_1 = "Text"
-  ss_1 = slot_0.desc or ("")
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((slot_0.desc or ("")))
   temp_0.Text = temp_2
   v2456_1 = env.ipairs
   v2462_1 = cell_get(upvalues[24])
@@ -26554,8 +26312,7 @@ protos[351] = function(upvalues, argument_1)
   ss_4 = 380
   ss_5 = 0
   ss_6 = 0
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Size = temp_2
   cell_get(upvalues[5]).BackgroundTransparency = 1
   cell_get(upvalues[14]).Transparency = 1
@@ -26591,8 +26348,7 @@ protos[351] = function(upvalues, argument_1)
   ss_4 = 52
   ss_5 = 0
   ss_6 = 52
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Size = temp_2
   temp_0 = (cell_get(upvalues[13]))
   temp_1 = "Transparency"
@@ -26644,15 +26400,11 @@ protos[352] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
     return slot_9
   end
   slot_5 = ((slot_2 == "primary"))
-  ss_0 = slot_5 and ((cell_get(upvalues[1])))
-  ss_0 = ss_0 or (cell_get(upvalues[2])).colors.row
-  slot_6 = ss_0
-  ss_0 = slot_5 and (0.15)
-  ss_0 = ss_0 or (0.3)
+  slot_6 = ((slot_5 and ((cell_get(upvalues[1])))) or (cell_get(upvalues[2])).colors.row)
+  ss_0 = (slot_5 and (0.15)) or (0.3)
   slot_7 = new_cell()
   slot_7 = cell_set_or_create(slot_7, ss_0)
-  ss_0 = slot_5 and (cell_get(upvalues[2])).colors.text
-  ss_0 = ss_0 or (cell_get(upvalues[2])).colors.muted
+  ss_0 = (slot_5 and (cell_get(upvalues[2])).colors.text) or (cell_get(upvalues[2])).colors.muted
   v299_1 = cell_get(upvalues[3])
   v309_1 = new_table(0)
   v315_1 = cell_get(upvalues[4])
@@ -26694,8 +26446,7 @@ protos[352] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   ss_2 = "UIStroke"
   ss_3 = v599_1
   ss_4 = "Color"
-  ss_5 = slot_5 and ((cell_get(upvalues[1])))
-  ss_5 = ss_5 or (cell_get(upvalues[2])).colors.stroke
+  ss_5 = (slot_5 and ((cell_get(upvalues[1])))) or (cell_get(upvalues[2])).colors.stroke
   ss_3[ss_4] = ss_5
   ss_3.Transparency = 0.4
   ss_3.Thickness = 1
@@ -26707,8 +26458,7 @@ protos[352] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
     v819_1(v814_1, v824_1, "Text", slot_0)
   else
     temp_0 = (cell_get(slot_9))
-    ss_1 = slot_1 or ("")
-    ss_0 = ss_1
+    ss_0 = (slot_1 or (""))
     temp_0.Text = ss_0
   end
   v738_1 = (cell_get(slot_9)).MouseEnter
@@ -26752,9 +26502,7 @@ end
 protos[355] = function(upvalues, argument_1)
   local slot_0, slot_1, ss_0, ss_1, ss_2, ss_3, temp_0, temp_1, temp_2, v163_1, v183_1, v211_1
   local vm_frame_random = math.random(0, 2147483646)
-  slot_0 = argument_1
-  ss_0 = slot_0 or ((new_table(0)))
-  slot_0 = ss_0
+  slot_0 = (argument_1 or ((new_table(0))))
   temp_0 = slot_0
   temp_1 = "type"
   temp_2 = "info"
@@ -26788,9 +26536,7 @@ end
 protos[357] = function(upvalues, argument_1)
   local slot_0, slot_1, slot_2, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, temp_0, temp_1, temp_2, v183_1, v211_1, v247_1, v275_1
   local vm_frame_random = math.random(0, 2147483646)
-  slot_0 = argument_1
-  ss_0 = slot_0 or ((new_table(0)))
-  slot_0 = ss_0
+  slot_0 = (argument_1 or ((new_table(0))))
   temp_0 = slot_0
   temp_1 = "type"
   temp_2 = "confirm"
@@ -26844,9 +26590,7 @@ end
 protos[360] = function(upvalues, argument_1)
   local slot_0, slot_1, slot_2, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, temp_0, temp_1, temp_2, v183_1, v211_1, v247_1, v275_1
   local vm_frame_random = math.random(0, 2147483646)
-  slot_0 = argument_1
-  ss_0 = slot_0 or ((new_table(0)))
-  slot_0 = ss_0
+  slot_0 = (argument_1 or ((new_table(0))))
   temp_0 = slot_0
   temp_1 = "type"
   temp_2 = "warning"
@@ -26900,9 +26644,7 @@ end
 protos[363] = function(upvalues, argument_1)
   local slot_0, slot_1, ss_0, ss_1, ss_2, ss_3, temp_0, temp_1, temp_2, v163_1, v183_1, v211_1
   local vm_frame_random = math.random(0, 2147483646)
-  slot_0 = argument_1
-  ss_0 = slot_0 or ((new_table(0)))
-  slot_0 = ss_0
+  slot_0 = (argument_1 or ((new_table(0))))
   temp_0 = slot_0
   temp_1 = "type"
   temp_2 = "success"
@@ -26937,9 +26679,7 @@ protos[365] = function(upvalues, argument_1)
   local slot_0, slot_1, slot_2, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, temp_0, temp_1, temp_2
   local v403_1, v431_1, v467_1, v495_1, v521_1, v528_1, v533_1
   local vm_frame_random = math.random(0, 2147483646)
-  slot_0 = argument_1
-  ss_0 = slot_0 or ((new_table(0)))
-  slot_0 = ss_0
+  slot_0 = (argument_1 or ((new_table(0))))
   temp_0 = slot_0
   temp_1 = "type"
   temp_2 = "prompt"
@@ -26953,15 +26693,11 @@ protos[365] = function(upvalues, argument_1)
   temp_2 = true
   temp_0.Visible = temp_2
   temp_0 = (cell_get(upvalues[3]))
-  ss_1 = slot_0.default or ("")
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((slot_0.default or ("")))
   temp_0.Text = temp_2
   temp_0 = (cell_get(upvalues[3]))
   temp_1 = "PlaceholderText"
-  ss_1 = slot_0.placeholder or ("...")
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((slot_0.placeholder or ("...")))
   temp_0.PlaceholderText = temp_2
   v403_1 = slot_0.cancelText
   ss_1 = slot_2
@@ -27035,8 +26771,7 @@ protos[368] = function(upvalues, argument_1)
     if not slot_11 then slot_11 = {} end
     return slot_11
   end
-  ss_0 = slot_0 or ((new_table(0)))
-  slot_0 = ss_0
+  slot_0 = (slot_0 or ((new_table(0))))
   temp_0 = slot_0
   temp_1 = "type"
   temp_2 = "list"
@@ -27048,9 +26783,7 @@ protos[368] = function(upvalues, argument_1)
   slot_1 = ss_0
   v163_1 = env["type"]
   v178_1 = slot_0.items
-  ss_0 = (((v163_1(v178_1)) == "table")) and slot_0.items
-  ss_0 = ss_0 or ((new_table(0)))
-  slot_3 = ss_0
+  slot_3 = (((((v163_1(v178_1)) == "table")) and slot_0.items) or ((new_table(0))))
   v268_1 = slot_0.selected
   slot_4 = new_cell()
   slot_4 = cell_set_or_create(slot_4, v268_1)
@@ -27191,8 +26924,7 @@ protos[368] = function(upvalues, argument_1)
     ss_3 = v1510_1
     ss_4 = "Text"
     ss_6 = v1626_1
-    ss_7 = v1641_1 or (cell_get(slot_11)).value
-    ss_7 = ss_7 or ("")
+    ss_7 = (v1641_1 or (cell_get(slot_11)).value) or ("")
     ss_5 = ss_6(ss_7)
     ss_3[ss_4] = ss_5
     v1775_1 = (cell_get(upvalues[4])).colors.text
@@ -27205,8 +26937,7 @@ protos[368] = function(upvalues, argument_1)
     v1855_1 = env.Enum.TextTruncate.AtEnd
     ss_3.TextTruncate = v1855_1
     ss_3.ZIndex = 20005
-    ss_0 = ss_1(ss_2, ss_3)
-    slot_14 = ss_0
+    slot_14 = (ss_1(ss_2, ss_3))
     v1884_1 = cell_get(upvalues[2])
     v1894_1 = new_table(0)
     v1894_1.Parent = slot_12
@@ -27303,40 +27034,22 @@ protos[369] = function(upvalues)
     v219_1 = cell_get(upvalues[2])
     slot_2 = ((v218_1 == v219_1))
     temp_5 = slot_1.btn
-    ss_1 = slot_2 and (cell_get(upvalues[3])).colors.accent
-    ss_1 = ss_1 or (cell_get(upvalues[3])).colors.row
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((slot_2 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.row))
     temp_5.BackgroundColor3 = temp_7
     temp_5 = slot_1.btn
-    ss_1 = slot_2 and (0.22)
-    ss_1 = ss_1 or (0.45)
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((slot_2 and (0.22)) or (0.45)))
     temp_5.BackgroundTransparency = temp_7
     temp_5 = slot_1.stroke
-    ss_1 = slot_2 and (cell_get(upvalues[3])).colors.accent
-    ss_1 = ss_1 or (cell_get(upvalues[3])).colors.stroke
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((slot_2 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.stroke))
     temp_5.Color = temp_7
     temp_5 = slot_1.stroke
-    ss_1 = slot_2 and (0.15)
-    ss_1 = ss_1 or (0.6)
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((slot_2 and (0.15)) or (0.6)))
     temp_5.Transparency = temp_7
     temp_5 = slot_1.title
-    ss_1 = slot_2 and ((env.Color3.fromRGB(255, 255, 255)))
-    ss_1 = ss_1 or (cell_get(upvalues[3])).colors.text
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((slot_2 and ((env.Color3.fromRGB(255, 255, 255)))) or (cell_get(upvalues[3])).colors.text))
     temp_5.TextColor3 = temp_7
     temp_5 = slot_1.sub
-    ss_1 = slot_2 and ((env.Color3.fromRGB(255, 255, 255)))
-    ss_1 = ss_1 or (cell_get(upvalues[3])).colors.muted
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((slot_2 and ((env.Color3.fromRGB(255, 255, 255)))) or (cell_get(upvalues[3])).colors.muted))
     temp_5.TextColor3 = temp_7
   end
   return
@@ -27403,9 +27116,7 @@ protos[373] = function(upvalues, argument_1)
   temp_0.Text = temp_2
   temp_0 = (cell_get(upvalues[3]))
   temp_1 = "PlaceholderText"
-  ss_1 = (cell_get(slot_0)).confirmWord or ("DELETE")
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((cell_get(slot_0)).confirmWord or ("DELETE")))
   temp_0.PlaceholderText = temp_2
   v371_1 = (cell_get(slot_0)).okText
   ss_1 = slot_2
@@ -27453,8 +27164,7 @@ protos[374] = function(upvalues)
     v171_1 = (cell_get(upvalues[2])).confirmWord
     ss_1 = v156_1
     ss_2 = v171_1 or ("DELETE")
-    ss_1 = ((ss_1 .. ss_2))
-    ss_0 = ss_1
+    ss_0 = (((ss_1 .. ss_2)))
     temp_0.Text = ss_0
     temp_0 = (cell_get(upvalues[4]))
     temp_0.TextColor3 = (cell_get(upvalues[6])).Err
@@ -27978,8 +27688,7 @@ protos[382] = function(upvalues)
     ss_3[ss_4] = ss_5
     v314_1 = slot_1.nameKey
     ss_4 = "nameKey"
-    ss_5 = v314_1 or slot_1.name
-    ss_5 = ss_5 or ("?")
+    ss_5 = (v314_1 or slot_1.name) or ("?")
     ss_3[ss_4] = ss_5
     ss_1(ss_2, ss_3)
   end
@@ -28006,8 +27715,7 @@ protos[382] = function(upvalues)
     ss_3[ss_4] = ss_5
     v606_1 = slot_3.nameKey
     ss_4 = "nameKey"
-    ss_5 = v606_1 or slot_3.name
-    ss_5 = ss_5 or ("?")
+    ss_5 = (v606_1 or slot_3.name) or ("?")
     ss_3[ss_4] = ss_5
     ss_1(ss_2, ss_3)
   end
@@ -28034,8 +27742,7 @@ protos[382] = function(upvalues)
     ss_3[ss_4] = ss_5
     v898_1 = slot_5.nameKey
     ss_4 = "nameKey"
-    ss_5 = v898_1 or slot_5.name
-    ss_5 = ss_5 or ("?")
+    ss_5 = (v898_1 or slot_5.name) or ("?")
     ss_3[ss_4] = ss_5
     ss_1(ss_2, ss_3)
   end
@@ -28062,8 +27769,7 @@ protos[382] = function(upvalues)
     ss_3[ss_4] = ss_5
     v1190_1 = slot_7.nameKey
     ss_4 = "nameKey"
-    ss_5 = v1190_1 or slot_7.name
-    ss_5 = ss_5 or ("?")
+    ss_5 = (v1190_1 or slot_7.name) or ("?")
     ss_3[ss_4] = ss_5
     ss_1(ss_2, ss_3)
   end
@@ -28089,8 +27795,7 @@ protos[382] = function(upvalues)
     ss_3[ss_4] = ss_5
     v1482_1 = slot_9.nameKey
     ss_4 = "nameKey"
-    ss_5 = v1482_1 or slot_9.name
-    ss_5 = ss_5 or ("?")
+    ss_5 = (v1482_1 or slot_9.name) or ("?")
     ss_3[ss_4] = ss_5
     ss_1(ss_2, ss_3)
   end
@@ -28115,8 +27820,7 @@ protos[382] = function(upvalues)
     ss_3[ss_4] = ss_5
     v1729_1 = slot_11.nameKey
     ss_4 = "nameKey"
-    ss_5 = v1729_1 or slot_11.name
-    ss_5 = ss_5 or ("?")
+    ss_5 = (v1729_1 or slot_11.name) or ("?")
     ss_3[ss_4] = ss_5
     ss_1(ss_2, ss_3)
   end
@@ -28596,8 +28300,7 @@ protos[393] = function(upvalues)
         temp_6 = slot_2
         ss_2 = slot_0
         ss_3 = slot_3
-        ss_0 = ss_2(ss_3)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3))
         temp_5[temp_6] = temp_7
       else
         temp_5 = (cell_get(slot_1)).global
@@ -28631,8 +28334,7 @@ protos[393] = function(upvalues)
           temp_11 = slot_6
           ss_2 = slot_0
           ss_3 = slot_7
-          ss_0 = ss_2(ss_3)
-          temp_12 = ss_0
+          temp_12 = (ss_2(ss_3))
           temp_10[temp_11] = temp_12
         else
           temp_10 = (cell_get(slot_1)).buttons[slot_4]
@@ -28665,8 +28367,7 @@ protos[394] = function(upvalues, argument_1)
     v18_1.B = v68_1
     ss_1 = v18_1
   end
-  ss_1 = ss_1 or (nil)
-  return ss_1
+  return (ss_1 or (nil))
 end
 
 protos[395] = function(upvalues)
@@ -28722,8 +28423,7 @@ protos[396] = function(upvalues)
             temp_6 = slot_3
             ss_2 = slot_2
             ss_3 = slot_4
-            ss_0 = ss_2(ss_3)
-            temp_7 = ss_0
+            temp_7 = (ss_2(ss_3))
             temp_5[temp_6] = temp_7
           else
             if (((cell_get(upvalues[3])).global[slot_3] ~= nil)) then
@@ -28770,8 +28470,7 @@ protos[396] = function(upvalues)
               temp_11 = slot_7
               ss_2 = slot_2
               ss_3 = slot_8
-              ss_0 = ss_2(ss_3)
-              temp_12 = ss_0
+              temp_12 = (ss_2(ss_3))
               temp_10[temp_11] = temp_12
             else
               if (((cell_get(upvalues[3])).buttons[slot_5][slot_7] ~= nil)) then
@@ -28802,13 +28501,10 @@ protos[397] = decodeCapturedJsonFile397
 end
 
 protos[398] = function(upvalues, argument_1)
-  local slot_0, ss_0, v186_1, v197_1, v208_1, v219_1
+  local slot_0, v186_1, v197_1, v208_1, v219_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = (((env["type"](slot_0)) == "table")) and slot_0.R
-  ss_0 = ss_0 and slot_0.G
-  ss_0 = ss_0 and slot_0.B
-  if ss_0 then
+  if ((((((env["type"](slot_0)) == "table")) and slot_0.R) and slot_0.G) and slot_0.B) then
     v186_1 = env.Color3.new
     v197_1 = slot_0.R
     v208_1 = slot_0.G
@@ -28836,7 +28532,7 @@ protos[399] = function(upvalues, argument_1)
 end
 
 protos[400] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, temp_0, temp_2, v116_1, v138_1, v161_1, v184_1, v207_1, v230_1, v273_1, v284_1
+  local slot_0, slot_1, slot_2, slot_3, ss_1, ss_2, ss_3, ss_4, ss_5, temp_0, temp_2, v116_1, v138_1, v161_1, v184_1, v207_1, v230_1, v273_1, v284_1
   local v32_1, v374_1, v385_1, v396_1, v43_1, v686_1, v697_1
   local v850_1, v861_1, v872_1
   local vm_frame_random = math.random(0, 2147483646)
@@ -28844,8 +28540,7 @@ protos[400] = function(upvalues, argument_1)
   slot_1 = (cell_get(upvalues[1])).global
   v32_1 = (cell_get(upvalues[1])).buttons
   v43_1 = slot_0.id
-  ss_0 = v32_1[v43_1] or ((cell_get(upvalues[2])))
-  slot_2 = ss_0
+  slot_2 = (v32_1[v43_1] or ((cell_get(upvalues[2]))))
   v116_1 = new_table(0)
   v138_1 = slot_0.base.size
   v116_1.size = v138_1
@@ -28862,9 +28557,7 @@ protos[400] = function(upvalues, argument_1)
   v284_1 = slot_1.sizeMultiplier
   ss_1 = v273_1
   ss_2 = v284_1 or (1)
-  ss_1 = ((ss_1 * ss_2))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 * ss_2))))
   slot_3.size = temp_2
   temp_0 = slot_3
   v374_1 = env.math.clamp
@@ -28876,8 +28569,7 @@ protos[400] = function(upvalues, argument_1)
   ss_3 = ((ss_3 + ss_4))
   ss_4 = 0
   ss_5 = 0.95
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.backgroundTransparency = temp_2
   if slot_1.colorOverride then
     temp_0 = slot_3
@@ -28898,9 +28590,7 @@ protos[400] = function(upvalues, argument_1)
   v697_1 = slot_2.sizeMultiplier
   ss_1 = v686_1
   ss_2 = v697_1 or (1)
-  ss_1 = ((ss_1 * ss_2))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 * ss_2))))
   slot_3.size = temp_2
   temp_0 = slot_3
   v850_1 = env.math.clamp
@@ -28912,8 +28602,7 @@ protos[400] = function(upvalues, argument_1)
   ss_3 = ((ss_3 + ss_4))
   ss_4 = 0
   ss_5 = 0.95
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.backgroundTransparency = temp_2
   if slot_2.colorOverride then
     temp_0 = slot_3
@@ -28935,9 +28624,9 @@ end
 
 protos[401] = function(upvalues, argument_1)
   local v1000_1, v1001_1, v1006_1, v1023_1, v1034_1, v1040_1, v1061_1, v1078_1, v1080_1, v1284_1, v1306_1, v1322_1, v1350_1, v1355_1, v1370_1, v1388_1, v1393_1
-  local v1405_1, v1426_1, v1431_1, v1441_1, v1442_1, v1458_1, v1468_1, v1470_1, v1485_1, v1496_1, v1501_1, v1506_1, v1516_1, v1518_1, v1528_1, v1534_1, v1539_1, v1545_1, v1555_1, v1557_1
-  local v1562_1, v1578_1, v1588_1, v1594_1, v1614_1, v1619_1, v1629_1, v1630_1, v1635_1, v1654_1, v1675_1, v1690_1, v1695_1, v1700_1, v227_1, v269_1, v28_1, v316_1, v343_1, v369_1
-  local v379_1, v401_1, v412_1, v413_1, v430_1, v435_1, v456_1, v478_1, v479_1, v484_1, v512_1, v533_1, v550_1, v552_1, v604_1, v621_1, v670_1, v675_1
+  local v1405_1, v1426_1, v1441_1, v1496_1, v1501_1, v1516_1, v1534_1, v1539_1, v1555_1, v1557_1
+  local v1562_1, v1629_1, v1630_1, v1690_1, v1695_1, v1700_1, v227_1, v269_1, v28_1, v316_1, v343_1
+  local v401_1, v412_1, v413_1, v430_1, v435_1, v456_1, v478_1, v479_1, v484_1, v512_1, v533_1, v550_1, v552_1, v604_1, v621_1, v670_1, v675_1
   local v690_1, v6_1, v708_1, v713_1, v741_1, v747_1, v777_1, v803_1, v820_1, v825_1, v952_1, v957_1, v978_1
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, ss_0, temp_0, temp_1, temp_2
   local vm_frame_random = math.random(0, 2147483646)
@@ -28998,56 +28687,29 @@ protos[401] = function(upvalues, argument_1)
         v747_1 = v675_1(v670_1, v690_1, v708_1, v713_1)
         v747_1:Play()
       end
-      v369_1 = slot_0
-      v379_1 = v369_1.stroke
-      ss_0 = v379_1
-      if v379_1 then
-        v1458_1 = slot_1
-        v1468_1 = v1458_1.strokeThickness
-        v1470_1 = (v1468_1 ~= nil)
-        ss_0 = v1470_1
-      end
-      v1485_1 = ss_0
-      if v1485_1 then
+      if (slot_0.stroke and (((slot_1.strokeThickness ~= nil)))) then
         v1496_1 = cell_get(upvalues[2])
         v1501_1 = v1496_1.Create
-        v1506_1 = slot_0
-        v1516_1 = v1506_1.stroke
-        v1518_1 = env.TweenInfo
-        v1528_1 = v1518_1.new
-        v1534_1 = v1528_1(0.2)
+        v1516_1 = slot_0.stroke
+        v1534_1 = env.TweenInfo.new(0.2)
         v1539_1 = new_table(0)
-        v1545_1 = slot_1
-        v1555_1 = v1545_1.strokeThickness
+        v1555_1 = slot_1.strokeThickness
         v1539_1.Thickness = v1555_1
         v1557_1 = v1501_1(v1496_1, v1516_1, v1534_1, v1539_1)
         v1562_1 = v1557_1.Play
         v1562_1(v1557_1)
       end
       v1426_1 = cell_get(upvalues[3])
-      v1431_1 = slot_0
-      v1441_1 = v1431_1.id
-      v1442_1 = v1426_1(v1441_1)
-      ss_0 = v1442_1
-      if not v1442_1 then
-        v1578_1 = slot_0
-        v1588_1 = v1578_1.blockTouch
-        v1594_1 = (v1588_1 == true)
-        ss_0 = v1594_1
-      end
+      v1441_1 = slot_0.id
+      ss_0 = (v1426_1(v1441_1)) or (((slot_0.blockTouch == true)))
       slot_9 = nil
-      v1614_1 = ss_0
-      slot_9 = v1614_1
-      v1619_1 = slot_2
-      v1629_1 = v1619_1.Active
+      slot_9 = ss_0
+      v1629_1 = slot_2.Active
       v1630_1 = slot_9
-      v1635_1 = (v1629_1 ~= v1630_1)
-      if v1635_1 then
-        v1654_1 = slot_2
-        temp_0 = v1654_1
+      if ((v1629_1 ~= v1630_1)) then
+        temp_0 = slot_2
         temp_1 = "Active"
-        v1675_1 = slot_9
-        temp_2 = v1675_1
+        temp_2 = slot_9
         v1690_1 = temp_0
         v1695_1 = temp_1
         v1700_1 = temp_2
@@ -29060,8 +28722,7 @@ protos[401] = function(upvalues, argument_1)
       slot_5 = v621_1
       slot_4 = nil
       slot_4 = v604_1
-      ss_0 = (not slot_4) or ((not slot_5))
-      ss_0 = ss_0 or (((slot_5 == 0)))
+      ss_0 = ((not slot_4) or ((not slot_5))) or (((slot_5 == 0)))
       if not ss_0 then
         v777_1 = (slot_4 / slot_5)
         slot_6 = nil
@@ -29094,8 +28755,7 @@ protos[401] = function(upvalues, argument_1)
         v1080_1:Play()
         ss_0 = slot_0.corner and (((slot_1.cornerRadius ~= nil)))
         if ss_0 then
-          ss_0 = slot_0.cornerScale and ((env.UDim.new(1, 0)))
-          v1284_1 = ss_0
+          v1284_1 = (slot_0.cornerScale and ((env.UDim.new(1, 0))))
           ss_0 = v1284_1
           if not v1284_1 then
             v1306_1 = env.UDim.new
@@ -29111,56 +28771,29 @@ protos[401] = function(upvalues, argument_1)
           v1405_1 = v1355_1(v1350_1, v1370_1, v1388_1, v1393_1)
           v1405_1:Play()
         end
-        v369_1 = slot_0
-        v379_1 = v369_1.stroke
-        ss_0 = v379_1
-        if v379_1 then
-          v1458_1 = slot_1
-          v1468_1 = v1458_1.strokeThickness
-          v1470_1 = (v1468_1 ~= nil)
-          ss_0 = v1470_1
-        end
-        v1485_1 = ss_0
-        if v1485_1 then
+        if (slot_0.stroke and (((slot_1.strokeThickness ~= nil)))) then
           v1496_1 = cell_get(upvalues[2])
           v1501_1 = v1496_1.Create
-          v1506_1 = slot_0
-          v1516_1 = v1506_1.stroke
-          v1518_1 = env.TweenInfo
-          v1528_1 = v1518_1.new
-          v1534_1 = v1528_1(0.2)
+          v1516_1 = slot_0.stroke
+          v1534_1 = env.TweenInfo.new(0.2)
           v1539_1 = new_table(0)
-          v1545_1 = slot_1
-          v1555_1 = v1545_1.strokeThickness
+          v1555_1 = slot_1.strokeThickness
           v1539_1.Thickness = v1555_1
           v1557_1 = v1501_1(v1496_1, v1516_1, v1534_1, v1539_1)
           v1562_1 = v1557_1.Play
           v1562_1(v1557_1)
         end
         v1426_1 = cell_get(upvalues[3])
-        v1431_1 = slot_0
-        v1441_1 = v1431_1.id
-        v1442_1 = v1426_1(v1441_1)
-        ss_0 = v1442_1
-        if not v1442_1 then
-          v1578_1 = slot_0
-          v1588_1 = v1578_1.blockTouch
-          v1594_1 = (v1588_1 == true)
-          ss_0 = v1594_1
-        end
+        v1441_1 = slot_0.id
+        ss_0 = (v1426_1(v1441_1)) or (((slot_0.blockTouch == true)))
         slot_9 = nil
-        v1614_1 = ss_0
-        slot_9 = v1614_1
-        v1619_1 = slot_2
-        v1629_1 = v1619_1.Active
+        slot_9 = ss_0
+        v1629_1 = slot_2.Active
         v1630_1 = slot_9
-        v1635_1 = (v1629_1 ~= v1630_1)
-        if v1635_1 then
-          v1654_1 = slot_2
-          temp_0 = v1654_1
+        if ((v1629_1 ~= v1630_1)) then
+          temp_0 = slot_2
           temp_1 = "Active"
-          v1675_1 = slot_9
-          temp_2 = v1675_1
+          temp_2 = slot_9
           v1690_1 = temp_0
           v1695_1 = temp_1
           v1700_1 = temp_2
@@ -29202,8 +28835,7 @@ protos[403] = function(upvalues, argument_1, argument_2, argument_3)
     if not slot_3 then slot_3 = {} end
     return slot_3
   end
-  ss_0 = slot_2 or ((new_table(0)))
-  slot_2 = ss_0
+  slot_2 = (slot_2 or ((new_table(0))))
   v68_1 = new_table(0)
   v68_1.btn = slot_0
   v68_1.id = slot_1
@@ -29640,8 +29272,7 @@ protos[407] = function(upvalues, argument_1, argument_2, argument_3)
     end
     slot_4 = temp_3
     slot_5 = temp_4
-    ss_0 = (slot_3:find(slot_5, 1, true)) or ((slot_0.Name:find(slot_5, 1, true)))
-    if ss_0 then
+    if ((slot_3:find(slot_5, 1, true)) or ((slot_0.Name:find(slot_5, 1, true)))) then
       exit_181 = 2
       break
     end
@@ -29918,9 +29549,7 @@ protos[419] = function(upvalues, argument_1)
       end
       if ss_0 then
         slot_5 = slot_4.Role
-        ss_0 = ((slot_5 == "Zombie")) or ((((env.string.lower(slot_5)) == "zombie")))
-        ss_0 = ss_0 or (((slot_5 == "Зомби")))
-        if ss_0 then
+        if ((((slot_5 == "Zombie")) or ((((env.string.lower(slot_5)) == "zombie")))) or (((slot_5 == "Зомби")))) then
           exit_331 = 2
           break
         end
@@ -29960,30 +29589,25 @@ protos[419] = function(upvalues, argument_1)
   else
     v761_1 = cell_get(upvalues[8])
     temp_0 = (cell_get(upvalues[9]))
-    temp_1 = v761_1
-    slot_6 = temp_1
+    slot_6 = v761_1
     slot_7 = temp_0
   end
-  ss_0 = (not slot_2) and (((slot_6 > 2)))
-  if ss_0 then
+  if ((not slot_2) and (((slot_6 > 2)))) then
     slot_2 = true
   end
   if slot_2 then
     upvalues[3] = cell_set_or_create(upvalues[3], true)
   end
   if (cell_get(upvalues[3])) then
-    ss_0 = ((slot_6 <= 2)) and (((slot_7 <= 1)))
-    slot_10 = ss_0
-    ss_0 = ((slot_6 == 0)) and (((slot_7 == 0)))
-    slot_11 = ss_0
+    slot_10 = (((slot_6 <= 2)) and (((slot_7 <= 1))))
+    slot_11 = (((slot_6 == 0)) and (((slot_7 == 0))))
     ss_0 = slot_10 or slot_11
     if ss_0 then
       v1354_1 = cell_get(upvalues[10])
       if (not v1354_1) then
         upvalues[10] = cell_set_or_create(upvalues[10], slot_1)
       end
-      ss_0 = slot_11 and (5)
-      ss_0 = ss_0 or (6)
+      ss_0 = (slot_11 and (5)) or (6)
       v1467_1 = cell_get(upvalues[10])
       if ((((slot_1 - v1467_1)) >= ss_0)) then
         upvalues[3] = cell_set_or_create(upvalues[3], false)
@@ -30004,12 +29628,11 @@ protos[419] = function(upvalues, argument_1)
 end
 
 protos[420] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, ss_0, ss_1, v157_1
+  local slot_0, slot_1, slot_2, ss_0, v157_1
   local v88_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = slot_0 and slot_0.Character
-  slot_1 = ss_0
+  slot_1 = (slot_0 and slot_0.Character)
   v88_1 = not slot_1
   ss_0 = v88_1
   if not v88_1 then
@@ -30020,13 +29643,10 @@ protos[420] = function(upvalues, argument_1)
     return false
   end
   slot_2 = (slot_1:FindFirstChildOfClass("Humanoid"))
-  ss_0 = (not slot_2) or (((slot_2.Health <= 0)))
-  if ss_0 then
+  if ((not slot_2) or (((slot_2.Health <= 0)))) then
     return false
   end
-  ss_1 = ((cell_get(upvalues[1]))(slot_0)) or (((cell_get(upvalues[2]))(slot_0)))
-  ss_1 = ss_1 or (((cell_get(upvalues[3]))(slot_0)))
-  return ss_1
+  return ((((cell_get(upvalues[1]))(slot_0)) or (((cell_get(upvalues[2]))(slot_0)))) or (((cell_get(upvalues[3]))(slot_0))))
 end
 
 protos[421] = function(upvalues, argument_1)
@@ -30059,11 +29679,9 @@ protos[423] = function(upvalues, argument_1, argument_2)
   local slot_1, slot_2, slot_3, slot_4, slot_5, slot_8, slot_11, slot_12, ss_0, ss_1, ss_2, ss_3, temp_0, temp_1, temp_2, temp_5, temp_6, temp_7, temp_10, temp_11, temp_12
   local v1148_1
   local v74_1
-  local v983_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_1 = argument_2
-  ss_0 = argument_1 or ((new_table(0)))
-  slot_2 = ss_0
+  slot_2 = (argument_1 or ((new_table(0))))
   v74_1 = env["type"]
   if not ((((v74_1(slot_1)) ~= "table"))) then
     ss_2 = env.pairs
@@ -30115,13 +29733,7 @@ protos[423] = function(upvalues, argument_1, argument_2)
     for __loopKey_423_0, __loopValue_423_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
       slot_11 = __loopKey_423_0
       slot_12 = __loopValue_423_0
-      v983_1 = ((env["type"](slot_12)) == "table")
-      ss_0 = v983_1
-      if v983_1 then
-        ss_0 = ((slot_12.Role ~= nil)) or (((slot_12.Killed ~= nil)))
-        ss_0 = ss_0 or (((slot_12.Dead ~= nil)))
-      end
-      if ss_0 then
+      if ((((env["type"](slot_12)) == "table")) and ((((slot_12.Role ~= nil)) or (((slot_12.Killed ~= nil)))) or (((slot_12.Dead ~= nil))))) then
         v1148_1 = (cell_get(upvalues[1])):FindFirstChild(slot_11)
         if (not v1148_1) then
           temp_5 = slot_2
@@ -30140,9 +29752,7 @@ protos[424] = function(upvalues, argument_1, argument_2)
   local v402_1, v440_1, v460_1, v94_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  slot_1 = argument_2
-  ss_0 = slot_1 or ((new_table(0)))
-  slot_1 = ss_0
+  slot_1 = (argument_2 or ((new_table(0))))
   if ((cell_get(upvalues[1]))(slot_1)) then
     return "Hero"
   end
@@ -30182,7 +29792,7 @@ protos[424] = function(upvalues, argument_1, argument_2)
 end
 
 protos[425] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, ss_0, v102_1, v27_1
+  local slot_0, slot_1, slot_2, v102_1, v27_1
   local v82_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -30209,10 +29819,7 @@ protos[425] = function(upvalues, argument_1, argument_2)
   if ((cell_get(upvalues[6]))(slot_0)) then
     return "Zombie"
   end
-  ss_0 = ((slot_2 == "Sheriff")) or (((slot_2 == "Hero")))
-  ss_0 = ss_0 or (((slot_2 == "Innocent")))
-  ss_0 = ss_0 or (((slot_2 == "Murderer")))
-  if ss_0 then
+  if (((((slot_2 == "Sheriff")) or (((slot_2 == "Hero")))) or (((slot_2 == "Innocent")))) or (((slot_2 == "Murderer")))) then
     return slot_2
   end
   return "Innocent"
@@ -30221,12 +29828,10 @@ end
 protos[426] = function(upvalues, argument_1)
   local exit_384, exit_939, slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, ss_0, ss_1, ss_2, ss_4, ss_5, temp_0, temp_1, temp_2, v1031_1, v1051_1
   local v116_1, v1405_1, v172_1, v173_1, v178_1, v265_1
-  local v271_1, v276_1, v331_1, v337_1, v342_1, v476_1, v496_1, v611_1, v671_1, v681_1, v692_1, v698_1
+  local v271_1, v276_1, v331_1, v337_1, v342_1, v476_1, v496_1, v611_1, v692_1, v698_1
   local v721_1, v726_1, v731_1, v745_1, v750_1, v755_1, v775_1, v803_1, v823_1, v879_1, v896_1
   local vm_frame_random = math.random(0, 2147483646)
-  slot_0 = argument_1
-  ss_0 = slot_0 or ((new_table(0)))
-  slot_0 = ss_0
+  slot_0 = (argument_1 or ((new_table(0))))
   slot_1 = (env.os.clock())
   slot_2 = (cell_get(upvalues[1]))[slot_0]
   v116_1 = slot_2
@@ -30301,10 +29906,8 @@ protos[426] = function(upvalues, argument_1)
         return (cell_get(upvalues[6]))
       end
       upvalues[6] = cell_set_or_create(upvalues[6], nil)
-      v671_1 = cell_get(upvalues[1])
-      temp_0 = v671_1
-      v681_1 = slot_0
-      temp_1 = v681_1
+      temp_0 = (cell_get(upvalues[1]))
+      temp_1 = slot_0
       v692_1 = new_table(0)
       v698_1 = slot_1
       v692_1.at = v698_1
@@ -30316,10 +29919,8 @@ protos[426] = function(upvalues, argument_1)
       v721_1[v726_1] = v731_1
       return nil
     end
-    v671_1 = cell_get(upvalues[1])
-    temp_0 = v671_1
-    v681_1 = slot_0
-    temp_1 = v681_1
+    temp_0 = (cell_get(upvalues[1]))
+    temp_1 = slot_0
     v692_1 = new_table(0)
     v698_1 = slot_1
     v692_1.at = v698_1
@@ -30351,17 +29952,14 @@ protos[426] = function(upvalues, argument_1)
     v1051_1 = slot_11.Name
     slot_12 = (v1031_1(slot_0, v1051_1))
     slot_13 = ((cell_get(upvalues[7]))(slot_11))
-    ss_0 = slot_13 and (((slot_12 == "Murderer")))
-    if ss_0 then
+    if (slot_13 and (((slot_12 == "Murderer")))) then
       exit_939 = 2
       break
     end
-    ss_0 = slot_13 and ((not slot_7))
-    if ss_0 then
+    if (slot_13 and ((not slot_7))) then
       slot_7 = slot_11.Name
     end
-    ss_0 = ((slot_12 == "Murderer")) and ((not slot_8))
-    if ss_0 then
+    if (((slot_12 == "Murderer")) and ((not slot_8))) then
       slot_8 = slot_11.Name
     end
   end
@@ -30369,9 +29967,7 @@ protos[426] = function(upvalues, argument_1)
   elseif exit_939 == 2 then
     slot_9 = slot_11.Name
   end
-  ss_0 = slot_9 or slot_7
-  ss_0 = ss_0 or slot_8
-  slot_9 = ss_0
+  slot_9 = ((slot_9 or slot_7) or slot_8)
   if slot_9 then
     upvalues[6] = cell_set_or_create(upvalues[6], slot_9)
   end
@@ -30401,12 +29997,10 @@ protos[427] = function(upvalues, argument_1)
   regs.v32_1 = (cell_get(upvalues[1])):FindFirstChild("PlayerGui")
   slots[2] = nil
   slots[2] = regs.v32_1
-  ss_0 = slots[2] and ((slots[2]:FindFirstChild("TouchGui")) or ((slots[2]:FindFirstChild("TouchControlsGui"))))
-  if ss_0 then
+  if (slots[2] and ((slots[2]:FindFirstChild("TouchGui")) or ((slots[2]:FindFirstChild("TouchControlsGui"))))) then
     slots[1] = true
   end
-  ss_0 = slots[1] and (1)
-  ss_0 = ss_0 or (1.25)
+  ss_0 = (slots[1] and (1)) or (1.25)
   slots[3] = new_cell()
   slots[3] = cell_set_or_create(slots[3], ss_0)
   regs.v272_1 = ((cell_get(upvalues[2])) .. "/ButtonPositions.json")
@@ -30840,8 +30434,7 @@ protos[427] = function(upvalues, argument_1)
       slots[46] = ss_1
       slots[45] = nil
       slots[45] = ss_0
-      ss_0 = slots[45] and slots[46]
-      if ss_0 then
+      if (slots[45] and slots[46]) then
         regs.v4547_1 = slots[46].OnClientEvent
         slots[40] = cell_set_or_create(slots[40], regs.v4547_1)
       end
@@ -31053,12 +30646,10 @@ protos[427] = function(upvalues, argument_1)
   slots[103] = cell_set_or_create(slots[103], regs.v5782_1)
   regs.v5793_1 = env["type"]
   regs.v5798_1 = env.checkcaller
-  ss_0 = (((regs.v5793_1(regs.v5798_1)) == "function")) and env.checkcaller
-  ss_0 = ss_0 or (nil)
+  ss_0 = ((((regs.v5793_1(regs.v5798_1)) == "function")) and env.checkcaller) or (nil)
   slots[104] = new_cell()
   slots[104] = cell_set_or_create(slots[104], ss_0)
-  ss_0 = env.hookmetamethod and env.getnamecallmethod
-  if ss_0 then
+  if (env.hookmetamethod and env.getnamecallmethod) then
     v6036_1 = new_table(0)
     v6036_1.Shoot = true
     v6036_1.CreateBeam = true
@@ -31209,9 +30800,7 @@ protos[427] = function(upvalues, argument_1)
   temp_0 = (cell_get(upvalues[4]))
   temp_1 = "_AutoShotAfterGet"
   regs.v6832_1 = closure(761, {upvalues[6], upvalues[1], slot_cell_ref(slots, 26), slot_cell_ref(slots, 24), slot_cell_ref(slots, 23), slot_cell_ref(slots, 59), slot_cell_ref(slots, 60), slot_cell_ref(slots, 11), slot_cell_ref(slots, 9), slot_cell_ref(slots, 89), slot_cell_ref(slots, 10), slot_cell_ref(slots, 8), slot_cell_ref(slots, 88), slot_cell_ref(slots, 84), upvalues[12]})
-  ss_2 = regs.v6832_1
-  ss_0 = ss_2()
-  temp_2 = ss_0
+  temp_2 = (regs.v6832_1())
   temp_0._AutoShotAfterGet = temp_2
   v6879_1 = (cell_get(upvalues[12])).Heartbeat
   regs.v6880_1 = v6879_1.Connect
@@ -31409,8 +30998,7 @@ protos[428] = function(upvalues)
       for __loopKey_428_0, __loopValue_428_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
         slot_2 = __loopKey_428_0
         slot_3 = __loopValue_428_0
-        ss_0 = (cell_get(upvalues[3]))[slot_2] and slot_3.X
-        ss_0 = ss_0 and slot_3.Y
+        ss_0 = ((cell_get(upvalues[3]))[slot_2] and slot_3.X) and slot_3.Y
         if ss_0 then
           temp_5 = (cell_get(upvalues[3]))
           v466_1 = env.UDim2.new
@@ -31528,8 +31116,8 @@ protos[432] = function(upvalues, argument_1)
 end
 
 protos[433] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, ss_0, v160_1, v166_1, v176_1, v397_1, v402_1, v413_1, v423_1, v429_1, v449_1
-  local v459_1, v469_1, v475_1, v507_1, v512_1, v522_1, v537_1, v542_1, v576_1, v586_1, v592_1, v607_1, v62_1, v67_1, v77_1, v78_1, v89_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, ss_0, v176_1, v397_1
+  local v537_1, v62_1, v77_1, v89_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
@@ -31543,156 +31131,67 @@ protos[433] = function(upvalues, argument_1)
       slot_3 = (slot_0:FindFirstChild("Backpack"))
       slot_4 = nil
       slot_4 = (closure(434, {}))
-      ss_0 = (slot_4(slot_1)) or ((slot_4(slot_3)))
-      if ss_0 then
+      if ((slot_4(slot_1)) or ((slot_4(slot_3)))) then
         return false
       end
       if ((cell_get(upvalues[1])).rolePlayerLooksAlive(slot_0)) then
         return false
       end
-      v160_1 = vm_frame_random
-      v166_1 = (v160_1 % 2)
-      v176_1 = (v166_1 == 0)
+      v176_1 = (((vm_frame_random % 2)) == 0)
       v62_1 = cell_get(upvalues[2])
-      v67_1 = slot_0
-      v77_1 = v67_1.Name
-      v78_1 = v62_1[v77_1]
-      slot_5 = v78_1
+      v77_1 = slot_0.Name
+      slot_5 = v62_1[v77_1]
       v89_1 = slot_5
-      ss_0 = v89_1
-      if v89_1 then
-        v413_1 = slot_5
-        v423_1 = v413_1.Killed
-        v429_1 = (v423_1 == true)
-        ss_0 = v429_1
-        if not v429_1 then
-          v459_1 = slot_5
-          v469_1 = v459_1.Dead
-          v475_1 = (v469_1 == true)
-          ss_0 = v475_1
-        end
-      end
-      v449_1 = ss_0
-      if v449_1 then
+      ss_0 = v89_1 and (((slot_5.Killed == true)) or (((slot_5.Dead == true))))
+      if ss_0 then
         return true
       end
       v397_1 = slot_1
-      v402_1 = not v397_1
-      if v402_1 then
+      if (not v397_1) then
         return true
       end
-      v507_1 = slot_1
-      v512_1 = v507_1.FindFirstChildOfClass
-      v522_1 = v512_1(v507_1, "Humanoid")
-      slot_6 = v522_1
+      slot_6 = (slot_1:FindFirstChildOfClass("Humanoid"))
       v537_1 = slot_6
-      v542_1 = not v537_1
-      ss_0 = v542_1
-      if not v542_1 then
-        v576_1 = slot_6
-        v586_1 = v576_1.Health
-        v592_1 = (v586_1 <= 0)
-        ss_0 = v592_1
-      end
-      v607_1 = ss_0
-      if v607_1 then
+      if ((not v537_1) or (((slot_6.Health <= 0)))) then
         return true
       end
       return false
     end
-    v160_1 = vm_frame_random
-    v166_1 = (v160_1 % 2)
-    v176_1 = (v166_1 == 0)
+    v176_1 = (((vm_frame_random % 2)) == 0)
     v62_1 = cell_get(upvalues[2])
-    v67_1 = slot_0
-    v77_1 = v67_1.Name
-    v78_1 = v62_1[v77_1]
-    slot_5 = v78_1
+    v77_1 = slot_0.Name
+    slot_5 = v62_1[v77_1]
     v89_1 = slot_5
-    ss_0 = v89_1
-    if v89_1 then
-      v413_1 = slot_5
-      v423_1 = v413_1.Killed
-      v429_1 = (v423_1 == true)
-      ss_0 = v429_1
-      if not v429_1 then
-        v459_1 = slot_5
-        v469_1 = v459_1.Dead
-        v475_1 = (v469_1 == true)
-        ss_0 = v475_1
-      end
-    end
-    v449_1 = ss_0
-    if v449_1 then
+    ss_0 = v89_1 and (((slot_5.Killed == true)) or (((slot_5.Dead == true))))
+    if ss_0 then
       return true
     end
     v397_1 = slot_1
-    v402_1 = not v397_1
-    if v402_1 then
+    if (not v397_1) then
       return true
     end
-    v507_1 = slot_1
-    v512_1 = v507_1.FindFirstChildOfClass
-    v522_1 = v512_1(v507_1, "Humanoid")
-    slot_6 = v522_1
+    slot_6 = (slot_1:FindFirstChildOfClass("Humanoid"))
     v537_1 = slot_6
-    v542_1 = not v537_1
-    ss_0 = v542_1
-    if not v542_1 then
-      v576_1 = slot_6
-      v586_1 = v576_1.Health
-      v592_1 = (v586_1 <= 0)
-      ss_0 = v592_1
-    end
-    v607_1 = ss_0
-    if v607_1 then
+    if ((not v537_1) or (((slot_6.Health <= 0)))) then
       return true
     end
     return false
   end
   v62_1 = cell_get(upvalues[2])
-  v67_1 = slot_0
-  v77_1 = v67_1.Name
-  v78_1 = v62_1[v77_1]
-  slot_5 = v78_1
+  v77_1 = slot_0.Name
+  slot_5 = v62_1[v77_1]
   v89_1 = slot_5
-  ss_0 = v89_1
-  if v89_1 then
-    v413_1 = slot_5
-    v423_1 = v413_1.Killed
-    v429_1 = (v423_1 == true)
-    ss_0 = v429_1
-    if not v429_1 then
-      v459_1 = slot_5
-      v469_1 = v459_1.Dead
-      v475_1 = (v469_1 == true)
-      ss_0 = v475_1
-    end
-  end
-  v449_1 = ss_0
-  if v449_1 then
+  ss_0 = v89_1 and (((slot_5.Killed == true)) or (((slot_5.Dead == true))))
+  if ss_0 then
     return true
   end
   v397_1 = slot_1
-  v402_1 = not v397_1
-  if v402_1 then
+  if (not v397_1) then
     return true
   end
-  v507_1 = slot_1
-  v512_1 = v507_1.FindFirstChildOfClass
-  v522_1 = v512_1(v507_1, "Humanoid")
-  slot_6 = v522_1
+  slot_6 = (slot_1:FindFirstChildOfClass("Humanoid"))
   v537_1 = slot_6
-  v542_1 = not v537_1
-  ss_0 = v542_1
-  if not v542_1 then
-    v576_1 = slot_6
-    v586_1 = v576_1.Health
-    v592_1 = (v586_1 <= 0)
-    ss_0 = v592_1
-  end
-  v607_1 = ss_0
-  if v607_1 then
+  if ((not v537_1) or (((slot_6.Health <= 0)))) then
     return true
   end
   return false
@@ -31716,24 +31215,14 @@ protos[434] = function(upvalues, argument_1)
     slot_2 = __loopValue_434_0
     if (slot_2:IsA("Tool")) then
       slot_3 = (slot_2.Name:lower())
-      ss_0 = (slot_3:find("knife")) or ((slot_3:find("zombie")))
-      ss_0 = ss_0 or ((slot_3:find("claw")))
-      ss_0 = ss_0 or ((slot_3:find("blade")))
-      ss_0 = ss_0 or ((slot_3:find("slash")))
-      ss_0 = ss_0 or ((slot_3:find("нож")))
-      ss_0 = ss_0 or ((slot_3:find("зомби")))
-      if ss_0 then
+      if (((((((slot_3:find("knife")) or ((slot_3:find("zombie")))) or ((slot_3:find("claw")))) or ((slot_3:find("blade")))) or ((slot_3:find("slash")))) or ((slot_3:find("нож")))) or ((slot_3:find("зомби")))) then
         return true
       end
-      ss_0 = (slot_2:FindFirstChild("KnifeThrown")) or ((slot_2:FindFirstChild("Stab")))
-      ss_0 = ss_0 or ((slot_2:FindFirstChild("Slash")))
-      ss_0 = ss_0 or ((slot_2:FindFirstChild("KnifeLocal")))
-      if ss_0 then
+      if ((((slot_2:FindFirstChild("KnifeThrown")) or ((slot_2:FindFirstChild("Stab")))) or ((slot_2:FindFirstChild("Slash")))) or ((slot_2:FindFirstChild("KnifeLocal")))) then
         return true
       end
       slot_4 = (slot_2:FindFirstChild("Events"))
-      ss_0 = slot_4 and ((slot_4:FindFirstChild("KnifeThrown")) or ((slot_4:FindFirstChild("HandleTouched"))))
-      if ss_0 then
+      if (slot_4 and ((slot_4:FindFirstChild("KnifeThrown")) or ((slot_4:FindFirstChild("HandleTouched"))))) then
         return true
       end
       continue
@@ -31757,38 +31246,20 @@ protos[435] = function(upvalues, argument_1)
     return false
   end
   slot_1 = (slot_0.Name:lower())
-  ss_0 = (slot_1:find("gun")) or ((slot_1:find("pistol")))
-  ss_0 = ss_0 or ((slot_1:find("revolver")))
-  ss_0 = ss_0 or ((slot_1:find("пистолет")))
-  ss_0 = ss_0 or ((slot_1:find("револьвер")))
-  if ss_0 then
+  if (((((slot_1:find("gun")) or ((slot_1:find("pistol")))) or ((slot_1:find("revolver")))) or ((slot_1:find("пистолет")))) or ((slot_1:find("револьвер")))) then
     return false
   end
-  ss_0 = (slot_0:FindFirstChild("Fire")) or ((slot_0:FindFirstChild("Shoot")))
-  ss_0 = ss_0 or ((slot_0:FindFirstChild("Reload")))
-  ss_0 = ss_0 or ((slot_0:FindFirstChild("Ammo")))
-  ss_0 = ss_0 or ((slot_0:FindFirstChild("GunLocal")))
-  if ss_0 then
+  if (((((slot_0:FindFirstChild("Fire")) or ((slot_0:FindFirstChild("Shoot")))) or ((slot_0:FindFirstChild("Reload")))) or ((slot_0:FindFirstChild("Ammo")))) or ((slot_0:FindFirstChild("GunLocal")))) then
     return false
   end
-  ss_0 = (slot_1:find("knife")) or ((slot_1:find("zombie")))
-  ss_0 = ss_0 or ((slot_1:find("claw")))
-  ss_0 = ss_0 or ((slot_1:find("blade")))
-  ss_0 = ss_0 or ((slot_1:find("slash")))
-  ss_0 = ss_0 or ((slot_1:find("нож")))
-  ss_0 = ss_0 or ((slot_1:find("зомби")))
-  if ss_0 then
+  if (((((((slot_1:find("knife")) or ((slot_1:find("zombie")))) or ((slot_1:find("claw")))) or ((slot_1:find("blade")))) or ((slot_1:find("slash")))) or ((slot_1:find("нож")))) or ((slot_1:find("зомби")))) then
     return true
   end
-  ss_0 = (slot_0:FindFirstChild("KnifeThrown")) or ((slot_0:FindFirstChild("Stab")))
-  ss_0 = ss_0 or ((slot_0:FindFirstChild("Slash")))
-  ss_0 = ss_0 or ((slot_0:FindFirstChild("KnifeLocal")))
-  if ss_0 then
+  if ((((slot_0:FindFirstChild("KnifeThrown")) or ((slot_0:FindFirstChild("Stab")))) or ((slot_0:FindFirstChild("Slash")))) or ((slot_0:FindFirstChild("KnifeLocal")))) then
     return true
   end
   slot_2 = (slot_0:FindFirstChild("Events"))
-  ss_0 = slot_2 and ((slot_2:FindFirstChild("KnifeThrown")) or ((slot_2:FindFirstChild("HandleTouched"))))
-  if ss_0 then
+  if (slot_2 and ((slot_2:FindFirstChild("KnifeThrown")) or ((slot_2:FindFirstChild("HandleTouched"))))) then
     return true
   end
   return false
@@ -31796,7 +31267,7 @@ end
 
 protos[436] = function(upvalues, argument_1)
   local exit_197, exit_405, slot_0, slot_1, slot_2, slot_4, slot_5, slot_6, ss_0, ss_1, ss_2, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4, v109_1, v115_1, v120_1
-  local v352_1, v358_1, v363_1, v383_1, v383_2, v383_3, v406_1, v411_1, v416_1, v421_ret1, v421_ret2, v436_1, v446_1, v452_1, v476_1, v486_1, v497_1, v502_1, v507_1, v63_1, v68_1, v78_1, v93_1
+  local v352_1, v358_1, v363_1, v383_1, v383_2, v383_3, v406_1, v411_1, v416_1, v421_ret1, v421_ret2, v497_1, v502_1, v93_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
@@ -31823,10 +31294,7 @@ protos[436] = function(upvalues, argument_1)
       end
     end
     if exit_197 == 1 then
-      v63_1 = slot_0
-      v68_1 = v63_1.FindFirstChild
-      v78_1 = v68_1(v63_1, "Backpack")
-      slot_4 = v78_1
+      slot_4 = (slot_0:FindFirstChild("Backpack"))
       v93_1 = slot_4
       if not v93_1 then
         return false
@@ -31849,22 +31317,16 @@ protos[436] = function(upvalues, argument_1)
         v421_ret1, v421_ret2 = v406_1(v411_1, v416_1)
         temp_4 = v421_ret2
         temp_3 = v421_ret1
-        v436_1 = temp_3
-        temp_2 = v436_1
-        v446_1 = temp_3
-        v452_1 = (v446_1 == nil)
-        if v452_1 then
+        temp_2 = temp_3
+        if ((temp_3 == nil)) then
           exit_405 = 1
           break
         end
-        v476_1 = temp_3
-        slot_5 = v476_1
-        v486_1 = temp_4
-        slot_6 = v486_1
+        slot_5 = temp_3
+        slot_6 = temp_4
         v497_1 = cell_get(upvalues[1])
         v502_1 = slot_6
-        v507_1 = v497_1(v502_1)
-        if v507_1 then
+        if (v497_1(v502_1)) then
           exit_405 = 2
           break
         end
@@ -31878,10 +31340,7 @@ protos[436] = function(upvalues, argument_1)
       return true
     end
   else
-    v63_1 = slot_0
-    v68_1 = v63_1.FindFirstChild
-    v78_1 = v68_1(v63_1, "Backpack")
-    slot_4 = v78_1
+    slot_4 = (slot_0:FindFirstChild("Backpack"))
     v93_1 = slot_4
     if not v93_1 then
       return false
@@ -31904,22 +31363,16 @@ protos[436] = function(upvalues, argument_1)
       v421_ret1, v421_ret2 = v406_1(v411_1, v416_1)
       temp_4 = v421_ret2
       temp_3 = v421_ret1
-      v436_1 = temp_3
-      temp_2 = v436_1
-      v446_1 = temp_3
-      v452_1 = (v446_1 == nil)
-      if v452_1 then
+      temp_2 = temp_3
+      if ((temp_3 == nil)) then
         exit_405 = 1
         break
       end
-      v476_1 = temp_3
-      slot_5 = v476_1
-      v486_1 = temp_4
-      slot_6 = v486_1
+      slot_5 = temp_3
+      slot_6 = temp_4
       v497_1 = cell_get(upvalues[1])
       v502_1 = slot_6
-      v507_1 = v497_1(v502_1)
-      if v507_1 then
+      if (v497_1(v502_1)) then
         exit_405 = 2
         break
       end
@@ -31955,12 +31408,10 @@ protos[437] = function(upvalues)
 end
 
 protos[438] = function(upvalues)
-  local slot_0, ss_0, v17_1, v186_1, v202_1, v203_1, v218_1, v219_1, v27_1
+  local slot_0, v186_1, v202_1, v203_1, v218_1, v219_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])) and ((cell_get(upvalues[2])))
-  if ss_0 then
-    ss_0 = ((cell_get(upvalues[1])):FindFirstChild("RightHand")) or (((cell_get(upvalues[1])):FindFirstChild("Right Arm")))
-    slot_0 = ss_0
+  if ((cell_get(upvalues[1])) and ((cell_get(upvalues[2])))) then
+    slot_0 = (((cell_get(upvalues[1])):FindFirstChild("RightHand")) or (((cell_get(upvalues[1])):FindFirstChild("Right Arm"))))
     if slot_0 then
       v186_1 = cell_get(upvalues[3])
       v202_1 = (cell_get(upvalues[2])).CFrame
@@ -31969,19 +31420,15 @@ protos[438] = function(upvalues)
       v219_1 = v203_1(v202_1, v218_1)
       return ((v186_1 * v219_1)).Position
     end
-    v17_1 = cell_get(upvalues[3])
-    v27_1 = v17_1.Position
-    return v27_1
+    return (cell_get(upvalues[3])).Position
   end
-  v17_1 = cell_get(upvalues[3])
-  v27_1 = v17_1.Position
-  return v27_1
+  return (cell_get(upvalues[3])).Position
 end
 
 protos[439] = function(upvalues)
-  local exit_150, exit_514, slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, ss_0, ss_1, ss_2, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4, v16_1, v21_1, v31_1
-  local v46_1, v461_1, v467_1, v472_1, v492_1, v492_2, v492_3, v515_1, v520_1, v525_1, v530_ret1, v530_ret2, v545_1, v555_1, v561_1, v585_1, v595_1, v606_1, v611_1, v62_1, v621_1, v651_1, v661_1, v662_1, v667_1, v68_1, v683_1, v688_1, v698_1
-  local v720_1, v725_1, v73_1, v735_1, v750_1, v762_1, v767_1, v777_1, v792_1
+  local exit_150, exit_514, slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, ss_0, ss_1, ss_2, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4
+  local v46_1, v461_1, v467_1, v472_1, v492_1, v492_2, v492_3, v515_1, v520_1, v525_1, v530_ret1, v530_ret2, v62_1, v68_1, v698_1
+  local v73_1, v750_1
   local vm_frame_random = math.random(0, 2147483646)
   if (cell_get(upvalues[1])) then
     v62_1 = env.ipairs
@@ -32000,9 +31447,7 @@ protos[439] = function(upvalues)
       slot_1 = temp_4
       if (slot_1:IsA("Tool")) then
         slot_2 = (slot_1.Name:lower())
-        ss_0 = (slot_2:find("gun")) or ((slot_2:find("revolver")))
-        ss_0 = ss_0 or ((slot_2:find("pistol")))
-        if ss_0 then
+        if (((slot_2:find("gun")) or ((slot_2:find("revolver")))) or ((slot_2:find("pistol")))) then
           exit_150 = 2
           break
         end
@@ -32010,10 +31455,7 @@ protos[439] = function(upvalues)
       end
     end
     if exit_150 == 1 then
-      v16_1 = cell_get(upvalues[2])
-      v21_1 = v16_1.FindFirstChild
-      v31_1 = v21_1(v16_1, "Backpack")
-      slot_3 = v31_1
+      slot_3 = ((cell_get(upvalues[2])):FindFirstChild("Backpack"))
       v46_1 = slot_3
       if not v46_1 then
         return false
@@ -32036,47 +31478,20 @@ protos[439] = function(upvalues)
         v530_ret1, v530_ret2 = v515_1(v520_1, v525_1)
         temp_4 = v530_ret2
         temp_3 = v530_ret1
-        v545_1 = temp_3
-        temp_2 = v545_1
-        v555_1 = temp_3
-        v561_1 = (v555_1 == nil)
-        if v561_1 then
+        temp_2 = temp_3
+        if ((temp_3 == nil)) then
           exit_514 = 1
           break
         end
-        v585_1 = temp_3
-        slot_4 = v585_1
-        v595_1 = temp_4
-        slot_5 = v595_1
-        v606_1 = slot_5
-        v611_1 = v606_1.IsA
-        v621_1 = v611_1(v606_1, "Tool")
-        if v621_1 then
-          v651_1 = slot_5
-          v661_1 = v651_1.Name
-          v662_1 = v661_1.lower
-          v667_1 = v662_1(v661_1)
-          slot_6 = v667_1
-          v683_1 = slot_6
-          v688_1 = v683_1.find
-          v698_1 = v688_1(v683_1, "gun")
-          ss_0 = v698_1
-          if not v698_1 then
-            v720_1 = slot_6
-            v725_1 = v720_1.find
-            v735_1 = v725_1(v720_1, "revolver")
-            ss_0 = v735_1
-          end
+        slot_4 = temp_3
+        slot_5 = temp_4
+        if (slot_5:IsA("Tool")) then
+          slot_6 = (slot_5.Name:lower())
+          v698_1 = slot_6:find("gun")
+          ss_0 = v698_1 or ((slot_6:find("revolver")))
           v750_1 = ss_0
-          ss_0 = v750_1
-          if not v750_1 then
-            v762_1 = slot_6
-            v767_1 = v762_1.find
-            v777_1 = v767_1(v762_1, "pistol")
-            ss_0 = v777_1
-          end
-          v792_1 = ss_0
-          if v792_1 then
+          ss_0 = v750_1 or ((slot_6:find("pistol")))
+          if ss_0 then
             exit_514 = 2
             break
           end
@@ -32092,10 +31507,7 @@ protos[439] = function(upvalues)
       return true
     end
   else
-    v16_1 = cell_get(upvalues[2])
-    v21_1 = v16_1.FindFirstChild
-    v31_1 = v21_1(v16_1, "Backpack")
-    slot_3 = v31_1
+    slot_3 = ((cell_get(upvalues[2])):FindFirstChild("Backpack"))
     v46_1 = slot_3
     if not v46_1 then
       return false
@@ -32118,47 +31530,20 @@ protos[439] = function(upvalues)
       v530_ret1, v530_ret2 = v515_1(v520_1, v525_1)
       temp_4 = v530_ret2
       temp_3 = v530_ret1
-      v545_1 = temp_3
-      temp_2 = v545_1
-      v555_1 = temp_3
-      v561_1 = (v555_1 == nil)
-      if v561_1 then
+      temp_2 = temp_3
+      if ((temp_3 == nil)) then
         exit_514 = 1
         break
       end
-      v585_1 = temp_3
-      slot_4 = v585_1
-      v595_1 = temp_4
-      slot_5 = v595_1
-      v606_1 = slot_5
-      v611_1 = v606_1.IsA
-      v621_1 = v611_1(v606_1, "Tool")
-      if v621_1 then
-        v651_1 = slot_5
-        v661_1 = v651_1.Name
-        v662_1 = v661_1.lower
-        v667_1 = v662_1(v661_1)
-        slot_6 = v667_1
-        v683_1 = slot_6
-        v688_1 = v683_1.find
-        v698_1 = v688_1(v683_1, "gun")
-        ss_0 = v698_1
-        if not v698_1 then
-          v720_1 = slot_6
-          v725_1 = v720_1.find
-          v735_1 = v725_1(v720_1, "revolver")
-          ss_0 = v735_1
-        end
+      slot_4 = temp_3
+      slot_5 = temp_4
+      if (slot_5:IsA("Tool")) then
+        slot_6 = (slot_5.Name:lower())
+        v698_1 = slot_6:find("gun")
+        ss_0 = v698_1 or ((slot_6:find("revolver")))
         v750_1 = ss_0
-        ss_0 = v750_1
-        if not v750_1 then
-          v762_1 = slot_6
-          v767_1 = v762_1.find
-          v777_1 = v767_1(v762_1, "pistol")
-          ss_0 = v777_1
-        end
-        v792_1 = ss_0
-        if v792_1 then
+        ss_0 = v750_1 or ((slot_6:find("pistol")))
+        if ss_0 then
           exit_514 = 2
           break
         end
@@ -32193,8 +31578,7 @@ protos[440] = function(upvalues)
     slot_2 = __loopKey_440_0
     slot_3 = __loopValue_440_0
     v247_1 = cell_get(upvalues[3])
-    ss_0 = ((slot_3 ~= v247_1)) and slot_3.Character
-    if ss_0 then
+    if (((slot_3 ~= v247_1)) and slot_3.Character) then
       slot_4 = (slot_3.Character:FindFirstChild("HumanoidRootPart"))
       if slot_4 then
         v385_1 = (cell_get(upvalues[4])).Position
@@ -32211,8 +31595,8 @@ protos[440] = function(upvalues)
 end
 
 protos[441] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, ss_0, ss_2, ss_3, ss_4, v11_1, v165_1, v175_1, v176_1, v181_1, v186_1, v201_1, v217_1, v222_1, v227_1, v23_1, v238_1, v259_1, v269_1, v270_1, v275_1, v28_1, v290_1, v300_1, v310_1, v312_1, v322_1, v323_1
-  local v328_1, v33_1, v333_1, v349_1, v359_1, v360_1, v365_1, v381_1, v391_1, v392_1, v397_1, v423_1, v433_1, v434_1, v439_1, v465_1, v475_1, v476_1, v481_1, v491_1, v492_1, v507_1, v54_1, v545_1, v555_1, v570_1, v581_1, v591_1, v606_1, v616_1
+  local slot_0, slot_1, slot_2, ss_0, ss_2, ss_3, ss_4, v11_1, v175_1, v176_1, v181_1, v222_1, v23_1, v269_1, v270_1, v28_1, v310_1, v322_1, v323_1
+  local v328_1, v33_1, v359_1, v360_1, v365_1, v391_1, v392_1, v433_1, v434_1, v475_1, v476_1, v491_1, v54_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   v11_1 = (cell_get(upvalues[1])).DuelMode
@@ -32230,33 +31614,23 @@ protos[441] = function(upvalues, argument_1)
     v33_1 = v23_1(v28_1)
     ss_0 = v33_1
     if not v33_1 then
-      v217_1 = cell_get(upvalues[5])
-      v222_1 = v217_1()
-      v227_1 = not v222_1
-      ss_0 = v227_1
+      v222_1 = (cell_get(upvalues[5]))()
+      ss_0 = (not v222_1)
     end
-    v238_1 = ss_0
-    if v238_1 then
+    if ss_0 then
       return "Unknown"
     end
-    v165_1 = cell_get(upvalues[6])
-    v175_1 = v165_1.roleZombieOverride
+    v175_1 = (cell_get(upvalues[6])).roleZombieOverride
     v176_1 = slot_0
     v181_1 = cell_get(upvalues[7])
-    v186_1 = v175_1(v176_1, v181_1)
-    slot_1 = v186_1
-    v201_1 = slot_1
-    if v201_1 then
-      v290_1 = slot_1
-      return v290_1
+    slot_1 = (v175_1(v176_1, v181_1))
+    if slot_1 then
+      return slot_1
     end
-    v259_1 = cell_get(upvalues[6])
-    v269_1 = v259_1.rolePlayerHasGun
+    v269_1 = (cell_get(upvalues[6])).rolePlayerHasGun
     v270_1 = slot_0
-    v275_1 = v269_1(v270_1)
-    if v275_1 then
-      v349_1 = cell_get(upvalues[6])
-      v359_1 = v349_1.roleGunHolderRole
+    if (v269_1(v270_1)) then
+      v359_1 = (cell_get(upvalues[6])).roleGunHolderRole
       v360_1 = slot_0
       v365_1 = cell_get(upvalues[7])
       ss_2 = v359_1
@@ -32264,55 +31638,29 @@ protos[441] = function(upvalues, argument_1)
       ss_4 = v365_1
       return ss_2(ss_3, ss_4)
     end
-    v300_1 = slot_0
-    v310_1 = v300_1.Name
-    v312_1 = cell_get(upvalues[6])
-    v322_1 = v312_1.roleMurdererName
+    v310_1 = slot_0.Name
+    v322_1 = (cell_get(upvalues[6])).roleMurdererName
     v323_1 = cell_get(upvalues[7])
     v328_1 = v322_1(v323_1)
-    v333_1 = (v310_1 == v328_1)
-    if v333_1 then
+    if ((v310_1 == v328_1)) then
       return "Murderer"
     end
-    v381_1 = cell_get(upvalues[6])
-    v391_1 = v381_1.rolePlayerHasZombie
+    v391_1 = (cell_get(upvalues[6])).rolePlayerHasZombie
     v392_1 = slot_0
-    v397_1 = v391_1(v392_1)
-    if v397_1 then
+    if (v391_1(v392_1)) then
       return "Zombie"
     end
-    v423_1 = cell_get(upvalues[6])
-    v433_1 = v423_1.isZombieMode
+    v433_1 = (cell_get(upvalues[6])).isZombieMode
     v434_1 = cell_get(upvalues[7])
-    v439_1 = v433_1(v434_1)
-    if v439_1 then
+    if (v433_1(v434_1)) then
       return "Zombie"
     end
-    v465_1 = cell_get(upvalues[6])
-    v475_1 = v465_1.roleOf
+    v475_1 = (cell_get(upvalues[6])).roleOf
     v476_1 = cell_get(upvalues[7])
-    v481_1 = slot_0
-    v491_1 = v481_1.Name
-    v492_1 = v475_1(v476_1, v491_1)
-    slot_2 = v492_1
-    v507_1 = slot_2
-    ss_0 = v507_1
-    if v507_1 then
-      v545_1 = slot_2
-      v555_1 = (v545_1 ~= "Unknown")
-      ss_0 = v555_1
-    end
-    v570_1 = ss_0
-    ss_0 = v570_1
-    if v570_1 then
-      v581_1 = slot_2
-      v591_1 = (v581_1 ~= "Murderer")
-      ss_0 = v591_1
-    end
-    v606_1 = ss_0
-    if v606_1 then
-      v616_1 = slot_2
-      return v616_1
+    v491_1 = slot_0.Name
+    slot_2 = (v475_1(v476_1, v491_1))
+    if (((slot_2 and (((slot_2 ~= "Unknown"))))) and (((slot_2 ~= "Murderer")))) then
+      return slot_2
     end
     return "Innocent"
   end
@@ -32321,33 +31669,23 @@ protos[441] = function(upvalues, argument_1)
   v33_1 = v23_1(v28_1)
   ss_0 = v33_1
   if not v33_1 then
-    v217_1 = cell_get(upvalues[5])
-    v222_1 = v217_1()
-    v227_1 = not v222_1
-    ss_0 = v227_1
+    v222_1 = (cell_get(upvalues[5]))()
+    ss_0 = (not v222_1)
   end
-  v238_1 = ss_0
-  if v238_1 then
+  if ss_0 then
     return "Unknown"
   end
-  v165_1 = cell_get(upvalues[6])
-  v175_1 = v165_1.roleZombieOverride
+  v175_1 = (cell_get(upvalues[6])).roleZombieOverride
   v176_1 = slot_0
   v181_1 = cell_get(upvalues[7])
-  v186_1 = v175_1(v176_1, v181_1)
-  slot_1 = v186_1
-  v201_1 = slot_1
-  if v201_1 then
-    v290_1 = slot_1
-    return v290_1
+  slot_1 = (v175_1(v176_1, v181_1))
+  if slot_1 then
+    return slot_1
   end
-  v259_1 = cell_get(upvalues[6])
-  v269_1 = v259_1.rolePlayerHasGun
+  v269_1 = (cell_get(upvalues[6])).rolePlayerHasGun
   v270_1 = slot_0
-  v275_1 = v269_1(v270_1)
-  if v275_1 then
-    v349_1 = cell_get(upvalues[6])
-    v359_1 = v349_1.roleGunHolderRole
+  if (v269_1(v270_1)) then
+    v359_1 = (cell_get(upvalues[6])).roleGunHolderRole
     v360_1 = slot_0
     v365_1 = cell_get(upvalues[7])
     ss_2 = v359_1
@@ -32355,55 +31693,29 @@ protos[441] = function(upvalues, argument_1)
     ss_4 = v365_1
     return ss_2(ss_3, ss_4)
   end
-  v300_1 = slot_0
-  v310_1 = v300_1.Name
-  v312_1 = cell_get(upvalues[6])
-  v322_1 = v312_1.roleMurdererName
+  v310_1 = slot_0.Name
+  v322_1 = (cell_get(upvalues[6])).roleMurdererName
   v323_1 = cell_get(upvalues[7])
   v328_1 = v322_1(v323_1)
-  v333_1 = (v310_1 == v328_1)
-  if v333_1 then
+  if ((v310_1 == v328_1)) then
     return "Murderer"
   end
-  v381_1 = cell_get(upvalues[6])
-  v391_1 = v381_1.rolePlayerHasZombie
+  v391_1 = (cell_get(upvalues[6])).rolePlayerHasZombie
   v392_1 = slot_0
-  v397_1 = v391_1(v392_1)
-  if v397_1 then
+  if (v391_1(v392_1)) then
     return "Zombie"
   end
-  v423_1 = cell_get(upvalues[6])
-  v433_1 = v423_1.isZombieMode
+  v433_1 = (cell_get(upvalues[6])).isZombieMode
   v434_1 = cell_get(upvalues[7])
-  v439_1 = v433_1(v434_1)
-  if v439_1 then
+  if (v433_1(v434_1)) then
     return "Zombie"
   end
-  v465_1 = cell_get(upvalues[6])
-  v475_1 = v465_1.roleOf
+  v475_1 = (cell_get(upvalues[6])).roleOf
   v476_1 = cell_get(upvalues[7])
-  v481_1 = slot_0
-  v491_1 = v481_1.Name
-  v492_1 = v475_1(v476_1, v491_1)
-  slot_2 = v492_1
-  v507_1 = slot_2
-  ss_0 = v507_1
-  if v507_1 then
-    v545_1 = slot_2
-    v555_1 = (v545_1 ~= "Unknown")
-    ss_0 = v555_1
-  end
-  v570_1 = ss_0
-  ss_0 = v570_1
-  if v570_1 then
-    v581_1 = slot_2
-    v591_1 = (v581_1 ~= "Murderer")
-    ss_0 = v591_1
-  end
-  v606_1 = ss_0
-  if v606_1 then
-    v616_1 = slot_2
-    return v616_1
+  v491_1 = slot_0.Name
+  slot_2 = (v475_1(v476_1, v491_1))
+  if (((slot_2 and (((slot_2 ~= "Unknown"))))) and (((slot_2 ~= "Murderer")))) then
+    return slot_2
   end
   return "Innocent"
 end
@@ -32417,9 +31729,7 @@ protos[442] = function(upvalues, argument_1)
   ss_0, ss_1 = v3_1(v8_1, slot_0)
   slot_2 = ss_1
   temp_0 = (cell_get(upvalues[2]))
-  ss_1 = ss_0 and slot_2
-  ss_1 = ss_1 or ("Unknown")
-  ss_0 = ss_1
+  ss_0 = ((ss_0 and slot_2) or ("Unknown"))
   temp_0[slot_0] = ss_0
   return (cell_get(upvalues[2]))[slot_0]
 end
@@ -32449,8 +31759,7 @@ protos[443] = function(upvalues, argument_1)
     end
     slot_2 = temp_3
     slot_3 = v143_ret2
-    ss_0 = slot_3 and slot_3.Role
-    v279_1 = ss_0
+    v279_1 = (slot_3 and slot_3.Role)
     ss_0 = v279_1
     if v279_1 then
       v300_1 = slot_3.Killed
@@ -32638,10 +31947,7 @@ protos[446] = function(upvalues)
       v386_1 = (slot_3:sub(1, 1)):upper()
       v418_1 = (slot_3:sub(2)):lower()
       slot_3 = ((v386_1 .. v418_1))
-      ss_0 = ((slot_3 == "Sheriff")) or (((slot_3 == "Murderer")))
-      ss_0 = ss_0 or (((slot_3 == "Hero")))
-      ss_0 = ss_0 or (((slot_3 == "Innocent")))
-      ss_0 = ss_0 or (((slot_3 == "Zombie")))
+      ss_0 = (((((slot_3 == "Sheriff")) or (((slot_3 == "Murderer")))) or (((slot_3 == "Hero")))) or (((slot_3 == "Innocent")))) or (((slot_3 == "Zombie")))
       if not ss_0 then
         slot_3 = "Unknown"
       end
@@ -32745,8 +32051,7 @@ protos[450] = function(upvalues, argument_1)
     ss_4 = slot_7
     ss_5 = 0
     ss_6 = slot_9
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.Size = temp_2
     temp_0 = slot_11
     v972_1 = env.UDim2.new
@@ -32756,16 +32061,14 @@ protos[450] = function(upvalues, argument_1)
     ss_4 = v989_1
     ss_5 = 0
     ss_6 = 56
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.Position = temp_2
     temp_0 = slot_11
     ss_2 = env.Color3.fromRGB
     ss_3 = 10
     ss_4 = 10
     ss_5 = 13
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.BackgroundColor3 = temp_2
     slot_11.BackgroundTransparency = 0.06
     slot_11.BorderSizePixel = 0
@@ -32777,8 +32080,7 @@ protos[450] = function(upvalues, argument_1)
     ss_2 = env.UDim.new
     ss_3 = 0
     ss_4 = 5
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.CornerRadius = temp_2
     slot_12.Parent = slot_11
     v1445_1 = env.Instance.new("Frame")
@@ -32790,16 +32092,14 @@ protos[450] = function(upvalues, argument_1)
     ss_4 = 0
     ss_5 = 0
     ss_6 = 2
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.Size = temp_2
     temp_0 = slot_13
     ss_2 = env.Color3.fromRGB
     ss_3 = 0
     ss_4 = 232
     ss_5 = 122
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.BackgroundColor3 = temp_2
     slot_13.BorderSizePixel = 0
     slot_13.Parent = slot_11
@@ -32810,8 +32110,7 @@ protos[450] = function(upvalues, argument_1)
     ss_2 = env.UDim.new
     ss_3 = 0
     ss_4 = 2
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.CornerRadius = temp_2
     slot_14.Parent = slot_13
     v1902_1 = env.Instance.new("TextLabel")
@@ -32823,8 +32122,7 @@ protos[450] = function(upvalues, argument_1)
     ss_4 = 0
     ss_5 = 0
     ss_6 = slot_8
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.Size = temp_2
     slot_15.BackgroundTransparency = 1
     slot_15.Text = "⚠  PRE-ROUND ROLES"
@@ -32835,8 +32133,7 @@ protos[450] = function(upvalues, argument_1)
     ss_3 = 0
     ss_4 = 232
     ss_5 = 122
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.TextColor3 = temp_2
     slot_15.TextXAlignment = env.Enum.TextXAlignment.Center
     slot_15.Parent = slot_11
@@ -32852,8 +32149,7 @@ protos[450] = function(upvalues, argument_1)
     ss_4 = v2543_1
     ss_5 = 0
     ss_6 = 2
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.Size = temp_2
     temp_0 = slot_16
     v2617_1 = env.UDim2.new
@@ -32863,16 +32159,14 @@ protos[450] = function(upvalues, argument_1)
     ss_4 = 8
     ss_5 = 0
     ss_6 = v2643_1
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.Position = temp_2
     temp_0 = slot_16
     ss_2 = env.Color3.fromRGB
     ss_3 = 0
     ss_4 = 232
     ss_5 = 122
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.BackgroundColor3 = temp_2
     slot_16.BackgroundTransparency = 0.3
     slot_16.BorderSizePixel = 0
@@ -32885,8 +32179,7 @@ protos[450] = function(upvalues, argument_1)
     ss_2 = env.UDim.new
     ss_3 = 0
     ss_4 = 1
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.CornerRadius = temp_2
     slot_17.Parent = slot_16
     ss_2 = env.ipairs
@@ -32899,8 +32192,7 @@ protos[450] = function(upvalues, argument_1)
       slot_19 = __loopValue_450_0
       v3207_1 = cell_get(upvalues[4])
       v3222_1 = slot_19.role
-      ss_0 = v3207_1[v3222_1] or (cell_get(upvalues[4])).Unknown
-      slot_20 = ss_0
+      slot_20 = (v3207_1[v3222_1] or (cell_get(upvalues[4])).Unknown)
       v3371_1 = env.Instance.new("Frame")
       slot_21 = nil
       slot_21 = v3371_1
@@ -33047,8 +32339,7 @@ protos[450] = function(upvalues, argument_1)
     v5880_1.Size = v5918_1
     v5924_1 = v5814_1(v5809_1, slot_16, v5875_1, v5880_1)
     slot_28 = nil
-    slot_28 = v5924_1
-    v5940_1 = slot_28
+    v5940_1 = v5924_1
     v5945_1 = v5940_1.Play
     v5945_1(v5940_1)
   end
@@ -33056,18 +32347,16 @@ protos[450] = function(upvalues, argument_1)
 end
 
 protos[451] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, slot_3, ss_0, v1_1, v104_1, v16_1, v177_1, v188_1, v89_1
+  local slot_0, slot_1, slot_2, slot_3, v1_1, v104_1, v16_1, v177_1, v188_1, v89_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
   v1_1 = cell_get(upvalues[1])
   v16_1 = slot_0.role
-  ss_0 = v1_1[v16_1] or (6)
-  slot_2 = ss_0
+  slot_2 = (v1_1[v16_1] or (6))
   v89_1 = cell_get(upvalues[1])
   v104_1 = slot_1.role
-  ss_0 = v89_1[v104_1] or (6)
-  slot_3 = ss_0
+  slot_3 = (v89_1[v104_1] or (6))
   if ((slot_2 ~= slot_3)) then
     return ((slot_2 < slot_3))
   end
@@ -33206,8 +32495,7 @@ protos[456] = function(upvalues)
           ss_2 = v607_1
           ss_3 = v612_1
           ss_0, ss_1 = ss_2(ss_3)
-          ss_0 = ss_0 and (((ss_1 < 1)))
-          if ss_0 then
+          if (ss_0 and (((ss_1 < 1)))) then
             v755_1 = cell_get(upvalues[5])
             v760_1 = v755_1.Create
             v765_1 = cell_get(slot_3)
@@ -33278,7 +32566,7 @@ protos[460] = destroyCapturedObject460
 end
 
 protos[461] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_3, ss_0, ss_1, temp_0, temp_1, temp_2, v1_1, v141_1, v151_1, v16_1, v161_1, v168_1, v178_1, v189_1, v194_1, v199_1, v206_1, v216_1, v274_1, v289_1, v290_1, v306_1, v321_1
+  local slot_0, slot_1, slot_3, ss_0, ss_1, temp_0, temp_1, temp_2, v1_1, v16_1, v189_1, v194_1, v199_1, v274_1, v289_1, v290_1, v306_1, v321_1
   local v337_1, v342_1, v364_1, v384_1, v43_1, v58_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = {argument_1}
@@ -33293,10 +32581,8 @@ protos[461] = function(upvalues, argument_1)
     v58_1 = (cell_get(slot_0)).File
     return v43_1[v58_1]
   end
-  ss_0 = env.getcustomasset or env.getsynasset
-  slot_1 = ss_0
-  ss_0 = env.writefile and env.readfile
-  ss_0 = ss_0 and slot_1
+  slot_1 = (env.getcustomasset or env.getsynasset)
+  ss_0 = (env.writefile and env.readfile) and slot_1
   if ss_0 then
     v274_1 = env.isfile
     v289_1 = (cell_get(slot_0)).File
@@ -33313,61 +32599,39 @@ protos[461] = function(upvalues, argument_1)
       v384_1 = (cell_get(slot_0)).File
       ss_0, ss_1 = v364_1(slot_1, v384_1)
       slot_3 = ss_1
-      ss_0 = ss_0 and slot_3
-      if ss_0 then
+      if (ss_0 and slot_3) then
         temp_0 = (cell_get(upvalues[1]))
         temp_1 = (cell_get(slot_0)).File
         temp_2 = slot_3
         temp_0[temp_1] = temp_2
         return slot_3
       end
-      v141_1 = cell_get(upvalues[1])
-      temp_0 = v141_1
-      v151_1 = cell_get(slot_0)
-      v161_1 = v151_1.File
-      temp_1 = v161_1
-      v168_1 = cell_get(slot_0)
-      v178_1 = v168_1.Url
-      temp_2 = v178_1
+      temp_0 = (cell_get(upvalues[1]))
+      temp_1 = (cell_get(slot_0)).File
+      temp_2 = (cell_get(slot_0)).Url
       v189_1 = temp_0
       v194_1 = temp_1
       v199_1 = temp_2
       v189_1[v194_1] = v199_1
-      v206_1 = cell_get(slot_0)
-      v216_1 = v206_1.Url
-      return v216_1
+      return (cell_get(slot_0)).Url
     end
-    v141_1 = cell_get(upvalues[1])
-    temp_0 = v141_1
-    v151_1 = cell_get(slot_0)
-    v161_1 = v151_1.File
-    temp_1 = v161_1
-    v168_1 = cell_get(slot_0)
-    v178_1 = v168_1.Url
-    temp_2 = v178_1
+    temp_0 = (cell_get(upvalues[1]))
+    temp_1 = (cell_get(slot_0)).File
+    temp_2 = (cell_get(slot_0)).Url
     v189_1 = temp_0
     v194_1 = temp_1
     v199_1 = temp_2
     v189_1[v194_1] = v199_1
-    v206_1 = cell_get(slot_0)
-    v216_1 = v206_1.Url
-    return v216_1
+    return (cell_get(slot_0)).Url
   end
-  v141_1 = cell_get(upvalues[1])
-  temp_0 = v141_1
-  v151_1 = cell_get(slot_0)
-  v161_1 = v151_1.File
-  temp_1 = v161_1
-  v168_1 = cell_get(slot_0)
-  v178_1 = v168_1.Url
-  temp_2 = v178_1
+  temp_0 = (cell_get(upvalues[1]))
+  temp_1 = (cell_get(slot_0)).File
+  temp_2 = (cell_get(slot_0)).Url
   v189_1 = temp_0
   v194_1 = temp_1
   v199_1 = temp_2
   v189_1[v194_1] = v199_1
-  v206_1 = cell_get(slot_0)
-  v216_1 = v206_1.Url
-  return v216_1
+  return (cell_get(slot_0)).Url
 end
 
 protos[462] = function(upvalues)
@@ -33433,8 +32697,7 @@ protos[463] = function(upvalues)
           temp_0 = slot_4
           ss_2 = (cell_get(upvalues[6]))
           ss_3 = slot_1
-          ss_0 = ss_2(ss_3)
-          temp_2 = ss_0
+          temp_2 = (ss_2(ss_3))
           temp_0.SoundId = temp_2
           slot_4.Volume = 1
           temp_0 = slot_4
@@ -33641,8 +32904,7 @@ protos[469] = function(upvalues)
     slot_1 = new_cell()
     slot_0 = cell_set_or_create(slot_0, __loopKey_469_0)
     slot_1 = cell_set_or_create(slot_1, __loopValue_469_0)
-    ss_0 = (cell_get(slot_0)) and (cell_get(slot_0)).Parent
-    if ss_0 then
+    if ((cell_get(slot_0)) and (cell_get(slot_0)).Parent) then
       v239_1 = env.pcall
       v244_1 = closure(470, {capture_0(), capture_1()})
       v239_1(v244_1)
@@ -33713,11 +32975,9 @@ protos[472] = function(upvalues)
 end
 
 protos[473] = function(upvalues)
-  local ss_0, v130_1, v135_1
+  local v130_1, v135_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])) and (((cell_get(upvalues[2]))()))
-  ss_0 = ss_0 and ((((cell_get(upvalues[3])).Volume > 0)))
-  if ss_0 then
+  if (((cell_get(upvalues[1])) and (((cell_get(upvalues[2]))()))) and ((((cell_get(upvalues[3])).Volume > 0)))) then
     v130_1 = env.pcall
     v135_1 = closure(474, {upvalues[3]})
     v130_1(v135_1)
@@ -33735,11 +32995,9 @@ protos[474] = muteCapturedSound474
 end
 
 protos[475] = function(upvalues)
-  local ss_0, v120_1, v125_1
+  local v120_1, v125_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])) and (((cell_get(upvalues[2]))()))
-  ss_0 = ss_0 and (cell_get(upvalues[3])).Playing
-  if ss_0 then
+  if (((cell_get(upvalues[1])) and (((cell_get(upvalues[2]))()))) and (cell_get(upvalues[3])).Playing) then
     v120_1 = cell_get(upvalues[4])
     v125_1 = cell_get(upvalues[3])
     v120_1(v125_1)
@@ -33854,8 +33112,7 @@ protos[478] = function(upvalues)
           temp_2 = temp_3
           slot_1 = new_cell()
           slot_1 = cell_set_or_create(slot_1, temp_3)
-          ss_0 = (cell_get(slot_1)) and (cell_get(slot_1)).Parent
-          if ss_0 then
+          if ((cell_get(slot_1)) and (cell_get(slot_1)).Parent) then
             if (((cell_get(slot_1)).Volume > 0)) then
               v508_1 = env.pcall
               v513_1 = closure(479, {capture_1()})
@@ -34101,9 +33358,7 @@ protos[488] = function(upvalues, argument_1)
           v1323_1 = (cell_get(upvalues[6]))._TracerFx
           slot_10 = new_cell()
           slot_10 = cell_set_or_create(slot_10, v1323_1)
-          ss_0 = (cell_get(slot_10)) and (cell_get(slot_10)).Enabled
-          ss_0 = ss_0 and ((((cell_get(slot_10)).Style ~= "None")))
-          if ss_0 then
+          if (((cell_get(slot_10)) and (cell_get(slot_10)).Enabled) and ((((cell_get(slot_10)).Style ~= "None")))) then
             v1468_1 = env.pcall
             v1473_1 = closure(490, {upvalues[7], capture_10(), capture_6(), capture_4(), capture_5()})
             v1468_1(v1473_1)
@@ -34160,8 +33415,7 @@ protos[491] = function(upvalues, argument_1, argument_2)
   if ss_0 then
     return true
   end
-  ss_0 = (((env.typeof(slot_0)) == "Instance")) and (cell_get(upvalues[1])).Character
-  v238_1 = ss_0
+  v238_1 = ((((env.typeof(slot_0)) == "Instance")) and (cell_get(upvalues[1])).Character)
   ss_0 = v238_1
   if v238_1 then
     v264_1 = (cell_get(upvalues[1])).Character
@@ -34193,8 +33447,7 @@ protos[491] = function(upvalues, argument_1, argument_2)
   if ss_0 then
     return true
   end
-  ss_0 = (((env.typeof(slot_1)) == "Instance")) and (cell_get(upvalues[1])).Character
-  v511_1 = ss_0
+  v511_1 = ((((env.typeof(slot_1)) == "Instance")) and (cell_get(upvalues[1])).Character)
   ss_0 = v511_1
   if v511_1 then
     v537_1 = (cell_get(upvalues[1])).Character
@@ -34284,8 +33537,7 @@ protos[494] = function(upvalues, ...)
   for i = 1, varargs.n do varargs[i] = argv[i + 0] end
   ss_0 = (new_table(1))
   ss_2 = varargs
-  ss_0 = set_list_values(ss_0, 1, unpack_values(ss_2, 1, ss_2.n))
-  slot_0 = ss_0
+  slot_0 = (set_list_values(ss_0, 1, unpack_values(ss_2, 1, ss_2.n)))
   v24_1 = cell_get(upvalues[1])
   v39_1 = slot_0[1]
   v50_1 = slot_0[2]
@@ -34401,8 +33653,7 @@ protos[496] = function(upvalues)
   for __loopKey_496_0, __loopValue_496_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_2 = __loopKey_496_0
     slot_3 = __loopValue_496_0
-    ss_0 = (slot_3:IsA("Model")) and ((slot_3:FindFirstChild("Humanoid")))
-    ss_0 = ss_0 and ((slot_3:FindFirstChild("HumanoidRootPart")))
+    ss_0 = ((slot_3:IsA("Model")) and ((slot_3:FindFirstChild("Humanoid")))) and ((slot_3:FindFirstChild("HumanoidRootPart")))
     if ss_0 then
       slot_4 = false
       v424_1 = env.ipairs
@@ -34471,9 +33722,7 @@ protos[497] = function(upvalues, argument_1)
     for __loopKey_497_0, __loopValue_497_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
       slot_1 = __loopKey_497_0
       slot_2 = __loopValue_497_0
-      ss_0 = (slot_2:IsA("Model")) and ((slot_2:FindFirstChild("Humanoid")))
-      ss_0 = ss_0 and ((slot_2:FindFirstChild("HumanoidRootPart")))
-      if ss_0 then
+      if (((slot_2:IsA("Model")) and ((slot_2:FindFirstChild("Humanoid")))) and ((slot_2:FindFirstChild("HumanoidRootPart")))) then
         v342_1 = env.table.insert
         v343_1 = cell_get(upvalues[1])
         v342_1(v343_1, slot_2)
@@ -34495,17 +33744,16 @@ end
 
 protos[499] = function(upvalues)
   local regs = {}
-  local v1187_1, v1197_1, v1225_1, v1231_1, v1236_1, v1256_1, v1256_2, v1256_3, v2249_1, v2254_1, v2259_1, v2264_ret1, v2264_ret2, v2279_1, v2289_1, v2295_1, v2319_1, v2329_1, v2339_1, v2344_1
-  local v2349_1, v2369_1, v2374_1, v2390_1, v2400_1, v2411_1, v2423_1, v2428_1, v2433_1, v2438_1, v2449_1, v2458_1, v2463_1, v2473_1, v2474_1, v2485_1, v2506_1, v2516_1, v2522_1, v2537_1
-  local v2547_1, v2557_1, v2558_1, v2568_1, v2583_1, v2602_1, v2612_1, v2613_1, v2618_1, v2628_1, v2639_1, v2644_1, v2649_1, v2668_1, v2678_1, v2694_1, v2706_1, v2712_1, v2717_1, v2737_1
-  local v2737_2, v2737_3, v2760_1, v2765_1, v2770_1, v2775_ret1, v2775_ret2, v2790_1, v2800_1, v2806_1, v2830_1, v2840_1, v2850_1, v2855_1, v2860_1, v2891_1, v2901_1, v2912_1, v2924_1, v2929_1
-  local v2934_1, v2939_1, v2950_1, v2961_1, v3006_1, v3072_1
+  local v1197_1, v1225_1, v1231_1, v1236_1, v1256_1, v1256_2, v1256_3, v2249_1, v2254_1, v2259_1, v2264_ret1, v2264_ret2, v2339_1, v2344_1
+  local v2369_1, v2411_1, v2423_1, v2428_1, v2433_1, v2458_1, v2473_1, v2474_1
+  local v2568_1, v2612_1, v2613_1, v2628_1, v2639_1, v2644_1, v2706_1, v2712_1, v2717_1, v2737_1
+  local v2737_2, v2737_3, v2760_1, v2765_1, v2770_1, v2775_ret1, v2775_ret2, v2850_1, v2855_1, v2912_1, v2924_1, v2929_1
+  local v2934_1, v2961_1, v3006_1, v3072_1
   local exit_997, slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_16, slot_17, slot_18, slot_19, slot_20, slot_21, slot_23, slot_24, slot_25, slot_26, slot_27, slot_28, slot_29, slot_30, slot_31, slot_32, slot_33
   local slot_34, slot_35, slot_36, slot_37, slot_38, slot_39, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4
   local vm_frame_random = math.random(0, 2147483646)
   if (cell_get(upvalues[1])).DuelMode then
-    ss_2 = (cell_get(upvalues[2]))
-    return ss_2()
+    return ((cell_get(upvalues[2])))()
   end
   if (cell_get(upvalues[1])).TrainingMode then
     regs.v126_1 = cell_get(upvalues[3])
@@ -34740,8 +33988,7 @@ protos[499] = function(upvalues)
     if slot_17 then
       return slot_17
     end
-    v1187_1 = env.math
-    v1197_1 = v1187_1.huge
+    v1197_1 = env.math.huge
     slot_28 = nil
     slot_28 = v1197_1
     slot_27 = nil
@@ -34763,86 +34010,52 @@ protos[499] = function(upvalues)
       v2264_ret1, v2264_ret2 = v2249_1(v2254_1, v2259_1)
       temp_4 = v2264_ret2
       temp_3 = v2264_ret1
-      v2279_1 = temp_3
-      temp_2 = v2279_1
-      v2289_1 = temp_3
-      v2295_1 = (v2289_1 == nil)
-      if v2295_1 then
+      temp_2 = temp_3
+      if ((temp_3 == nil)) then
         break
       end
       slot_29 = nil
       slot_30 = nil
-      v2319_1 = temp_3
-      slot_29 = v2319_1
-      v2329_1 = temp_4
-      slot_30 = v2329_1
+      slot_29 = temp_3
+      slot_30 = temp_4
       v2339_1 = slot_30
       v2344_1 = cell_get(upvalues[7])
-      v2349_1 = (v2339_1 ~= v2344_1)
-      ss_0 = v2349_1
-      if v2349_1 then
-        v2390_1 = slot_30
-        v2400_1 = v2390_1.Character
-        ss_0 = v2400_1
-      end
-      v2411_1 = ss_0
+      v2411_1 = (((v2339_1 ~= v2344_1)) and slot_30.Character)
       ss_0 = v2411_1
       if v2411_1 then
         v2423_1 = cell_get(upvalues[8])
         v2428_1 = slot_30
         v2433_1 = v2423_1(v2428_1)
-        v2438_1 = not v2433_1
-        ss_0 = v2438_1
+        ss_0 = (not v2433_1)
       end
-      v2449_1 = ss_0
-      if v2449_1 then
+      if ss_0 then
         v2458_1 = cell_get(upvalues[10])
-        v2463_1 = slot_30
-        v2473_1 = v2463_1.Name
+        v2473_1 = slot_30.Name
         v2474_1 = v2458_1[v2473_1]
         slot_31 = nil
         slot_31 = v2474_1
-        v2485_1 = slot_31
-        ss_0 = v2485_1
-        if v2485_1 then
-          v2506_1 = slot_31
-          v2516_1 = v2506_1.Role
-          v2522_1 = (v2516_1 == "Murderer")
-          ss_0 = v2522_1
-        end
-        v2537_1 = ss_0
-        if v2537_1 then
-          v2547_1 = slot_30
-          v2557_1 = v2547_1.Character
-          v2558_1 = v2557_1.FindFirstChild
-          v2568_1 = v2558_1(v2557_1, "HumanoidRootPart")
+        if (slot_31 and (((slot_31.Role == "Murderer")))) then
+          v2568_1 = slot_30.Character:FindFirstChild("HumanoidRootPart")
           slot_32 = nil
           slot_32 = v2568_1
-          v2583_1 = slot_32
-          if v2583_1 then
-            v2602_1 = slot_32
-            v2612_1 = v2602_1.Position
+          if slot_32 then
+            v2612_1 = slot_32.Position
             v2613_1 = slot_10
-            v2618_1 = (v2612_1 - v2613_1)
-            v2628_1 = v2618_1.Magnitude
+            v2628_1 = ((v2612_1 - v2613_1)).Magnitude
             slot_33 = nil
             slot_33 = v2628_1
             v2639_1 = slot_33
             v2644_1 = slot_28
-            v2649_1 = (v2639_1 < v2644_1)
-            if v2649_1 then
-              v2668_1 = slot_33
-              slot_28 = v2668_1
-              v2678_1 = slot_30
-              slot_27 = v2678_1
+            if ((v2639_1 < v2644_1)) then
+              slot_28 = slot_33
+              slot_27 = slot_30
             end
           end
         end
       end
     end
     v2369_1 = slot_27
-    v2374_1 = not v2369_1
-    if v2374_1 then
+    if (not v2369_1) then
       v2706_1 = env.ipairs
       v2712_1 = cell_get(upvalues[6])
       v2717_1 = v2712_1.GetPlayers
@@ -34861,39 +34074,25 @@ protos[499] = function(upvalues)
         v2775_ret1, v2775_ret2 = v2760_1(v2765_1, v2770_1)
         temp_4 = v2775_ret2
         temp_3 = v2775_ret1
-        v2790_1 = temp_3
-        temp_2 = v2790_1
-        v2800_1 = temp_3
-        v2806_1 = (v2800_1 == nil)
-        if v2806_1 then
+        temp_2 = temp_3
+        if ((temp_3 == nil)) then
           break
         end
         slot_34 = nil
         slot_35 = nil
-        v2830_1 = temp_3
-        slot_34 = v2830_1
-        v2840_1 = temp_4
-        slot_35 = v2840_1
+        slot_34 = temp_3
+        slot_35 = temp_4
         v2850_1 = slot_35
         v2855_1 = cell_get(upvalues[7])
-        v2860_1 = (v2850_1 ~= v2855_1)
-        ss_0 = v2860_1
-        if v2860_1 then
-          v2891_1 = slot_35
-          v2901_1 = v2891_1.Character
-          ss_0 = v2901_1
-        end
-        v2912_1 = ss_0
+        v2912_1 = (((v2850_1 ~= v2855_1)) and slot_35.Character)
         ss_0 = v2912_1
         if v2912_1 then
           v2924_1 = cell_get(upvalues[8])
           v2929_1 = slot_35
           v2934_1 = v2924_1(v2929_1)
-          v2939_1 = not v2934_1
-          ss_0 = v2939_1
+          ss_0 = (not v2934_1)
         end
-        v2950_1 = ss_0
-        if v2950_1 then
+        if ss_0 then
           v2961_1 = env.pcall
           regs.v2966_1 = cell_get(upvalues[11])
           regs.v2971_1 = slot_35
@@ -34906,8 +34105,7 @@ protos[499] = function(upvalues)
           slot_37 = regs.v2991_1
           slot_36 = nil
           regs.v3001_1 = ss_0
-          slot_36 = regs.v3001_1
-          v3006_1 = slot_36
+          v3006_1 = regs.v3001_1
           ss_0 = v3006_1
           if v3006_1 then
             regs.v3027_1 = slot_37
@@ -34945,11 +34143,9 @@ protos[499] = function(upvalues)
         end
       end
     end
-    v2694_1 = slot_27
-    return v2694_1
+    return slot_27
   end
-  v1187_1 = env.math
-  v1197_1 = v1187_1.huge
+  v1197_1 = env.math.huge
   slot_28 = nil
   slot_28 = v1197_1
   slot_27 = nil
@@ -34971,86 +34167,52 @@ protos[499] = function(upvalues)
     v2264_ret1, v2264_ret2 = v2249_1(v2254_1, v2259_1)
     temp_4 = v2264_ret2
     temp_3 = v2264_ret1
-    v2279_1 = temp_3
-    temp_2 = v2279_1
-    v2289_1 = temp_3
-    v2295_1 = (v2289_1 == nil)
-    if v2295_1 then
+    temp_2 = temp_3
+    if ((temp_3 == nil)) then
       break
     end
     slot_29 = nil
     slot_30 = nil
-    v2319_1 = temp_3
-    slot_29 = v2319_1
-    v2329_1 = temp_4
-    slot_30 = v2329_1
+    slot_29 = temp_3
+    slot_30 = temp_4
     v2339_1 = slot_30
     v2344_1 = cell_get(upvalues[7])
-    v2349_1 = (v2339_1 ~= v2344_1)
-    ss_0 = v2349_1
-    if v2349_1 then
-      v2390_1 = slot_30
-      v2400_1 = v2390_1.Character
-      ss_0 = v2400_1
-    end
-    v2411_1 = ss_0
+    v2411_1 = (((v2339_1 ~= v2344_1)) and slot_30.Character)
     ss_0 = v2411_1
     if v2411_1 then
       v2423_1 = cell_get(upvalues[8])
       v2428_1 = slot_30
       v2433_1 = v2423_1(v2428_1)
-      v2438_1 = not v2433_1
-      ss_0 = v2438_1
+      ss_0 = (not v2433_1)
     end
-    v2449_1 = ss_0
-    if v2449_1 then
+    if ss_0 then
       v2458_1 = cell_get(upvalues[10])
-      v2463_1 = slot_30
-      v2473_1 = v2463_1.Name
+      v2473_1 = slot_30.Name
       v2474_1 = v2458_1[v2473_1]
       slot_31 = nil
       slot_31 = v2474_1
-      v2485_1 = slot_31
-      ss_0 = v2485_1
-      if v2485_1 then
-        v2506_1 = slot_31
-        v2516_1 = v2506_1.Role
-        v2522_1 = (v2516_1 == "Murderer")
-        ss_0 = v2522_1
-      end
-      v2537_1 = ss_0
-      if v2537_1 then
-        v2547_1 = slot_30
-        v2557_1 = v2547_1.Character
-        v2558_1 = v2557_1.FindFirstChild
-        v2568_1 = v2558_1(v2557_1, "HumanoidRootPart")
+      if (slot_31 and (((slot_31.Role == "Murderer")))) then
+        v2568_1 = slot_30.Character:FindFirstChild("HumanoidRootPart")
         slot_32 = nil
         slot_32 = v2568_1
-        v2583_1 = slot_32
-        if v2583_1 then
-          v2602_1 = slot_32
-          v2612_1 = v2602_1.Position
+        if slot_32 then
+          v2612_1 = slot_32.Position
           v2613_1 = slot_10
-          v2618_1 = (v2612_1 - v2613_1)
-          v2628_1 = v2618_1.Magnitude
+          v2628_1 = ((v2612_1 - v2613_1)).Magnitude
           slot_33 = nil
           slot_33 = v2628_1
           v2639_1 = slot_33
           v2644_1 = slot_28
-          v2649_1 = (v2639_1 < v2644_1)
-          if v2649_1 then
-            v2668_1 = slot_33
-            slot_28 = v2668_1
-            v2678_1 = slot_30
-            slot_27 = v2678_1
+          if ((v2639_1 < v2644_1)) then
+            slot_28 = slot_33
+            slot_27 = slot_30
           end
         end
       end
     end
   end
   v2369_1 = slot_27
-  v2374_1 = not v2369_1
-  if v2374_1 then
+  if (not v2369_1) then
     v2706_1 = env.ipairs
     v2712_1 = cell_get(upvalues[6])
     v2717_1 = v2712_1.GetPlayers
@@ -35069,39 +34231,25 @@ protos[499] = function(upvalues)
       v2775_ret1, v2775_ret2 = v2760_1(v2765_1, v2770_1)
       temp_4 = v2775_ret2
       temp_3 = v2775_ret1
-      v2790_1 = temp_3
-      temp_2 = v2790_1
-      v2800_1 = temp_3
-      v2806_1 = (v2800_1 == nil)
-      if v2806_1 then
+      temp_2 = temp_3
+      if ((temp_3 == nil)) then
         break
       end
       slot_34 = nil
       slot_35 = nil
-      v2830_1 = temp_3
-      slot_34 = v2830_1
-      v2840_1 = temp_4
-      slot_35 = v2840_1
+      slot_34 = temp_3
+      slot_35 = temp_4
       v2850_1 = slot_35
       v2855_1 = cell_get(upvalues[7])
-      v2860_1 = (v2850_1 ~= v2855_1)
-      ss_0 = v2860_1
-      if v2860_1 then
-        v2891_1 = slot_35
-        v2901_1 = v2891_1.Character
-        ss_0 = v2901_1
-      end
-      v2912_1 = ss_0
+      v2912_1 = (((v2850_1 ~= v2855_1)) and slot_35.Character)
       ss_0 = v2912_1
       if v2912_1 then
         v2924_1 = cell_get(upvalues[8])
         v2929_1 = slot_35
         v2934_1 = v2924_1(v2929_1)
-        v2939_1 = not v2934_1
-        ss_0 = v2939_1
+        ss_0 = (not v2934_1)
       end
-      v2950_1 = ss_0
-      if v2950_1 then
+      if ss_0 then
         v2961_1 = env.pcall
         regs.v2966_1 = cell_get(upvalues[11])
         regs.v2971_1 = slot_35
@@ -35114,8 +34262,7 @@ protos[499] = function(upvalues)
         slot_37 = regs.v2991_1
         slot_36 = nil
         regs.v3001_1 = ss_0
-        slot_36 = regs.v3001_1
-        v3006_1 = slot_36
+        v3006_1 = regs.v3001_1
         ss_0 = v3006_1
         if v3006_1 then
           regs.v3027_1 = slot_37
@@ -35153,8 +34300,7 @@ protos[499] = function(upvalues)
       end
     end
   end
-  v2694_1 = slot_27
-  return v2694_1
+  return slot_27
 end
 
 protos[500] = function(upvalues, argument_1, argument_2, argument_3, argument_4, argument_5, argument_6, argument_7)
@@ -35170,23 +34316,16 @@ protos[500] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   slot_4 = argument_5
   slot_5 = argument_6
   slot_6 = argument_7
-  ss_0 = slot_1 or (2.8)
-  slot_1 = ss_0
-  ss_0 = slot_2 or (1)
-  slot_2 = ss_0
-  ss_0 = slot_3 or (1)
-  slot_3 = ss_0
-  ss_0 = slot_4 or (0)
-  slot_4 = ss_0
-  ss_0 = slot_5 or (0)
-  slot_5 = ss_0
-  ss_0 = slot_6 or (0)
-  slot_6 = ss_0
+  slot_1 = (slot_1 or (2.8))
+  slot_2 = (slot_2 or (1))
+  slot_3 = (slot_3 or (1))
+  slot_4 = (slot_4 or (0))
+  slot_5 = (slot_5 or (0))
+  slot_6 = (slot_6 or (0))
   if (not slot_0) then
     return nil
   end
-  ss_0 = slot_0.Character or slot_0
-  slot_7 = ss_0
+  slot_7 = (slot_0.Character or slot_0)
   if (not slot_7) then
     return nil
   end
@@ -35196,9 +34335,7 @@ protos[500] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
     return nil
   end
   slot_10 = slot_8.AssemblyLinearVelocity
-  ss_0 = slot_9 and slot_9.MoveDirection
-  ss_0 = ss_0 or ((env.Vector3.new()))
-  slot_11 = ss_0
+  slot_11 = ((slot_9 and slot_9.MoveDirection) or ((env.Vector3.new())))
   v544_1 = env.Vector3.new
   v555_1 = slot_10.X
   v571_1 = slot_10.Z
@@ -35207,8 +34344,7 @@ protos[500] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   v615_1 = slot_11.X
   v631_1 = slot_11.Z
   slot_13 = (v604_1(v615_1, 0, v631_1)).Magnitude
-  ss_0 = ((slot_12 > 0.5)) or (((slot_13 > 0.1)))
-  v704_1 = ss_0
+  v704_1 = (((slot_12 > 0.5)) or (((slot_13 > 0.1))))
   ss_0 = v704_1
   if not v704_1 then
     v726_1 = env.math.abs
@@ -35708,15 +34844,13 @@ protos[515] = function(upvalues, argument_1)
           v145_1 = cell_get(upvalues[5])
           v160_1 = (cell_get(upvalues[1])).FlickShotSpeed
           v145_1(v160_1)
-          ss_0 = (((cell_get(upvalues[1])).FlickShotMode == "camera")) and ("camera")
-          ss_0 = ss_0 or ("character")
+          ss_0 = ((((cell_get(upvalues[1])).FlickShotMode == "camera")) and ("camera")) or ("character")
           slot_3 = new_cell()
           slot_3 = cell_set_or_create(slot_3, ss_0)
           v367_1 = (cell_get(upvalues[6])).CurrentCamera
           slot_4 = new_cell()
           slot_4 = cell_set_or_create(slot_4, v367_1)
-          ss_0 = (cell_get(upvalues[7])) or ((cell_get(upvalues[8])) and (((cell_get(upvalues[8])):FindFirstChild("Head"))))
-          slot_5 = ss_0
+          slot_5 = ((cell_get(upvalues[7])) or ((cell_get(upvalues[8])) and (((cell_get(upvalues[8])):FindFirstChild("Head")))))
           v434_1 = ((cell_get(slot_3)) == "camera")
           ss_0 = v434_1
           if v434_1 then
@@ -35812,12 +34946,10 @@ protos[516] = function(upvalues)
 end
 
 protos[517] = function(upvalues)
-  local slot_0, ss_0
+  local slot_0
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = (cell_get(upvalues[1])).CurrentCamera
-  ss_0 = slot_0 and (cell_get(upvalues[2])).camWant
-  ss_0 = ss_0 and (cell_get(upvalues[2])).camActive
-  if ss_0 then
+  if ((slot_0 and (cell_get(upvalues[2])).camWant) and (cell_get(upvalues[2])).camActive) then
     slot_0.CFrame = (cell_get(upvalues[2])).camWant
   end
   return
@@ -35864,8 +34996,7 @@ protos[519] = function(upvalues, argument_1)
       v208_1 = cell_get(upvalues[4])
       v208_1()
     else
-      ss_0 = (((cell_get(upvalues[5])) == "character")) and (cell_get(slot_2)).AutoRotate
-      if ss_0 then
+      if ((((cell_get(upvalues[5])) == "character")) and (cell_get(slot_2)).AutoRotate) then
         v329_1 = env.pcall
         v334_1 = closure(520, {capture_2()})
         v329_1(v334_1)
@@ -35986,8 +35117,7 @@ protos[519] = function(upvalues, argument_1)
           v1073_1 = cell_get(upvalues[18])
           if ((slot_5 ~= v1073_1)) then
             upvalues[18] = cell_set_or_create(upvalues[18], slot_5)
-            ss_0 = (cell_get(upvalues[19])) and (cell_get(upvalues[19])).Position
-            slot_6 = ss_0
+            slot_6 = ((cell_get(upvalues[19])) and (cell_get(upvalues[19])).Position)
             if slot_6 then
               cell_get(upvalues[1]).camStartRot = slot_5.CFrame.Rotation
               cell_get(upvalues[1]).camCurRot = (cell_get(upvalues[1])).camStartRot
@@ -36000,8 +35130,7 @@ protos[519] = function(upvalues, argument_1)
               temp_0.camOffLocal = temp_2
             end
           end
-          ss_0 = (cell_get(upvalues[19])) and (cell_get(upvalues[19])).Position
-          slot_7 = ss_0
+          slot_7 = ((cell_get(upvalues[19])) and (cell_get(upvalues[19])).Position)
           v1522_1 = not slot_7
           ss_0 = v1522_1
           if not v1522_1 then
@@ -36025,8 +35154,7 @@ protos[519] = function(upvalues, argument_1)
               ss_3 = v1652_1
               ss_4 = v1653_1
               ss_5 = v1668_1 or (cell_get(upvalues[1])).camStartRot
-              ss_0 = ss_1(ss_2, ss_3, ss_4, ss_5)
-              slot_9 = ss_0
+              slot_9 = (ss_1(ss_2, ss_3, ss_4, ss_5))
               if slot_9 then
                 upvalues[21] = cell_set_or_create(upvalues[21], slot_9)
               end
@@ -36198,7 +35326,7 @@ protos[523] = function(upvalues)
 end
 
 protos[524] = function(upvalues, argument_1)
-  local slot_0, ss_0, v67_1
+  local slot_0, v67_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
@@ -36214,16 +35342,13 @@ protos[524] = function(upvalues, argument_1)
   if (slot_0:IsA("Accessory")) then
     return true
   end
-  ss_0 = slot_0.Parent and ((slot_0.Parent:IsA("Accessory")))
-  if ss_0 then
+  if (slot_0.Parent and ((slot_0.Parent:IsA("Accessory")))) then
     return true
   end
   if (slot_0:IsA("ForceField")) then
     return true
   end
-  ss_0 = ((slot_0.Name == "Handle")) and slot_0.Parent
-  ss_0 = ss_0 and ((slot_0.Parent:IsA("Tool")))
-  if ss_0 then
+  if ((((slot_0.Name == "Handle")) and slot_0.Parent) and ((slot_0.Parent:IsA("Tool")))) then
     return true
   end
   return false
@@ -36249,9 +35374,7 @@ protos[525] = function(upvalues, argument_1)
     slot_2 = __loopKey_525_0
     slot_3 = __loopValue_525_0
     v218_1 = cell_get(upvalues[3])
-    ss_0 = ((slot_3 ~= v218_1)) and slot_3.Character
-    ss_0 = ss_0 and (((slot_3.Character ~= slot_0)))
-    if ss_0 then
+    if ((((slot_3 ~= v218_1)) and slot_3.Character) and (((slot_3.Character ~= slot_0)))) then
       v343_1 = env.table.insert
       v359_1 = slot_3.Character
       v343_1(slot_1, v359_1)
@@ -36375,16 +35498,13 @@ protos[527] = function(upvalues, argument_1)
     v112_1 = slot_0:IsA("Player")
     ss_0 = (not v112_1)
   end
-  ss_0 = ss_0 and slot_0
-  ss_0 = ss_0 or slot_0.Character
-  slot_2 = ss_0
+  slot_2 = ((ss_0 and slot_0) or slot_0.Character)
   if (not slot_2) then
     return false
   end
   slot_3 = ((cell_get(upvalues[3]))())
   slot_4 = (slot_2:FindFirstChild("Head"))
-  ss_0 = (slot_2:FindFirstChild("UpperTorso")) or ((slot_2:FindFirstChild("Torso")))
-  slot_5 = ss_0
+  slot_5 = ((slot_2:FindFirstChild("UpperTorso")) or ((slot_2:FindFirstChild("Torso"))))
   slot_6 = (slot_2:FindFirstChild("HumanoidRootPart"))
   slot_7 = (new_table(0))
   if slot_4 then
@@ -36434,16 +35554,13 @@ protos[528] = function(upvalues, argument_1)
     v80_1 = slot_0:IsA("Player")
     ss_0 = (not v80_1)
   end
-  ss_0 = ss_0 and slot_0
-  ss_0 = ss_0 or slot_0.Character
-  slot_2 = ss_0
+  slot_2 = ((ss_0 and slot_0) or slot_0.Character)
   if (not slot_2) then
     return false
   end
   slot_3 = ((cell_get(upvalues[2]))())
   slot_4 = (slot_2:FindFirstChild("Head"))
-  ss_0 = (slot_2:FindFirstChild("UpperTorso")) or ((slot_2:FindFirstChild("Torso")))
-  slot_5 = ss_0
+  slot_5 = ((slot_2:FindFirstChild("UpperTorso")) or ((slot_2:FindFirstChild("Torso"))))
   slot_6 = (slot_2:FindFirstChild("HumanoidRootPart"))
   slot_7 = (new_table(0))
   if slot_4 then
@@ -36971,9 +36088,7 @@ protos[532] = function(upvalues)
   v8_1 = closure(533, {})
   ss_0, ss_1 = v3_1(v8_1)
   slot_1 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_1)) == "number")))
-  ss_0 = ss_0 and (((slot_1 > 0)))
-  if ss_0 then
+  if ((ss_0 and ((((env["type"](slot_1)) == "number")))) and (((slot_1 > 0)))) then
     return slot_1
   end
   return 196.2
@@ -37114,7 +36229,7 @@ end
 
 protos[539] = function(upvalues, argument_1)
   local exit_263, slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, ss_0, ss_1, ss_2, ss_3, ss_4, temp_0, temp_1, temp_2, temp_3, v188_1
-  local v446_1, v451_1, v456_1
+  local v446_1, v451_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if ((slot_0.snap_n < 2)) then
@@ -37153,14 +36268,12 @@ protos[539] = function(upvalues, argument_1)
       end
       v446_1 = temp_3
       v451_1 = temp_2
-      v456_1 = (v446_1 + v451_1)
-      temp_3 = v456_1
+      temp_3 = ((v446_1 + v451_1))
       continue
     end
     v446_1 = temp_3
     v451_1 = temp_2
-    v456_1 = (v446_1 + v451_1)
-    temp_3 = v456_1
+    temp_3 = ((v446_1 + v451_1))
   end
   if exit_263 == 1 then
     return slot_3, slot_4
@@ -37359,10 +36472,7 @@ protos[540] = function(upvalues, argument_1)
   slot_30 = v1466_1
   slot_29 = nil
   slot_29 = v1431_1
-  ss_0 = ((slot_27 ~= slot_27)) or (((slot_28 ~= slot_28)))
-  ss_0 = ss_0 or (((slot_29 ~= slot_29)))
-  ss_0 = ss_0 or (((slot_30 ~= slot_30)))
-  if ss_0 then
+  if (((((slot_27 ~= slot_27)) or (((slot_28 ~= slot_28)))) or (((slot_29 ~= slot_29)))) or (((slot_30 ~= slot_30)))) then
     return nil
   end
   v1556_1 = env.Vector3.new(slot_27, 0, slot_28)
@@ -37502,8 +36612,7 @@ protos[542] = function(upvalues, argument_1)
     slot_5 = nil
     slot_5 = v729_1
     v781_1 = (cell_get(upvalues[2])).acc_max
-    ss_0 = ((slot_4 > v781_1)) and (((slot_4 > 0)))
-    if ss_0 then
+    if (((slot_4 > v781_1)) and (((slot_4 > 0)))) then
       v1154_1 = slot_5
       v1169_1 = (cell_get(upvalues[2])).acc_max
       slot_5 = ((((v1154_1 * v1169_1)) / slot_4))
@@ -37570,8 +36679,7 @@ protos[544] = function(upvalues, argument_1)
   ss_4 = 1
   ss_0, ss_1 = ss_2(ss_3, ss_4)
   slot_3 = ss_0
-  ss_0 = (not slot_1) or ((not slot_3))
-  if ss_0 then
+  if ((not slot_1) or ((not slot_3))) then
     return nil
   end
   slot_5 = ((((slot_2 + ss_1)) * 0.5))
@@ -37585,7 +36693,7 @@ end
 
 protos[545] = function(upvalues, argument_1)
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, ss_0, ss_1, ss_2, ss_3, ss_4, temp_0, temp_1, temp_2, temp_3, v219_1
-  local v451_1, v456_1, v461_1, v556_1, v567_1, v578_1, v603_1
+  local v451_1, v456_1, v556_1, v567_1, v578_1, v603_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if ((slot_0.snap_n < 2)) then
@@ -37628,14 +36736,12 @@ protos[545] = function(upvalues, argument_1)
       end
       v451_1 = temp_3
       v456_1 = temp_2
-      v461_1 = (v451_1 + v456_1)
-      temp_3 = v461_1
+      temp_3 = ((v451_1 + v456_1))
       continue
     end
     v451_1 = temp_3
     v456_1 = temp_2
-    v461_1 = (v451_1 + v456_1)
-    temp_3 = v461_1
+    temp_3 = ((v451_1 + v456_1))
   end
   return slot_6
 end
@@ -37667,9 +36773,7 @@ protos[546] = function(upvalues, argument_1, argument_2)
   v24_1 = closure(547, {capture_0(), capture_1()})
   ss_0, ss_1 = v19_1(v24_1)
   slot_3 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_3)) == "number")))
-  ss_0 = ss_0 and (((slot_3 > 0)))
-  if ss_0 then
+  if ((ss_0 and ((((env["type"](slot_3)) == "number")))) and (((slot_3 > 0)))) then
     return slot_3
   end
   return 0
@@ -37756,14 +36860,13 @@ protos[550] = function(upvalues, argument_1)
 end
 
 protos[551] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, ss_0, v109_1, v136_1, v28_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, v109_1, v136_1, v28_1
   local v39_1, v448_1, v449_1, v464_1, v55_1, v561_1, v582_1
   local v628_1, v640_1, v651_1, v666_1, v681_1, v686_1, v82_1, v93_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
-  ss_0 = (not slot_0) or ((not slot_1))
-  if ss_0 then
+  if ((not slot_0) or ((not slot_1))) then
     return 0
   end
   v28_1 = env.Vector3.new
@@ -37777,17 +36880,14 @@ protos[551] = function(upvalues, argument_1, argument_2)
   v136_1 = slot_2.Magnitude
   slot_5 = slot_3.Magnitude
   slot_4 = v136_1
-  ss_0 = ((slot_4 < 1)) and (((slot_5 < 1)))
-  if ss_0 then
+  if (((slot_4 < 1)) and (((slot_5 < 1)))) then
     return 1
   end
-  ss_0 = ((slot_4 < 1)) or (((slot_5 < 1)))
-  if ss_0 then
+  if (((slot_4 < 1)) or (((slot_5 < 1)))) then
     return 0
   end
   slot_6 = ((slot_5 / slot_4))
-  ss_0 = ((slot_6 > 1.5)) or (((slot_6 < 0.6)))
-  if ss_0 then
+  if (((slot_6 > 1.5)) or (((slot_6 < 0.6)))) then
     return 0
   end
   v448_1 = slot_2.Unit
@@ -37883,13 +36983,11 @@ protos[553] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
       slot_10 = ((ss_0 / v461_1))
     end
   end
-  ss_0 = slot_9 or slot_8
-  slot_13 = ss_0
+  slot_13 = (slot_9 or slot_8)
   if (not slot_13) then
     return env.Vector3.zero, 0, nil, 0
   end
-  ss_0 = slot_8 and slot_9
-  if ss_0 then
+  if (slot_8 and slot_9) then
     v626_1 = env.math.clamp
     v637_1 = (slot_10 * 2.2)
     slot_14 = (v626_1(v637_1, 0, 1))
@@ -37903,8 +37001,7 @@ protos[553] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   if slot_5 then
     slot_16 = ((cell_get(upvalues[1]))(slot_5, slot_6, slot_7, slot_0))
     slot_15 = ((cell_get(upvalues[2]))(slot_13, slot_16))
-    ss_0 = ((slot_15 > 0)) and slot_7
-    if ss_0 then
+    if (((slot_15 > 0)) and slot_7) then
       v872_1 = slot_13
       v877_1 = v872_1.Lerp
       v893_1 = env.Vector3.new
@@ -38027,7 +37124,7 @@ protos[557] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   local v1069_1, v1084_1, v1162_1, v1177_1, v11_1, v1287_1, v1298_1, v1308_1, v1338_1, v1443_1, v1469_1, v1523_1, v1540_1
   local v1561_1, v1562_1, v1567_1, v1572_1, v1577_1, v193_1, v214_1, v246_1, v28_1, v297_1, v322_1, v344_1, v360_1, v375_1
   local v380_1, v440_1, v59_1, v661_1, v692_1, v903_1
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, slot_16, slot_17, slot_18, ss_0, ss_1, temp_0, temp_2
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, slot_16, slot_17, slot_18, ss_0, temp_0, temp_2
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
@@ -38043,9 +37140,7 @@ protos[557] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   v59_1 = (cell_get(upvalues[2]))(slot_0, 0)
   slot_7 = nil
   slot_7 = v59_1
-  ss_0 = slot_7 and slot_7.Y
-  ss_0 = ss_0 or (0)
-  slot_8 = ss_0
+  slot_8 = ((slot_7 and slot_7.Y) or (0))
   v193_1 = (cell_get(upvalues[3]))(slot_0)
   slot_9 = nil
   slot_9 = v193_1
@@ -38072,8 +37167,7 @@ protos[557] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   if ((((slot_3 - v440_1)) >= 0.15)) then
     slot_0.ground_t = slot_3
     temp_0 = slot_0
-    ss_0 = (cell_get(upvalues[6]))(slot_5, slot_12, slot_4)
-    temp_2 = ss_0
+    temp_2 = ((cell_get(upvalues[6]))(slot_5, slot_12, slot_4))
     temp_0.ground_y = temp_2
   end
   slot_14 = slot_0.ground_y
@@ -38084,8 +37178,7 @@ protos[557] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
     temp_0 = slot_0
     temp_2 = slot_15
     temp_0.clr = temp_2
-    ss_0 = (((env.math.abs(slot_8)) < 1)) and ((not slot_10))
-    if ss_0 then
+    if ((((env.math.abs(slot_8)) < 1)) and ((not slot_10))) then
       if slot_0.gc_seen then
         v903_1 = slot_0.gc_base
         if ((slot_15 < v903_1)) then
@@ -38108,9 +37201,7 @@ protos[557] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
         temp_0.gc_seen = temp_2
       end
     end
-    ss_0 = slot_0.gc_seen and slot_0.gc_base
-    ss_0 = ss_0 or slot_11
-    slot_16 = ss_0
+    slot_16 = ((slot_0.gc_seen and slot_0.gc_base) or slot_11)
     v1287_1 = env.math.max
     v1298_1 = (slot_16 * 0.35)
     v1308_1 = v1287_1(v1298_1, 1)
@@ -38118,9 +37209,7 @@ protos[557] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
     slot_17 = v1308_1
     v1338_1 = (slot_16 + slot_17)
     slot_13 = ((slot_15 > v1338_1))
-    ss_0 = (not slot_13) and slot_10
-    ss_0 = ss_0 and ((((env.math.abs(slot_8)) > 4)))
-    v1443_1 = ss_0
+    v1443_1 = (((not slot_13) and slot_10) and ((((env.math.abs(slot_8)) > 4))))
     ss_0 = v1443_1
     if v1443_1 then
       v1469_1 = (slot_16 + 0.35)
@@ -38142,10 +37231,7 @@ protos[557] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
       temp_2 = true
       slot_0.jump_fresh = temp_2
       temp_0 = slot_0
-      ss_1 = slot_0.jl_seen and slot_0.jl_v
-      ss_1 = ss_1 or ((env.math.max(slot_8, 0)))
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = (((slot_0.jl_seen and slot_0.jl_v) or ((env.math.max(slot_8, 0)))))
       temp_0.jump_v = temp_2
     else
       slot_0.jump_fresh = false
@@ -38166,9 +37252,7 @@ protos[557] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   temp_2 = slot_13
   slot_0.air = temp_2
   temp_0 = slot_0
-  ss_1 = slot_13 and (((slot_8 > 1)) or (((slot_18 > 1))))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((slot_13 and (((slot_8 > 1)) or (((slot_18 > 1))))))
   temp_0.jumping = temp_2
   return
 end
@@ -38277,8 +37361,7 @@ protos[558] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
               v1187_1 = slot_16.Z
               slot_12 = (v1154_1(v1165_1, v1176_1, v1187_1))
             end
-            ss_0 = slot_11 and (((ss_3 <= 0)))
-            if ss_0 then
+            if (slot_11 and (((ss_3 <= 0)))) then
               if ((slot_0.spoof < 20)) then
                 temp_0 = slot_0
                 temp_2 = ((slot_0.spoof + 1))
@@ -38306,8 +37389,7 @@ protos[558] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
                 v1695_1 = v1668_1(0, v1690_1)
                 slot_18 = nil
                 slot_18 = v1695_1
-                ss_0 = slot_0.jump_fresh and (((slot_18 <= 0.2)))
-                if ss_0 then
+                if (slot_0.jump_fresh and (((slot_18 <= 0.2)))) then
                   v1792_1 = (((cell_get(upvalues[13]))()) * slot_18)
                   v1797_1 = (slot_17 + v1792_1)
                   slot_19 = nil
@@ -38341,15 +37423,13 @@ protos[558] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
             end
             temp_2 = slot_12
             slot_0.vel = temp_2
-            ss_1 = ((slot_7 ~= nil)) or (((slot_9 ~= nil)))
-            ss_0 = ss_1
+            ss_0 = (((slot_7 ~= nil)) or (((slot_9 ~= nil))))
             slot_0.ready = ss_0
             slot_0.fresh = slot_0.vel
             temp_0 = slot_0
             temp_2 = slot_13
             temp_0.turn = temp_2
-            ss_0 = ss_2 or slot_12
-            slot_20 = ss_0
+            slot_20 = (ss_2 or slot_12)
             v2412_1 = cell_get(upvalues[14])
             v2437_1 = slot_20.X
             v2448_1 = slot_20.Z
@@ -38374,11 +37454,7 @@ protos[559] = function(upvalues)
   ss_3 = v33_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_3 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_3)) == "number")))
-  ss_0 = ss_0 and (((slot_3 == slot_3)))
-  ss_0 = ss_0 and (((slot_3 > 4)))
-  ss_0 = ss_0 and (((slot_3 < 800)))
-  if ss_0 then
+  if ((((ss_0 and ((((env["type"](slot_3)) == "number")))) and (((slot_3 == slot_3)))) and (((slot_3 > 4)))) and (((slot_3 < 800)))) then
     slot_0 = ((slot_3 / 1000))
   end
   v85_1 = env.pcall
@@ -38387,22 +37463,16 @@ protos[559] = function(upvalues)
   ss_3 = v90_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_5 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_5)) == "number")))
-  ss_0 = ss_0 and (((slot_5 == slot_5)))
-  ss_0 = ss_0 and (((slot_5 > 0)))
-  if ss_0 then
+  if (((ss_0 and ((((env["type"](slot_5)) == "number")))) and (((slot_5 == slot_5)))) and (((slot_5 > 0)))) then
     slot_6 = ((slot_5 * 2))
-    ss_0 = ((slot_6 > 0.004)) and (((slot_6 < 0.8)))
-    if ss_0 then
+    if (((slot_6 > 0.004)) and (((slot_6 < 0.8)))) then
       slot_1 = slot_6
     end
   end
-  ss_0 = slot_0 and slot_1
-  if ss_0 then
+  if (slot_0 and slot_1) then
     return ((((slot_0 + slot_1)) * 0.5))
   end
-  ss_1 = slot_0 or slot_1
-  return ss_1
+  return (slot_0 or slot_1)
 end
 
 protos[560] = function(upvalues)
@@ -38725,8 +37795,7 @@ protos[566] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
     v903_1 = ((v854_1(v877_1, v892_1)) * slot_6)
     slot_20 = nil
     slot_20 = v903_1
-    ss_0 = ((slot_19 > slot_20)) and (((slot_19 > 1e-06)))
-    if ss_0 then
+    if (((slot_19 > slot_20)) and (((slot_19 > 1e-06)))) then
       slot_17 = ((((slot_17 * slot_20)) / slot_19))
       slot_18 = ((((slot_18 * slot_20)) / slot_19))
     end
@@ -38735,8 +37804,7 @@ protos[566] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   else
     slot_21 = nil
     slot_21 = slot_6
-    ss_0 = ((slot_6 > 0)) and (((slot_8.Magnitude > 0)))
-    v1360_1 = ss_0
+    v1360_1 = (((slot_6 > 0)) and (((slot_8.Magnitude > 0))))
     ss_0 = v1360_1
     if v1360_1 then
       v1381_1 = slot_0.air
@@ -38765,8 +37833,7 @@ protos[566] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
         ss_2 = slot_8
         ss_4 = v1645_1
         ss_5 = v1676_1
-        ss_0 = ss_1(ss_2, ss_4(ss_5, v1686_1, (0.6)))
-        slot_8 = ss_0
+        slot_8 = (ss_1(ss_2, ss_4(ss_5, v1686_1, (0.6))))
       end
       v1598_1 = (0.15 * slot_24)
       v1603_1 = (0.85 + v1598_1)
@@ -38798,16 +37865,13 @@ protos[566] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
     v1891_1 = (v1875_1 - v1886_1)
     slot_28 = nil
     slot_28 = v1891_1
-    ss_0 = slot_0.jumping and (((slot_0.jump_v > 0)))
-    ss_0 = ss_0 and (((slot_7 > 0)))
-    v2101_1 = ss_0
+    v2101_1 = ((slot_0.jumping and (((slot_0.jump_v > 0)))) and (((slot_7 > 0))))
     ss_0 = v2101_1
     if v2101_1 then
       v2133_1 = (slot_0.jump_v / slot_7)
       ss_0 = ((slot_27 <= v2133_1))
     end
-    ss_0 = ss_0 and (((slot_28 > slot_26)))
-    if ss_0 then
+    if (ss_0 and (((slot_28 > slot_26)))) then
       slot_26 = slot_28
     end
     v1937_1 = slot_1.Y
@@ -38863,9 +37927,7 @@ protos[567] = function(upvalues, argument_1, argument_2, argument_3)
   v40_1 = env.table.clear
   v51_1 = (cell_get(upvalues[1])).w
   v40_1(v51_1)
-  ss_0 = slot_0.ready and (((cell_get(upvalues[2]))(slot_0)))
-  ss_0 = ss_0 or (0)
-  slot_3 = ss_0
+  slot_3 = ((slot_0.ready and (((cell_get(upvalues[2]))(slot_0)))) or (0))
   v187_1 = env.Vector3.new
   v204_1 = slot_0.fresh.X
   v226_1 = slot_0.fresh.Z
@@ -39017,8 +38079,7 @@ protos[571] = function(upvalues, argument_1, argument_2, argument_3)
   slot_3 = slot_1.Position
   v39_1 = cell_get(upvalues[1])
   v39_1(slot_0, slot_3, slot_2)
-  ss_0 = (cell_get(upvalues[2])).primary or slot_3
-  slot_4 = ss_0
+  slot_4 = ((cell_get(upvalues[2])).primary or slot_3)
   slot_5 = ((cell_get(upvalues[3]))(slot_0, slot_4))
   v223_1 = -(1)
   slot_9 = 0
@@ -39052,9 +38113,7 @@ protos[571] = function(upvalues, argument_1, argument_2, argument_3)
     v716_1 = (cell_get(upvalues[2])).weight
     ss_1 = ((slot_7 / v716_1))
   end
-  ss_1 = ss_1 or (0)
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((ss_1 or (0)))
   temp_0.conf = temp_2
   slot_15 = (cell_get(upvalues[6])).pad
   v825_1 = (slot_8 - slot_15)
@@ -39074,13 +38133,11 @@ protos[571] = function(upvalues, argument_1, argument_2, argument_3)
 end
 
 protos[572] = function(upvalues)
-  local slot_0, slot_1, slot_2, ss_0, temp_0, temp_1, temp_2, temp_3, v344_1, v355_1
+  local slot_0, slot_1, slot_2, temp_0, temp_1, temp_2, temp_3, v344_1, v355_1
   local v411_1, v427_1, v448_1, v68_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = (cell_get(upvalues[1])).primary
-  ss_0 = (not slot_0) or ((((cell_get(upvalues[1])).n == 0)))
-  ss_0 = ss_0 or ((((cell_get(upvalues[1])).weight <= 0)))
-  if ss_0 then
+  if (((not slot_0) or ((((cell_get(upvalues[1])).n == 0)))) or ((((cell_get(upvalues[1])).weight <= 0)))) then
     return 0
   end
   slot_1 = 0
@@ -39129,8 +38186,7 @@ protos[574] = function(upvalues, argument_1, argument_2)
   slot_0 = argument_1
   slot_1 = argument_2
   v11_1 = slot_0.ready
-  ss_0 = (not v11_1) or (((slot_1 <= 0)))
-  if ss_0 then
+  if ((not v11_1) or (((slot_1 <= 0)))) then
     return env.Vector3.zero
   end
   v34_1 = env.Vector3.new
@@ -39149,16 +38205,13 @@ protos[574] = function(upvalues, argument_1, argument_2)
     v370_1 = slot_0.jump_v
     v381_1 = (slot_3 * slot_6)
     slot_7 = ((v370_1 - v381_1))
-    ss_0 = slot_0.jumping and (((slot_0.jump_v > 0)))
-    ss_0 = ss_0 and (((slot_3 > 0)))
-    v624_1 = ss_0
+    v624_1 = ((slot_0.jumping and (((slot_0.jump_v > 0)))) and (((slot_3 > 0))))
     ss_0 = v624_1
     if v624_1 then
       v656_1 = (slot_0.jump_v / slot_3)
       ss_0 = ((slot_6 <= v656_1))
     end
-    ss_0 = ss_0 and (((slot_7 > slot_5)))
-    if ss_0 then
+    if (ss_0 and (((slot_7 > slot_5)))) then
       slot_5 = slot_7
     end
     v433_1 = env.Vector3.new
@@ -39206,10 +38259,7 @@ protos[576] = function(upvalues, argument_1)
   if (not slot_0) then
     return nil
   end
-  ss_0 = (((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))
-  ss_0 = ss_0 and slot_0.Character
-  ss_0 = ss_0 or slot_0
-  slot_2 = ss_0
+  slot_2 = ((((((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))) and slot_0.Character) or slot_0)
   if (not slot_2) then
     return nil
   end
@@ -39254,12 +38304,10 @@ protos[576] = function(upvalues, argument_1)
   slot_9 = nil
   slot_9 = v543_1
   slot_10 = nil
-  ss_0 = slot_5.ready and (((slot_9 > 0)))
-  if ss_0 then
+  if (slot_5.ready and (((slot_9 > 0)))) then
     slot_10 = ((cell_get(upvalues[6]))(slot_5, slot_3, slot_6))
   else
-    ss_0 = ((cell_get(upvalues[7]))(slot_3)) or env.Vector3.zero
-    slot_11 = ss_0
+    slot_11 = (((cell_get(upvalues[7]))(slot_3)) or env.Vector3.zero)
     v843_1 = env.Vector3.new
     v854_1 = slot_11.X
     v870_1 = slot_11.Z
@@ -39326,17 +38374,14 @@ protos[576] = function(upvalues, argument_1)
 end
 
 protos[577] = function(upvalues, argument_1)
-  local slot_0, slot_2, slot_3, slot_4, ss_0, temp_0
+  local slot_0, slot_2, slot_3, slot_4, temp_0
   local v322_1, v338_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
     return nil
   end
-  ss_0 = (((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))
-  ss_0 = ss_0 and slot_0.Character
-  ss_0 = ss_0 or slot_0
-  slot_2 = ss_0
+  slot_2 = ((((((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))) and slot_0.Character) or slot_0)
   if (not slot_2) then
     return nil
   end
@@ -39356,17 +38401,14 @@ protos[577] = function(upvalues, argument_1)
 end
 
 protos[578] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_3, slot_4, slot_5, ss_0
+  local slot_0, slot_1, slot_3, slot_4, slot_5
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
   if (not slot_0) then
     return env.Vector3.zero
   end
-  ss_0 = (((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))
-  ss_0 = ss_0 and slot_0.Character
-  ss_0 = ss_0 or slot_0
-  slot_3 = ss_0
+  slot_3 = ((((((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))) and slot_0.Character) or slot_0)
   if (not slot_3) then
     return env.Vector3.zero
   end
@@ -39427,9 +38469,7 @@ protos[581] = function(upvalues, argument_1)
     v67_1 = cell_get(upvalues[3])
     v62_1(v67_1)
     slot_1 = ((cell_get(upvalues[4]))())
-    ss_0 = (cell_get(upvalues[5])) and (cell_get(upvalues[5])).Position
-    ss_0 = ss_0 or (nil)
-    slot_2 = ss_0
+    slot_2 = (((cell_get(upvalues[5])) and (cell_get(upvalues[5])).Position) or (nil))
     v209_1 = env.ipairs
     v215_1 = cell_get(upvalues[6])
     v220_1 = v215_1.GetPlayers
@@ -39444,10 +38484,8 @@ protos[581] = function(upvalues, argument_1)
       v358_1 = cell_get(upvalues[7])
       if ((slot_4 ~= v358_1)) then
         slot_5 = slot_4.Character
-        ss_0 = slot_5 and ((slot_5:FindFirstChild("HumanoidRootPart")))
-        slot_6 = ss_0
-        ss_0 = slot_6 and ((not slot_2) or (((((slot_6.Position - slot_2)).Magnitude <= 250))))
-        if ss_0 then
+        slot_6 = (slot_5 and ((slot_5:FindFirstChild("HumanoidRootPart"))))
+        if (slot_6 and ((not slot_2) or (((((slot_6.Position - slot_2)).Magnitude <= 250))))) then
           slot_7 = (cell_get(upvalues[8]))[slot_6]
           if (not slot_7) then
             slot_7 = ((cell_get(upvalues[9]))())
@@ -39837,9 +38875,7 @@ protos[583] = function(upvalues)
     v74_1 = closure(584, {})
     ss_0, ss_1 = v69_1(v74_1)
     slot_2 = ss_1
-    ss_0 = ss_0 and ((((env["type"](slot_2)) == "number")))
-    ss_0 = ss_0 and (((slot_2 > 0)))
-    if ss_0 then
+    if ((ss_0 and ((((env["type"](slot_2)) == "number")))) and (((slot_2 > 0)))) then
       upvalues[3] = cell_set_or_create(upvalues[3], slot_2)
     end
     upvalues[2] = cell_set_or_create(upvalues[2], slot_0)
@@ -40229,8 +39265,7 @@ protos[597] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       ss_6 = v818_1
       ss_2 = ss_3(ss_4, ss_6(slot_5))
       ss_3 = slot_8
-      ss_0 = ss_1(ss_2, ss_3)
-      slot_10 = ss_0
+      slot_10 = (ss_1(ss_2, ss_3))
       v873_1 = slot_9[1]
       v874_1 = (slot_2 - v873_1)
       slot_11 = nil
@@ -40356,8 +39391,7 @@ protos[597] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
           ss_2 = slot_31
           ss_3 = slot_32
           ss_4 = slot_33
-          ss_5 = v3049_1 and (1)
-          ss_5 = ss_5 or (0)
+          ss_5 = (v3049_1 and (1)) or (0)
           v3157_1 = (cell_get(upvalues[6]))(slot_27, slot_32, slot_33)
           ss_5 = ((ss_5 - v3157_1))
           ss_1(ss_2, ss_3, ss_4, ss_5)
@@ -40370,8 +39404,7 @@ protos[597] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       ss_2 = (cell_get(upvalues[4]))
       ss_3 = slot_31
       ss_4 = slot_10
-      ss_0 = ss_2(ss_3, ss_4)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4))
       temp_0.P = temp_2
     end
   end
@@ -40660,8 +39693,7 @@ protos[605] = function(upvalues)
   v400_1 = (v347_1((1), v368_1(v385_1)))
   v400_3 = ss_1[v400_1]
   v411_1 = (cell_get(upvalues[1])).rtt
-  ss_1 = ((v400_3 - v411_1))
-  return ss_1
+  return (((v400_3 - v411_1)))
 end
 
 protos[606] = function(upvalues, argument_1, argument_2, argument_3)
@@ -40765,8 +39797,7 @@ protos[609] = function(upvalues, argument_1)
     slot_7 = ((slot_7 + 1))
     temp_3 = ((temp_3 + temp_2))
   end
-  ss_0 = ((slot_7 < 3)) or (((slot_5 < 1e-08)))
-  if ss_0 then
+  if (((slot_7 < 3)) or (((slot_5 < 1e-08)))) then
     return nil, nil
   end
   slot_11 = ((slot_6 / slot_5))
@@ -40801,7 +39832,7 @@ end
 
 protos[610] = function(upvalues, argument_1)
   local exit_238, slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, ss_0, ss_1, ss_2, ss_3, ss_4, temp_0, temp_1, temp_2, temp_3, v163_1
-  local v412_1, v431_1, v436_1, v441_1
+  local v412_1, v431_1, v436_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if ((slot_0.snap_n < 2)) then
@@ -40840,14 +39871,12 @@ protos[610] = function(upvalues, argument_1)
       end
       v431_1 = temp_3
       v436_1 = temp_2
-      v441_1 = (v431_1 + v436_1)
-      temp_3 = v441_1
+      temp_3 = ((v431_1 + v436_1))
       continue
     end
     v431_1 = temp_3
     v436_1 = temp_2
-    v441_1 = (v431_1 + v436_1)
-    temp_3 = v441_1
+    temp_3 = ((v431_1 + v436_1))
   end
   if exit_238 == 1 then
     return slot_4, slot_5
@@ -40860,7 +39889,7 @@ protos[611] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   local v1040_1, v1112_1, v1184_1, v11_1, v1230_1, v1241_1, v1246_1, v1271_1, v1282_1, v1287_1, v1303_1, v1318_1, v1333_1, v1338_1, v1343_1
   local v37_1, v38_1, v509_1, v526_1, v531_1, v551_1, v572_1, v577_1, v602_1, v619_1, v624_1, v644_1, v665_1, v670_1, v695_1, v712_1, v717_1, v742_1, v759_1
   local v764_1, v789_1, v814_1, v839_1, v866_1, v891_1, v912_1, v917_1, v968_1
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, slot_16, ss_0, temp_0, temp_2
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, slot_16, temp_0, temp_2
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
@@ -40883,8 +39912,7 @@ protos[611] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     v38_1 = (slot_1 - v37_1)
     slot_4 = nil
     slot_4 = v38_1
-    ss_0 = ((slot_4 <= 0)) or (((slot_4 > 0.6)))
-    if ss_0 then
+    if (((slot_4 <= 0)) or (((slot_4 > 0.6)))) then
       slot_0.px = slot_2
       slot_0.pz = slot_3
       temp_0 = slot_0
@@ -40961,8 +39989,7 @@ protos[611] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       v1343_1 = v1303_1(v1338_1)
       slot_16 = nil
       slot_16 = v1343_1
-      ss_0 = ((slot_16 > 300)) and (((slot_16 > 0)))
-      if ss_0 then
+      if (((slot_16 > 300)) and (((slot_16 > 0)))) then
         slot_14 = ((((slot_14 * 300)) / slot_16))
         slot_15 = ((((slot_15 * 300)) / slot_16))
       end
@@ -41166,10 +40193,7 @@ protos[612] = function(upvalues, argument_1)
   v1451_1 = (v1431_1 / v1446_1)
   slot_30 = nil
   slot_30 = v1451_1
-  ss_0 = ((slot_27 ~= slot_27)) or (((slot_28 ~= slot_28)))
-  ss_0 = ss_0 or (((slot_29 ~= slot_29)))
-  ss_0 = ss_0 or (((slot_30 ~= slot_30)))
-  if ss_0 then
+  if (((((slot_27 ~= slot_27)) or (((slot_28 ~= slot_28)))) or (((slot_29 ~= slot_29)))) or (((slot_30 ~= slot_30)))) then
     return nil
   end
   v1526_1 = env.Vector3.new(slot_27, 0, slot_28)
@@ -41302,8 +40326,7 @@ protos[614] = function(upvalues, argument_1)
     v717_1 = slot_2.X
     slot_6 = slot_2.Z
     slot_5 = v717_1
-    ss_0 = ((slot_4 > 280)) and (((slot_4 > 0)))
-    if ss_0 then
+    if (((slot_4 > 280)) and (((slot_4 > 0)))) then
       slot_5 = ((((slot_5 * 280)) / slot_4))
       slot_6 = ((((slot_6 * 280)) / slot_4))
     end
@@ -41346,14 +40369,13 @@ protos[615] = function(upvalues, argument_1)
 end
 
 protos[616] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, ss_0, v109_1, v136_1, v28_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, v109_1, v136_1, v28_1
   local v39_1, v448_1, v449_1, v464_1, v55_1, v552_1, v577_1, v592_1, v603_1, v609_1, v624_1
   local v639_1, v654_1, v659_1, v82_1, v93_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
-  ss_0 = (not slot_0) or ((not slot_1))
-  if ss_0 then
+  if ((not slot_0) or ((not slot_1))) then
     return 0
   end
   v28_1 = env.Vector3.new
@@ -41367,17 +40389,14 @@ protos[616] = function(upvalues, argument_1, argument_2)
   v136_1 = slot_2.Magnitude
   slot_5 = slot_3.Magnitude
   slot_4 = v136_1
-  ss_0 = ((slot_4 < 1)) and (((slot_5 < 1)))
-  if ss_0 then
+  if (((slot_4 < 1)) and (((slot_5 < 1)))) then
     return 1
   end
-  ss_0 = ((slot_4 < 1)) or (((slot_5 < 1)))
-  if ss_0 then
+  if (((slot_4 < 1)) or (((slot_5 < 1)))) then
     return 0
   end
   slot_6 = ((slot_5 / slot_4))
-  ss_0 = ((slot_6 > 1.75)) or (((slot_6 < 0.45)))
-  if ss_0 then
+  if (((slot_6 > 1.75)) or (((slot_6 < 0.45)))) then
     return 0
   end
   v448_1 = slot_2.Unit
@@ -41455,8 +40474,7 @@ protos[618] = function(upvalues, argument_1)
   ss_4 = 1
   ss_0, ss_1 = ss_2(ss_3, ss_4)
   slot_3 = ss_0
-  ss_0 = (not slot_1) or ((not slot_3))
-  if ss_0 then
+  if ((not slot_1) or ((not slot_3))) then
     return nil
   end
   slot_5 = ((((slot_2 + ss_1)) * 0.5))
@@ -41470,7 +40488,7 @@ end
 
 protos[619] = function(upvalues, argument_1)
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, ss_0, ss_1, ss_2, ss_3, ss_4, temp_0, temp_1, temp_2, temp_3, v219_1
-  local v451_1, v456_1, v461_1, v556_1, v567_1, v578_1, v603_1
+  local v451_1, v456_1, v556_1, v567_1, v578_1, v603_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if ((slot_0.snap_n < 2)) then
@@ -41513,20 +40531,18 @@ protos[619] = function(upvalues, argument_1)
       end
       v451_1 = temp_3
       v456_1 = temp_2
-      v461_1 = (v451_1 + v456_1)
-      temp_3 = v461_1
+      temp_3 = ((v451_1 + v456_1))
       continue
     end
     v451_1 = temp_3
     v456_1 = temp_2
-    v461_1 = (v451_1 + v456_1)
-    temp_3 = v461_1
+    temp_3 = ((v451_1 + v456_1))
   end
   return slot_6
 end
 
 protos[620] = function(upvalues, argument_1, argument_2, argument_3)
-  local slot_0, slot_1, slot_2, slot_3, ss_1, temp_0, temp_1, temp_2, v12_1, v13_1, v196_1, v201_1, v222_1, v233_1, v239_1, v244_1, v290_1
+  local slot_0, slot_1, slot_2, slot_3, temp_0, temp_1, temp_2, v12_1, v13_1, v196_1, v201_1, v222_1, v233_1, v239_1, v244_1, v290_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
@@ -41558,9 +40574,7 @@ protos[620] = function(upvalues, argument_1, argument_2, argument_3)
   v239_1 = v222_1(0, v233_1, 0)
   v244_1 = cell_get(upvalues[3])
   slot_3 = (v201_1(v196_1, slot_0, v239_1, v244_1))
-  ss_1 = slot_3 and slot_3.Position.Y
-  ss_1 = ss_1 or (nil)
-  return ss_1
+  return ((slot_3 and slot_3.Position.Y) or (nil))
 end
 
 protos[621] = function(upvalues, argument_1, argument_2, argument_3)
@@ -41594,9 +40608,7 @@ protos[621] = function(upvalues, argument_1, argument_2, argument_3)
   v61_1 = closure(622, {capture_1(), capture_2()})
   ss_0, ss_1 = v56_1(v61_1)
   slot_4 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_4)) == "number")))
-  ss_0 = ss_0 and (((slot_4 > 0)))
-  if ss_0 then
+  if ((ss_0 and ((((env["type"](slot_4)) == "number")))) and (((slot_4 > 0)))) then
     return slot_4
   end
   return 3
@@ -41630,9 +40642,7 @@ protos[623] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   v59_1 = (cell_get(upvalues[2]))(slot_0, 0)
   slot_7 = nil
   slot_7 = v59_1
-  ss_0 = slot_7 and slot_7.Y
-  ss_0 = ss_0 or (0)
-  slot_8 = ss_0
+  slot_8 = ((slot_7 and slot_7.Y) or (0))
   v193_1 = (cell_get(upvalues[3]))(slot_0)
   slot_9 = nil
   slot_9 = v193_1
@@ -41658,8 +40668,7 @@ protos[623] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   if ((((slot_3 - v419_1)) >= 0.14)) then
     slot_0.ground_t = slot_3
     temp_0 = slot_0
-    ss_0 = (cell_get(upvalues[7]))(slot_5, slot_12, slot_4)
-    temp_2 = ss_0
+    temp_2 = ((cell_get(upvalues[7]))(slot_5, slot_12, slot_4))
     temp_0.ground_y = temp_2
   end
   slot_13 = slot_0.ground_y
@@ -41671,8 +40680,7 @@ protos[623] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
     temp_0 = slot_0
     temp_2 = slot_15
     temp_0.clr = temp_2
-    ss_0 = ((((cell_get(upvalues[5]))(slot_8)) < 1)) and ((not slot_10))
-    if ss_0 then
+    if (((((cell_get(upvalues[5]))(slot_8)) < 1)) and ((not slot_10))) then
       if slot_0.gc_seen then
         v870_1 = slot_0.gc_base
         if ((slot_15 < v870_1)) then
@@ -41695,18 +40703,14 @@ protos[623] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
         temp_0.gc_seen = temp_2
       end
     end
-    ss_0 = slot_0.gc_seen and slot_0.gc_base
-    ss_0 = ss_0 or slot_11
-    slot_16 = ss_0
+    slot_16 = ((slot_0.gc_seen and slot_0.gc_base) or slot_11)
     v1259_1 = (slot_5.Y - slot_13)
     v1270_1 = cell_get(upvalues[8])
     v1285_1 = (slot_16 * 0.35)
     v1295_1 = v1270_1(v1285_1, 1)
     v1300_1 = (slot_16 + v1295_1)
     slot_14 = ((v1259_1 > v1300_1))
-    ss_0 = (not slot_14) and slot_10
-    ss_0 = ss_0 and (((((cell_get(upvalues[5]))(slot_8)) > 4)))
-    v1399_1 = ss_0
+    v1399_1 = (((not slot_14) and slot_10) and (((((cell_get(upvalues[5]))(slot_8)) > 4))))
     ss_0 = v1399_1
     if v1399_1 then
       v1425_1 = (slot_16 + 0.35)
@@ -41727,17 +40731,14 @@ protos[623] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
       slot_0.air_since = slot_3
       temp_2 = true
       slot_0.jump_fresh = temp_2
-      ss_1 = slot_0.jl_seen and slot_0.jl_v
-      ss_1 = ss_1 or (((cell_get(upvalues[8]))(slot_8, 0)))
-      ss_0 = ss_1
+      ss_0 = ((slot_0.jl_seen and slot_0.jl_v) or (((cell_get(upvalues[8]))(slot_8, 0))))
       slot_0.jump_v = ss_0
       slot_0.jump_launch_y = slot_5.Y
       temp_0 = slot_0
       temp_2 = slot_3
       temp_0.jump_launch_t = temp_2
     else
-      ss_0 = ((slot_0.playerName ~= "")) and (((slot_0.jump_launch_t > 0)))
-      if ss_0 then
+      if (((slot_0.playerName ~= "")) and (((slot_0.jump_launch_t > 0)))) then
         v2161_1 = cell_get(upvalues[9])
         v2176_1 = slot_0.playerName
         v2187_1 = slot_0.jl_v
@@ -41769,8 +40770,7 @@ protos[623] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
       ss_1 = ((((v2292_1 - v2335_1)) > 1))
     end
   end
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ss_1
   temp_0.jumping = temp_2
   return
 end
@@ -41974,8 +40974,7 @@ protos[630] = function(upvalues, argument_1, argument_2, argument_3)
       ss_2 = v308_1
       ss_3 = v329_1
       ss_4 = 5
-      ss_0 = ss_2(ss_3, ss_4)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4))
       temp_0.speedhack_mult = temp_2
     else
       v420_1 = slot_3.speedhack
@@ -42064,8 +41063,7 @@ protos[630] = function(upvalues, argument_1, argument_2, argument_3)
       ss_2 = v1728_1
       ss_3 = v1749_1
       ss_4 = 4
-      ss_0 = ss_2(ss_3, ss_4)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4))
       temp_0.jumphack_mult = temp_2
     else
       slot_3.jumphack = false
@@ -42144,8 +41142,7 @@ protos[632] = function(upvalues, argument_1, argument_2)
         v579_1 = (slot_4 - 1)
         v590_1 = slot_2[v579_1].launch_t
         slot_5 = ((v563_1 - v590_1))
-        ss_0 = ((slot_5 > 0)) and (((slot_5 < 1.3)))
-        if ss_0 then
+        if (((slot_5 > 0)) and (((slot_5 < 1.3)))) then
           temp_5 = (((#slot_3) + 1))
           slot_3[temp_5] = slot_5
         end
@@ -42212,8 +41209,7 @@ protos[633] = function(upvalues, argument_1, argument_2)
     v172_1 = slot_0.jl_seen
     ss_1 = v146_1
     ss_2 = v161_1
-    ss_3 = v172_1 and slot_0.jl_v
-    v221_1 = ss_3
+    v221_1 = (v172_1 and slot_0.jl_v)
     ss_3 = v221_1
     if not v221_1 then
       v233_1 = cell_get(upvalues[2])
@@ -42226,12 +41222,10 @@ protos[633] = function(upvalues, argument_1, argument_2)
     ss_1 = v291_1
     ss_2 = slot_2
     ss_3 = slot_1
-    ss_5 = v321_1 and slot_0.pos.Y
-    ss_5 = ss_5 or (0)
+    ss_5 = (v321_1 and slot_0.pos.Y) or (0)
     ss_1(ss_2, ss_3, ss_0, ss_5)
   else
-    ss_0 = (not slot_4) and slot_3
-    if ss_0 then
+    if ((not slot_4) and slot_3) then
       v422_1 = cell_get(upvalues[4])
       v422_1(slot_2, slot_1)
     end
@@ -42241,8 +41235,8 @@ end
 
 protos[634] = function(upvalues, argument_1, argument_2)
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, ss_0, v177_1, v178_1, v226_1, v293_1, v313_1, v314_1, v32_1, v324_1, v339_1, v346_1
-  local v351_1, v356_1, v366_1, v392_1, v427_1, v454_1, v469_1, v479_1, v494_1, v500_1, v510_1, v511_1, v526_1, v536_1, v547_1, v590_1, v600_1, v601_1, v606_1, v621_1, v631_1, v652_1, v657_1, v667_1, v673_1, v678_1, v693_1, v709_1
-  local v714_1, v719_1, v729_1, v730_1, v740_1, v745_1, v755_1
+  local v351_1, v392_1, v427_1, v454_1, v469_1, v479_1, v494_1, v500_1, v510_1, v600_1, v601_1, v631_1, v652_1, v673_1, v709_1
+  local v714_1, v729_1, v730_1, v740_1, v755_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
@@ -42284,48 +41278,29 @@ protos[634] = function(upvalues, argument_1, argument_2)
     end
     v346_1 = cell_get(upvalues[4])
     v351_1 = slot_3
-    v356_1 = v346_1(v351_1)
-    v366_1 = (v356_1 < 5)
-    ss_0 = v366_1
-    if v366_1 then
-      v526_1 = slot_0
-      v536_1 = v526_1.jumping
-      ss_0 = v536_1
-    end
-    v547_1 = ss_0
-    if v547_1 then
+    if ((((v346_1(v351_1)) < 5)) and slot_0.jumping) then
       return false, 0, nil
     end
     v500_1 = slot_3
     v510_1 = -(8)
-    v511_1 = (v500_1 < v510_1)
-    if v511_1 then
-      v590_1 = slot_2
-      v600_1 = v590_1.pred_land_t
+    if ((v500_1 < v510_1)) then
+      v600_1 = slot_2.pred_land_t
       v601_1 = slot_1
-      v606_1 = (v600_1 - v601_1)
-      slot_6 = v606_1
-      v621_1 = slot_6
-      v631_1 = (v621_1 > 0)
+      slot_6 = ((v600_1 - v601_1))
+      v631_1 = (slot_6 > 0)
       ss_0 = v631_1
       if v631_1 then
         v652_1 = slot_6
-        v657_1 = cell_get(upvalues[1])
-        v667_1 = v657_1.jump_wait_cap
-        v673_1 = (v667_1 * 0.7)
-        v678_1 = (v652_1 < v673_1)
-        ss_0 = v678_1
+        v673_1 = ((cell_get(upvalues[1])).jump_wait_cap * 0.7)
+        ss_0 = ((v652_1 < v673_1))
       end
-      v693_1 = ss_0
-      if v693_1 then
+      if ss_0 then
         v709_1 = cell_get(upvalues[2])
         v714_1 = slot_6
-        v719_1 = cell_get(upvalues[1])
-        v729_1 = v719_1.jump_land_lead
+        v729_1 = (cell_get(upvalues[1])).jump_land_lead
         v730_1 = (v714_1 - v729_1)
         v740_1 = v709_1(v730_1, 0)
-        v745_1 = slot_2
-        v755_1 = v745_1.launch_y
+        v755_1 = slot_2.launch_y
         return true, v740_1, v755_1
       end
       return false, 0, nil
@@ -42334,48 +41309,29 @@ protos[634] = function(upvalues, argument_1, argument_2)
   end
   v346_1 = cell_get(upvalues[4])
   v351_1 = slot_3
-  v356_1 = v346_1(v351_1)
-  v366_1 = (v356_1 < 5)
-  ss_0 = v366_1
-  if v366_1 then
-    v526_1 = slot_0
-    v536_1 = v526_1.jumping
-    ss_0 = v536_1
-  end
-  v547_1 = ss_0
-  if v547_1 then
+  if ((((v346_1(v351_1)) < 5)) and slot_0.jumping) then
     return false, 0, nil
   end
   v500_1 = slot_3
   v510_1 = -(8)
-  v511_1 = (v500_1 < v510_1)
-  if v511_1 then
-    v590_1 = slot_2
-    v600_1 = v590_1.pred_land_t
+  if ((v500_1 < v510_1)) then
+    v600_1 = slot_2.pred_land_t
     v601_1 = slot_1
-    v606_1 = (v600_1 - v601_1)
-    slot_6 = v606_1
-    v621_1 = slot_6
-    v631_1 = (v621_1 > 0)
+    slot_6 = ((v600_1 - v601_1))
+    v631_1 = (slot_6 > 0)
     ss_0 = v631_1
     if v631_1 then
       v652_1 = slot_6
-      v657_1 = cell_get(upvalues[1])
-      v667_1 = v657_1.jump_wait_cap
-      v673_1 = (v667_1 * 0.7)
-      v678_1 = (v652_1 < v673_1)
-      ss_0 = v678_1
+      v673_1 = ((cell_get(upvalues[1])).jump_wait_cap * 0.7)
+      ss_0 = ((v652_1 < v673_1))
     end
-    v693_1 = ss_0
-    if v693_1 then
+    if ss_0 then
       v709_1 = cell_get(upvalues[2])
       v714_1 = slot_6
-      v719_1 = cell_get(upvalues[1])
-      v729_1 = v719_1.jump_land_lead
+      v729_1 = (cell_get(upvalues[1])).jump_land_lead
       v730_1 = (v714_1 - v729_1)
       v740_1 = v709_1(v730_1, 0)
-      v745_1 = slot_2
-      v755_1 = v745_1.launch_y
+      v755_1 = slot_2.launch_y
       return true, v740_1, v755_1
     end
     return false, 0, nil
@@ -42622,8 +41578,7 @@ protos[637] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
                 v2414_1 = v2383_1(0, v2409_1)
                 slot_17 = nil
                 slot_17 = v2414_1
-                ss_0 = slot_0.jump_fresh and (((slot_17 <= 0.22)))
-                if ss_0 then
+                if (slot_0.jump_fresh and (((slot_17 <= 0.22)))) then
                   v2538_1 = (((cell_get(upvalues[16]))()) * slot_17)
                   v2543_1 = (slot_16 + v2538_1)
                   slot_18 = nil
@@ -42664,27 +41619,22 @@ protos[637] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
             ss_2 = env.Vector3.new
             ss_3 = slot_12
             ss_4 = slot_15
-            ss_0 = ss_2(ss_3, ss_4, slot_13)
-            temp_2 = ss_0
+            temp_2 = (ss_2(ss_3, ss_4, slot_13))
             slot_0.fresh = temp_2
             temp_0 = slot_0
             temp_1 = "ready"
-            ss_1 = slot_0.kalman.init or (((slot_7 ~= nil)))
-            ss_0 = ss_1
-            temp_2 = ss_0
+            temp_2 = ((slot_0.kalman.init or (((slot_7 ~= nil)))))
             temp_0.ready = temp_2
             v3016_1 = slot_0.sk_dx
             v3033_1 = (slot_0.sk_i - 1)
             v3048_1 = (cell_get(upvalues[11])).ring
             v3059_1 = (((v3033_1 % v3048_1)) + 1)
-            ss_0 = v3016_1[v3059_1] or (0)
-            slot_19 = ss_0
+            slot_19 = (v3016_1[v3059_1] or (0))
             v3111_1 = slot_0.sk_dz
             v3128_1 = (slot_0.sk_i - 1)
             v3143_1 = (cell_get(upvalues[11])).ring
             v3154_1 = (((v3128_1 % v3143_1)) + 1)
-            ss_0 = v3111_1[v3154_1] or (0)
-            slot_20 = ss_0
+            slot_20 = (v3111_1[v3154_1] or (0))
             v3197_1 = cell_get(upvalues[17])
             v3212_1 = (slot_12 * slot_12)
             v3227_1 = (slot_13 * slot_13)
@@ -42699,8 +41649,7 @@ protos[637] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
             v3293_1 = v3253_1(v3288_1)
             slot_22 = nil
             slot_22 = v3293_1
-            ss_0 = ((slot_21 > 1)) and (((slot_22 > 1)))
-            if ss_0 then
+            if (((slot_21 > 1)) and (((slot_22 > 1)))) then
               v3681_1 = cell_get(upvalues[18])
               v3696_1 = (slot_12 * slot_19)
               v3711_1 = (slot_13 * slot_20)
@@ -42779,15 +41728,13 @@ protos[637] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
             ss_1 = regs.v4046_1
             ss_2 = regs.v4171_1
             ss_3 = 1
-            ss_4 = v4197_1 and (0.1)
-            ss_4 = ss_4 or (0)
+            ss_4 = (v4197_1 and (0.1)) or (0)
             regs.v4323_3 = (ss_3 - ss_4)
             regs.v4328_2 = (ss_2 * regs.v4323_3)
             v4354_1 = slot_0.anom.speedhack
             ss_2 = regs.v4328_2
             ss_3 = 1
-            ss_4 = v4354_1 and (0.1)
-            ss_4 = ss_4 or (0)
+            ss_4 = (v4354_1 and (0.1)) or (0)
             regs.v4407_3 = (ss_3 - ss_4)
             ss_2 = ((ss_2 * regs.v4407_3))
             ss_3 = 0
@@ -42799,8 +41746,7 @@ protos[637] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
             temp_1 = "conf"
             ss_2 = (cell_get(upvalues[23]))
             ss_3 = slot_0
-            ss_0 = ss_2(ss_3)
-            temp_2 = ss_0
+            temp_2 = (ss_2(ss_3))
             temp_0.conf = temp_2
           end
         end
@@ -42822,11 +41768,7 @@ protos[638] = function(upvalues)
   ss_3 = v33_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_3 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_3)) == "number")))
-  ss_0 = ss_0 and (((slot_3 == slot_3)))
-  ss_0 = ss_0 and (((slot_3 > 4)))
-  ss_0 = ss_0 and (((slot_3 < 900)))
-  if ss_0 then
+  if ((((ss_0 and ((((env["type"](slot_3)) == "number")))) and (((slot_3 == slot_3)))) and (((slot_3 > 4)))) and (((slot_3 < 900)))) then
     slot_0 = ((slot_3 / 1000))
   end
   v85_1 = env.pcall
@@ -42835,22 +41777,16 @@ protos[638] = function(upvalues)
   ss_3 = v90_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_5 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_5)) == "number")))
-  ss_0 = ss_0 and (((slot_5 == slot_5)))
-  ss_0 = ss_0 and (((slot_5 > 0)))
-  if ss_0 then
+  if (((ss_0 and ((((env["type"](slot_5)) == "number")))) and (((slot_5 == slot_5)))) and (((slot_5 > 0)))) then
     slot_6 = ((slot_5 * 2))
-    ss_0 = ((slot_6 > 0.004)) and (((slot_6 < 0.9)))
-    if ss_0 then
+    if (((slot_6 > 0.004)) and (((slot_6 < 0.9)))) then
       slot_1 = slot_6
     end
   end
-  ss_0 = slot_0 and slot_1
-  if ss_0 then
+  if (slot_0 and slot_1) then
     return ((((slot_0 + slot_1)) * 0.5))
   end
-  ss_1 = slot_0 or slot_1
-  return ss_1
+  return (slot_0 or slot_1)
 end
 
 protos[639] = function(upvalues)
@@ -42914,7 +41850,7 @@ protos[641] = function(upvalues)
 end
 
 protos[642] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, v102_1, v11_1, v236_1, v247_1, v262_1, v263_1, v283_1, v65_1, v80_1
+  local slot_0, slot_1, v102_1, v11_1, v236_1, v247_1, v262_1, v263_1, v283_1, v65_1, v80_1
   local v87_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -42923,9 +41859,7 @@ protos[642] = function(upvalues, argument_1)
     return 0
   end
   slot_1 = 0
-  ss_0 = slot_0 and (((slot_0.time > 0)))
-  ss_0 = ss_0 and (cell_get(upvalues[1])).step_seen
-  if ss_0 then
+  if ((slot_0 and (((slot_0.time > 0)))) and (cell_get(upvalues[1])).step_seen) then
     v236_1 = cell_get(upvalues[2])
     v247_1 = (cell_get(upvalues[3]))()
     v262_1 = slot_0.time
@@ -42999,8 +41933,7 @@ protos[644] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       v366_1 = slot_4.speedhack_mult
       ss_0 = (v351_1(v366_1, 4.5))
     end
-    ss_0 = ss_0 or (1)
-    slot_6 = ss_0
+    slot_6 = (ss_0 or (1))
     v425_1 = cell_get(upvalues[2])
     v440_1 = slot_0.kalman
     ss_2 = v425_1
@@ -43081,8 +42014,7 @@ protos[644] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
     v1048_1 = v1008_1(v1043_1)
     slot_17 = nil
     slot_17 = v1048_1
-    ss_0 = ((slot_17 > slot_14)) and (((slot_17 > 1e-06)))
-    if ss_0 then
+    if (((slot_17 > slot_14)) and (((slot_17 > 1e-06)))) then
       v1314_1 = slot_1.X
       v1335_1 = (((slot_15 * slot_14)) / slot_17)
       slot_9 = ((v1314_1 + v1335_1))
@@ -43107,9 +42039,7 @@ protos[644] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       v1554_1 = (cell_get(upvalues[6]))()
       slot_21 = nil
       slot_21 = v1554_1
-      ss_0 = slot_4.jumphack and slot_0.jl_v
-      ss_0 = ss_0 or slot_0.jump_v
-      slot_22 = ss_0
+      slot_22 = ((slot_4.jumphack and slot_0.jl_v) or slot_0.jump_v)
       if ((slot_0.playerName ~= "")) then
         v1741_1 = cell_get(upvalues[7])
         v1756_1 = slot_0.playerName
@@ -43119,16 +42049,13 @@ protos[644] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       v1704_1 = (slot_22 - v1699_1)
       slot_23 = nil
       slot_23 = v1704_1
-      ss_0 = slot_0.jumping and (((slot_22 > 0)))
-      ss_0 = ss_0 and (((slot_21 > 0)))
-      v1911_1 = ss_0
+      v1911_1 = ((slot_0.jumping and (((slot_22 > 0)))) and (((slot_21 > 0))))
       ss_0 = v1911_1
       if v1911_1 then
         v1937_1 = (slot_22 / slot_21)
         ss_0 = ((slot_20 <= v1937_1))
       end
-      ss_0 = ss_0 and (((slot_23 > slot_19)))
-      if ss_0 then
+      if (ss_0 and (((slot_23 > slot_19)))) then
         slot_19 = slot_23
       end
       v1778_1 = cell_get(upvalues[8])
@@ -43136,9 +42063,7 @@ protos[644] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       slot_18 = (v1778_1(v1793_1, slot_19, slot_21, slot_2))
       v1834_1 = slot_1.Y
       if ((slot_18 < v1834_1)) then
-        ss_0 = slot_0.gc_seen and slot_0.gc_base
-        ss_0 = ss_0 or (3)
-        slot_24 = ss_0
+        slot_24 = ((slot_0.gc_seen and slot_0.gc_base) or (3))
         v2102_1 = cell_get(upvalues[9])
         v2118_1 = env.Vector3.new
         v2134_1 = slot_1.Y
@@ -43167,7 +42092,7 @@ end
 
 protos[645] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   local v113_1, v114_1, v11_1, v130_1, v145_1, v146_1, v177_1, v213_1, v305_3, v331_1, v342_1, v359_1, v364_1, v379_1, v390_1, v407_1
-  local v412_1, v417_1, v443_1, v454_1, v471_1, v476_1, v48_1, v491_1, v502_1, v519_1, v524_1, v529_1, v575_1, v689_1, v743_1, v74_1, v754_1, v765_1, v790_1, v801_1
+  local v412_1, v417_1, v443_1, v454_1, v471_1, v476_1, v48_1, v491_1, v502_1, v519_1, v524_1, v529_1, v689_1, v743_1, v74_1, v754_1, v765_1, v790_1, v801_1
   local v812_1, v837_1, v848_1, v853_1, v878_1, v889_1, v894_1, v91_1, v936_1, v952_1
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_15, slot_16, slot_17, slot_18, slot_19, slot_20, slot_21, slot_22, slot_23, slot_24, ss_0, ss_1, ss_2, ss_3, ss_4
   local vm_frame_random = math.random(0, 2147483646)
@@ -43205,8 +42130,7 @@ protos[645] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   slot_8 = v177_1
   v213_1 = (slot_6.Magnitude > 0)
   ss_0 = slot_2
-  ss_1 = v213_1 and (1)
-  ss_1 = ss_1 or (0)
+  ss_1 = (v213_1 and (1)) or (0)
   v305_3 = (ss_0 * ss_1)
   slot_9 = nil
   slot_9 = v305_3
@@ -43280,21 +42204,17 @@ protos[645] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       slot_24 = ss_2
       slot_23 = ss_1
       slot_22 = ss_0
-      ss_0 = ((slot_23 < slot_22)) and (((slot_23 < slot_24)))
-      if ss_0 then
+      if (((slot_23 < slot_22)) and (((slot_23 < slot_24)))) then
         return slot_10
       end
       if ((slot_24 < slot_22)) then
         return slot_11
       end
-      v575_1 = slot_5
-      return v575_1
+      return slot_5
     end
-    v575_1 = slot_5
-    return v575_1
+    return slot_5
   end
-  v575_1 = slot_5
-  return v575_1
+  return slot_5
 end
 
 protos[646] = function(upvalues, argument_1)
@@ -43320,8 +42240,7 @@ protos[647] = function(upvalues, argument_1, argument_2)
   slot_0 = argument_1
   slot_1 = argument_2
   v11_1 = slot_0.ready
-  ss_0 = (not v11_1) or (((slot_1 <= 0)))
-  if ss_0 then
+  if ((not v11_1) or (((slot_1 <= 0)))) then
     return env.Vector3.zero
   end
   v34_1 = env.Vector3.new
@@ -43340,16 +42259,13 @@ protos[647] = function(upvalues, argument_1, argument_2)
     v379_1 = slot_0.jump_v
     v390_1 = (slot_3 * slot_6)
     slot_7 = ((v379_1 - v390_1))
-    ss_0 = slot_0.jumping and (((slot_0.jump_v > 0)))
-    ss_0 = ss_0 and (((slot_3 > 0)))
-    v633_1 = ss_0
+    v633_1 = ((slot_0.jumping and (((slot_0.jump_v > 0)))) and (((slot_3 > 0))))
     ss_0 = v633_1
     if v633_1 then
       v665_1 = (slot_0.jump_v / slot_3)
       ss_0 = ((slot_6 <= v665_1))
     end
-    ss_0 = ss_0 and (((slot_7 > slot_5)))
-    if ss_0 then
+    if (ss_0 and (((slot_7 > slot_5)))) then
       slot_5 = slot_7
     end
     v442_1 = env.Vector3.new
@@ -43383,16 +42299,14 @@ protos[648] = function(upvalues, argument_1)
   v8_1 = cell_get(upvalues[1])
   ss_0, ss_1 = v3_1(v8_1, slot_0)
   slot_2 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_2)) == "string")))
-  if ss_0 then
+  if (ss_0 and ((((env["type"](slot_2)) == "string")))) then
     return slot_2
   end
   if (cell_get(upvalues[2])) then
     v180_1 = cell_get(upvalues[2])
     v195_1 = slot_0.Name
     slot_3 = v180_1[v195_1]
-    ss_0 = slot_3 and slot_3.Role
-    if ss_0 then
+    if (slot_3 and slot_3.Role) then
       return slot_3.Role
     end
     return "Unknown"
@@ -43441,8 +42355,7 @@ protos[650] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       continue
     end
     slot_10 = slot_9.Character
-    ss_0 = (not slot_10) or (((slot_10 == slot_2)))
-    if ss_0 then
+    if ((not slot_10) or (((slot_10 == slot_2)))) then
       continue
     end
     v398_1 = (cell_get(upvalues[4]))(slot_9)
@@ -43454,8 +42367,7 @@ protos[650] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
       continue
     end
     slot_12 = slot_11.Position
-    ss_0 = slot_3 and (((slot_3 > 0)))
-    if ss_0 then
+    if (slot_3 and (((slot_3 > 0)))) then
       slot_13 = slot_11.AssemblyLinearVelocity
       if (((env.typeof(slot_13)) == "Vector3")) then
         v778_1 = slot_12
@@ -43623,9 +42535,7 @@ protos[653] = function(upvalues, argument_1)
     slot_2 = __loopKey_653_0
     slot_3 = __loopValue_653_0
     v218_1 = cell_get(upvalues[3])
-    ss_0 = ((slot_3 ~= v218_1)) and slot_3.Character
-    ss_0 = ss_0 and (((slot_3.Character ~= slot_0)))
-    if ss_0 then
+    if ((((slot_3 ~= v218_1)) and slot_3.Character) and (((slot_3.Character ~= slot_0)))) then
       temp_6 = (((#slot_1) + 1))
       temp_7 = slot_3.Character
       slot_1[temp_6] = temp_7
@@ -43636,11 +42546,11 @@ end
 
 protos[654] = function(upvalues, argument_1)
   local regs = {}
-  local v1004_1, v1009_1, v1016_1, v1021_1, v1026_1, v1031_1, v1036_1, v1041_1, v1057_1, v1062_1, v1067_1, v1082_1, v1083_1, v1089_1, v1099_1, v1105_1, v1115_1, v1121_1, v1126_1, v1136_1
-  local v1142_1, v1152_1, v1158_1, v1168_1, v1174_1, v1179_1, v1189_1, v1195_1, v1205_1, v1211_1, v1221_1, v1227_1, v1232_1, v1242_1, v1252_1, v1258_1, v1268_1, v1274_1, v1284_1, v1290_1
-  local v1295_1, v1305_1, v1311_1, v1321_1, v1327_1, v1337_1, v1343_1, v1348_1, v1370_1, v1375_1, v1390_1, v1390_2, v1390_3, v1822_1, v1827_1, v1832_1, v1837_ret1, v1837_ret2, v1852_1, v1862_1
-  local v1868_1, v1892_1, v1902_1, v1913_1, v1918_1, v1923_1, v1928_1, v1933_1, v1954_1, v1959_1, v1974_1, v1974_2, v1974_3, v2002_1, v2007_1, v2012_1, v2017_1, v2022_1, v2027_1, v2042_1
-  local v2062_1, v2073_1, v2078_1, v2083_1, v2088_ret1, v2088_ret2, v2103_1, v2113_1, v2119_1, v2143_1, v2153_1, v2164_1, v2169_1, v2174_1, v2179_1, v2184_1, v2203_1, v2229_1, v2240_1, v2245_1
+  local v1004_1, v1009_1, v1016_1, v1021_1, v1026_1, v1031_1, v1036_1, v1041_1, v1057_1, v1062_1, v1067_1, v1082_1, v1083_1, v1099_1, v1115_1, v1121_1, v1126_1, v1136_1
+  local v1152_1, v1168_1, v1174_1, v1179_1, v1189_1, v1205_1, v1221_1, v1227_1, v1232_1, v1242_1, v1252_1, v1268_1, v1284_1, v1290_1
+  local v1295_1, v1305_1, v1321_1, v1337_1, v1343_1, v1348_1, v1370_1, v1375_1, v1390_1, v1390_2, v1390_3, v1822_1, v1827_1, v1832_1, v1837_ret1, v1837_ret2
+  local v1913_1, v1918_1, v1923_1, v1928_1, v1954_1, v1959_1, v1974_1, v1974_2, v1974_3, v2002_1, v2007_1, v2012_1, v2017_1, v2022_1, v2027_1
+  local v2073_1, v2078_1, v2083_1, v2088_ret1, v2088_ret2, v2164_1, v2169_1, v2174_1, v2179_1, v2240_1, v2245_1
   local exit_1821, exit_2072, slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_14, slot_15, slot_16, slot_17, slot_18, slot_19, slot_20, slot_21, slot_22, slot_23, slot_24, slot_25, ss_0, ss_1, ss_2, ss_3, ss_4, temp_0, temp_1
   local temp_2, temp_3, temp_4, temp_5, temp_6, temp_7
   local vm_frame_random = math.random(0, 2147483646)
@@ -43774,8 +42684,7 @@ protos[654] = function(upvalues, argument_1)
       regs.v1737_1 = slot_16.Z
       ss_3 = regs.v1722_3
       ss_4 = regs.v1737_1
-      ss_0 = ss_1(ss_2, ss_3, ss_4)
-      slot_16 = ss_0
+      slot_16 = (ss_1(ss_2, ss_3, ss_4))
     else
       regs.v1616_1 = slot_16
       regs.v1632_1 = env.Vector3.new
@@ -43816,44 +42725,34 @@ protos[654] = function(upvalues, argument_1)
     slot_19 = v1067_1
     v1082_1 = new_table(6)
     v1083_1 = slot_18
-    v1089_1 = env.Vector3
-    v1099_1 = v1089_1.new
-    v1105_1 = cell_get(upvalues[7])
-    v1115_1 = v1105_1.aim_chest
+    v1099_1 = env.Vector3.new
+    v1115_1 = (cell_get(upvalues[7])).aim_chest
     v1121_1 = v1099_1(0, v1115_1, 0)
     v1126_1 = (v1083_1 + v1121_1)
     v1082_1[1] = v1126_1
     v1136_1 = slot_18
-    v1142_1 = env.Vector3
-    v1152_1 = v1142_1.new
-    v1158_1 = cell_get(upvalues[7])
-    v1168_1 = v1158_1.aim_head
+    v1152_1 = env.Vector3.new
+    v1168_1 = (cell_get(upvalues[7])).aim_head
     v1174_1 = v1152_1(0, v1168_1, 0)
     v1179_1 = (v1136_1 + v1174_1)
     v1082_1[2] = v1179_1
     v1189_1 = slot_18
-    v1195_1 = env.Vector3
-    v1205_1 = v1195_1.new
-    v1211_1 = cell_get(upvalues[7])
-    v1221_1 = v1211_1.aim_low
+    v1205_1 = env.Vector3.new
+    v1221_1 = (cell_get(upvalues[7])).aim_low
     v1227_1 = v1205_1(0, v1221_1, 0)
     v1232_1 = (v1189_1 + v1227_1)
     v1082_1[3] = v1232_1
     v1242_1 = slot_18
     v1082_1[4] = v1242_1
     v1252_1 = slot_8
-    v1258_1 = env.Vector3
-    v1268_1 = v1258_1.new
-    v1274_1 = cell_get(upvalues[7])
-    v1284_1 = v1274_1.aim_chest
+    v1268_1 = env.Vector3.new
+    v1284_1 = (cell_get(upvalues[7])).aim_chest
     v1290_1 = v1268_1(0, v1284_1, 0)
     v1295_1 = (v1252_1 + v1290_1)
     v1082_1[5] = v1295_1
     v1305_1 = slot_8
-    v1311_1 = env.Vector3
-    v1321_1 = v1311_1.new
-    v1327_1 = cell_get(upvalues[7])
-    v1337_1 = v1327_1.aim_head
+    v1321_1 = env.Vector3.new
+    v1337_1 = (cell_get(upvalues[7])).aim_head
     v1343_1 = v1321_1(0, v1337_1, 0)
     v1348_1 = (v1305_1 + v1343_1)
     v1082_1[6] = v1348_1
@@ -43875,26 +42774,20 @@ protos[654] = function(upvalues, argument_1)
       v1837_ret1, v1837_ret2 = v1822_1(v1827_1, v1832_1)
       temp_4 = v1837_ret2
       temp_3 = v1837_ret1
-      v1852_1 = temp_3
-      temp_2 = v1852_1
-      v1862_1 = temp_3
-      v1868_1 = (v1862_1 == nil)
-      if v1868_1 then
+      temp_2 = temp_3
+      if ((temp_3 == nil)) then
         exit_1821 = 1
         break
       end
       slot_21 = nil
       slot_22 = nil
-      v1892_1 = temp_3
-      slot_21 = v1892_1
-      v1902_1 = temp_4
-      slot_22 = v1902_1
+      slot_21 = temp_3
+      slot_22 = temp_4
       v1913_1 = cell_get(upvalues[14])
       v1918_1 = slot_10
       v1923_1 = slot_22
       v1928_1 = slot_19
-      v1933_1 = v1913_1(v1918_1, v1923_1, v1928_1)
-      if v1933_1 then
+      if (v1913_1(v1918_1, v1923_1, v1928_1)) then
         v2002_1 = cell_get(upvalues[11])
         v2007_1 = slot_10
         v2012_1 = slot_22
@@ -43903,8 +42796,7 @@ protos[654] = function(upvalues, argument_1)
         v2027_1 = v2002_1(v2007_1, v2012_1, v2017_1, v2022_1)
         slot_23 = nil
         slot_23 = v2027_1
-        v2042_1 = slot_23
-        if v2042_1 then
+        if slot_23 then
           exit_1821 = 2
           break
         end
@@ -43928,36 +42820,28 @@ protos[654] = function(upvalues, argument_1)
         v2088_ret1, v2088_ret2 = v2073_1(v2078_1, v2083_1)
         temp_4 = v2088_ret2
         temp_3 = v2088_ret1
-        v2103_1 = temp_3
-        temp_2 = v2103_1
-        v2113_1 = temp_3
-        v2119_1 = (v2113_1 == nil)
-        if v2119_1 then
+        temp_2 = temp_3
+        if ((temp_3 == nil)) then
           exit_2072 = 1
           break
         end
         slot_24 = nil
         slot_25 = nil
-        v2143_1 = temp_3
-        slot_24 = v2143_1
-        v2153_1 = temp_4
-        slot_25 = v2153_1
+        slot_24 = temp_3
+        slot_25 = temp_4
         v2164_1 = cell_get(upvalues[14])
         v2169_1 = slot_10
         v2174_1 = slot_25
         v2179_1 = slot_19
-        v2184_1 = v2164_1(v2169_1, v2174_1, v2179_1)
-        if v2184_1 then
+        if (v2164_1(v2169_1, v2174_1, v2179_1)) then
           exit_2072 = 2
           break
         end
       end
       if exit_2072 == 1 then
-        v2203_1 = cell_get(upvalues[12])
-        temp_0 = v2203_1
+        temp_0 = (cell_get(upvalues[12]))
         temp_1 = "_lastWait"
-        v2229_1 = -(1)
-        temp_2 = v2229_1
+        temp_2 = (-(1))
         v2240_1 = temp_0
         v2245_1 = temp_1
         regs.v2250_1 = temp_2
@@ -43984,8 +42868,7 @@ protos[654] = function(upvalues, argument_1)
         return regs.v2369_1
       end
     elseif exit_1821 == 2 then
-      v2062_1 = slot_23
-      return v2062_1
+      return slot_23
     end
   else
     regs.v963_1 = cell_get(upvalues[12])
@@ -44011,44 +42894,34 @@ protos[654] = function(upvalues, argument_1)
     slot_19 = v1067_1
     v1082_1 = new_table(6)
     v1083_1 = slot_18
-    v1089_1 = env.Vector3
-    v1099_1 = v1089_1.new
-    v1105_1 = cell_get(upvalues[7])
-    v1115_1 = v1105_1.aim_chest
+    v1099_1 = env.Vector3.new
+    v1115_1 = (cell_get(upvalues[7])).aim_chest
     v1121_1 = v1099_1(0, v1115_1, 0)
     v1126_1 = (v1083_1 + v1121_1)
     v1082_1[1] = v1126_1
     v1136_1 = slot_18
-    v1142_1 = env.Vector3
-    v1152_1 = v1142_1.new
-    v1158_1 = cell_get(upvalues[7])
-    v1168_1 = v1158_1.aim_head
+    v1152_1 = env.Vector3.new
+    v1168_1 = (cell_get(upvalues[7])).aim_head
     v1174_1 = v1152_1(0, v1168_1, 0)
     v1179_1 = (v1136_1 + v1174_1)
     v1082_1[2] = v1179_1
     v1189_1 = slot_18
-    v1195_1 = env.Vector3
-    v1205_1 = v1195_1.new
-    v1211_1 = cell_get(upvalues[7])
-    v1221_1 = v1211_1.aim_low
+    v1205_1 = env.Vector3.new
+    v1221_1 = (cell_get(upvalues[7])).aim_low
     v1227_1 = v1205_1(0, v1221_1, 0)
     v1232_1 = (v1189_1 + v1227_1)
     v1082_1[3] = v1232_1
     v1242_1 = slot_18
     v1082_1[4] = v1242_1
     v1252_1 = slot_8
-    v1258_1 = env.Vector3
-    v1268_1 = v1258_1.new
-    v1274_1 = cell_get(upvalues[7])
-    v1284_1 = v1274_1.aim_chest
+    v1268_1 = env.Vector3.new
+    v1284_1 = (cell_get(upvalues[7])).aim_chest
     v1290_1 = v1268_1(0, v1284_1, 0)
     v1295_1 = (v1252_1 + v1290_1)
     v1082_1[5] = v1295_1
     v1305_1 = slot_8
-    v1311_1 = env.Vector3
-    v1321_1 = v1311_1.new
-    v1327_1 = cell_get(upvalues[7])
-    v1337_1 = v1327_1.aim_head
+    v1321_1 = env.Vector3.new
+    v1337_1 = (cell_get(upvalues[7])).aim_head
     v1343_1 = v1321_1(0, v1337_1, 0)
     v1348_1 = (v1305_1 + v1343_1)
     v1082_1[6] = v1348_1
@@ -44070,26 +42943,20 @@ protos[654] = function(upvalues, argument_1)
       v1837_ret1, v1837_ret2 = v1822_1(v1827_1, v1832_1)
       temp_4 = v1837_ret2
       temp_3 = v1837_ret1
-      v1852_1 = temp_3
-      temp_2 = v1852_1
-      v1862_1 = temp_3
-      v1868_1 = (v1862_1 == nil)
-      if v1868_1 then
+      temp_2 = temp_3
+      if ((temp_3 == nil)) then
         exit_1821 = 1
         break
       end
       slot_21 = nil
       slot_22 = nil
-      v1892_1 = temp_3
-      slot_21 = v1892_1
-      v1902_1 = temp_4
-      slot_22 = v1902_1
+      slot_21 = temp_3
+      slot_22 = temp_4
       v1913_1 = cell_get(upvalues[14])
       v1918_1 = slot_10
       v1923_1 = slot_22
       v1928_1 = slot_19
-      v1933_1 = v1913_1(v1918_1, v1923_1, v1928_1)
-      if v1933_1 then
+      if (v1913_1(v1918_1, v1923_1, v1928_1)) then
         v2002_1 = cell_get(upvalues[11])
         v2007_1 = slot_10
         v2012_1 = slot_22
@@ -44098,8 +42965,7 @@ protos[654] = function(upvalues, argument_1)
         v2027_1 = v2002_1(v2007_1, v2012_1, v2017_1, v2022_1)
         slot_23 = nil
         slot_23 = v2027_1
-        v2042_1 = slot_23
-        if v2042_1 then
+        if slot_23 then
           exit_1821 = 2
           break
         end
@@ -44123,36 +42989,28 @@ protos[654] = function(upvalues, argument_1)
         v2088_ret1, v2088_ret2 = v2073_1(v2078_1, v2083_1)
         temp_4 = v2088_ret2
         temp_3 = v2088_ret1
-        v2103_1 = temp_3
-        temp_2 = v2103_1
-        v2113_1 = temp_3
-        v2119_1 = (v2113_1 == nil)
-        if v2119_1 then
+        temp_2 = temp_3
+        if ((temp_3 == nil)) then
           exit_2072 = 1
           break
         end
         slot_24 = nil
         slot_25 = nil
-        v2143_1 = temp_3
-        slot_24 = v2143_1
-        v2153_1 = temp_4
-        slot_25 = v2153_1
+        slot_24 = temp_3
+        slot_25 = temp_4
         v2164_1 = cell_get(upvalues[14])
         v2169_1 = slot_10
         v2174_1 = slot_25
         v2179_1 = slot_19
-        v2184_1 = v2164_1(v2169_1, v2174_1, v2179_1)
-        if v2184_1 then
+        if (v2164_1(v2169_1, v2174_1, v2179_1)) then
           exit_2072 = 2
           break
         end
       end
       if exit_2072 == 1 then
-        v2203_1 = cell_get(upvalues[12])
-        temp_0 = v2203_1
+        temp_0 = (cell_get(upvalues[12]))
         temp_1 = "_lastWait"
-        v2229_1 = -(1)
-        temp_2 = v2229_1
+        temp_2 = (-(1))
         v2240_1 = temp_0
         v2245_1 = temp_1
         regs.v2250_1 = temp_2
@@ -44179,24 +43037,20 @@ protos[654] = function(upvalues, argument_1)
         return regs.v2369_1
       end
     elseif exit_1821 == 2 then
-      v2062_1 = slot_23
-      return v2062_1
+      return slot_23
     end
   end
 end
 
 protos[655] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_3, slot_4, slot_5, ss_0
+  local slot_0, slot_1, slot_3, slot_4, slot_5
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
   if (not slot_0) then
     return env.Vector3.zero
   end
-  ss_0 = (((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))
-  ss_0 = ss_0 and slot_0.Character
-  ss_0 = ss_0 or slot_0
-  slot_3 = ss_0
+  slot_3 = ((((((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))) and slot_0.Character) or slot_0)
   if (not slot_3) then
     return env.Vector3.zero
   end
@@ -44238,16 +43092,13 @@ protos[657] = function(upvalues)
 end
 
 protos[658] = function(upvalues, argument_1)
-  local slot_0, slot_2, slot_3, slot_4, ss_0
+  local slot_0, slot_2, slot_3, slot_4
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
     return 0
   end
-  ss_0 = (((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))
-  ss_0 = ss_0 and slot_0.Character
-  ss_0 = ss_0 or slot_0
-  slot_2 = ss_0
+  slot_2 = ((((((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))) and slot_0.Character) or slot_0)
   if (not slot_2) then
     return 0
   end
@@ -44285,17 +43136,14 @@ protos[659] = clearAndResetExtendedPingStats
 end
 
 protos[660] = function(upvalues, argument_1)
-  local slot_0, slot_2, slot_3, slot_4, slot_5, ss_0, ss_1, ss_2, ss_3, v320_1, v335_1, v348_1, v370_1, v393_1, v416_1
+  local slot_0, slot_2, slot_3, slot_4, slot_5, ss_1, ss_2, ss_3, v320_1, v335_1, v348_1, v370_1, v393_1, v416_1
   local v439_1, v462_1, v485_1, v508_1, v531_1, v548_1, v565_1, v582_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
     return (new_table(0))
   end
-  ss_0 = (((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))
-  ss_0 = ss_0 and slot_0.Character
-  ss_0 = ss_0 or slot_0
-  slot_2 = ss_0
+  slot_2 = ((((((env.typeof(slot_0)) == "Instance")) and ((slot_0:IsA("Player")))) and slot_0.Character) or slot_0)
   if (not slot_2) then
     return (new_table(0))
   end
@@ -44335,12 +43183,10 @@ protos[660] = function(upvalues, argument_1)
   v348_1.conf = v582_1
   ss_1 = v348_1
   ss_2 = "arc_n"
-  ss_3 = slot_5 and slot_5.n
-  ss_3 = ss_3 or (0)
+  ss_3 = (slot_5 and slot_5.n) or (0)
   ss_1[ss_2] = ss_3
   ss_2 = "arc_avg_lv"
-  ss_3 = slot_5 and slot_5.avg_lv
-  ss_3 = ss_3 or (0)
+  ss_3 = (slot_5 and slot_5.avg_lv) or (0)
   ss_1[ss_2] = ss_3
   return ss_1
 end
@@ -44360,9 +43206,7 @@ protos[661] = function(upvalues, argument_1)
     v67_1 = cell_get(upvalues[3])
     v62_1(v67_1)
     slot_1 = ((cell_get(upvalues[4]))())
-    ss_0 = (cell_get(upvalues[5])) and (cell_get(upvalues[5])).Position
-    ss_0 = ss_0 or (nil)
-    slot_2 = ss_0
+    slot_2 = (((cell_get(upvalues[5])) and (cell_get(upvalues[5])).Position) or (nil))
     v209_1 = env.ipairs
     v215_1 = cell_get(upvalues[6])
     v220_1 = v215_1.GetPlayers
@@ -44377,10 +43221,8 @@ protos[661] = function(upvalues, argument_1)
       v358_1 = cell_get(upvalues[7])
       if ((slot_4 ~= v358_1)) then
         slot_5 = slot_4.Character
-        ss_0 = slot_5 and ((slot_5:FindFirstChild("HumanoidRootPart")))
-        slot_6 = ss_0
-        ss_0 = slot_6 and ((not slot_2) or (((((slot_6.Position - slot_2)).Magnitude <= 300))))
-        if ss_0 then
+        slot_6 = (slot_5 and ((slot_5:FindFirstChild("HumanoidRootPart"))))
+        if (slot_6 and ((not slot_2) or (((((slot_6.Position - slot_2)).Magnitude <= 300))))) then
           slot_7 = (cell_get(upvalues[8]))[slot_6]
           if (not slot_7) then
             slot_7 = ((cell_get(upvalues[9]))())
@@ -44444,7 +43286,7 @@ protos[662] = function(upvalues)
 end
 
 protos[663] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, ss_1, v6_1, v98_1
+  local slot_0, slot_1, ss_0, v6_1, v98_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   v6_1 = not slot_0
@@ -44457,10 +43299,7 @@ protos[663] = function(upvalues, argument_1)
     return false
   end
   slot_1 = (slot_0.Name:lower())
-  ss_1 = (slot_1:find("gun")) or ((slot_1:find("revolver")))
-  ss_1 = ss_1 or ((slot_1:find("pistol")))
-  ss_1 = ((ss_1 ~= nil))
-  return ss_1
+  return ((((((slot_1:find("gun")) or ((slot_1:find("revolver")))) or ((slot_1:find("pistol")))) ~= nil)))
 end
 
 protos[664] = function(upvalues)
@@ -44588,13 +43427,11 @@ protos[669] = function(upvalues)
 end
 
 protos[670] = function(upvalues)
-  local slot_0, ss_0, ss_1, temp_0, v225_1, v241_1
+  local slot_0, ss_0, temp_0, v225_1, v241_1
   local vm_frame_random = math.random(0, 2147483646)
   ss_0 = (cell_get(upvalues[1])) and (cell_get(upvalues[1])).Enabled
   temp_0 = (cell_get(upvalues[2])).state
-  ss_1 = ss_0 and (true)
-  ss_1 = ss_1 or (false)
-  ss_0 = ss_1
+  ss_0 = ((ss_0 and (true)) or (false))
   temp_0.active = ss_0
   if (cell_get(upvalues[2])).state.active then
     v225_1 = cell_get(upvalues[3])
@@ -44611,8 +43448,7 @@ protos[671] = function(upvalues)
   local v437_1
   local vm_frame_random = math.random(0, 2147483646)
   if not ((cell_get(upvalues[1]))) then
-    ss_0 = ((cell_get(upvalues[3]))()) and ("Mobile")
-    ss_0 = ss_0 or ("PC")
+    ss_0 = (((cell_get(upvalues[3]))()) and ("Mobile")) or ("PC")
     upvalues[2] = cell_set_or_create(upvalues[2], ss_0)
     slot_0 = (env.Instance.new("ScreenGui"))
     slot_0.Name = "AquaHub_GunOverlay"
@@ -44955,9 +43791,7 @@ protos[685] = function(upvalues)
     slot_1 = v134_ret2
     if (slot_1:IsA("Tool")) then
       slot_2 = (slot_1.Name:lower())
-      ss_0 = (slot_2:find("gun")) or ((slot_2:find("revolver")))
-      ss_0 = ss_0 or ((slot_2:find("pistol")))
-      if ss_0 then
+      if (((slot_2:find("gun")) or ((slot_2:find("revolver")))) or ((slot_2:find("pistol")))) then
         exit_118 = 2
         break
       end
@@ -44980,9 +43814,7 @@ protos[685] = function(upvalues)
         slot_5 = __loopValue_685_0
         if (slot_5:IsA("Tool")) then
           slot_6 = (slot_5.Name:lower())
-          ss_0 = (slot_6:find("gun")) or ((slot_6:find("revolver")))
-          ss_0 = ss_0 or ((slot_6:find("pistol")))
-          if ss_0 then
+          if (((slot_6:find("gun")) or ((slot_6:find("revolver")))) or ((slot_6:find("pistol")))) then
             return slot_5, false
           end
           continue
@@ -44997,9 +43829,9 @@ protos[685] = function(upvalues)
 end
 
 protos[686] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_10, ss_0, ss_1, ss_2, ss_3, ss_4, v120_1, v175_1, v180_1, v185_1, v206_1, v257_1, v262_1, v283_1, v284_1, v289_1, v311_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_10, ss_0, ss_1, ss_2, ss_3, ss_4, v120_1, v175_1, v180_1, v185_1, v206_1, v257_1, v283_1, v284_1, v289_1, v311_1
   local v38_1, v410_1, v415_1, v432_1, v458_1, v494_1, v506_1, v529_1, v53_1, v544_1, v545_1, v607_1, v694_1, v695_1, v700_1, v722_1, v738_1, v743_1, v758_1, v769_1, v780_1, v791_1, v802_1, v813_1
-  local v814_1, v829_1, v839_1, v849_1, v854_1, v871_1, v876_1, v887_1, v89_1, v897_1, v902_1, v918_1, v928_1, v929_1, v945_1, v950_1
+  local v814_1, v849_1, v854_1, v871_1, v89_1, v897_1, v902_1, v928_1, v929_1, v945_1, v950_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = {argument_1}
   slot_1 = {argument_2}
@@ -45098,40 +43930,33 @@ protos[686] = function(upvalues, argument_1, argument_2)
           ss_4 = v545_1
           ss_0, ss_1 = ss_2(ss_3, ss_4)
           slot_10 = ss_1
-          ss_0 = ss_0 and ((((env.typeof(slot_10)) == "Vector3")))
-          if ss_0 then
+          if (ss_0 and ((((env.typeof(slot_10)) == "Vector3")))) then
             slot_6 = cell_set_or_create(slot_6, slot_10)
           end
           v607_1 = env.os.clock()
           slot_7 = cell_set_or_create(slot_7, v607_1)
         end
         v257_1 = cell_get(slot_6)
-        v262_1 = not v257_1
-        if v262_1 then
+        if (not v257_1) then
           v849_1 = cell_get(slot_3)
           v854_1 = not v849_1
           ss_0 = v854_1
           if v854_1 then
             v871_1 = cell_get(upvalues[5])
-            v876_1 = not v871_1
-            ss_0 = v876_1
+            ss_0 = (not v871_1)
           end
-          v887_1 = ss_0
-          if v887_1 then
+          if ss_0 then
             v897_1 = cell_get(upvalues[2])
             v902_1 = v897_1.UnequipTools
             v902_1(v897_1)
           end
         else
-          v829_1 = cell_get(upvalues[3])
-          v839_1 = v829_1.FlickShotEnabled
-          if v839_1 then
+          if (cell_get(upvalues[3])).FlickShotEnabled then
             v945_1 = env.pcall
             v950_1 = closure(687, {upvalues[8], capture_6()})
             v945_1(v950_1)
           end
-          v918_1 = env.task
-          v928_1 = v918_1.spawn
+          v928_1 = env.task.spawn
           v929_1 = closure(688, {capture_5(), upvalues[4], capture_0(), capture_6(), capture_7(), capture_4(), upvalues[6], capture_2(), upvalues[9], capture_1(), upvalues[10], capture_3(), upvalues[5], upvalues[2]})
           v928_1(v929_1)
         end
@@ -45157,32 +43982,26 @@ protos[686] = function(upvalues, argument_1, argument_2)
         slot_6 = cell_set_or_create(slot_6, v814_1)
       end
       v257_1 = cell_get(slot_6)
-      v262_1 = not v257_1
-      if v262_1 then
+      if (not v257_1) then
         v849_1 = cell_get(slot_3)
         v854_1 = not v849_1
         ss_0 = v854_1
         if v854_1 then
           v871_1 = cell_get(upvalues[5])
-          v876_1 = not v871_1
-          ss_0 = v876_1
+          ss_0 = (not v871_1)
         end
-        v887_1 = ss_0
-        if v887_1 then
+        if ss_0 then
           v897_1 = cell_get(upvalues[2])
           v902_1 = v897_1.UnequipTools
           v902_1(v897_1)
         end
       else
-        v829_1 = cell_get(upvalues[3])
-        v839_1 = v829_1.FlickShotEnabled
-        if v839_1 then
+        if (cell_get(upvalues[3])).FlickShotEnabled then
           v945_1 = env.pcall
           v950_1 = closure(687, {upvalues[8], capture_6()})
           v945_1(v950_1)
         end
-        v918_1 = env.task
-        v928_1 = v918_1.spawn
+        v928_1 = env.task.spawn
         v929_1 = closure(688, {capture_5(), upvalues[4], capture_0(), capture_6(), capture_7(), capture_4(), upvalues[6], capture_2(), upvalues[9], capture_1(), upvalues[10], capture_3(), upvalues[5], upvalues[2]})
         v928_1(v929_1)
       end
@@ -45235,8 +44054,7 @@ protos[688] = function(upvalues)
     ss_4 = v48_1
     ss_0, ss_1 = ss_2(ss_3, ss_4)
     slot_1 = ss_1
-    ss_0 = ss_0 and ((((env.typeof(slot_1)) == "Vector3")))
-    if ss_0 then
+    if (ss_0 and ((((env.typeof(slot_1)) == "Vector3")))) then
       if ((((cell_get(upvalues[2])).getWait()) >= 0)) then
         upvalues[4] = cell_set_or_create(upvalues[4], slot_1)
         v276_1 = env.os.clock()
@@ -45253,8 +44071,7 @@ protos[688] = function(upvalues)
       ss_4 = v309_1
       ss_0, ss_1 = ss_2(ss_3, ss_4)
       slot_4 = ss_1
-      ss_0 = ss_0 and ((((env.typeof(slot_4)) == "Vector3")))
-      if ss_0 then
+      if (ss_0 and ((((env.typeof(slot_4)) == "Vector3")))) then
         upvalues[4] = cell_set_or_create(upvalues[4], slot_4)
         v432_1 = env.os.clock()
         upvalues[5] = cell_set_or_create(upvalues[5], v432_1)
@@ -45275,8 +44092,7 @@ protos[688] = function(upvalues)
       ss_3 = v591_1
       ss_0, ss_1 = ss_2(ss_3)
       slot_7 = ss_1
-      ss_0 = ss_0 and ((((env.typeof(slot_7)) == "Vector3")))
-      if ss_0 then
+      if (ss_0 and ((((env.typeof(slot_7)) == "Vector3")))) then
         v702_1 = ((cell_get(upvalues[4])) + slot_7)
         upvalues[4] = cell_set_or_create(upvalues[4], v702_1)
       end
@@ -45296,16 +44112,14 @@ protos[688] = function(upvalues)
         ss_3 = v815_1
         ss_0, ss_1 = ss_2(ss_3)
         slot_10 = ss_1
-        ss_0 = ss_0 and ((((env.typeof(slot_10)) == "Vector3")))
-        if ss_0 then
+        if (ss_0 and ((((env.typeof(slot_10)) == "Vector3")))) then
           v926_1 = ((cell_get(upvalues[4])) + slot_10)
           upvalues[4] = cell_set_or_create(upvalues[4], v926_1)
         end
       end
     end
   end
-  ss_0 = ((cell_get(upvalues[8])):FindFirstChild("KnifeLocal")) and (((cell_get(upvalues[8])).KnifeLocal:FindFirstChild("CreateBeam")))
-  ss_0 = ss_0 and (((cell_get(upvalues[8])).KnifeLocal.CreateBeam:FindFirstChild("RemoteFunction")))
+  ss_0 = (((cell_get(upvalues[8])):FindFirstChild("KnifeLocal")) and (((cell_get(upvalues[8])).KnifeLocal:FindFirstChild("CreateBeam")))) and (((cell_get(upvalues[8])).KnifeLocal.CreateBeam:FindFirstChild("RemoteFunction")))
   slot_11 = new_cell()
   slot_11 = cell_set_or_create(slot_11, ss_0)
   temp_0 = (cell_get(upvalues[9])).state
@@ -45323,12 +44137,9 @@ protos[688] = function(upvalues)
       slot_13 = new_cell()
       slot_13 = cell_set_or_create(slot_13, nil)
       if (cell_get(upvalues[10])) then
-        ss_0 = (cell_get(upvalues[3])).Character and (((cell_get(upvalues[3])).Character:FindFirstChild("HumanoidRootPart")))
-        ss_0 = ss_0 or (((cell_get(upvalues[3])):FindFirstChild("HumanoidRootPart")))
-        slot_14 = ss_0
+        slot_14 = (((cell_get(upvalues[3])).Character and (((cell_get(upvalues[3])).Character:FindFirstChild("HumanoidRootPart")))) or (((cell_get(upvalues[3])):FindFirstChild("HumanoidRootPart"))))
         ss_1 = env.CFrame.new
-        ss_2 = slot_14 and slot_14.Position
-        ss_2 = ss_2 or ((cell_get(upvalues[4])))
+        ss_2 = (slot_14 and slot_14.Position) or ((cell_get(upvalues[4])))
         v1604_1 = env.Vector3.new(0, 1, 0)
         ss_2 = ((ss_2 + v1604_1))
         ss_0 = ss_1(ss_2)
@@ -45494,8 +44305,7 @@ protos[696] = function(upvalues)
       slot_1 = __loopKey_696_0
       slot_2 = __loopValue_696_0
       v249_1 = cell_get(upvalues[4])
-      ss_0 = ((slot_2 ~= v249_1)) and (((((cell_get(upvalues[5]))(slot_2)) == "Murderer")))
-      if ss_0 then
+      if (((slot_2 ~= v249_1)) and (((((cell_get(upvalues[5]))(slot_2)) == "Murderer")))) then
         exit_153 = 2
         break
       end
@@ -45515,8 +44325,7 @@ protos[696] = function(upvalues)
         ss_0 = (not v450_1)
       end
       if not ss_0 then
-        ss_0 = slot_0.Character or slot_0
-        slot_3 = ss_0
+        slot_3 = (slot_0.Character or slot_0)
         if not ((not slot_3)) then
           v537_1 = slot_3:FindFirstChild("HumanoidRootPart")
           if not ((not v537_1)) then
@@ -45569,8 +44378,7 @@ protos[698] = function(upvalues)
       slot_2 = temp_3
       slot_3 = v227_ret2
       v307_1 = cell_get(upvalues[6])
-      ss_0 = ((slot_3 ~= v307_1)) and (((cell_get(upvalues[3])).rolePlayerHasZombie(slot_3)))
-      if ss_0 then
+      if (((slot_3 ~= v307_1)) and (((cell_get(upvalues[3])).rolePlayerHasZombie(slot_3)))) then
         exit_211 = 2
         break
       end
@@ -45601,8 +44409,7 @@ protos[698] = function(upvalues)
       ss_3 = v621_1
       ss_4 = v626_1
       ss_0, ss_1 = ss_2(ss_3, ss_4)
-      ss_0 = ss_0 and (((ss_1 == "Zombie")))
-      slot_4 = ss_0
+      slot_4 = (ss_0 and (((ss_1 == "Zombie"))))
     end
   end
   slot_9 = env.math.huge
@@ -45625,8 +44432,7 @@ protos[698] = function(upvalues)
       slot_12 = slot_11.Character
       slot_13 = (slot_12:FindFirstChildOfClass("Humanoid"))
       slot_14 = (slot_12:FindFirstChild("HumanoidRootPart"))
-      ss_0 = slot_14 and slot_13
-      ss_0 = ss_0 and (((slot_13.Health > 0)))
+      ss_0 = (slot_14 and slot_13) and (((slot_13.Health > 0)))
       if ss_0 then
         slot_15 = true
         if slot_1 then
@@ -45646,20 +44452,16 @@ protos[698] = function(upvalues)
             ss_3 = v1231_1
             ss_4 = slot_11
             ss_0, ss_1 = ss_2(ss_3, ss_4)
-            ss_0 = ss_0 and (((ss_1 == "Zombie")))
-            slot_16 = ss_0
+            slot_16 = (ss_0 and (((ss_1 == "Zombie"))))
           end
-          ss_0 = slot_4 and ((not slot_16))
-          ss_0 = ss_0 or ((not slot_4) and slot_16)
-          slot_15 = ss_0
+          slot_15 = ((slot_4 and ((not slot_16))) or ((not slot_4) and slot_16))
         end
         if slot_15 then
           v1417_1 = slot_14.Position
           v1428_1 = (cell_get(upvalues[1])).Position
           slot_19 = ((v1417_1 - v1428_1)).Magnitude
           if ((slot_19 < slot_9)) then
-            ss_0 = (not slot_0) or (((cell_get(upvalues[8]))(slot_11)))
-            if ss_0 then
+            if ((not slot_0) or (((cell_get(upvalues[8]))(slot_11)))) then
               slot_7 = slot_11
               slot_8 = slot_14
               slot_9 = slot_19
@@ -45682,8 +44484,7 @@ protos[699] = function(upvalues, argument_1, argument_2)
     return nil, false
   end
   slot_2 = (slot_0:FindFirstChild("Knife"))
-  ss_0 = slot_2 and ((slot_2:IsA("Tool")))
-  if ss_0 then
+  if (slot_2 and ((slot_2:IsA("Tool")))) then
     return slot_2, slot_1
   end
   v76_1 = env.ipairs
@@ -45695,8 +44496,7 @@ protos[699] = function(upvalues, argument_1, argument_2)
   for __loopKey_699_0, __loopValue_699_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_3 = __loopKey_699_0
     slot_4 = __loopValue_699_0
-    ss_0 = (slot_4:IsA("Tool")) and (((cell_get(upvalues[1]))(slot_4)))
-    if ss_0 then
+    if ((slot_4:IsA("Tool")) and (((cell_get(upvalues[1]))(slot_4)))) then
       return slot_4, slot_1
     end
   end
@@ -45726,7 +44526,7 @@ protos[700] = function(upvalues)
 end
 
 protos[701] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_1, v39_1, v44_1
+  local slot_0, slot_1, v39_1, v44_1
   math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
@@ -45736,9 +44536,7 @@ protos[701] = function(upvalues, argument_1)
   slot_1 = (closure(702, {}))
   v39_1 = slot_0
   v44_1 = v39_1.FindFirstChild
-  ss_1 = slot_1(v44_1(v39_1, ("Events")))
-  ss_1 = ss_1 or ((slot_1(slot_0)))
-  return ss_1
+  return ((slot_1(v44_1(v39_1, ("Events")))) or ((slot_1(slot_0))))
 end
 
 protos[702] = function(upvalues, argument_1)
@@ -45750,8 +44548,7 @@ protos[702] = function(upvalues, argument_1)
     return nil
   end
   slot_1 = (slot_0:FindFirstChild("KnifeThrown"))
-  ss_0 = slot_1 and ((slot_1:IsA("RemoteEvent")) or ((slot_1:IsA("RemoteFunction"))))
-  if ss_0 then
+  if (slot_1 and ((slot_1:IsA("RemoteEvent")) or ((slot_1:IsA("RemoteFunction"))))) then
     return slot_1
   end
   v71_1 = env.ipairs
@@ -45763,8 +44560,7 @@ protos[702] = function(upvalues, argument_1)
   for __loopKey_702_0, __loopValue_702_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_2 = __loopKey_702_0
     slot_3 = __loopValue_702_0
-    ss_0 = (slot_3:IsA("RemoteEvent")) or ((slot_3:IsA("RemoteFunction")))
-    if ss_0 then
+    if ((slot_3:IsA("RemoteEvent")) or ((slot_3:IsA("RemoteFunction")))) then
       v444_1 = env.string.lower
       v455_1 = slot_3.Name
       slot_4 = (v444_1(v455_1))
@@ -45778,78 +44574,46 @@ protos[702] = function(upvalues, argument_1)
 end
 
 protos[703] = function(upvalues)
-  local slot_0, slot_1, ss_0, ss_2, ss_3, v16_1, v21_1, v232_1, v243_1, v254_1, v269_1, v279_1, v285_1, v300_1, v311_1, v321_1, v322_1, v346_1, v356_1, v357_1
-  local v36_1, v367_1
+  local slot_0, slot_1, ss_2, ss_3, v232_1, v243_1, v321_1, v322_1, v356_1
+  local v367_1
   local vm_frame_random = math.random(0, 2147483646)
   if (cell_get(upvalues[1])) then
-    ss_0 = ((cell_get(upvalues[1])):FindFirstChild("RightHand")) or (((cell_get(upvalues[1])):FindFirstChild("Right Arm")))
-    slot_0 = ss_0
-    ss_0 = slot_0 and ((slot_0:IsA("BasePart")))
-    if ss_0 then
+    slot_0 = (((cell_get(upvalues[1])):FindFirstChild("RightHand")) or (((cell_get(upvalues[1])):FindFirstChild("Right Arm"))))
+    if (slot_0 and ((slot_0:IsA("BasePart")))) then
       v232_1 = env.CFrame.new
       v243_1 = slot_0.Position
       ss_2 = v232_1
       ss_3 = v243_1
       return ss_2(ss_3)
     end
-    v16_1 = cell_get(upvalues[2])
-    v21_1 = v16_1()
-    slot_1 = v21_1
-    v36_1 = slot_1
-    ss_0 = v36_1
-    if v36_1 then
-      v269_1 = slot_1
-      v279_1 = v269_1.Magnitude
-      v285_1 = (v279_1 > 0.1)
-      ss_0 = v285_1
-    end
-    v300_1 = ss_0
-    if v300_1 then
-      v311_1 = env.CFrame
-      v321_1 = v311_1.new
+    slot_1 = ((cell_get(upvalues[2]))())
+    if (slot_1 and (((slot_1.Magnitude > 0.1)))) then
+      v321_1 = env.CFrame.new
       v322_1 = slot_1
       ss_2 = v321_1
       ss_3 = v322_1
       return ss_2(ss_3)
     end
-    v254_1 = cell_get(upvalues[3])
-    if v254_1 then
-      v346_1 = env.CFrame
-      v356_1 = v346_1.new
-      v357_1 = cell_get(upvalues[3])
-      v367_1 = v357_1.Position
+    if (cell_get(upvalues[3])) then
+      v356_1 = env.CFrame.new
+      v367_1 = (cell_get(upvalues[3])).Position
       ss_2 = v356_1
       ss_3 = v367_1
       return ss_2(ss_3)
     end
     return nil
   end
-  v16_1 = cell_get(upvalues[2])
-  v21_1 = v16_1()
-  slot_1 = v21_1
-  v36_1 = slot_1
-  ss_0 = v36_1
-  if v36_1 then
-    v269_1 = slot_1
-    v279_1 = v269_1.Magnitude
-    v285_1 = (v279_1 > 0.1)
-    ss_0 = v285_1
-  end
-  v300_1 = ss_0
-  if v300_1 then
-    v311_1 = env.CFrame
-    v321_1 = v311_1.new
+  slot_1 = ((cell_get(upvalues[2]))())
+  if (slot_1 and (((slot_1.Magnitude > 0.1)))) then
+    v321_1 = env.CFrame.new
     v322_1 = slot_1
     ss_2 = v321_1
     ss_3 = v322_1
     return ss_2(ss_3)
   end
-  v254_1 = cell_get(upvalues[3])
-  if v254_1 then
-    v346_1 = env.CFrame
-    v356_1 = v346_1.new
-    v357_1 = cell_get(upvalues[3])
-    v367_1 = v357_1.Position
+  if (cell_get(upvalues[3])) then
+    v356_1 = env.CFrame.new
+    v367_1 = (cell_get(upvalues[3])).Position
     ss_2 = v356_1
     ss_3 = v367_1
     return ss_2(ss_3)
@@ -45864,9 +44628,7 @@ protos[704] = function(upvalues)
   slot_2 = env.math.huge
   slot_1 = nil
   slot_0 = nil
-  ss_0 = (cell_get(upvalues[1])) and (cell_get(upvalues[1])).Position
-  ss_0 = ss_0 or env.Vector3.zero
-  slot_3 = ss_0
+  slot_3 = (((cell_get(upvalues[1])) and (cell_get(upvalues[1])).Position) or env.Vector3.zero)
   v166_1 = env.ipairs
   v172_1 = cell_get(upvalues[2])
   v177_1 = v172_1.GetPlayers
@@ -45877,13 +44639,10 @@ protos[704] = function(upvalues)
     slot_4 = __loopKey_704_0
     slot_5 = __loopValue_704_0
     v315_1 = cell_get(upvalues[3])
-    ss_0 = ((slot_5 ~= v315_1)) and slot_5.Character
-    if ss_0 then
+    if (((slot_5 ~= v315_1)) and slot_5.Character) then
       slot_6 = (slot_5.Character:FindFirstChildOfClass("Humanoid"))
       slot_7 = (slot_5.Character:FindFirstChild("HumanoidRootPart"))
-      ss_0 = slot_7 and slot_6
-      ss_0 = ss_0 and (((slot_6.Health > 0)))
-      if ss_0 then
+      if ((slot_7 and slot_6) and (((slot_6.Health > 0)))) then
         slot_8 = ((slot_7.Position - slot_3)).Magnitude
         if ((slot_8 < slot_2)) then
           slot_0 = slot_5
@@ -45911,7 +44670,7 @@ protos[705] = function(upvalues, argument_1, argument_2)
 end
 
 protos[706] = function(upvalues, argument_1, argument_2, argument_3)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, ss_0, ss_1, ss_2, temp_0, temp_1, temp_2, v1_1, v1019_1, v1020_1, v1025_1, v1085_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, ss_0, ss_1, ss_2, temp_0, temp_2, v1_1, v1019_1, v1020_1, v1025_1, v1085_1
   local v1248_1, v1253_1, v1274_1, v1279_1, v130_1, v1324_1, v1325_1, v1365_1, v1370_1, v1396_1, v1402_1, v141_1, v49_1, v500_1, v54_1
   local v579_1, v584_1, v589_1, v59_1, v6_1, v605_1, v625_1, v636_1, v647_1, v658_1, v669_1, v680_1, v697_1, v702_1, v776_1, v79_1, v802_1, v880_1, v881_1, v978_1, v993_1
   local vm_frame_random = math.random(0, 2147483646)
@@ -45970,16 +44729,12 @@ protos[706] = function(upvalues, argument_1, argument_2, argument_3)
   end
   ss_0, ss_1 = ss_2()
   temp_0 = ss_1
-  temp_1 = ss_0
-  slot_4 = temp_1
+  slot_4 = ss_0
   slot_5 = temp_0
-  ss_0 = slot_4 and ((not slot_5))
-  ss_0 = ss_0 and slot_4.Character
-  if ss_0 then
+  if ((slot_4 and ((not slot_5))) and slot_4.Character) then
     slot_5 = (slot_4.Character:FindFirstChild("HumanoidRootPart"))
   end
-  ss_0 = (not slot_4) or ((not slot_5))
-  if ss_0 then
+  if ((not slot_4) or ((not slot_5))) then
     return false
   end
   ss_2 = (cell_get(upvalues[9]))
@@ -46050,7 +44805,6 @@ protos[706] = function(upvalues, argument_1, argument_2, argument_3)
   slot_15 = false
   if (cell_get(slot_11)) then
     temp_0 = (cell_get(upvalues[14])).state
-    temp_1 = "allowShot"
     temp_2 = true
     temp_0.allowShot = temp_2
     if ((cell_get(slot_11)):IsA("RemoteFunction")) then
@@ -46063,7 +44817,6 @@ protos[706] = function(upvalues, argument_1, argument_2, argument_3)
       slot_15 = (v1274_1(v1279_1))
     end
     temp_0 = (cell_get(upvalues[14])).state
-    temp_1 = "allowShot"
     temp_2 = false
     temp_0.allowShot = temp_2
   end
@@ -46168,8 +44921,7 @@ protos[712] = function(upvalues)
   ss_0, ss_1 = ss_2()
   slot_1 = ss_1
   slot_0 = ss_0
-  ss_0 = (not slot_0) or ((not slot_1))
-  if ss_0 then
+  if ((not slot_0) or ((not slot_1))) then
     return nil, nil
   end
   v140_1 = cell_get(upvalues[4])
@@ -46193,11 +44945,11 @@ end
 
 protos[713] = function(upvalues, ...)
   local argv = pack_values(...)
-  local v1002_1, v1012_1, v1026_1, v1031_1, v1036_1, v1050_1, v1055_1, v1060_1, v1079_1, v1090_1, v1095_1, v1100_1, v1105_1, v1106_1, v1116_1, v1130_1, v1135_1, v1140_1, v1165_1, v1175_1
-  local v1186_1, v1201_1, v1206_1, v1211_1, v1239_1, v1244_1, v1250_1, v1260_1, v1261_1, v1271_1, v1281_1, v171_1, v181_1, v209_1, v337_1, v342_1, v363_1
-  local v373_1, v379_1, v380_1, v391_1, v402_1, v412_1, v427_1, v437_1, v442_1, v447_1, v457_1, v478_1, v488_1, v494_1, v509_1, v518_1, v523_1, v541_1, v546_1, v551_1
-  local v562_1, v573_1, v578_1, v598_1, v608_1, v618_1, v623_1, v63_1, v644_1, v659_1, v670_1, v685_1, v695_1, v705_1, v721_1, v741_1, v751_1, v757_1, v772_1, v788_1
-  local v793_1, v7_1, v803_1, v804_1, v814_1, v829_1, v841_1, v846_1, v856_1, v857_1, v867_1, v882_1, v891_1, v912_1, v927_1, v932_1, v937_1, v958_1, v968_1, v979_1
+  local v1026_1, v1031_1, v1050_1, v1055_1, v1090_1, v1095_1, v1100_1, v1105_1, v1130_1, v1135_1, v1165_1, v1175_1
+  local v1186_1, v1201_1, v1206_1, v1211_1, v1239_1, v1244_1, v1260_1, v1261_1, v1281_1, v181_1, v209_1, v337_1, v342_1
+  local v379_1, v437_1, v442_1, v518_1, v523_1, v546_1
+  local v573_1, v578_1, v63_1, v757_1, v788_1
+  local v7_1, v803_1, v829_1, v841_1, v856_1, v927_1, v932_1, v937_1, v968_1, v979_1
   local exit_1002, slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, ss_7, ss_8, temp_0, temp_1, temp_2, temp_3, temp_4, temp_5, temp_6
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argv[1]
@@ -46206,8 +44958,7 @@ protos[713] = function(upvalues, ...)
   v7_1 = env.getnamecallmethod()
   slot_1 = nil
   slot_1 = v7_1
-  ss_0 = ((slot_1 ~= "FireServer")) and (((slot_1 ~= "InvokeServer")))
-  if ss_0 then
+  if (((slot_1 ~= "FireServer")) and (((slot_1 ~= "InvokeServer")))) then
     ss_2 = (cell_get(upvalues[1]))
     ss_3 = slot_0
     ss_4 = varargs
@@ -46220,156 +44971,93 @@ protos[713] = function(upvalues, ...)
     ss_0 = (not v209_1)
   end
   if ss_0 then
-    ss_0 = slot_0 and slot_0.Name
-    slot_2 = ss_0
-    ss_0 = slot_2 and (cell_get(upvalues[3]))[slot_2]
-    if ss_0 then
+    slot_2 = (slot_0 and slot_0.Name)
+    if (slot_2 and (cell_get(upvalues[3]))[slot_2]) then
       return nil
     end
-    v171_1 = cell_get(upvalues[4])
-    v181_1 = v171_1.KnifeSilentAim
+    v181_1 = (cell_get(upvalues[4])).KnifeSilentAim
     ss_0 = v181_1
     if v181_1 then
-      v363_1 = cell_get(upvalues[2])
-      v373_1 = v363_1.state
-      v379_1 = v373_1.allowShot
-      v380_1 = not v379_1
-      ss_0 = v380_1
+      v379_1 = (cell_get(upvalues[2])).state.allowShot
+      ss_0 = (not v379_1)
     end
-    v391_1 = ss_0
-    ss_0 = v391_1
-    if v391_1 then
-      v402_1 = slot_1
-      v412_1 = (v402_1 == "FireServer")
-      ss_0 = v412_1
-    end
-    v427_1 = ss_0
-    if v427_1 then
+    ss_0 = ss_0 and (((slot_1 == "FireServer")))
+    if ss_0 then
       v437_1 = env.typeof
       v442_1 = slot_0
-      v447_1 = v437_1(v442_1)
-      v457_1 = (v447_1 == "Instance")
-      ss_0 = v457_1
-      if v457_1 then
-        v478_1 = slot_0
-        v488_1 = v478_1.Name
-        v494_1 = (v488_1 == "KnifeThrown")
-        ss_0 = v494_1
-      end
-      v509_1 = ss_0
-      if v509_1 then
+      ss_0 = (((v437_1(v442_1)) == "Instance")) and (((slot_0.Name == "KnifeThrown")))
+      if ss_0 then
         v518_1 = cell_get(upvalues[5])
         v523_1 = not v518_1
         ss_0 = v523_1
         if not v523_1 then
-          v541_1 = cell_get(upvalues[5])
-          v546_1 = v541_1()
-          v551_1 = not v546_1
-          ss_0 = v551_1
+          v546_1 = (cell_get(upvalues[5]))()
+          ss_0 = (not v546_1)
         end
-        v562_1 = ss_0
-        if v562_1 then
+        if ss_0 then
           v573_1 = env.pcall
           v578_1 = cell_get(upvalues[6])
           ss_2 = v573_1
           ss_3 = v578_1
           ss_0, ss_1, ss_2 = ss_2(ss_3)
           slot_5 = nil
-          v598_1 = ss_2
-          slot_5 = v598_1
+          slot_5 = ss_2
           slot_4 = nil
-          v608_1 = ss_1
-          slot_4 = v608_1
+          slot_4 = ss_1
           slot_3 = nil
-          v618_1 = ss_0
-          slot_3 = v618_1
-          v623_1 = slot_3
-          ss_0 = v623_1
-          if v623_1 then
-            v644_1 = slot_4
-            ss_0 = v644_1
-          end
-          v659_1 = ss_0
-          ss_0 = v659_1
-          if v659_1 then
-            v670_1 = slot_5
-            ss_0 = v670_1
-          end
-          v685_1 = ss_0
-          if v685_1 then
-            v695_1 = env.table
-            v705_1 = v695_1.pack
-            ss_1 = v705_1
+          ss_0 = ((ss_0 and slot_4)) and slot_5
+          if ss_0 then
+            ss_1 = env.table.pack
             ss_2 = varargs
             ss_0 = ss_1(unpack_values(ss_2, 1, ss_2.n))
             slot_6 = nil
-            v721_1 = ss_0
-            slot_6 = v721_1
+            slot_6 = ss_0
             slot_7 = false
-            v741_1 = slot_6
-            v751_1 = v741_1.n
-            v757_1 = (v751_1 >= 2)
+            v757_1 = (slot_6.n >= 2)
             ss_0 = v757_1
             if v757_1 then
               v788_1 = env.typeof
-              v793_1 = slot_6
-              v803_1 = v793_1[1]
-              v804_1 = v788_1(v803_1)
-              v814_1 = (v804_1 == "CFrame")
-              ss_0 = v814_1
+              v803_1 = slot_6[1]
+              ss_0 = (((v788_1(v803_1)) == "CFrame"))
             end
             v829_1 = ss_0
             ss_0 = v829_1
             if v829_1 then
               v841_1 = env.typeof
-              v846_1 = slot_6
-              v856_1 = v846_1[2]
-              v857_1 = v841_1(v856_1)
-              v867_1 = (v857_1 == "CFrame")
-              ss_0 = v867_1
+              v856_1 = slot_6[2]
+              ss_0 = (((v841_1(v856_1)) == "CFrame"))
             end
-            v882_1 = ss_0
-            if v882_1 then
-              v891_1 = slot_6
-              temp_0 = v891_1
+            if ss_0 then
+              temp_0 = slot_6
               temp_1 = 2
-              v912_1 = slot_5
-              temp_2 = v912_1
+              temp_2 = slot_5
               v927_1 = temp_0
               v932_1 = temp_1
               v937_1 = temp_2
               v927_1[v932_1] = v937_1
               slot_7 = true
             else
-              v958_1 = slot_6
-              v968_1 = v958_1.n
+              v968_1 = slot_6.n
               v979_1 = -(1)
               temp_0, temp_1, temp_2, temp_3 = v968_1, 1, v979_1, v968_1
               while true do
-                v1002_1 = temp_2
-                v1012_1 = (v1002_1 > 0)
-                if v1012_1 then
+                if ((temp_2 > 0)) then
                   v1026_1 = temp_3
                   v1031_1 = temp_1
-                  v1036_1 = (v1026_1 <= v1031_1)
-                  if v1036_1 then
+                  if ((v1026_1 <= v1031_1)) then
                     slot_8 = nil
-                    v1079_1 = temp_3
-                    slot_8 = v1079_1
+                    slot_8 = temp_3
                     v1090_1 = env.typeof
                     v1095_1 = slot_6
                     v1100_1 = slot_8
                     v1105_1 = v1095_1[v1100_1]
-                    v1106_1 = v1090_1(v1105_1)
-                    v1116_1 = (v1106_1 == "CFrame")
-                    if v1116_1 then
+                    if (((v1090_1(v1105_1)) == "CFrame")) then
                       exit_1002 = 2
                       break
                     end
                     v1130_1 = temp_3
                     v1135_1 = temp_2
-                    v1140_1 = (v1130_1 + v1135_1)
-                    temp_3 = v1140_1
+                    temp_3 = ((v1130_1 + v1135_1))
                     continue
                   end
                   exit_1002 = 1
@@ -46377,25 +45065,20 @@ protos[713] = function(upvalues, ...)
                 end
                 v1050_1 = temp_3
                 v1055_1 = temp_1
-                v1060_1 = (v1050_1 >= v1055_1)
-                if v1060_1 then
+                if ((v1050_1 >= v1055_1)) then
                   slot_8 = nil
-                  v1079_1 = temp_3
-                  slot_8 = v1079_1
+                  slot_8 = temp_3
                   v1090_1 = env.typeof
                   v1095_1 = slot_6
                   v1100_1 = slot_8
                   v1105_1 = v1095_1[v1100_1]
-                  v1106_1 = v1090_1(v1105_1)
-                  v1116_1 = (v1106_1 == "CFrame")
-                  if v1116_1 then
+                  if (((v1090_1(v1105_1)) == "CFrame")) then
                     exit_1002 = 2
                     break
                   end
                   v1130_1 = temp_3
                   v1135_1 = temp_2
-                  v1140_1 = (v1130_1 + v1135_1)
-                  temp_3 = v1140_1
+                  temp_3 = ((v1130_1 + v1135_1))
                   continue
                 end
                 exit_1002 = 1
@@ -46416,15 +45099,12 @@ protos[713] = function(upvalues, ...)
                 slot_7 = true
               end
             end
-            v772_1 = slot_7
-            if v772_1 then
+            if slot_7 then
               v1239_1 = cell_get(upvalues[1])
               v1244_1 = slot_0
-              v1250_1 = env.table
-              v1260_1 = v1250_1.unpack
+              v1260_1 = env.table.unpack
               v1261_1 = slot_6
-              v1271_1 = slot_6
-              v1281_1 = v1271_1.n
+              v1281_1 = slot_6.n
               ss_2 = v1239_1
               ss_3 = v1244_1
               ss_5 = v1260_1
@@ -46469,150 +45149,89 @@ protos[713] = function(upvalues, ...)
     end
     return ss_2(ss_3, unpack_values(ss_4, 1, ss_4.n))
   end
-  v171_1 = cell_get(upvalues[4])
-  v181_1 = v171_1.KnifeSilentAim
+  v181_1 = (cell_get(upvalues[4])).KnifeSilentAim
   ss_0 = v181_1
   if v181_1 then
-    v363_1 = cell_get(upvalues[2])
-    v373_1 = v363_1.state
-    v379_1 = v373_1.allowShot
-    v380_1 = not v379_1
-    ss_0 = v380_1
+    v379_1 = (cell_get(upvalues[2])).state.allowShot
+    ss_0 = (not v379_1)
   end
-  v391_1 = ss_0
-  ss_0 = v391_1
-  if v391_1 then
-    v402_1 = slot_1
-    v412_1 = (v402_1 == "FireServer")
-    ss_0 = v412_1
-  end
-  v427_1 = ss_0
-  if v427_1 then
+  ss_0 = ss_0 and (((slot_1 == "FireServer")))
+  if ss_0 then
     v437_1 = env.typeof
     v442_1 = slot_0
-    v447_1 = v437_1(v442_1)
-    v457_1 = (v447_1 == "Instance")
-    ss_0 = v457_1
-    if v457_1 then
-      v478_1 = slot_0
-      v488_1 = v478_1.Name
-      v494_1 = (v488_1 == "KnifeThrown")
-      ss_0 = v494_1
-    end
-    v509_1 = ss_0
-    if v509_1 then
+    ss_0 = (((v437_1(v442_1)) == "Instance")) and (((slot_0.Name == "KnifeThrown")))
+    if ss_0 then
       v518_1 = cell_get(upvalues[5])
       v523_1 = not v518_1
       ss_0 = v523_1
       if not v523_1 then
-        v541_1 = cell_get(upvalues[5])
-        v546_1 = v541_1()
-        v551_1 = not v546_1
-        ss_0 = v551_1
+        v546_1 = (cell_get(upvalues[5]))()
+        ss_0 = (not v546_1)
       end
-      v562_1 = ss_0
-      if v562_1 then
+      if ss_0 then
         v573_1 = env.pcall
         v578_1 = cell_get(upvalues[6])
         ss_2 = v573_1
         ss_3 = v578_1
         ss_0, ss_1, ss_2 = ss_2(ss_3)
         slot_5 = nil
-        v598_1 = ss_2
-        slot_5 = v598_1
+        slot_5 = ss_2
         slot_4 = nil
-        v608_1 = ss_1
-        slot_4 = v608_1
+        slot_4 = ss_1
         slot_3 = nil
-        v618_1 = ss_0
-        slot_3 = v618_1
-        v623_1 = slot_3
-        ss_0 = v623_1
-        if v623_1 then
-          v644_1 = slot_4
-          ss_0 = v644_1
-        end
-        v659_1 = ss_0
-        ss_0 = v659_1
-        if v659_1 then
-          v670_1 = slot_5
-          ss_0 = v670_1
-        end
-        v685_1 = ss_0
-        if v685_1 then
-          v695_1 = env.table
-          v705_1 = v695_1.pack
-          ss_1 = v705_1
+        ss_0 = ((ss_0 and slot_4)) and slot_5
+        if ss_0 then
+          ss_1 = env.table.pack
           ss_2 = varargs
           ss_0 = ss_1(unpack_values(ss_2, 1, ss_2.n))
           slot_6 = nil
-          v721_1 = ss_0
-          slot_6 = v721_1
+          slot_6 = ss_0
           slot_7 = false
-          v741_1 = slot_6
-          v751_1 = v741_1.n
-          v757_1 = (v751_1 >= 2)
+          v757_1 = (slot_6.n >= 2)
           ss_0 = v757_1
           if v757_1 then
             v788_1 = env.typeof
-            v793_1 = slot_6
-            v803_1 = v793_1[1]
-            v804_1 = v788_1(v803_1)
-            v814_1 = (v804_1 == "CFrame")
-            ss_0 = v814_1
+            v803_1 = slot_6[1]
+            ss_0 = (((v788_1(v803_1)) == "CFrame"))
           end
           v829_1 = ss_0
           ss_0 = v829_1
           if v829_1 then
             v841_1 = env.typeof
-            v846_1 = slot_6
-            v856_1 = v846_1[2]
-            v857_1 = v841_1(v856_1)
-            v867_1 = (v857_1 == "CFrame")
-            ss_0 = v867_1
+            v856_1 = slot_6[2]
+            ss_0 = (((v841_1(v856_1)) == "CFrame"))
           end
-          v882_1 = ss_0
-          if v882_1 then
-            v891_1 = slot_6
-            temp_0 = v891_1
+          if ss_0 then
+            temp_0 = slot_6
             temp_1 = 2
-            v912_1 = slot_5
-            temp_2 = v912_1
+            temp_2 = slot_5
             v927_1 = temp_0
             v932_1 = temp_1
             v937_1 = temp_2
             v927_1[v932_1] = v937_1
             slot_7 = true
           else
-            v958_1 = slot_6
-            v968_1 = v958_1.n
+            v968_1 = slot_6.n
             v979_1 = -(1)
             temp_0, temp_1, temp_2, temp_3 = v968_1, 1, v979_1, v968_1
             while true do
-              v1002_1 = temp_2
-              v1012_1 = (v1002_1 > 0)
-              if v1012_1 then
+              if ((temp_2 > 0)) then
                 v1026_1 = temp_3
                 v1031_1 = temp_1
-                v1036_1 = (v1026_1 <= v1031_1)
-                if v1036_1 then
+                if ((v1026_1 <= v1031_1)) then
                   slot_8 = nil
-                  v1079_1 = temp_3
-                  slot_8 = v1079_1
+                  slot_8 = temp_3
                   v1090_1 = env.typeof
                   v1095_1 = slot_6
                   v1100_1 = slot_8
                   v1105_1 = v1095_1[v1100_1]
-                  v1106_1 = v1090_1(v1105_1)
-                  v1116_1 = (v1106_1 == "CFrame")
-                  if v1116_1 then
+                  if (((v1090_1(v1105_1)) == "CFrame")) then
                     exit_1002 = 2
                     break
                   end
                   v1130_1 = temp_3
                   v1135_1 = temp_2
-                  v1140_1 = (v1130_1 + v1135_1)
-                  temp_3 = v1140_1
+                  temp_3 = ((v1130_1 + v1135_1))
                   continue
                 end
                 exit_1002 = 1
@@ -46620,25 +45239,20 @@ protos[713] = function(upvalues, ...)
               end
               v1050_1 = temp_3
               v1055_1 = temp_1
-              v1060_1 = (v1050_1 >= v1055_1)
-              if v1060_1 then
+              if ((v1050_1 >= v1055_1)) then
                 slot_8 = nil
-                v1079_1 = temp_3
-                slot_8 = v1079_1
+                slot_8 = temp_3
                 v1090_1 = env.typeof
                 v1095_1 = slot_6
                 v1100_1 = slot_8
                 v1105_1 = v1095_1[v1100_1]
-                v1106_1 = v1090_1(v1105_1)
-                v1116_1 = (v1106_1 == "CFrame")
-                if v1116_1 then
+                if (((v1090_1(v1105_1)) == "CFrame")) then
                   exit_1002 = 2
                   break
                 end
                 v1130_1 = temp_3
                 v1135_1 = temp_2
-                v1140_1 = (v1130_1 + v1135_1)
-                temp_3 = v1140_1
+                temp_3 = ((v1130_1 + v1135_1))
                 continue
               end
               exit_1002 = 1
@@ -46659,15 +45273,12 @@ protos[713] = function(upvalues, ...)
               slot_7 = true
             end
           end
-          v772_1 = slot_7
-          if v772_1 then
+          if slot_7 then
             v1239_1 = cell_get(upvalues[1])
             v1244_1 = slot_0
-            v1250_1 = env.table
-            v1260_1 = v1250_1.unpack
+            v1260_1 = env.table.unpack
             v1261_1 = slot_6
-            v1271_1 = slot_6
-            v1281_1 = v1271_1.n
+            v1281_1 = slot_6.n
             ss_2 = v1239_1
             ss_3 = v1244_1
             ss_5 = v1260_1
@@ -46788,17 +45399,12 @@ protos[714] = function(upvalues)
               slot_5 = __loopValue_714_0
               slot_6 = slot_5.Name
               slot_7 = slot_5.Animation
-              ss_0 = slot_7 and slot_7.Name
-              ss_0 = ss_0 and (((slot_7.Name ~= "")))
-              if ss_0 then
+              if ((slot_7 and slot_7.Name) and (((slot_7.Name ~= "")))) then
                 slot_6 = slot_7.Name
               end
               slot_8 = (env.string.lower(slot_6))
-              ss_0 = slot_7 and slot_7.AnimationId
-              ss_0 = ss_0 or ("")
-              slot_9 = ss_0
-              ss_0 = (env.string.find(slot_8, "throwhold")) or ((env.string.find(slot_8, "throwtest2")))
-              v912_1 = ss_0
+              slot_9 = ((slot_7 and slot_7.AnimationId) or (""))
+              v912_1 = ((env.string.find(slot_8, "throwhold")) or ((env.string.find(slot_8, "throwtest2"))))
               ss_0 = v912_1
               if not v912_1 then
                 v934_1 = env.string.find
@@ -46866,8 +45472,7 @@ protos[716] = function(upvalues, argument_1, argument_2)
       if not slot_1 then
         if not (((cell_get(upvalues[3]))._isMenuOpen())) then
           slot_2 = env.workspace.CurrentCamera
-          ss_0 = slot_2 and slot_2.ViewportSize
-          ss_0 = ss_0 or ((env.Vector2.new(1280, 720)))
+          ss_0 = (slot_2 and slot_2.ViewportSize) or ((env.Vector2.new(1280, 720)))
           v257_1 = slot_0.Position.X
           v274_1 = (ss_0.X * 0.5)
           v279_1 = (v257_1 < v274_1)
@@ -46903,13 +45508,11 @@ protos[717] = function(upvalues, argument_1, argument_2)
       slot_2 = ((v49_1 - v54_1))
       upvalues[1] = cell_set_or_create(upvalues[1], false)
       upvalues[2] = cell_set_or_create(upvalues[2], nil)
-      ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Connected
-      if ss_0 then
+      if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Connected) then
         v227_1 = cell_get(upvalues[4])
         v227_1:Disconnect()
       end
-      ss_0 = (cell_get(upvalues[5])) and (cell_get(upvalues[5])).Connected
-      if ss_0 then
+      if ((cell_get(upvalues[5])) and (cell_get(upvalues[5])).Connected) then
         v303_1 = cell_get(upvalues[5])
         v303_1:Disconnect()
       end
@@ -46933,19 +45536,17 @@ protos[718] = function(upvalues)
 end
 
 protos[719] = function(upvalues)
-  local ss_0, v133_1, v138_1, v190_1, v195_1
+  local v133_1, v138_1, v190_1, v195_1
   local vm_frame_random = math.random(0, 2147483646)
   if (cell_get(upvalues[1])) then
     upvalues[1] = cell_set_or_create(upvalues[1], false)
     upvalues[2] = cell_set_or_create(upvalues[2], nil)
-    ss_0 = (cell_get(upvalues[3])) and (cell_get(upvalues[3])).Connected
-    if ss_0 then
+    if ((cell_get(upvalues[3])) and (cell_get(upvalues[3])).Connected) then
       v133_1 = cell_get(upvalues[3])
       v138_1 = v133_1.Disconnect
       v138_1(v133_1)
     end
-    ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Connected
-    if ss_0 then
+    if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Connected) then
       v190_1 = cell_get(upvalues[4])
       v195_1 = v190_1.Disconnect
       v195_1(v190_1)
@@ -47004,8 +45605,7 @@ end
 protos[721] = function(upvalues)
   local ss_0
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = ((cell_get(upvalues[2])):GetAttribute("AquaHubKnifeWatch")) and (true)
-  ss_0 = ss_0 or (false)
+  ss_0 = (((cell_get(upvalues[2])):GetAttribute("AquaHubKnifeWatch")) and (true)) or (false)
   upvalues[1] = cell_set_or_create(upvalues[1], ss_0)
   return
 end
@@ -47107,8 +45707,7 @@ protos[728] = function(upvalues)
   local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_1, ss_2, temp_0, temp_1, temp_2, temp_5, v277_1, v282_1
   local v536_1, v543_1, v548_1, v574_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = ((cell_get(upvalues[1])):FindFirstChildWhichIsA("Weld")) or (((cell_get(upvalues[1])):FindFirstChildWhichIsA("WeldConstraint")))
-  slot_0 = ss_0
+  slot_0 = (((cell_get(upvalues[1])):FindFirstChildWhichIsA("Weld")) or (((cell_get(upvalues[1])):FindFirstChildWhichIsA("WeldConstraint"))))
   if slot_0 then
     temp_0 = slot_0
     temp_1 = "Enabled"
@@ -47176,10 +45775,8 @@ protos[729] = function(upvalues)
   end
   slot_1 = (slot_0:FindFirstChild("Handle"))
   slot_2 = (slot_0:FindFirstChild("Events"))
-  ss_0 = slot_2 and ((slot_2:FindFirstChild("HandleTouched")))
-  slot_3 = ss_0
-  ss_0 = (not slot_1) or ((not slot_3))
-  if ss_0 then
+  slot_3 = (slot_2 and ((slot_2:FindFirstChild("HandleTouched"))))
+  if ((not slot_1) or ((not slot_3))) then
     return nil, nil, nil
   end
   return slot_0, slot_1, slot_3
@@ -47214,8 +45811,7 @@ protos[730] = function(upvalues)
   if (not slot_1) then
     return false
   end
-  ss_0 = (cell_get(upvalues[1])).AutoEquipKnifeRange or (10)
-  slot_2 = ss_0
+  slot_2 = ((cell_get(upvalues[1])).AutoEquipKnifeRange or (10))
   slot_3 = false
   v340_1 = env.ipairs
   v346_1 = cell_get(upvalues[5])
@@ -47228,13 +45824,10 @@ protos[730] = function(upvalues)
     slot_4 = __loopKey_730_0
     slot_5 = __loopValue_730_0
     v489_1 = cell_get(upvalues[4])
-    ss_0 = ((slot_5 ~= v489_1)) and slot_5.Character
-    if ss_0 then
+    if (((slot_5 ~= v489_1)) and slot_5.Character) then
       slot_6 = (slot_5.Character:FindFirstChild("HumanoidRootPart"))
       slot_7 = (slot_5.Character:FindFirstChildOfClass("Humanoid"))
-      ss_0 = slot_6 and slot_7
-      ss_0 = ss_0 and (((slot_7.Health > 0)))
-      if ss_0 then
+      if ((slot_6 and slot_7) and (((slot_7.Health > 0)))) then
         v736_1 = slot_6.Position
         v747_1 = (cell_get(upvalues[6])).Position
         if ((((v736_1 - v747_1)).Magnitude <= slot_2)) then
@@ -47311,9 +45904,9 @@ protos[732] = function(upvalues)
 end
 
 protos[733] = function(upvalues)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, ss_0, ss_1, ss_2, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4, v1_1, v100_1, v111_1, v143_1, v163_1, v173_1, v183_1, v188_1, v193_1, v209_1, v234_1, v247_1, v253_1, v258_1
-  local v278_1, v278_2, v278_3, v306_1, v311_1, v316_1, v321_ret1, v321_ret2, v33_1, v336_1, v346_1, v352_1, v376_1, v386_1, v396_1, v401_1, v406_1, v427_1, v432_1, v437_1, v442_1, v463_1, v473_1, v484_1, v49_1, v494_1, v504_1, v505_1, v515_1, v531_1, v541_1, v542_1
-  local v552_1, v567_1, v588_1, v6_1, v603_1, v614_1, v624_1, v630_1, v645_1, v655_1, v665_1, v666_1, v671_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, ss_0, ss_1, ss_2, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4, v1_1, v100_1, v111_1, v188_1, v193_1, v209_1, v247_1, v253_1, v258_1
+  local v278_1, v278_2, v278_3, v306_1, v311_1, v316_1, v321_ret1, v321_ret2, v33_1, v396_1, v401_1, v427_1, v432_1, v437_1, v442_1, v49_1
+  local v6_1, v665_1, v666_1, v671_1
   local vm_frame_random = math.random(0, 2147483646)
   v1_1 = cell_get(upvalues[1])
   v6_1 = not v1_1
@@ -47333,20 +45926,15 @@ protos[733] = function(upvalues)
     if (not v33_1) then
       v209_1 = (cell_get(upvalues[4]))()
       if not ((not v209_1)) then
-        v143_1 = cell_get(upvalues[5])
-        ss_2 = v143_1
+        ss_2 = (cell_get(upvalues[5]))
         ss_0, ss_1, ss_2 = ss_2()
-        v163_1 = ss_2
-        slot_2 = v163_1
-        v173_1 = ss_1
-        slot_1 = v173_1
-        v183_1 = ss_0
-        slot_0 = v183_1
+        slot_2 = ss_2
+        slot_1 = ss_1
+        slot_0 = ss_0
         v188_1 = slot_1
         v193_1 = not v188_1
         if not v193_1 then
-          v234_1 = new_table(0)
-          slot_3 = v234_1
+          slot_3 = (new_table(0))
           v247_1 = env.ipairs
           v253_1 = cell_get(upvalues[6])
           v258_1 = v253_1.GetPlayers
@@ -47365,56 +45953,19 @@ protos[733] = function(upvalues)
             v321_ret1, v321_ret2 = v306_1(v311_1, v316_1)
             temp_4 = v321_ret2
             temp_3 = v321_ret1
-            v336_1 = temp_3
-            temp_2 = v336_1
-            v346_1 = temp_3
-            v352_1 = (v346_1 == nil)
-            if v352_1 then
+            temp_2 = temp_3
+            if ((temp_3 == nil)) then
               break
             end
-            v376_1 = temp_3
-            slot_4 = v376_1
-            v386_1 = temp_4
-            slot_5 = v386_1
+            slot_4 = temp_3
+            slot_5 = temp_4
             v396_1 = slot_5
             v401_1 = cell_get(upvalues[7])
-            v406_1 = (v396_1 ~= v401_1)
-            ss_0 = v406_1
-            if v406_1 then
-              v463_1 = slot_5
-              v473_1 = v463_1.Character
-              ss_0 = v473_1
-            end
-            v484_1 = ss_0
-            if v484_1 then
-              v494_1 = slot_5
-              v504_1 = v494_1.Character
-              v505_1 = v504_1.FindFirstChild
-              v515_1 = v505_1(v504_1, "HumanoidRootPart")
-              slot_6 = v515_1
-              v531_1 = slot_5
-              v541_1 = v531_1.Character
-              v542_1 = v541_1.FindFirstChildOfClass
-              v552_1 = v542_1(v541_1, "Humanoid")
-              slot_7 = v552_1
-              v567_1 = slot_6
-              ss_0 = v567_1
-              if v567_1 then
-                v588_1 = slot_7
-                ss_0 = v588_1
-              end
-              v603_1 = ss_0
-              ss_0 = v603_1
-              if v603_1 then
-                v614_1 = slot_7
-                v624_1 = v614_1.Health
-                v630_1 = (v624_1 > 0)
-                ss_0 = v630_1
-              end
-              v645_1 = ss_0
-              if v645_1 then
-                v655_1 = env.table
-                v665_1 = v655_1.insert
+            if (((v396_1 ~= v401_1)) and slot_5.Character) then
+              slot_6 = (slot_5.Character:FindFirstChild("HumanoidRootPart"))
+              slot_7 = (slot_5.Character:FindFirstChildOfClass("Humanoid"))
+              if (((slot_6 and slot_7)) and (((slot_7.Health > 0)))) then
+                v665_1 = env.table.insert
                 v666_1 = slot_3
                 v671_1 = slot_6
                 v665_1(v666_1, v671_1)
@@ -47429,20 +45980,15 @@ protos[733] = function(upvalues)
         end
       end
     else
-      v143_1 = cell_get(upvalues[5])
-      ss_2 = v143_1
+      ss_2 = (cell_get(upvalues[5]))
       ss_0, ss_1, ss_2 = ss_2()
-      v163_1 = ss_2
-      slot_2 = v163_1
-      v173_1 = ss_1
-      slot_1 = v173_1
-      v183_1 = ss_0
-      slot_0 = v183_1
+      slot_2 = ss_2
+      slot_1 = ss_1
+      slot_0 = ss_0
       v188_1 = slot_1
       v193_1 = not v188_1
       if not v193_1 then
-        v234_1 = new_table(0)
-        slot_3 = v234_1
+        slot_3 = (new_table(0))
         v247_1 = env.ipairs
         v253_1 = cell_get(upvalues[6])
         v258_1 = v253_1.GetPlayers
@@ -47461,56 +46007,19 @@ protos[733] = function(upvalues)
           v321_ret1, v321_ret2 = v306_1(v311_1, v316_1)
           temp_4 = v321_ret2
           temp_3 = v321_ret1
-          v336_1 = temp_3
-          temp_2 = v336_1
-          v346_1 = temp_3
-          v352_1 = (v346_1 == nil)
-          if v352_1 then
+          temp_2 = temp_3
+          if ((temp_3 == nil)) then
             break
           end
-          v376_1 = temp_3
-          slot_4 = v376_1
-          v386_1 = temp_4
-          slot_5 = v386_1
+          slot_4 = temp_3
+          slot_5 = temp_4
           v396_1 = slot_5
           v401_1 = cell_get(upvalues[7])
-          v406_1 = (v396_1 ~= v401_1)
-          ss_0 = v406_1
-          if v406_1 then
-            v463_1 = slot_5
-            v473_1 = v463_1.Character
-            ss_0 = v473_1
-          end
-          v484_1 = ss_0
-          if v484_1 then
-            v494_1 = slot_5
-            v504_1 = v494_1.Character
-            v505_1 = v504_1.FindFirstChild
-            v515_1 = v505_1(v504_1, "HumanoidRootPart")
-            slot_6 = v515_1
-            v531_1 = slot_5
-            v541_1 = v531_1.Character
-            v542_1 = v541_1.FindFirstChildOfClass
-            v552_1 = v542_1(v541_1, "Humanoid")
-            slot_7 = v552_1
-            v567_1 = slot_6
-            ss_0 = v567_1
-            if v567_1 then
-              v588_1 = slot_7
-              ss_0 = v588_1
-            end
-            v603_1 = ss_0
-            ss_0 = v603_1
-            if v603_1 then
-              v614_1 = slot_7
-              v624_1 = v614_1.Health
-              v630_1 = (v624_1 > 0)
-              ss_0 = v630_1
-            end
-            v645_1 = ss_0
-            if v645_1 then
-              v655_1 = env.table
-              v665_1 = v655_1.insert
+          if (((v396_1 ~= v401_1)) and slot_5.Character) then
+            slot_6 = (slot_5.Character:FindFirstChild("HumanoidRootPart"))
+            slot_7 = (slot_5.Character:FindFirstChildOfClass("Humanoid"))
+            if (((slot_6 and slot_7)) and (((slot_7.Health > 0)))) then
+              v665_1 = env.table.insert
               v666_1 = slot_3
               v671_1 = slot_6
               v665_1(v666_1, v671_1)
@@ -47529,9 +46038,9 @@ protos[733] = function(upvalues)
 end
 
 protos[734] = function(upvalues)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, ss_0, ss_1, ss_2, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4, v1_1, v130_1, v141_1, v197_1, v219_1, v239_1, v249_1, v259_1, v264_1
-  local v269_1, v285_1, v310_1, v323_1, v329_1, v334_1, v354_1, v354_2, v354_3, v382_1, v387_1, v392_1, v397_ret1, v397_ret2, v412_1, v422_1, v428_1, v452_1, v462_1, v472_1, v477_1, v482_1, v49_1, v503_1, v508_1, v513_1, v518_1, v539_1, v54_1, v549_1, v560_1, v570_1
-  local v580_1, v581_1, v59_1, v591_1, v6_1, v607_1, v617_1, v618_1, v628_1, v643_1, v664_1, v679_1, v690_1, v700_1, v706_1, v721_1, v730_1, v740_1, v741_1, v751_1, v752_1, v762_1, v773_1, v778_1, v788_1, v789_1, v79_1, v809_1, v819_1, v820_1, v825_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, ss_0, ss_1, ss_2, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4, v1_1, v130_1, v141_1, v197_1, v264_1
+  local v269_1, v285_1, v323_1, v329_1, v334_1, v354_1, v354_2, v354_3, v382_1, v387_1, v392_1, v397_ret1, v397_ret2, v472_1, v477_1, v49_1, v503_1, v508_1, v513_1, v518_1, v54_1
+  local v59_1, v6_1, v740_1, v751_1, v773_1, v788_1, v79_1, v819_1, v820_1, v825_1
   local vm_frame_random = math.random(0, 2147483646)
   v1_1 = cell_get(upvalues[1])
   v6_1 = not v1_1
@@ -47557,20 +46066,15 @@ protos[734] = function(upvalues)
       if (not v197_1) then
         v285_1 = (cell_get(upvalues[6]))()
         if not ((not v285_1)) then
-          v219_1 = cell_get(upvalues[7])
-          ss_2 = v219_1
+          ss_2 = (cell_get(upvalues[7]))
           ss_0, ss_1, ss_2 = ss_2()
-          v239_1 = ss_2
-          slot_3 = v239_1
-          v249_1 = ss_1
-          slot_2 = v249_1
-          v259_1 = ss_0
-          slot_1 = v259_1
+          slot_3 = ss_2
+          slot_2 = ss_1
+          slot_1 = ss_0
           v264_1 = slot_2
           v269_1 = not v264_1
           if not v269_1 then
-            v310_1 = new_table(0)
-            slot_4 = v310_1
+            slot_4 = (new_table(0))
             v323_1 = env.ipairs
             v329_1 = cell_get(upvalues[8])
             v334_1 = v329_1.GetPlayers
@@ -47589,68 +46093,24 @@ protos[734] = function(upvalues)
               v397_ret1, v397_ret2 = v382_1(v387_1, v392_1)
               temp_4 = v397_ret2
               temp_3 = v397_ret1
-              v412_1 = temp_3
-              temp_2 = v412_1
-              v422_1 = temp_3
-              v428_1 = (v422_1 == nil)
-              if v428_1 then
+              temp_2 = temp_3
+              if ((temp_3 == nil)) then
                 break
               end
-              v452_1 = temp_3
-              slot_5 = v452_1
-              v462_1 = temp_4
-              slot_6 = v462_1
+              slot_5 = temp_3
+              slot_6 = temp_4
               v472_1 = slot_6
               v477_1 = cell_get(upvalues[9])
-              v482_1 = (v472_1 ~= v477_1)
-              ss_0 = v482_1
-              if v482_1 then
-                v539_1 = slot_6
-                v549_1 = v539_1.Character
-                ss_0 = v549_1
-              end
-              v560_1 = ss_0
-              if v560_1 then
-                v570_1 = slot_6
-                v580_1 = v570_1.Character
-                v581_1 = v580_1.FindFirstChild
-                v591_1 = v581_1(v580_1, "HumanoidRootPart")
-                slot_7 = v591_1
-                v607_1 = slot_6
-                v617_1 = v607_1.Character
-                v618_1 = v617_1.FindFirstChildOfClass
-                v628_1 = v618_1(v617_1, "Humanoid")
-                slot_8 = v628_1
-                v643_1 = slot_7
-                ss_0 = v643_1
-                if v643_1 then
-                  v664_1 = slot_8
-                  ss_0 = v664_1
-                end
-                v679_1 = ss_0
-                ss_0 = v679_1
-                if v679_1 then
-                  v690_1 = slot_8
-                  v700_1 = v690_1.Health
-                  v706_1 = (v700_1 > 0)
-                  ss_0 = v706_1
-                end
-                v721_1 = ss_0
-                if v721_1 then
-                  v730_1 = slot_7
-                  v740_1 = v730_1.Position
-                  v741_1 = cell_get(upvalues[10])
-                  v751_1 = v741_1.Position
-                  v752_1 = (v740_1 - v751_1)
-                  v762_1 = v752_1.Magnitude
-                  slot_9 = v762_1
-                  v773_1 = slot_9
-                  v778_1 = cell_get(upvalues[11])
-                  v788_1 = v778_1.KillAuraDistance
-                  v789_1 = (v773_1 <= v788_1)
-                  if v789_1 then
-                    v809_1 = env.table
-                    v819_1 = v809_1.insert
+              if (((v472_1 ~= v477_1)) and slot_6.Character) then
+                slot_7 = (slot_6.Character:FindFirstChild("HumanoidRootPart"))
+                slot_8 = (slot_6.Character:FindFirstChildOfClass("Humanoid"))
+                if (((slot_7 and slot_8)) and (((slot_8.Health > 0)))) then
+                  v740_1 = slot_7.Position
+                  v751_1 = (cell_get(upvalues[10])).Position
+                  v773_1 = ((v740_1 - v751_1)).Magnitude
+                  v788_1 = (cell_get(upvalues[11])).KillAuraDistance
+                  if ((v773_1 <= v788_1)) then
+                    v819_1 = env.table.insert
                     v820_1 = slot_4
                     v825_1 = slot_7
                     v819_1(v820_1, v825_1)
@@ -47666,20 +46126,15 @@ protos[734] = function(upvalues)
           end
         end
       else
-        v219_1 = cell_get(upvalues[7])
-        ss_2 = v219_1
+        ss_2 = (cell_get(upvalues[7]))
         ss_0, ss_1, ss_2 = ss_2()
-        v239_1 = ss_2
-        slot_3 = v239_1
-        v249_1 = ss_1
-        slot_2 = v249_1
-        v259_1 = ss_0
-        slot_1 = v259_1
+        slot_3 = ss_2
+        slot_2 = ss_1
+        slot_1 = ss_0
         v264_1 = slot_2
         v269_1 = not v264_1
         if not v269_1 then
-          v310_1 = new_table(0)
-          slot_4 = v310_1
+          slot_4 = (new_table(0))
           v323_1 = env.ipairs
           v329_1 = cell_get(upvalues[8])
           v334_1 = v329_1.GetPlayers
@@ -47698,68 +46153,24 @@ protos[734] = function(upvalues)
             v397_ret1, v397_ret2 = v382_1(v387_1, v392_1)
             temp_4 = v397_ret2
             temp_3 = v397_ret1
-            v412_1 = temp_3
-            temp_2 = v412_1
-            v422_1 = temp_3
-            v428_1 = (v422_1 == nil)
-            if v428_1 then
+            temp_2 = temp_3
+            if ((temp_3 == nil)) then
               break
             end
-            v452_1 = temp_3
-            slot_5 = v452_1
-            v462_1 = temp_4
-            slot_6 = v462_1
+            slot_5 = temp_3
+            slot_6 = temp_4
             v472_1 = slot_6
             v477_1 = cell_get(upvalues[9])
-            v482_1 = (v472_1 ~= v477_1)
-            ss_0 = v482_1
-            if v482_1 then
-              v539_1 = slot_6
-              v549_1 = v539_1.Character
-              ss_0 = v549_1
-            end
-            v560_1 = ss_0
-            if v560_1 then
-              v570_1 = slot_6
-              v580_1 = v570_1.Character
-              v581_1 = v580_1.FindFirstChild
-              v591_1 = v581_1(v580_1, "HumanoidRootPart")
-              slot_7 = v591_1
-              v607_1 = slot_6
-              v617_1 = v607_1.Character
-              v618_1 = v617_1.FindFirstChildOfClass
-              v628_1 = v618_1(v617_1, "Humanoid")
-              slot_8 = v628_1
-              v643_1 = slot_7
-              ss_0 = v643_1
-              if v643_1 then
-                v664_1 = slot_8
-                ss_0 = v664_1
-              end
-              v679_1 = ss_0
-              ss_0 = v679_1
-              if v679_1 then
-                v690_1 = slot_8
-                v700_1 = v690_1.Health
-                v706_1 = (v700_1 > 0)
-                ss_0 = v706_1
-              end
-              v721_1 = ss_0
-              if v721_1 then
-                v730_1 = slot_7
-                v740_1 = v730_1.Position
-                v741_1 = cell_get(upvalues[10])
-                v751_1 = v741_1.Position
-                v752_1 = (v740_1 - v751_1)
-                v762_1 = v752_1.Magnitude
-                slot_9 = v762_1
-                v773_1 = slot_9
-                v778_1 = cell_get(upvalues[11])
-                v788_1 = v778_1.KillAuraDistance
-                v789_1 = (v773_1 <= v788_1)
-                if v789_1 then
-                  v809_1 = env.table
-                  v819_1 = v809_1.insert
+            if (((v472_1 ~= v477_1)) and slot_6.Character) then
+              slot_7 = (slot_6.Character:FindFirstChild("HumanoidRootPart"))
+              slot_8 = (slot_6.Character:FindFirstChildOfClass("Humanoid"))
+              if (((slot_7 and slot_8)) and (((slot_8.Health > 0)))) then
+                v740_1 = slot_7.Position
+                v751_1 = (cell_get(upvalues[10])).Position
+                v773_1 = ((v740_1 - v751_1)).Magnitude
+                v788_1 = (cell_get(upvalues[11])).KillAuraDistance
+                if ((v773_1 <= v788_1)) then
+                  v819_1 = env.table.insert
                   v820_1 = slot_4
                   v825_1 = slot_7
                   v819_1(v820_1, v825_1)
@@ -47820,13 +46231,10 @@ protos[736] = function(upvalues, argument_1, argument_2)
     slot_4 = __loopKey_736_0
     slot_5 = __loopValue_736_0
     v219_1 = cell_get(upvalues[2])
-    ss_0 = ((slot_5 ~= v219_1)) and slot_5.Character
-    if ss_0 then
+    if (((slot_5 ~= v219_1)) and slot_5.Character) then
       slot_6 = (slot_5.Character:FindFirstChild("HumanoidRootPart"))
       slot_7 = (slot_5.Character:FindFirstChildOfClass("Humanoid"))
-      ss_0 = slot_6 and slot_7
-      ss_0 = ss_0 and (((slot_7.Health > 0)))
-      if ss_0 then
+      if ((slot_6 and slot_7) and (((slot_7.Health > 0)))) then
         slot_8 = ((slot_6.Position - slot_0)).Magnitude
         if ((slot_8 <= slot_3)) then
           slot_3 = slot_8
@@ -47906,8 +46314,7 @@ protos[740] = function(upvalues)
     slot_1 = cell_set_or_create(slot_1, v68_1)
     v83_1 = cell_get(slot_1)
     if not ((not v83_1)) then
-      ss_0 = (cell_get(upvalues[4])).ThrowingKnifeAuraRadius or (10)
-      slot_2 = ss_0
+      slot_2 = ((cell_get(upvalues[4])).ThrowingKnifeAuraRadius or (10))
       v192_1 = env.pairs
       v197_1 = cell_get(upvalues[5])
       ss_2 = v192_1
@@ -47921,17 +46328,14 @@ protos[740] = function(upvalues)
           break
         end
         slot_3 = temp_3
-        ss_0 = slot_3 and slot_3.Parent
-        v357_1 = ss_0
+        v357_1 = (slot_3 and slot_3.Parent)
         ss_0 = v357_1
         if v357_1 then
           v378_1 = (cell_get(upvalues[6]))[slot_3]
           ss_0 = (not v378_1)
         end
         if ss_0 then
-          ss_0 = (slot_3:IsA("BasePart")) and slot_3
-          ss_0 = ss_0 or ((slot_3:FindFirstChildWhichIsA("BasePart")))
-          slot_4 = ss_0
+          slot_4 = (((slot_3:IsA("BasePart")) and slot_3) or ((slot_3:FindFirstChildWhichIsA("BasePart"))))
           if slot_4 then
             v518_1 = cell_get(upvalues[7])
             v533_1 = slot_4.Position
@@ -47964,8 +46368,7 @@ end
 protos[741] = function(upvalues)
   local slot_0, ss_0, temp_0, v180_1, v185_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])).Parent and (((cell_get(upvalues[1])).Parent:FindFirstChildOfClass("Humanoid")))
-  slot_0 = ss_0
+  slot_0 = ((cell_get(upvalues[1])).Parent and (((cell_get(upvalues[1])).Parent:FindFirstChildOfClass("Humanoid"))))
   ss_0 = (not slot_0) or (((slot_0.Health <= 0)))
   if not ss_0 then
     temp_0 = (cell_get(upvalues[2])).state
@@ -48206,14 +46609,11 @@ protos[753] = function(upvalues, argument_1)
 end
 
 protos[754] = function(upvalues, argument_1)
-  local slot_1, slot_2, ss_0, v277_1, v278_1
+  local slot_1, slot_2, v277_1, v278_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_1 = argument_1.Name
   slot_2 = (env.string.lower(slot_1))
-  ss_0 = (slot_2:find("gundrop")) or ((slot_2:find("gun")))
-  ss_0 = ss_0 or ((slot_2:find("revolver")))
-  ss_0 = ss_0 or ((slot_2:find("pistol")))
-  if ss_0 then
+  if ((((slot_2:find("gundrop")) or ((slot_2:find("gun")))) or ((slot_2:find("revolver")))) or ((slot_2:find("pistol")))) then
     upvalues[1] = cell_set_or_create(upvalues[1], nil)
     upvalues[2] = cell_set_or_create(upvalues[2], 0)
     v277_1 = env.task.defer
@@ -48441,7 +46841,7 @@ protos[761] = function(upvalues)
 end
 
 protos[762] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, ss_1, v6_1, v98_1
+  local slot_0, slot_1, ss_0, v6_1, v98_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   v6_1 = not slot_0
@@ -48454,9 +46854,7 @@ protos[762] = function(upvalues, argument_1)
     return false
   end
   slot_1 = (slot_0.Name:lower())
-  ss_1 = (slot_1:find("gun")) or ((slot_1:find("revolver")))
-  ss_1 = ss_1 or ((slot_1:find("pistol")))
-  return ss_1
+  return (((slot_1:find("gun")) or ((slot_1:find("revolver")))) or ((slot_1:find("pistol"))))
 end
 
 protos[763] = function(upvalues)
@@ -48480,11 +46878,9 @@ protos[763] = function(upvalues)
       ss_2 = v225_1
       ss_4 = slot_1
       ss_0, ss_1 = ss_2(v230_1, ss_4)
-      ss_0 = ss_0 and (((ss_1 == "Murderer")))
-      if ss_0 then
+      if (ss_0 and (((ss_1 == "Murderer")))) then
         slot_4 = slot_1.Character
-        ss_0 = slot_4 and ((slot_4:FindFirstChild("HumanoidRootPart")))
-        slot_5 = ss_0
+        slot_5 = (slot_4 and ((slot_4:FindFirstChild("HumanoidRootPart"))))
         if slot_5 then
           return slot_1, slot_5
         end
@@ -48511,8 +46907,7 @@ protos[764] = function(upvalues)
   if (not ss_0) then
     return false
   end
-  ss_1 = ((slot_1 ~= "Sheriff")) and (((slot_1 ~= "Unknown")))
-  return ss_1
+  return (((slot_1 ~= "Sheriff")) and (((slot_1 ~= "Unknown"))))
 end
 
 protos[765] = function(upvalues, argument_1)
@@ -48520,8 +46915,7 @@ protos[765] = function(upvalues, argument_1)
   local v384_1, v422_1, v442_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = slot_0 and slot_0.Character
-  slot_1 = ss_0
+  slot_1 = (slot_0 and slot_0.Character)
   if (not slot_1) then
     return false
   end
@@ -48594,8 +46988,7 @@ protos[766] = function(upvalues)
     v282_1(0.03)
     ss_2 = (cell_get(upvalues[3]))
     ss_0, ss_1 = ss_2()
-    ss_0 = ss_0 and ss_1
-    if ss_0 then
+    if (ss_0 and ss_1) then
       exit_225 = 2
       break
     end
@@ -48629,8 +47022,7 @@ protos[768] = function(upvalues)
   ss_0, ss_1 = ss_2()
   slot_1 = ss_1
   slot_0 = ss_0
-  ss_0 = (not slot_0) or ((not slot_1))
-  if ss_0 then
+  if ((not slot_0) or ((not slot_1))) then
     return nil
   end
   v87_1 = env.math.clamp
@@ -48696,10 +47088,9 @@ protos[770] = function(upvalues)
 end
 
 protos[771] = function(upvalues)
-  local slot_0, slot_1, slot_3, slot_4, slot_5, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, v1007_1, v1013_1, v1023_1, v1044_1, v1049_1, v108_1, v113_1, v13_1, v130_1, v135_1, v18_1, v212_1, v217_1, v239_1, v271_1
-  local v287_1, v323_1, v374_1, v406_1, v411_1, v431_1, v482_1, v492_1, v494_1, v499_1, v509_1, v510_1, v526_1, v536_1, v588_1, v593_1, v603_1, v617_1, v622_1, v634_1, v644_1, v645_1, v650_1, v660_1, v665_1, v685_1, v701_1, v711_1
-  local v733_1, v738_1, v743_1, v758_1, v770_1, v780_1, v781_1, v786_1, v791_1, v806_1, v816_1, v826_1, v827_1, v832_1, v837_1, v852_1, v857_1, v862_1, v877_1, v888_1, v893_1, v904_1, v919_1, v924_1, v929_1, v93_1, v945_1, v950_1, v965_1, v985_1, v995_1
-  local v997_1
+  local slot_0, slot_1, slot_3, slot_4, slot_5, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, v1007_1, v1023_1, v1044_1, v1049_1, v108_1, v113_1, v13_1, v130_1, v135_1, v18_1, v212_1, v217_1, v239_1, v271_1
+  local v287_1, v323_1, v374_1, v431_1, v492_1, v494_1, v509_1, v510_1, v536_1, v617_1, v622_1, v645_1, v660_1, v685_1, v711_1
+  local v733_1, v738_1, v758_1, v781_1, v786_1, v827_1, v832_1, v852_1, v857_1, v877_1, v888_1, v924_1, v93_1, v995_1
   local vm_frame_random = math.random(0, 2147483646)
   v13_1 = env.os.clock()
   v18_1 = cell_get(upvalues[1])
@@ -48752,55 +47143,37 @@ protos[771] = function(upvalues)
         end
         slot_1 = true
         upvalues[12] = cell_set_or_create(upvalues[12], true)
-        v406_1 = cell_get(upvalues[10])
-        v411_1 = v406_1()
-        if v411_1 then
-          v482_1 = env.math
-          v492_1 = v482_1.clamp
+        if ((cell_get(upvalues[10]))()) then
+          v492_1 = env.math.clamp
           v494_1 = env.tonumber
-          v499_1 = cell_get(upvalues[6])
-          v509_1 = v499_1.AutoShotAfterGetDelay
+          v509_1 = (cell_get(upvalues[6])).AutoShotAfterGetDelay
           v510_1 = v494_1(v509_1)
           ss_1 = v492_1
           ss_2 = v510_1 or (0)
           ss_3 = 0
           ss_4 = 1000
-          ss_0 = ss_1(ss_2, ss_3, ss_4)
-          v588_1 = ss_0
-          slot_3 = v588_1
-          v593_1 = slot_3
-          v603_1 = (v593_1 > 0)
-          if v603_1 then
-            v634_1 = env.os
-            v644_1 = v634_1.clock
-            v645_1 = v644_1()
-            v650_1 = slot_3
-            v660_1 = (v650_1 / 1000)
-            v665_1 = (v645_1 + v660_1)
-            slot_4 = v665_1
+          slot_3 = ((ss_1(ss_2, ss_3, ss_4)))
+          if ((slot_3 > 0)) then
+            v645_1 = env.os.clock()
+            v660_1 = (slot_3 / 1000)
+            slot_4 = ((v645_1 + v660_1))
             while true do
               v685_1 = cell_get(upvalues[2])
               ss_0 = v685_1
               if v685_1 then
                 v733_1 = cell_get(upvalues[3])
                 v738_1 = cell_get(upvalues[4])
-                v743_1 = (v733_1 == v738_1)
-                ss_0 = v743_1
+                ss_0 = ((v733_1 == v738_1))
               end
               v758_1 = ss_0
               ss_0 = v758_1
               if v758_1 then
-                v770_1 = env.os
-                v780_1 = v770_1.clock
-                v781_1 = v780_1()
+                v781_1 = env.os.clock()
                 v786_1 = slot_4
-                v791_1 = (v781_1 < v786_1)
-                ss_0 = v791_1
+                ss_0 = ((v781_1 < v786_1))
               end
-              v806_1 = ss_0
-              if v806_1 then
-                v701_1 = env.task
-                v711_1 = v701_1.wait
+              if ss_0 then
+                v711_1 = env.task.wait
                 v711_1(0.02)
                 continue
               end
@@ -48813,49 +47186,34 @@ protos[771] = function(upvalues)
           if not v622_1 then
             v852_1 = cell_get(upvalues[3])
             v857_1 = cell_get(upvalues[4])
-            v862_1 = (v852_1 ~= v857_1)
-            ss_0 = v862_1
+            ss_0 = ((v852_1 ~= v857_1))
           end
           v877_1 = ss_0
           ss_0 = v877_1
           if not v877_1 then
             v888_1 = cell_get(upvalues[5])
-            v893_1 = not v888_1
-            ss_0 = v893_1
+            ss_0 = (not v888_1)
           end
-          v904_1 = ss_0
-          if v904_1 then
+          if ss_0 then
             break
           end
-          v816_1 = env.os
-          v826_1 = v816_1.clock
-          v827_1 = v826_1()
+          v827_1 = env.os.clock()
           v832_1 = slot_0
-          v837_1 = (v827_1 >= v832_1)
-          if v837_1 then
+          if ((v827_1 >= v832_1)) then
             break
           end
-          v919_1 = cell_get(upvalues[9])
-          v924_1 = v919_1()
-          v929_1 = not v924_1
-          if v929_1 then
+          v924_1 = (cell_get(upvalues[9]))()
+          if (not v924_1) then
             break
           end
-          v945_1 = cell_get(upvalues[10])
-          v950_1 = v945_1()
-          slot_5 = v950_1
-          v965_1 = slot_5
-          if v965_1 then
+          if ((((cell_get(upvalues[10]))()))) then
             v1044_1 = env.pcall
             v1049_1 = cell_get(upvalues[13])
             v1044_1(v1049_1)
           end
-          v985_1 = env.task
-          v995_1 = v985_1.wait
-          v997_1 = env.math
-          v1007_1 = v997_1.max
-          v1013_1 = slot_3
-          v1023_1 = (v1013_1 / 1000)
+          v995_1 = env.task.wait
+          v1007_1 = env.math.max
+          v1023_1 = (slot_3 / 1000)
           ss_1 = v995_1
           ss_3 = v1007_1
           ss_4 = 0.36
@@ -48863,60 +47221,41 @@ protos[771] = function(upvalues)
           ss_1(ss_3(ss_4, ss_5))
           continue
         end
-        v526_1 = env.task
-        v536_1 = v526_1.wait
+        v536_1 = env.task.wait
         v536_1(0.1)
         continue
       end
-      v406_1 = cell_get(upvalues[10])
-      v411_1 = v406_1()
-      if v411_1 then
-        v482_1 = env.math
-        v492_1 = v482_1.clamp
+      if ((cell_get(upvalues[10]))()) then
+        v492_1 = env.math.clamp
         v494_1 = env.tonumber
-        v499_1 = cell_get(upvalues[6])
-        v509_1 = v499_1.AutoShotAfterGetDelay
+        v509_1 = (cell_get(upvalues[6])).AutoShotAfterGetDelay
         v510_1 = v494_1(v509_1)
         ss_1 = v492_1
         ss_2 = v510_1 or (0)
         ss_3 = 0
         ss_4 = 1000
-        ss_0 = ss_1(ss_2, ss_3, ss_4)
-        v588_1 = ss_0
-        slot_3 = v588_1
-        v593_1 = slot_3
-        v603_1 = (v593_1 > 0)
-        if v603_1 then
-          v634_1 = env.os
-          v644_1 = v634_1.clock
-          v645_1 = v644_1()
-          v650_1 = slot_3
-          v660_1 = (v650_1 / 1000)
-          v665_1 = (v645_1 + v660_1)
-          slot_4 = v665_1
+        slot_3 = ((ss_1(ss_2, ss_3, ss_4)))
+        if ((slot_3 > 0)) then
+          v645_1 = env.os.clock()
+          v660_1 = (slot_3 / 1000)
+          slot_4 = ((v645_1 + v660_1))
           while true do
             v685_1 = cell_get(upvalues[2])
             ss_0 = v685_1
             if v685_1 then
               v733_1 = cell_get(upvalues[3])
               v738_1 = cell_get(upvalues[4])
-              v743_1 = (v733_1 == v738_1)
-              ss_0 = v743_1
+              ss_0 = ((v733_1 == v738_1))
             end
             v758_1 = ss_0
             ss_0 = v758_1
             if v758_1 then
-              v770_1 = env.os
-              v780_1 = v770_1.clock
-              v781_1 = v780_1()
+              v781_1 = env.os.clock()
               v786_1 = slot_4
-              v791_1 = (v781_1 < v786_1)
-              ss_0 = v791_1
+              ss_0 = ((v781_1 < v786_1))
             end
-            v806_1 = ss_0
-            if v806_1 then
-              v701_1 = env.task
-              v711_1 = v701_1.wait
+            if ss_0 then
+              v711_1 = env.task.wait
               v711_1(0.02)
               continue
             end
@@ -48929,49 +47268,34 @@ protos[771] = function(upvalues)
         if not v622_1 then
           v852_1 = cell_get(upvalues[3])
           v857_1 = cell_get(upvalues[4])
-          v862_1 = (v852_1 ~= v857_1)
-          ss_0 = v862_1
+          ss_0 = ((v852_1 ~= v857_1))
         end
         v877_1 = ss_0
         ss_0 = v877_1
         if not v877_1 then
           v888_1 = cell_get(upvalues[5])
-          v893_1 = not v888_1
-          ss_0 = v893_1
+          ss_0 = (not v888_1)
         end
-        v904_1 = ss_0
-        if v904_1 then
+        if ss_0 then
           break
         end
-        v816_1 = env.os
-        v826_1 = v816_1.clock
-        v827_1 = v826_1()
+        v827_1 = env.os.clock()
         v832_1 = slot_0
-        v837_1 = (v827_1 >= v832_1)
-        if v837_1 then
+        if ((v827_1 >= v832_1)) then
           break
         end
-        v919_1 = cell_get(upvalues[9])
-        v924_1 = v919_1()
-        v929_1 = not v924_1
-        if v929_1 then
+        v924_1 = (cell_get(upvalues[9]))()
+        if (not v924_1) then
           break
         end
-        v945_1 = cell_get(upvalues[10])
-        v950_1 = v945_1()
-        slot_5 = v950_1
-        v965_1 = slot_5
-        if v965_1 then
+        if ((((cell_get(upvalues[10]))()))) then
           v1044_1 = env.pcall
           v1049_1 = cell_get(upvalues[13])
           v1044_1(v1049_1)
         end
-        v985_1 = env.task
-        v995_1 = v985_1.wait
-        v997_1 = env.math
-        v1007_1 = v997_1.max
-        v1013_1 = slot_3
-        v1023_1 = (v1013_1 / 1000)
+        v995_1 = env.task.wait
+        v1007_1 = env.math.max
+        v1023_1 = (slot_3 / 1000)
         ss_1 = v995_1
         ss_3 = v1007_1
         ss_4 = 0.36
@@ -48979,8 +47303,7 @@ protos[771] = function(upvalues)
         ss_1(ss_3(ss_4, ss_5))
         continue
       end
-      v526_1 = env.task
-      v536_1 = v526_1.wait
+      v536_1 = env.task.wait
       v536_1(0.1)
       continue
     end
@@ -49012,8 +47335,7 @@ protos[772] = function(upvalues)
         v221_1 = cell_get(upvalues[5])
         v220_1(v221_1)
       else
-        ss_0 = (not slot_1) and ((cell_get(upvalues[4])))
-        if ss_0 then
+        if ((not slot_1) and ((cell_get(upvalues[4])))) then
           upvalues[4] = cell_set_or_create(upvalues[4], false)
         end
       end
@@ -49025,8 +47347,7 @@ end
 protos[773] = function(upvalues, argument_1)
   local ss_0, v148_1, v179_1, v219_1, v220_1, v98_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = argument_1 and (true)
-  ss_0 = ss_0 or (false)
+  ss_0 = (argument_1 and (true)) or (false)
   upvalues[1] = cell_set_or_create(upvalues[1], ss_0)
   v98_1 = cell_get(upvalues[1])
   if (not v98_1) then
@@ -49394,10 +47715,7 @@ protos[783] = function(upvalues, argument_1)
         v150_1 = slot_0.Position.Y
         slot_1 = (v116_1(v133_1, v150_1))
         v166_1 = cell_get(upvalues[2])
-        ss_0 = (not v166_1) and (cell_get(upvalues[3])).onClick
-        ss_0 = ss_0 and ((cell_get(upvalues[4])))
-        ss_0 = ss_0 and (cell_get(upvalues[4])).Parent
-        if ss_0 then
+        if ((((not v166_1) and (cell_get(upvalues[3])).onClick) and ((cell_get(upvalues[4])))) and (cell_get(upvalues[4])).Parent) then
           v377_1 = (cell_get(upvalues[3])).onClick
           v377_1()
         end
@@ -49406,8 +47724,7 @@ protos[783] = function(upvalues, argument_1)
           v415_1 = cell_get(upvalues[2])
           v414_1(v415_1, slot_1)
         end
-        ss_0 = (cell_get(upvalues[5])) and (cell_get(upvalues[3])).buttonType
-        v473_1 = ss_0
+        v473_1 = ((cell_get(upvalues[5])) and (cell_get(upvalues[3])).buttonType)
         ss_0 = v473_1
         if v473_1 then
           v484_1 = cell_get(upvalues[6])
@@ -49458,8 +47775,7 @@ protos[784] = function(upvalues, argument_1)
     if not slot_12 then slot_12 = {} end
     return slot_12
   end
-  ss_0 = slot_0.guiRef and slot_0.guiRef[1]
-  if ss_0 then
+  if (slot_0.guiRef and slot_0.guiRef[1]) then
     return
   end
   v33_1 = env.math.floor
@@ -49786,13 +48102,11 @@ protos[787] = destroyCapturedObject787
 end
 
 protos[788] = function(upvalues)
-  local slot_0, ss_0, v11_1, v137_1, v142_1, v147_1, v169_1, v174_1, v191_1, v202_1, v217_1, v222_1, v228_1, v233_1
+  local slot_0, v11_1, v137_1, v142_1, v147_1, v169_1, v174_1, v191_1, v202_1, v217_1, v222_1, v228_1, v233_1
   local vm_frame_random = math.random(0, 2147483646)
   v11_1 = (cell_get(upvalues[1])).Parent
   if not ((not v11_1)) then
-    ss_0 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize
-    ss_0 = ss_0 or ((cell_get(upvalues[3])))
-    slot_0 = ss_0
+    slot_0 = (((cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize) or ((cell_get(upvalues[3]))))
     v137_1 = cell_get(upvalues[4])
     v142_1 = v137_1.Create
     v147_1 = cell_get(upvalues[1])
@@ -49811,15 +48125,13 @@ protos[788] = function(upvalues)
 end
 
 protos[789] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, ss_0, v11_1, v137_1, v142_1, v147_1, v169_1, v174_1, v202_1, v208_1, v213_1, v244_1
+  local slot_0, slot_1, slot_2, v11_1, v137_1, v142_1, v147_1, v169_1, v174_1, v202_1, v208_1, v213_1, v244_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
   v11_1 = (cell_get(upvalues[1])).Parent
   if not ((not v11_1)) then
-    ss_0 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize
-    ss_0 = ss_0 or ((cell_get(upvalues[3])))
-    slot_2 = ss_0
+    slot_2 = (((cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize) or ((cell_get(upvalues[3]))))
     v137_1 = cell_get(upvalues[4])
     v142_1 = v137_1.Create
     v147_1 = cell_get(upvalues[1])
@@ -50055,11 +48367,8 @@ protos[792] = function(upvalues)
   local vm_frame_random = math.random(0, 2147483646)
   v11_1 = (cell_get(upvalues[1])).Parent
   if not ((not v11_1)) then
-    ss_0 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize
-    ss_0 = ss_0 or ((cell_get(upvalues[3])))
-    slot_0 = ss_0
-    ss_0 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentH
-    ss_0 = ss_0 or ((cell_get(upvalues[4])))
+    slot_0 = (((cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize) or ((cell_get(upvalues[3]))))
+    ss_0 = ((cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentH) or ((cell_get(upvalues[4])))
     v210_1 = cell_get(upvalues[5])
     v215_1 = v210_1.Create
     v220_1 = cell_get(upvalues[1])
@@ -50082,11 +48391,8 @@ protos[793] = function(upvalues)
   local vm_frame_random = math.random(0, 2147483646)
   v11_1 = (cell_get(upvalues[1])).Parent
   if not ((not v11_1)) then
-    ss_0 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize
-    ss_0 = ss_0 or ((cell_get(upvalues[3])))
-    slot_0 = ss_0
-    ss_0 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentH
-    ss_0 = ss_0 or ((cell_get(upvalues[4])))
+    slot_0 = (((cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize) or ((cell_get(upvalues[3]))))
+    ss_0 = ((cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentH) or ((cell_get(upvalues[4])))
     v210_1 = cell_get(upvalues[5])
     v215_1 = v210_1.Create
     v220_1 = cell_get(upvalues[1])
@@ -50764,12 +49070,10 @@ protos[822] = function(upvalues, argument_1)
   v120_1 = (cell_get(upvalues[1])):FindFirstChild("PlayerGui")
   slot_3 = nil
   slot_3 = v120_1
-  ss_0 = slot_3 and ((slot_3:FindFirstChild("TouchGui")) or ((slot_3:FindFirstChild("TouchControlsGui"))))
-  if ss_0 then
+  if (slot_3 and ((slot_3:FindFirstChild("TouchGui")) or ((slot_3:FindFirstChild("TouchControlsGui"))))) then
     slot_2 = cell_set_or_create(slot_2, true)
   end
-  ss_0 = (cell_get(slot_2)) and (1)
-  ss_0 = ss_0 or (1.25)
+  ss_0 = ((cell_get(slot_2)) and (1)) or (1.25)
   slot_4 = new_cell()
   slot_4 = cell_set_or_create(slot_4, ss_0)
   v360_1 = ((cell_get(upvalues[2])) .. "/ClutchesButtons.json")
@@ -50985,8 +49289,7 @@ protos[823] = function(upvalues)
       for __loopKey_823_0, __loopValue_823_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
         slot_2 = __loopKey_823_0
         slot_3 = __loopValue_823_0
-        ss_0 = (cell_get(upvalues[3]))[slot_2] and slot_3.X
-        ss_0 = ss_0 and slot_3.Y
+        ss_0 = ((cell_get(upvalues[3]))[slot_2] and slot_3.X) and slot_3.Y
         if ss_0 then
           temp_5 = (cell_get(upvalues[3]))
           v466_1 = env.UDim2.new
@@ -51234,9 +49537,7 @@ protos[834] = function(upvalues, argument_1)
     slot_4 = temp_3
     slot_5 = temp_4
     if (slot_5:IsA("BasePart")) then
-      ss_0 = ((slot_5.Transparency < 0.9)) and (((slot_5.LocalTransparencyModifier < 0.9)))
-      ss_0 = ss_0 and (((slot_5.Parent == slot_2)))
-      if ss_0 then
+      if ((((slot_5.Transparency < 0.9)) and (((slot_5.LocalTransparencyModifier < 0.9)))) and (((slot_5.Parent == slot_2)))) then
         exit_294 = 2
         break
       end
@@ -51250,8 +49551,7 @@ protos[834] = function(upvalues, argument_1)
   if (not slot_3) then
     return false
   end
-  ss_0 = (slot_1:FindFirstChild("RightHand")) or ((slot_1:FindFirstChild("Right Arm")))
-  slot_6 = ss_0
+  slot_6 = ((slot_1:FindFirstChild("RightHand")) or ((slot_1:FindFirstChild("Right Arm"))))
   if slot_6 then
     slot_7 = false
     v700_1 = env.ipairs
@@ -51273,16 +49573,10 @@ protos[834] = function(upvalues, argument_1)
       end
       slot_8 = temp_3
       slot_9 = temp_4
-      ss_0 = (slot_9:IsA("Weld")) or ((slot_9:IsA("Motor6D")))
-      ss_0 = ss_0 or ((slot_9:IsA("WeldConstraint")))
-      if ss_0 then
-        ss_0 = ((slot_9.Part0 == slot_6)) or (((slot_9.Part1 == slot_6)))
-        if ss_0 then
-          ss_0 = ((slot_9.Part0 == slot_6)) and slot_9.Part1
-          ss_0 = ss_0 or slot_9.Part0
-          slot_10 = ss_0
-          ss_0 = slot_10 and ((slot_10:IsDescendantOf(slot_2)))
-          if ss_0 then
+      if (((slot_9:IsA("Weld")) or ((slot_9:IsA("Motor6D")))) or ((slot_9:IsA("WeldConstraint")))) then
+        if (((slot_9.Part0 == slot_6)) or (((slot_9.Part1 == slot_6)))) then
+          slot_10 = ((((slot_9.Part0 == slot_6)) and slot_9.Part1) or slot_9.Part0)
+          if (slot_10 and ((slot_10:IsDescendantOf(slot_2)))) then
             exit_753 = 2
             break
           end
@@ -51296,8 +49590,7 @@ protos[834] = function(upvalues, argument_1)
       slot_7 = true
     end
     if (not slot_7) then
-      ss_0 = (slot_2:FindFirstChild("Handle")) or ((slot_2:FindFirstChildOfClass("BasePart")))
-      slot_11 = ss_0
+      slot_11 = ((slot_2:FindFirstChild("Handle")) or ((slot_2:FindFirstChildOfClass("BasePart"))))
       if slot_11 then
         v1340_1 = env.ipairs
         v1346_1 = slot_11
@@ -51311,11 +49604,8 @@ protos[834] = function(upvalues, argument_1)
         for __loopKey_834_0, __loopValue_834_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
           slot_12 = __loopKey_834_0
           slot_13 = __loopValue_834_0
-          ss_0 = (slot_13:IsA("Weld")) or ((slot_13:IsA("Motor6D")))
-          ss_0 = ss_0 or ((slot_13:IsA("WeldConstraint")))
-          if ss_0 then
-            ss_0 = ((slot_13.Part0 == slot_6)) or (((slot_13.Part1 == slot_6)))
-            if ss_0 then
+          if (((slot_13:IsA("Weld")) or ((slot_13:IsA("Motor6D")))) or ((slot_13:IsA("WeldConstraint")))) then
+            if (((slot_13.Part0 == slot_6)) or (((slot_13.Part1 == slot_6)))) then
               exit_1393 = 2
               break
             end
@@ -51353,12 +49643,10 @@ protos[835] = function(upvalues)
   if ((ss_0 < ss_1)) then
     return nil
   end
-  ss_0 = (cell_get(upvalues[2])).GoldBombClutchEnabled and (((cell_get(upvalues[3]))("GoldBomb")))
-  if ss_0 then
+  if ((cell_get(upvalues[2])).GoldBombClutchEnabled and (((cell_get(upvalues[3]))("GoldBomb")))) then
     return "GoldBomb"
   end
-  ss_0 = (cell_get(upvalues[2])).BombClutchEnabled and (((cell_get(upvalues[3]))("FakeBomb")))
-  if ss_0 then
+  if ((cell_get(upvalues[2])).BombClutchEnabled and (((cell_get(upvalues[3]))("FakeBomb")))) then
     return "FakeBomb"
   end
   return nil
@@ -52314,10 +50602,7 @@ protos[867] = function(upvalues, argument_1)
         v150_1 = slot_0.Position.Y
         slot_1 = (v116_1(v133_1, v150_1))
         v166_1 = cell_get(upvalues[2])
-        ss_0 = (not v166_1) and (cell_get(upvalues[3])).onClick
-        ss_0 = ss_0 and ((cell_get(upvalues[4])))
-        ss_0 = ss_0 and (cell_get(upvalues[4])).Parent
-        if ss_0 then
+        if ((((not v166_1) and (cell_get(upvalues[3])).onClick) and ((cell_get(upvalues[4])))) and (cell_get(upvalues[4])).Parent) then
           v377_1 = (cell_get(upvalues[3])).onClick
           v377_1()
         end
@@ -52326,8 +50611,7 @@ protos[867] = function(upvalues, argument_1)
           v415_1 = cell_get(upvalues[2])
           v414_1(v415_1, slot_1)
         end
-        ss_0 = (cell_get(upvalues[5])) and (cell_get(upvalues[3])).buttonType
-        v473_1 = ss_0
+        v473_1 = ((cell_get(upvalues[5])) and (cell_get(upvalues[3])).buttonType)
         ss_0 = v473_1
         if v473_1 then
           v484_1 = cell_get(upvalues[6])
@@ -52351,8 +50635,8 @@ protos[867] = function(upvalues, argument_1)
 end
 
 protos[868] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, ss_0, temp_0, temp_1, temp_2, v152_1, v157_1, v168_1, v178_1, v190_1, v195_1, v200_1, v210_1, v211_1, v221_1, v226_1, v238_1, v243_1, v258_1, v387_1, v398_1, v413_1
-  local v423_1, v428_1, v433_1, v443_1, v444_1, v454_1, v473_1, v494_1, v509_1, v514_1, v519_1, v69_1, v74_1, v89_1
+  local slot_0, slot_1, slot_2, slot_3, temp_0, temp_1, temp_2, v152_1, v157_1, v178_1, v190_1, v195_1, v210_1, v221_1, v238_1, v243_1, v258_1
+  local v423_1, v428_1, v443_1, v509_1, v514_1, v519_1, v69_1, v74_1, v89_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = {argument_1}
   local function capture_0()
@@ -52386,96 +50670,62 @@ protos[868] = function(upvalues, argument_1)
     v152_1 = env.pcall
     v157_1 = closure(869, {upvalues[2], capture_0()})
     v152_1(v157_1)
-    v168_1 = env.task
-    v178_1 = v168_1.wait
+    v178_1 = env.task.wait
     v178_1(0.15)
     v190_1 = slot_1
     v195_1 = v190_1.FindFirstChild
-    v200_1 = cell_get(slot_0)
-    v210_1 = v200_1.BombName
-    v211_1 = v195_1(v190_1, v210_1)
-    slot_3 = v211_1
+    v210_1 = (cell_get(slot_0)).BombName
+    slot_3 = (v195_1(v190_1, v210_1))
     v221_1 = slot_3
-    v226_1 = not v221_1
-    ss_0 = v226_1
-    if v226_1 then
-      v398_1 = slot_2
-      ss_0 = v398_1
-    end
-    v413_1 = ss_0
-    if v413_1 then
+    if ((not v221_1) and slot_2) then
       v423_1 = slot_2
       v428_1 = v423_1.FindFirstChild
-      v433_1 = cell_get(slot_0)
-      v443_1 = v433_1.BombName
-      v444_1 = v428_1(v423_1, v443_1)
-      slot_3 = v444_1
-      v454_1 = slot_3
-      if v454_1 then
-        v473_1 = slot_3
-        temp_0 = v473_1
+      v443_1 = (cell_get(slot_0)).BombName
+      slot_3 = (v428_1(v423_1, v443_1))
+      if slot_3 then
+        temp_0 = slot_3
         temp_1 = "Parent"
-        v494_1 = slot_1
-        temp_2 = v494_1
+        temp_2 = slot_1
         v509_1 = temp_0
         v514_1 = temp_1
         v519_1 = temp_2
         v509_1[v514_1] = v519_1
       end
     end
-    v387_1 = slot_3
-    return v387_1
+    return slot_3
   end
   v152_1 = env.pcall
   v157_1 = closure(869, {upvalues[2], capture_0()})
   v152_1(v157_1)
-  v168_1 = env.task
-  v178_1 = v168_1.wait
+  v178_1 = env.task.wait
   v178_1(0.15)
   v190_1 = slot_1
   v195_1 = v190_1.FindFirstChild
-  v200_1 = cell_get(slot_0)
-  v210_1 = v200_1.BombName
-  v211_1 = v195_1(v190_1, v210_1)
-  slot_3 = v211_1
+  v210_1 = (cell_get(slot_0)).BombName
+  slot_3 = (v195_1(v190_1, v210_1))
   v221_1 = slot_3
-  v226_1 = not v221_1
-  ss_0 = v226_1
-  if v226_1 then
-    v398_1 = slot_2
-    ss_0 = v398_1
-  end
-  v413_1 = ss_0
-  if v413_1 then
+  if ((not v221_1) and slot_2) then
     v423_1 = slot_2
     v428_1 = v423_1.FindFirstChild
-    v433_1 = cell_get(slot_0)
-    v443_1 = v433_1.BombName
-    v444_1 = v428_1(v423_1, v443_1)
-    slot_3 = v444_1
-    v454_1 = slot_3
-    if v454_1 then
-      v473_1 = slot_3
-      temp_0 = v473_1
+    v443_1 = (cell_get(slot_0)).BombName
+    slot_3 = (v428_1(v423_1, v443_1))
+    if slot_3 then
+      temp_0 = slot_3
       temp_1 = "Parent"
-      v494_1 = slot_1
-      temp_2 = v494_1
+      temp_2 = slot_1
       v509_1 = temp_0
       v514_1 = temp_1
       v519_1 = temp_2
       v509_1[v514_1] = v519_1
     end
   end
-  v387_1 = slot_3
-  return v387_1
+  return slot_3
 end
 
 protos[869] = function(upvalues)
-  local ss_0, v166_1, v167_1, v182_1
+  local v166_1, v167_1, v182_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])).Remotes and (cell_get(upvalues[1])).Remotes.Extras
-  ss_0 = ss_0 and (cell_get(upvalues[1])).Remotes.Extras.ReplicateToy
-  if ss_0 then
+  if (((cell_get(upvalues[1])).Remotes and (cell_get(upvalues[1])).Remotes.Extras) and (cell_get(upvalues[1])).Remotes.Extras.ReplicateToy) then
     v166_1 = (cell_get(upvalues[1])).Remotes.Extras.ReplicateToy
     v167_1 = v166_1.InvokeServer
     v182_1 = (cell_get(upvalues[2])).BombName
@@ -52670,8 +50920,7 @@ protos[873] = function(upvalues)
     v271_1(1)
     temp_3 = ((temp_3 + temp_2))
   end
-  ss_0 = (cell_get(upvalues[2])).btn and (cell_get(upvalues[2])).btn.Parent
-  if ss_0 then
+  if ((cell_get(upvalues[2])).btn and (cell_get(upvalues[2])).btn.Parent) then
     temp_0 = (cell_get(upvalues[2])).btn
     temp_1 = "Text"
     temp_2 = (cell_get(upvalues[1])).DisplayName
@@ -53036,9 +51285,7 @@ protos[881] = function(upvalues)
     ss_0 = (not v43_1)
   end
   if not ss_0 then
-    ss_0 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize
-    ss_0 = ss_0 or ((cell_get(upvalues[3])))
-    slot_0 = ss_0
+    slot_0 = (((cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize) or ((cell_get(upvalues[3]))))
     v164_1 = cell_get(upvalues[4])
     v169_1 = v164_1.Create
     v174_1 = cell_get(upvalues[1])
@@ -53070,9 +51317,7 @@ protos[882] = function(upvalues, argument_1, argument_2)
     ss_0 = (not v43_1)
   end
   if not ss_0 then
-    ss_0 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize
-    ss_0 = ss_0 or ((cell_get(upvalues[3])))
-    slot_2 = ss_0
+    slot_2 = (((cell_get(upvalues[2])) and (cell_get(upvalues[2])).currentSize) or ((cell_get(upvalues[3]))))
     v164_1 = cell_get(upvalues[4])
     v169_1 = v164_1.Create
     v174_1 = cell_get(upvalues[1])
@@ -53118,20 +51363,18 @@ protos[884] = function(upvalues)
 end
 
 protos[885] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, temp_0, v167_1, v168_1
+  local slot_0, slot_1, temp_0, v167_1, v168_1
   local v380_1, v381_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = (cell_get(upvalues[1]))[slot_0]
   if not ((not slot_1)) then
-    ss_0 = slot_1.gui and slot_1.gui.Parent
-    if ss_0 then
+    if (slot_1.gui and slot_1.gui.Parent) then
       v167_1 = slot_1.gui
       v168_1 = v167_1.Destroy
       v168_1(v167_1)
     end
-    ss_0 = slot_1.btn and slot_1.btn.Parent
-    if ss_0 then
+    if (slot_1.btn and slot_1.btn.Parent) then
       v380_1 = slot_1.btn
       v381_1 = v380_1.Destroy
       v381_1(v380_1)
@@ -53236,8 +51479,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
     ss_3 = 255
     ss_4 = 26
     ss_5 = 26
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.ParticlesColor = temp_2
   end
   if (((cell_get(slots[1])).WaterAuraEnabled == nil)) then
@@ -53253,8 +51495,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
     ss_3 = 26
     ss_4 = 54
     ss_5 = 255
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.WaterAuraColor = temp_2
   end
   if (((cell_get(slots[1])).MagicAuraEnabled == nil)) then
@@ -53270,8 +51511,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
     ss_3 = 255
     ss_4 = 26
     ss_5 = 26
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.MagicAuraColor = temp_2
   end
   if (((cell_get(slots[1])).WingsEnabled == nil)) then
@@ -53293,8 +51533,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
     ss_3 = 255
     ss_4 = 26
     ss_5 = 26
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.WingsColor = temp_2
   end
   if (((cell_get(slots[1])).ShadersEnabled == nil)) then
@@ -53483,8 +51722,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
     ss_3 = 150
     ss_4 = 90
     ss_5 = 220
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.Zombie = temp_2
   end
   v4061_1 = cell_get(upvalues[2])
@@ -53539,9 +51777,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
         slots[10] = temp_4
         v4613_1 = env["type"]
         v4618_1 = slots[10]
-        ss_0 = (((v4613_1(v4618_1)) == "table")) and slots[10].R
-        ss_0 = ss_0 and slots[10].G
-        ss_0 = ss_0 and slots[10].B
+        ss_0 = (((((v4613_1(v4618_1)) == "table")) and slots[10].R) and slots[10].G) and slots[10].B
         if ss_0 then
           v4774_1 = slots[9]:match("^Colors_(.+)$")
           slots[11] = nil
@@ -53560,8 +51796,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
             v4879_1 = slots[10]
             ss_2 = v4874_1
             ss_3 = v4879_1
-            ss_0 = ss_2(ss_3)
-            temp_7 = ss_0
+            temp_7 = (ss_2(ss_3))
             temp_5[temp_6] = temp_7
           else
             if ((slots[9] == "ParticlesColor")) then
@@ -53571,8 +51806,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
               v4971_1 = slots[10]
               ss_2 = v4966_1
               ss_3 = v4971_1
-              ss_0 = ss_2(ss_3)
-              temp_7 = ss_0
+              temp_7 = (ss_2(ss_3))
               temp_5.ParticlesColor = temp_7
             else
               if ((slots[9] == "WaterAuraColor")) then
@@ -53582,8 +51816,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
                 v5063_1 = slots[10]
                 ss_2 = v5058_1
                 ss_3 = v5063_1
-                ss_0 = ss_2(ss_3)
-                temp_7 = ss_0
+                temp_7 = (ss_2(ss_3))
                 temp_5.WaterAuraColor = temp_7
               else
                 if ((slots[9] == "MagicAuraColor")) then
@@ -53593,8 +51826,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
                   v5155_1 = slots[10]
                   ss_2 = v5150_1
                   ss_3 = v5155_1
-                  ss_0 = ss_2(ss_3)
-                  temp_7 = ss_0
+                  temp_7 = (ss_2(ss_3))
                   temp_5.MagicAuraColor = temp_7
                 else
                   if ((slots[9] == "WingsColor")) then
@@ -53604,8 +51836,7 @@ protos[887] = function(upvalues, argument_1, argument_2, argument_3)
                     v5247_1 = slots[10]
                     ss_2 = v5242_1
                     ss_3 = v5247_1
-                    ss_0 = ss_2(ss_3)
-                    temp_7 = ss_0
+                    temp_7 = (ss_2(ss_3))
                     temp_5.WingsColor = temp_7
                   end
                 end
@@ -54269,24 +52500,21 @@ protos[890] = function(upvalues)
     v328_1 = (cell_get(upvalues[1])).ParticlesColor
     ss_2 = v313_1
     ss_3 = v328_1
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.ParticlesColor = temp_2
     temp_0 = (cell_get(slot_0))
     v382_1 = cell_get(upvalues[2])
     v397_1 = (cell_get(upvalues[1])).WaterAuraColor
     ss_2 = v382_1
     ss_3 = v397_1
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.WaterAuraColor = temp_2
     temp_0 = (cell_get(slot_0))
     v451_1 = cell_get(upvalues[2])
     v466_1 = (cell_get(upvalues[1])).MagicAuraColor
     ss_2 = v451_1
     ss_3 = v466_1
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.MagicAuraColor = temp_2
     temp_0 = (cell_get(slot_0))
     temp_1 = "WingsColor"
@@ -54294,8 +52522,7 @@ protos[890] = function(upvalues)
     v535_1 = (cell_get(upvalues[1])).WingsColor
     ss_2 = v520_1
     ss_3 = v535_1
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.WingsColor = temp_2
     v568_1 = env.pcall
     v573_1 = closure(891, {upvalues[3], upvalues[4], capture_0()})
@@ -54360,8 +52587,8 @@ protos[894] = function(upvalues)
 end
 
 protos[895] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, ss_0, v160_1, v166_1, v176_1, v397_1, v402_1, v413_1, v423_1, v429_1, v449_1
-  local v459_1, v469_1, v475_1, v507_1, v512_1, v522_1, v537_1, v542_1, v576_1, v586_1, v592_1, v607_1, v62_1, v67_1, v77_1, v78_1, v89_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, ss_0, v176_1, v397_1
+  local v537_1, v62_1, v77_1, v89_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
@@ -54375,156 +52602,67 @@ protos[895] = function(upvalues, argument_1)
       slot_3 = (slot_0:FindFirstChild("Backpack"))
       slot_4 = nil
       slot_4 = (closure(896, {}))
-      ss_0 = (slot_4(slot_1)) or ((slot_4(slot_3)))
-      if ss_0 then
+      if ((slot_4(slot_1)) or ((slot_4(slot_3)))) then
         return false
       end
       if ((cell_get(upvalues[1])).rolePlayerLooksAlive(slot_0)) then
         return false
       end
-      v160_1 = vm_frame_random
-      v166_1 = (v160_1 % 2)
-      v176_1 = (v166_1 == 0)
+      v176_1 = (((vm_frame_random % 2)) == 0)
       v62_1 = cell_get(upvalues[2])
-      v67_1 = slot_0
-      v77_1 = v67_1.Name
-      v78_1 = v62_1[v77_1]
-      slot_5 = v78_1
+      v77_1 = slot_0.Name
+      slot_5 = v62_1[v77_1]
       v89_1 = slot_5
-      ss_0 = v89_1
-      if v89_1 then
-        v413_1 = slot_5
-        v423_1 = v413_1.Killed
-        v429_1 = (v423_1 == true)
-        ss_0 = v429_1
-        if not v429_1 then
-          v459_1 = slot_5
-          v469_1 = v459_1.Dead
-          v475_1 = (v469_1 == true)
-          ss_0 = v475_1
-        end
-      end
-      v449_1 = ss_0
-      if v449_1 then
+      ss_0 = v89_1 and (((slot_5.Killed == true)) or (((slot_5.Dead == true))))
+      if ss_0 then
         return true
       end
       v397_1 = slot_1
-      v402_1 = not v397_1
-      if v402_1 then
+      if (not v397_1) then
         return true
       end
-      v507_1 = slot_1
-      v512_1 = v507_1.FindFirstChildOfClass
-      v522_1 = v512_1(v507_1, "Humanoid")
-      slot_6 = v522_1
+      slot_6 = (slot_1:FindFirstChildOfClass("Humanoid"))
       v537_1 = slot_6
-      v542_1 = not v537_1
-      ss_0 = v542_1
-      if not v542_1 then
-        v576_1 = slot_6
-        v586_1 = v576_1.Health
-        v592_1 = (v586_1 <= 0)
-        ss_0 = v592_1
-      end
-      v607_1 = ss_0
-      if v607_1 then
+      if ((not v537_1) or (((slot_6.Health <= 0)))) then
         return true
       end
       return false
     end
-    v160_1 = vm_frame_random
-    v166_1 = (v160_1 % 2)
-    v176_1 = (v166_1 == 0)
+    v176_1 = (((vm_frame_random % 2)) == 0)
     v62_1 = cell_get(upvalues[2])
-    v67_1 = slot_0
-    v77_1 = v67_1.Name
-    v78_1 = v62_1[v77_1]
-    slot_5 = v78_1
+    v77_1 = slot_0.Name
+    slot_5 = v62_1[v77_1]
     v89_1 = slot_5
-    ss_0 = v89_1
-    if v89_1 then
-      v413_1 = slot_5
-      v423_1 = v413_1.Killed
-      v429_1 = (v423_1 == true)
-      ss_0 = v429_1
-      if not v429_1 then
-        v459_1 = slot_5
-        v469_1 = v459_1.Dead
-        v475_1 = (v469_1 == true)
-        ss_0 = v475_1
-      end
-    end
-    v449_1 = ss_0
-    if v449_1 then
+    ss_0 = v89_1 and (((slot_5.Killed == true)) or (((slot_5.Dead == true))))
+    if ss_0 then
       return true
     end
     v397_1 = slot_1
-    v402_1 = not v397_1
-    if v402_1 then
+    if (not v397_1) then
       return true
     end
-    v507_1 = slot_1
-    v512_1 = v507_1.FindFirstChildOfClass
-    v522_1 = v512_1(v507_1, "Humanoid")
-    slot_6 = v522_1
+    slot_6 = (slot_1:FindFirstChildOfClass("Humanoid"))
     v537_1 = slot_6
-    v542_1 = not v537_1
-    ss_0 = v542_1
-    if not v542_1 then
-      v576_1 = slot_6
-      v586_1 = v576_1.Health
-      v592_1 = (v586_1 <= 0)
-      ss_0 = v592_1
-    end
-    v607_1 = ss_0
-    if v607_1 then
+    if ((not v537_1) or (((slot_6.Health <= 0)))) then
       return true
     end
     return false
   end
   v62_1 = cell_get(upvalues[2])
-  v67_1 = slot_0
-  v77_1 = v67_1.Name
-  v78_1 = v62_1[v77_1]
-  slot_5 = v78_1
+  v77_1 = slot_0.Name
+  slot_5 = v62_1[v77_1]
   v89_1 = slot_5
-  ss_0 = v89_1
-  if v89_1 then
-    v413_1 = slot_5
-    v423_1 = v413_1.Killed
-    v429_1 = (v423_1 == true)
-    ss_0 = v429_1
-    if not v429_1 then
-      v459_1 = slot_5
-      v469_1 = v459_1.Dead
-      v475_1 = (v469_1 == true)
-      ss_0 = v475_1
-    end
-  end
-  v449_1 = ss_0
-  if v449_1 then
+  ss_0 = v89_1 and (((slot_5.Killed == true)) or (((slot_5.Dead == true))))
+  if ss_0 then
     return true
   end
   v397_1 = slot_1
-  v402_1 = not v397_1
-  if v402_1 then
+  if (not v397_1) then
     return true
   end
-  v507_1 = slot_1
-  v512_1 = v507_1.FindFirstChildOfClass
-  v522_1 = v512_1(v507_1, "Humanoid")
-  slot_6 = v522_1
+  slot_6 = (slot_1:FindFirstChildOfClass("Humanoid"))
   v537_1 = slot_6
-  v542_1 = not v537_1
-  ss_0 = v542_1
-  if not v542_1 then
-    v576_1 = slot_6
-    v586_1 = v576_1.Health
-    v592_1 = (v586_1 <= 0)
-    ss_0 = v592_1
-  end
-  v607_1 = ss_0
-  if v607_1 then
+  if ((not v537_1) or (((slot_6.Health <= 0)))) then
     return true
   end
   return false
@@ -54548,24 +52686,14 @@ protos[896] = function(upvalues, argument_1)
     slot_2 = __loopValue_896_0
     if (slot_2:IsA("Tool")) then
       slot_3 = (slot_2.Name:lower())
-      ss_0 = (slot_3:find("knife")) or ((slot_3:find("zombie")))
-      ss_0 = ss_0 or ((slot_3:find("claw")))
-      ss_0 = ss_0 or ((slot_3:find("blade")))
-      ss_0 = ss_0 or ((slot_3:find("slash")))
-      ss_0 = ss_0 or ((slot_3:find("нож")))
-      ss_0 = ss_0 or ((slot_3:find("зомби")))
-      if ss_0 then
+      if (((((((slot_3:find("knife")) or ((slot_3:find("zombie")))) or ((slot_3:find("claw")))) or ((slot_3:find("blade")))) or ((slot_3:find("slash")))) or ((slot_3:find("нож")))) or ((slot_3:find("зомби")))) then
         return true
       end
-      ss_0 = (slot_2:FindFirstChild("KnifeThrown")) or ((slot_2:FindFirstChild("Stab")))
-      ss_0 = ss_0 or ((slot_2:FindFirstChild("Slash")))
-      ss_0 = ss_0 or ((slot_2:FindFirstChild("KnifeLocal")))
-      if ss_0 then
+      if ((((slot_2:FindFirstChild("KnifeThrown")) or ((slot_2:FindFirstChild("Stab")))) or ((slot_2:FindFirstChild("Slash")))) or ((slot_2:FindFirstChild("KnifeLocal")))) then
         return true
       end
       slot_4 = (slot_2:FindFirstChild("Events"))
-      ss_0 = slot_4 and ((slot_4:FindFirstChild("KnifeThrown")) or ((slot_4:FindFirstChild("HandleTouched"))))
-      if ss_0 then
+      if (slot_4 and ((slot_4:FindFirstChild("KnifeThrown")) or ((slot_4:FindFirstChild("HandleTouched"))))) then
         return true
       end
       continue
@@ -54590,16 +52718,13 @@ protos[897] = function(upvalues)
     slot_2 = __loopValue_897_0
     slot_3 = slot_2.Character
     slot_4 = (slot_2:FindFirstChild("Backpack"))
-    ss_0 = (slot_0(slot_3)) or ((slot_0(slot_4)))
-    if ss_0 then
+    if ((slot_0(slot_3)) or ((slot_0(slot_4)))) then
       return true
     end
-    ss_0 = ((cell_get(upvalues[2])).roleHasGun(slot_3)) or (((cell_get(upvalues[2])).roleHasGun(slot_4)))
-    if ss_0 then
+    if (((cell_get(upvalues[2])).roleHasGun(slot_3)) or (((cell_get(upvalues[2])).roleHasGun(slot_4)))) then
       return true
     end
-    ss_0 = ((cell_get(upvalues[2])).roleHasZombie(slot_3)) or (((cell_get(upvalues[2])).roleHasZombie(slot_4)))
-    if ss_0 then
+    if (((cell_get(upvalues[2])).roleHasZombie(slot_3)) or (((cell_get(upvalues[2])).roleHasZombie(slot_4)))) then
       return true
     end
   end
@@ -54624,24 +52749,14 @@ protos[898] = function(upvalues, argument_1)
     slot_2 = __loopValue_898_0
     if (slot_2:IsA("Tool")) then
       slot_3 = (slot_2.Name:lower())
-      ss_0 = (slot_3:find("knife")) or ((slot_3:find("zombie")))
-      ss_0 = ss_0 or ((slot_3:find("claw")))
-      ss_0 = ss_0 or ((slot_3:find("blade")))
-      ss_0 = ss_0 or ((slot_3:find("slash")))
-      ss_0 = ss_0 or ((slot_3:find("нож")))
-      ss_0 = ss_0 or ((slot_3:find("зомби")))
-      if ss_0 then
+      if (((((((slot_3:find("knife")) or ((slot_3:find("zombie")))) or ((slot_3:find("claw")))) or ((slot_3:find("blade")))) or ((slot_3:find("slash")))) or ((slot_3:find("нож")))) or ((slot_3:find("зомби")))) then
         return true
       end
-      ss_0 = (slot_2:FindFirstChild("KnifeThrown")) or ((slot_2:FindFirstChild("Stab")))
-      ss_0 = ss_0 or ((slot_2:FindFirstChild("Slash")))
-      ss_0 = ss_0 or ((slot_2:FindFirstChild("KnifeLocal")))
-      if ss_0 then
+      if ((((slot_2:FindFirstChild("KnifeThrown")) or ((slot_2:FindFirstChild("Stab")))) or ((slot_2:FindFirstChild("Slash")))) or ((slot_2:FindFirstChild("KnifeLocal")))) then
         return true
       end
       slot_4 = (slot_2:FindFirstChild("Events"))
-      ss_0 = slot_4 and ((slot_4:FindFirstChild("KnifeThrown")) or ((slot_4:FindFirstChild("HandleTouched"))))
-      if ss_0 then
+      if (slot_4 and ((slot_4:FindFirstChild("KnifeThrown")) or ((slot_4:FindFirstChild("HandleTouched"))))) then
         return true
       end
       continue
@@ -54724,8 +52839,7 @@ protos[900] = function(upvalues)
     slot_2 = __loopKey_900_0
     slot_3 = __loopValue_900_0
     v247_1 = cell_get(upvalues[3])
-    ss_0 = ((slot_3 ~= v247_1)) and slot_3.Character
-    if ss_0 then
+    if (((slot_3 ~= v247_1)) and slot_3.Character) then
       slot_4 = (slot_3.Character:FindFirstChild("HumanoidRootPart"))
       if slot_4 then
         v385_1 = (cell_get(upvalues[4])).Position
@@ -54742,9 +52856,9 @@ protos[900] = function(upvalues)
 end
 
 protos[901] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, ss_0, ss_2, ss_3, ss_4, v11_1, v174_1, v179_1, v184_1, v199_1, v209_1, v210_1, v225_1, v23_1, v235_1, v262_1, v272_1, v273_1, v278_1, v28_1, v283_1, v298_1, v313_1, v318_1, v329_1, v341_1
-  local v351_1, v352_1, v357_1, v362_1, v372_1, v387_1, v408_1, v418_1, v419_1, v424_1, v43_1, v439_1, v449_1, v459_1, v461_1, v471_1, v472_1, v477_1, v482_1, v498_1, v508_1, v509_1, v514_1, v530_1, v540_1, v541_1, v546_1, v572_1, v582_1, v583_1, v588_1, v614_1, v624_1
-  local v625_1, v63_1, v630_1, v640_1, v641_1, v656_1, v694_1, v704_1, v719_1, v730_1, v740_1, v755_1, v765_1
+  local slot_0, slot_1, slot_2, slot_3, ss_0, ss_2, ss_3, ss_4, v11_1, v174_1, v179_1, v210_1, v235_1, v272_1, v273_1, v278_1, v313_1, v329_1
+  local v352_1, v357_1, v418_1, v419_1, v459_1, v471_1, v472_1, v477_1, v508_1, v509_1, v514_1, v540_1, v541_1, v582_1, v583_1, v624_1
+  local v625_1, v63_1, v640_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   v11_1 = (cell_get(upvalues[1])).DuelMode
@@ -54757,63 +52871,43 @@ protos[901] = function(upvalues, argument_1)
     if ((((cell_get(upvalues[3]))()) == slot_0)) then
       return "Murderer"
     end
-    v23_1 = cell_get(upvalues[4])
-    v28_1 = v23_1()
-    slot_1 = v28_1
-    v43_1 = slot_1
-    if v43_1 then
-      v199_1 = env.os
-      v209_1 = v199_1.clock
-      v210_1 = v209_1()
+    slot_1 = ((cell_get(upvalues[4]))())
+    if slot_1 then
+      v210_1 = env.os.clock()
       upvalues[5] = cell_set_or_create(upvalues[5], v210_1)
     end
     v174_1 = cell_get(upvalues[6])
     v179_1 = slot_0
-    v184_1 = v174_1(v179_1)
-    if v184_1 then
+    if (v174_1(v179_1)) then
       return "Unknown"
     end
-    v225_1 = cell_get(upvalues[5])
-    v235_1 = (v225_1 > 0)
+    v235_1 = ((cell_get(upvalues[5])) > 0)
     ss_0 = v235_1
     if v235_1 then
       v313_1 = slot_1
-      v318_1 = not v313_1
-      ss_0 = v318_1
+      ss_0 = (not v313_1)
     end
     v329_1 = ss_0
     ss_0 = v329_1
     if v329_1 then
-      v341_1 = env.os
-      v351_1 = v341_1.clock
-      v352_1 = v351_1()
+      v352_1 = env.os.clock()
       v357_1 = cell_get(upvalues[5])
-      v362_1 = (v352_1 - v357_1)
-      v372_1 = (v362_1 >= 3)
-      ss_0 = v372_1
+      ss_0 = ((((v352_1 - v357_1)) >= 3))
     end
-    v387_1 = ss_0
-    if v387_1 then
+    if ss_0 then
       return "Unknown"
     end
-    v262_1 = cell_get(upvalues[7])
-    v272_1 = v262_1.roleZombieOverride
+    v272_1 = (cell_get(upvalues[7])).roleZombieOverride
     v273_1 = slot_0
     v278_1 = cell_get(upvalues[8])
-    v283_1 = v272_1(v273_1, v278_1)
-    slot_2 = v283_1
-    v298_1 = slot_2
-    if v298_1 then
-      v439_1 = slot_2
-      return v439_1
+    slot_2 = (v272_1(v273_1, v278_1))
+    if slot_2 then
+      return slot_2
     end
-    v408_1 = cell_get(upvalues[7])
-    v418_1 = v408_1.rolePlayerHasGun
+    v418_1 = (cell_get(upvalues[7])).rolePlayerHasGun
     v419_1 = slot_0
-    v424_1 = v418_1(v419_1)
-    if v424_1 then
-      v498_1 = cell_get(upvalues[7])
-      v508_1 = v498_1.roleGunHolderRole
+    if (v418_1(v419_1)) then
+      v508_1 = (cell_get(upvalues[7])).roleGunHolderRole
       v509_1 = slot_0
       v514_1 = cell_get(upvalues[8])
       ss_2 = v508_1
@@ -54821,115 +52915,69 @@ protos[901] = function(upvalues, argument_1)
       ss_4 = v514_1
       return ss_2(ss_3, ss_4)
     end
-    v449_1 = slot_0
-    v459_1 = v449_1.Name
-    v461_1 = cell_get(upvalues[7])
-    v471_1 = v461_1.roleMurdererName
+    v459_1 = slot_0.Name
+    v471_1 = (cell_get(upvalues[7])).roleMurdererName
     v472_1 = cell_get(upvalues[8])
     v477_1 = v471_1(v472_1)
-    v482_1 = (v459_1 == v477_1)
-    if v482_1 then
+    if ((v459_1 == v477_1)) then
       return "Murderer"
     end
-    v530_1 = cell_get(upvalues[7])
-    v540_1 = v530_1.rolePlayerHasZombie
+    v540_1 = (cell_get(upvalues[7])).rolePlayerHasZombie
     v541_1 = slot_0
-    v546_1 = v540_1(v541_1)
-    if v546_1 then
+    if (v540_1(v541_1)) then
       return "Zombie"
     end
-    v572_1 = cell_get(upvalues[7])
-    v582_1 = v572_1.isZombieMode
+    v582_1 = (cell_get(upvalues[7])).isZombieMode
     v583_1 = cell_get(upvalues[8])
-    v588_1 = v582_1(v583_1)
-    if v588_1 then
+    if (v582_1(v583_1)) then
       return "Zombie"
     end
-    v614_1 = cell_get(upvalues[7])
-    v624_1 = v614_1.roleOf
+    v624_1 = (cell_get(upvalues[7])).roleOf
     v625_1 = cell_get(upvalues[8])
-    v630_1 = slot_0
-    v640_1 = v630_1.Name
-    v641_1 = v624_1(v625_1, v640_1)
-    slot_3 = v641_1
-    v656_1 = slot_3
-    ss_0 = v656_1
-    if v656_1 then
-      v694_1 = slot_3
-      v704_1 = (v694_1 ~= "Unknown")
-      ss_0 = v704_1
-    end
-    v719_1 = ss_0
-    ss_0 = v719_1
-    if v719_1 then
-      v730_1 = slot_3
-      v740_1 = (v730_1 ~= "Murderer")
-      ss_0 = v740_1
-    end
-    v755_1 = ss_0
-    if v755_1 then
-      v765_1 = slot_3
-      return v765_1
+    v640_1 = slot_0.Name
+    slot_3 = (v624_1(v625_1, v640_1))
+    if (((slot_3 and (((slot_3 ~= "Unknown"))))) and (((slot_3 ~= "Murderer")))) then
+      return slot_3
     end
     return "Innocent"
   end
-  v23_1 = cell_get(upvalues[4])
-  v28_1 = v23_1()
-  slot_1 = v28_1
-  v43_1 = slot_1
-  if v43_1 then
-    v199_1 = env.os
-    v209_1 = v199_1.clock
-    v210_1 = v209_1()
+  slot_1 = ((cell_get(upvalues[4]))())
+  if slot_1 then
+    v210_1 = env.os.clock()
     upvalues[5] = cell_set_or_create(upvalues[5], v210_1)
   end
   v174_1 = cell_get(upvalues[6])
   v179_1 = slot_0
-  v184_1 = v174_1(v179_1)
-  if v184_1 then
+  if (v174_1(v179_1)) then
     return "Unknown"
   end
-  v225_1 = cell_get(upvalues[5])
-  v235_1 = (v225_1 > 0)
+  v235_1 = ((cell_get(upvalues[5])) > 0)
   ss_0 = v235_1
   if v235_1 then
     v313_1 = slot_1
-    v318_1 = not v313_1
-    ss_0 = v318_1
+    ss_0 = (not v313_1)
   end
   v329_1 = ss_0
   ss_0 = v329_1
   if v329_1 then
-    v341_1 = env.os
-    v351_1 = v341_1.clock
-    v352_1 = v351_1()
+    v352_1 = env.os.clock()
     v357_1 = cell_get(upvalues[5])
-    v362_1 = (v352_1 - v357_1)
-    v372_1 = (v362_1 >= 3)
-    ss_0 = v372_1
+    ss_0 = ((((v352_1 - v357_1)) >= 3))
   end
-  v387_1 = ss_0
-  if v387_1 then
+  if ss_0 then
     return "Unknown"
   end
-  v262_1 = cell_get(upvalues[7])
-  v272_1 = v262_1.roleZombieOverride
+  v272_1 = (cell_get(upvalues[7])).roleZombieOverride
   v273_1 = slot_0
   v278_1 = cell_get(upvalues[8])
-  v283_1 = v272_1(v273_1, v278_1)
-  slot_2 = v283_1
-  v298_1 = slot_2
-  if v298_1 then
-    v439_1 = slot_2
-    return v439_1
+  slot_2 = (v272_1(v273_1, v278_1))
+  if slot_2 then
+    return slot_2
   end
-  v408_1 = cell_get(upvalues[7])
-  v418_1 = v408_1.rolePlayerHasGun
+  v418_1 = (cell_get(upvalues[7])).rolePlayerHasGun
   v419_1 = slot_0
-  v424_1 = v418_1(v419_1)
-  if v424_1 then
-    v498_1 = cell_get(upvalues[7])
-    v508_1 = v498_1.roleGunHolderRole
+  if (v418_1(v419_1)) then
+    v508_1 = (cell_get(upvalues[7])).roleGunHolderRole
     v509_1 = slot_0
     v514_1 = cell_get(upvalues[8])
     ss_2 = v508_1
@@ -54937,55 +52985,29 @@ protos[901] = function(upvalues, argument_1)
     ss_4 = v514_1
     return ss_2(ss_3, ss_4)
   end
-  v449_1 = slot_0
-  v459_1 = v449_1.Name
-  v461_1 = cell_get(upvalues[7])
-  v471_1 = v461_1.roleMurdererName
+  v459_1 = slot_0.Name
+  v471_1 = (cell_get(upvalues[7])).roleMurdererName
   v472_1 = cell_get(upvalues[8])
   v477_1 = v471_1(v472_1)
-  v482_1 = (v459_1 == v477_1)
-  if v482_1 then
+  if ((v459_1 == v477_1)) then
     return "Murderer"
   end
-  v530_1 = cell_get(upvalues[7])
-  v540_1 = v530_1.rolePlayerHasZombie
+  v540_1 = (cell_get(upvalues[7])).rolePlayerHasZombie
   v541_1 = slot_0
-  v546_1 = v540_1(v541_1)
-  if v546_1 then
+  if (v540_1(v541_1)) then
     return "Zombie"
   end
-  v572_1 = cell_get(upvalues[7])
-  v582_1 = v572_1.isZombieMode
+  v582_1 = (cell_get(upvalues[7])).isZombieMode
   v583_1 = cell_get(upvalues[8])
-  v588_1 = v582_1(v583_1)
-  if v588_1 then
+  if (v582_1(v583_1)) then
     return "Zombie"
   end
-  v614_1 = cell_get(upvalues[7])
-  v624_1 = v614_1.roleOf
+  v624_1 = (cell_get(upvalues[7])).roleOf
   v625_1 = cell_get(upvalues[8])
-  v630_1 = slot_0
-  v640_1 = v630_1.Name
-  v641_1 = v624_1(v625_1, v640_1)
-  slot_3 = v641_1
-  v656_1 = slot_3
-  ss_0 = v656_1
-  if v656_1 then
-    v694_1 = slot_3
-    v704_1 = (v694_1 ~= "Unknown")
-    ss_0 = v704_1
-  end
-  v719_1 = ss_0
-  ss_0 = v719_1
-  if v719_1 then
-    v730_1 = slot_3
-    v740_1 = (v730_1 ~= "Murderer")
-    ss_0 = v740_1
-  end
-  v755_1 = ss_0
-  if v755_1 then
-    v765_1 = slot_3
-    return v765_1
+  v640_1 = slot_0.Name
+  slot_3 = (v624_1(v625_1, v640_1))
+  if (((slot_3 and (((slot_3 ~= "Unknown"))))) and (((slot_3 ~= "Murderer")))) then
+    return slot_3
   end
   return "Innocent"
 end
@@ -54999,9 +53021,7 @@ protos[902] = function(upvalues, argument_1)
   ss_0, ss_1 = v3_1(v8_1, slot_0)
   slot_2 = ss_1
   temp_0 = (cell_get(upvalues[2]))
-  ss_1 = ss_0 and slot_2
-  ss_1 = ss_1 or ("Unknown")
-  ss_0 = ss_1
+  ss_0 = ((ss_0 and slot_2) or ("Unknown"))
   temp_0[slot_0] = ss_0
   return (cell_get(upvalues[2]))[slot_0]
 end
@@ -55052,8 +53072,7 @@ protos[904] = function(upvalues, argument_1)
     end
     slot_2 = temp_3
     slot_3 = v143_ret2
-    ss_0 = slot_3 and slot_3.Role
-    v279_1 = ss_0
+    v279_1 = (slot_3 and slot_3.Role)
     ss_0 = v279_1
     if v279_1 then
       v300_1 = slot_3.Killed
@@ -55313,8 +53332,7 @@ protos[906] = function(upvalues, argument_1)
   ss_4 = 0
   ss_5 = 0
   ss_2 = ss_3(ss_4, ss_5, v252_1((90)))
-  ss_1 = ((ss_1 * ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 * ss_2)))
   temp_0.CFrame = ss_0
   cell_get(slot_1).Anchored = true
   cell_get(slot_1).CanCollide = false
@@ -55361,7 +53379,7 @@ protos[907] = destroyCapturedObjectIfPresent907
 end
 
 protos[908] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4, v177_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_2, ss_3, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4, v177_1
   local v633_1, v654_1, v706_1, v724_1, v745_1, v798_1, v803_1, v808_1, v830_1, v835_1, v868_1, v901_1
   local v906_1, v927_1, v928_1, v933_1
   local vm_frame_random = math.random(0, 2147483646)
@@ -55405,9 +53423,7 @@ protos[908] = function(upvalues, argument_1)
     ss_2 = v706_1
     ss_3 = v724_1
     ss_4 = 0.5
-    ss_1 = ss_2(ss_3, ss_4, v745_1(slot_3))
-    ss_1 = ((ss_1 * 25))
-    ss_0 = ss_1
+    ss_0 = ((((ss_2(ss_3, ss_4, v745_1(slot_3))) * 25)))
     temp_4.Velocity = ss_0
     v798_1 = cell_get(upvalues[1])
     v803_1 = v798_1.Create
@@ -55473,8 +53489,7 @@ protos[910] = function(upvalues, argument_1)
   ss_4 = 0
   ss_5 = 0
   ss_2 = ss_3(ss_4, ss_5, v289_1((90)))
-  ss_1 = ((ss_1 * ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 * ss_2)))
   temp_0.CFrame = ss_0
   cell_get(slot_1).Anchored = true
   cell_get(slot_1).CanCollide = false
@@ -55625,8 +53640,7 @@ protos[914] = function(upvalues, argument_1)
     ss_5 = 0
     ss_7 = v417_1
     ss_2 = ss_3(ss_4, ss_5, ss_7(v423_1, (1)))
-    ss_1 = ((ss_1 + ss_2))
-    ss_0 = ss_1
+    ss_0 = (((ss_1 + ss_2)))
     temp_4.Position = ss_0
     cell_get(slot_2).Anchored = true
     cell_get(slot_2).CanCollide = false
@@ -55761,8 +53775,7 @@ protos[916] = function(upvalues, argument_1)
     ss_11 = 45
     ss_8 = pack_values(ss_9(ss_10, ss_11))
     ss_2 = ss_3(ss_4, ss_5, ss_7(unpack_values(ss_8, 1, ss_8.n)))
-    ss_1 = ((ss_1 * ss_2))
-    ss_0 = ss_1
+    ss_0 = (((ss_1 * ss_2)))
     temp_4.CFrame = ss_0
     cell_get(slot_2).Anchored = true
     cell_get(slot_2).CanCollide = false
@@ -55845,8 +53858,7 @@ protos[918] = function(upvalues, argument_1)
     ss_4 = v332_1
     ss_5 = 0
     ss_2 = ss_3(ss_4, ss_5, v353_1(v359_1, (3)))
-    ss_1 = ((ss_1 + ss_2))
-    ss_0 = ss_1
+    ss_0 = (((ss_1 + ss_2)))
     temp_4.Position = ss_0
     cell_get(slot_2).Anchored = true
     cell_get(slot_2).CanCollide = false
@@ -56017,8 +54029,7 @@ protos[922] = function(upvalues, argument_1)
   ss_4 = 0
   ss_5 = 0
   ss_2 = ss_3(ss_4, ss_5, v252_1((90)))
-  ss_1 = ((ss_1 * ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 * ss_2)))
   temp_0.CFrame = ss_0
   cell_get(slot_1).Anchored = true
   cell_get(slot_1).CanCollide = false
@@ -56331,8 +54342,7 @@ protos[930] = function(upvalues, argument_1)
     ss_7 = v353_1
     ss_8 = v359_1
     ss_2 = ss_3(ss_4, ss_5, ss_7(ss_8, (1)))
-    ss_1 = ((ss_1 + ss_2))
-    ss_0 = ss_1
+    ss_0 = (((ss_1 + ss_2)))
     temp_4.Position = ss_0
     cell_get(slot_2).Anchored = true
     cell_get(slot_2).CanCollide = false
@@ -56436,8 +54446,7 @@ protos[932] = function(upvalues, argument_1)
     ss_4 = v396_1
     ss_5 = 0
     ss_2 = ss_3(ss_4, ss_5, v417_1(v423_1, (1)))
-    ss_1 = ((ss_1 + ss_2))
-    ss_0 = ss_1
+    ss_0 = (((ss_1 + ss_2)))
     temp_4.Position = ss_0
     cell_get(slot_2).Anchored = true
     cell_get(slot_2).CanCollide = false
@@ -56603,8 +54612,7 @@ protos[936] = function(upvalues, argument_1)
   ss_4 = 0
   ss_5 = 0
   ss_2 = ss_3(ss_4, ss_5, v252_1((90)))
-  ss_1 = ((ss_1 * ss_2))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 * ss_2)))
   temp_0.CFrame = ss_0
   cell_get(slot_1).Anchored = true
   cell_get(slot_1).CanCollide = false
@@ -56687,8 +54695,7 @@ protos[938] = function(upvalues, argument_1)
     ss_4 = v332_1
     ss_5 = 0
     ss_2 = ss_3(ss_4, ss_5, v353_1(v359_1, (2)))
-    ss_1 = ((ss_1 + ss_2))
-    ss_0 = ss_1
+    ss_0 = (((ss_1 + ss_2)))
     temp_4.Position = ss_0
     cell_get(slot_2).Anchored = true
     cell_get(slot_2).CanCollide = false
@@ -56857,8 +54864,7 @@ protos[942] = function(upvalues, argument_1)
     ss_4 = 0
     ss_5 = 0
     ss_2 = ss_3(ss_4, ss_5, v621_1((90)))
-    ss_1 = ((ss_1 * ss_2))
-    ss_0 = ss_1
+    ss_0 = (((ss_1 * ss_2)))
     temp_5.CFrame = ss_0
     cell_get(slot_4).Anchored = true
     cell_get(slot_4).CanCollide = false
@@ -56969,8 +54975,7 @@ end
 protos[946] = function(upvalues, argument_1)
   local ss_0
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = argument_1 and (true)
-  ss_0 = ss_0 or (false)
+  ss_0 = (argument_1 and (true)) or (false)
   upvalues[1] = cell_set_or_create(upvalues[1], ss_0)
   return
 end
@@ -57207,8 +55212,7 @@ protos[955] = function(upvalues, argument_1)
       v49_1 = closure(956, {upvalues[2]})
       ss_0, ss_1 = v44_1(v49_1)
       slot_2 = ss_1
-      ss_0 = ss_0 and slot_2
-      if ss_0 then
+      if (ss_0 and slot_2) then
         v180_1 = (cell_get(upvalues[3])).trigger
         v180_1(slot_2)
       end
@@ -57427,7 +55431,7 @@ protos[957] = function(upvalues)
 end
 
 protos[958] = function(upvalues, argument_1, argument_2, argument_3, argument_4, argument_5)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, ss_0, ss_1, temp_2
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, ss_0, temp_2
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
@@ -57435,28 +55439,20 @@ protos[958] = function(upvalues, argument_1, argument_2, argument_3, argument_4,
   slot_3 = argument_4
   slot_4 = argument_5
   slot_5 = (env.Instance.new("Part"))
-  ss_1 = slot_0 or env.Enum.PartType.Block
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((slot_0 or env.Enum.PartType.Block))
   slot_5.Shape = temp_2
-  ss_1 = slot_1 or env.Enum.Material.Neon
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((slot_1 or env.Enum.Material.Neon))
   slot_5.Material = temp_2
-  ss_1 = slot_2 or ((env.Color3.new(1, 1, 1)))
-  ss_0 = ss_1
+  ss_0 = (slot_2 or ((env.Color3.new(1, 1, 1))))
   slot_5.Color = ss_0
   slot_5.Transparency = 1
   slot_5.Anchored = true
   slot_5.CanCollide = false
   slot_5.CanQuery = false
   slot_5.CastShadow = false
-  ss_0 = env.CFrame.new(slot_3)
-  temp_2 = ss_0
+  temp_2 = (env.CFrame.new(slot_3))
   slot_5.CFrame = temp_2
-  ss_1 = slot_4 or env.workspace
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((slot_4 or env.workspace))
   slot_5.Parent = temp_2
   return slot_5
 end
@@ -57549,8 +55545,7 @@ protos[961] = function(upvalues, argument_1)
   ss_3 = 0.3
   ss_4 = 0.3
   ss_5 = 0.3
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.Size = temp_2
   cell_get(slot_4).Transparency = 0.25
   v277_1 = cell_get(upvalues[2])
@@ -58237,9 +56232,7 @@ protos[970] = function(upvalues, argument_1)
   ss_4 = 0
   ss_5 = 0
   ss_2 = ss_3(ss_4, ss_5, v374_1((90)))
-  ss_1 = ((ss_1 * ss_2))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 * ss_2))))
   temp_0.CFrame = temp_2
   cell_get(slot_7).Transparency = 0.35
   v475_1 = cell_get(upvalues[2])
@@ -58510,12 +56503,9 @@ protos[973] = function(upvalues, argument_1)
   end
   slot_1 = new_cell()
   slot_1 = cell_set_or_create(slot_1, 1.05)
-  ss_0 = (cell_get(upvalues[1])) and (cell_get(upvalues[1])).MoveDirection
-  ss_0 = ss_0 or ((env.Vector3.new()))
-  slot_2 = ss_0
+  slot_2 = (((cell_get(upvalues[1])) and (cell_get(upvalues[1])).MoveDirection) or ((env.Vector3.new())))
   if ((slot_2.Magnitude < 0.1)) then
-    ss_0 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).CFrame.LookVector
-    v288_1 = ss_0
+    v288_1 = ((cell_get(upvalues[2])) and (cell_get(upvalues[2])).CFrame.LookVector)
     ss_0 = v288_1
     if not v288_1 then
       v310_1 = env.Vector3.new
@@ -58629,8 +56619,7 @@ protos[973] = function(upvalues, argument_1)
   ss_3 = 0.05
   ss_4 = 0.3
   ss_5 = 0.3
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.Size = temp_2
   temp_0 = (cell_get(slot_11))
   v1226_1 = env.CFrame.new
@@ -58643,9 +56632,7 @@ protos[973] = function(upvalues, argument_1)
   ss_4 = 0
   ss_5 = 0
   ss_2 = ss_3(ss_4, ss_5, v1270_1((90)))
-  ss_1 = ((ss_1 * ss_2))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 * ss_2))))
   temp_0.CFrame = temp_2
   cell_get(slot_11).Transparency = 0.15
   v1370_1 = cell_get(upvalues[3])
@@ -58661,8 +56648,7 @@ protos[973] = function(upvalues, argument_1)
   ss_3 = 0.05
   ss_4 = 0.05
   ss_5 = 0.05
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.Size = temp_2
   temp_0 = (cell_get(slot_12))
   v1561_1 = cell_get(slot_4)
@@ -58682,8 +56668,7 @@ protos[973] = function(upvalues, argument_1)
   ss_3 = 0.4
   ss_4 = 0.05
   ss_5 = 0.4
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.Size = temp_2
   temp_0 = (cell_get(slot_13))
   temp_1 = "CFrame"
@@ -58731,8 +56716,7 @@ protos[973] = function(upvalues, argument_1)
   ss_3 = 255
   ss_4 = 40
   ss_5 = 30
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.Color = temp_2
   cell_get(slot_17).Range = 6
   cell_get(slot_17).Brightness = 0
@@ -58874,8 +56858,7 @@ protos[974] = function(upvalues)
           ss_11 = slot_9
           ss_5 = ss_6(ss_7, ss_8, ss_10(ss_11))
           ss_4 = ((ss_4 + ss_5))
-          ss_0 = ss_2(ss_3, ss_4)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4))
           temp_5.CFrame = temp_7
         else
           temp_5 = slot_6
@@ -58894,8 +56877,7 @@ protos[974] = function(upvalues)
           ss_11 = slot_9
           ss_5 = ss_6(ss_7, ss_8, ss_10(ss_11))
           ss_4 = ((ss_4 + ss_5))
-          ss_0 = ss_2(ss_3, ss_4)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4))
           temp_5.CFrame = temp_7
         end
         v1056_1 = (slot_3 * 0.92)
@@ -58913,8 +56895,7 @@ protos[974] = function(upvalues)
         ss_3 = v1182_1
         ss_4 = v1203_1
         ss_5 = v1226_1
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3, ss_4, ss_5))
         temp_5.Size = temp_7
       end
     end
@@ -58928,8 +56909,7 @@ protos[974] = function(upvalues)
       ss_3 = 0.05
       ss_4 = slot_13
       ss_5 = slot_13
-      ss_0 = ss_2(ss_3, ss_4, ss_5)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4, ss_5))
       temp_0.Size = temp_2
       temp_0 = (cell_get(upvalues[6]))
       temp_1 = "Transparency"
@@ -58948,8 +56928,7 @@ protos[974] = function(upvalues)
     ss_3 = v1656_1
     ss_4 = slot_14
     ss_5 = 0.08
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.Size = temp_2
     cell_get(upvalues[7]).Transparency = ((1 - slot_3))
     temp_0 = (cell_get(upvalues[7]))
@@ -58968,8 +56947,7 @@ protos[974] = function(upvalues)
     ss_3 = v1926_1
     ss_4 = v1941_1
     ss_5 = 0.3
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.Size = temp_2
     temp_0 = (cell_get(upvalues[9]))
     v2018_1 = (slot_3 * 0.5)
@@ -59000,8 +56978,7 @@ protos[974] = function(upvalues)
       slot_17 = __loopValue_974_0
       v2540_1 = slot_17.Parent
       if not ((not v2540_1)) then
-        ss_0 = ((slot_16 == 1)) and (((0.05 + slot_14)))
-        ss_0 = ss_0 or (0.05)
+        ss_0 = (((slot_16 == 1)) and (((0.05 + slot_14)))) or (0.05)
         v2740_1 = (((1 - slot_3)) * 0.4)
         v2745_1 = (0.35 + v2740_1)
         slot_19 = nil
@@ -59024,8 +57001,7 @@ protos[974] = function(upvalues)
         ss_3 = slot_20
         ss_4 = slot_20
         ss_5 = slot_20
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3, ss_4, ss_5))
         temp_5.Size = temp_7
       end
     end
@@ -59179,8 +57155,7 @@ protos[976] = function(upvalues, argument_1)
     ss_3 = 0.14
     ss_4 = 0.05
     ss_5 = 0.14
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_6 = ss_0
+    temp_6 = (ss_2(ss_3, ss_4, ss_5))
     temp_4.Size = temp_6
     v504_1 = env.table.insert
     v505_1 = cell_get(slot_8)
@@ -59205,8 +57180,7 @@ protos[976] = function(upvalues, argument_1)
     ss_3 = 0.12
     ss_4 = 0.05
     ss_5 = 0.12
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_6 = ss_0
+    temp_6 = (ss_2(ss_3, ss_4, ss_5))
     temp_4.Size = temp_6
     v856_1 = env.table.insert
     v857_1 = cell_get(slot_9)
@@ -59311,8 +57285,7 @@ protos[977] = function(upvalues)
       ss_3 = slot_4
       ss_4 = slot_4
       ss_5 = slot_4
-      ss_0 = ss_2(ss_3, ss_4, ss_5)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4, ss_5))
       temp_0.Size = temp_2
       temp_0 = (cell_get(upvalues[4]))
       v508_1 = env.CFrame.new
@@ -59324,8 +57297,7 @@ protos[977] = function(upvalues)
       v566_1 = (v509_1 + v561_1)
       ss_2 = v508_1
       ss_3 = v566_1
-      ss_0 = ss_2(ss_3)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3))
       temp_0.CFrame = temp_2
       temp_0 = (cell_get(upvalues[4]))
       regs.v638_1 = (slot_3 * 0.95)
@@ -59380,8 +57352,7 @@ protos[977] = function(upvalues)
         ss_4 = 0
         ss_5 = 0
         ss_2 = ss_3(ss_4, ss_5, v1373_1((45)))
-        ss_1 = ((ss_1 * ss_2))
-        ss_0 = ss_1
+        ss_0 = (((ss_1 * ss_2)))
         slot_7.CFrame = ss_0
         v1456_1 = (slot_3 * 0.9)
         slot_7.Transparency = (((1 - v1456_1)))
@@ -59395,8 +57366,7 @@ protos[977] = function(upvalues)
         ss_3 = slot_10
         ss_4 = 0.05
         ss_5 = slot_10
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3, ss_4, ss_5))
         temp_5.Size = temp_7
       end
     end
@@ -59501,8 +57471,7 @@ protos[977] = function(upvalues)
         ss_3 = 255
         ss_4 = v2508_1
         ss_5 = v2560_1
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3, ss_4, ss_5))
         temp_5.Color = temp_7
       end
     end
@@ -59638,8 +57607,7 @@ protos[979] = function(upvalues, argument_1)
     ss_3 = 0.16
     ss_4 = 0.05
     ss_5 = 0.16
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_6 = ss_0
+    temp_6 = (ss_2(ss_3, ss_4, ss_5))
     temp_4.Size = temp_6
     v494_1 = env.table.insert
     v495_1 = cell_get(slot_8)
@@ -59677,8 +57645,7 @@ protos[979] = function(upvalues, argument_1)
     ss_3 = 0.16
     ss_4 = 0.05
     ss_5 = 0.16
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_6 = ss_0
+    temp_6 = (ss_2(ss_3, ss_4, ss_5))
     temp_4.Size = temp_6
     v952_1 = env.table.insert
     v953_1 = cell_get(slot_11)
@@ -59840,8 +57807,7 @@ protos[980] = function(upvalues)
         v1250_1 = (slot_6 * v1249_1)
         v1255_1 = v1233_1(v1250_1)
         slot_16 = nil
-        slot_16 = v1255_1
-        v1306_1 = (slot_16 * 0.92)
+        v1306_1 = (v1255_1 * 0.92)
         slot_5.Transparency = (((1 - v1306_1)))
         temp_5 = slot_5
         v1374_1 = env.Color3.fromRGB
@@ -59857,8 +57823,7 @@ protos[980] = function(upvalues)
         ss_3 = 255
         ss_4 = v1427_1
         ss_5 = v1479_1
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3, ss_4, ss_5))
         temp_5.Color = temp_7
       end
     end
@@ -59908,8 +57873,7 @@ protos[980] = function(upvalues)
         ss_4 = 0
         ss_5 = 0
         ss_2 = ss_3(ss_4, ss_5, v2029_1((45)))
-        ss_1 = ((ss_1 * ss_2))
-        ss_0 = ss_1
+        ss_0 = (((ss_1 * ss_2)))
         slot_19.CFrame = ss_0
         v2112_1 = (slot_2 * 0.9)
         slot_19.Transparency = (((1 - v2112_1)))
@@ -59923,8 +57887,7 @@ protos[980] = function(upvalues)
         ss_3 = slot_22
         ss_4 = 0.05
         ss_5 = slot_22
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3, ss_4, ss_5))
         temp_5.Size = temp_7
       end
     end
@@ -60028,8 +57991,7 @@ protos[982] = function(upvalues, argument_1)
   ss_3 = v132_1
   ss_4 = 0
   ss_5 = 220
-  ss_0 = set_list_values(ss_0, 2, ss_3(ss_4, ss_5, (255)))
-  slot_6 = ss_0
+  slot_6 = (set_list_values(ss_0, 2, ss_3(ss_4, ss_5, (255))))
   v168_1 = new_table(0)
   slot_7 = new_cell()
   slot_7 = cell_set_or_create(slot_7, v168_1)
@@ -60131,8 +58093,7 @@ protos[983] = function(upvalues)
       v457_1 = (slot_0 * v456_1)
       v482_1 = (((slot_1 % 2)) == 0)
       ss_0 = v457_1
-      ss_1 = v482_1 and ((-(2.5)))
-      ss_1 = ss_1 or (2.5)
+      ss_1 = (v482_1 and ((-(2.5)))) or (2.5)
       v570_3 = (ss_0 * ss_1)
       slot_5 = nil
       slot_5 = v570_3
@@ -60365,8 +58326,7 @@ protos[986] = function(upvalues)
         ss_4 = v803_1
         ss_5 = v813_1
         ss_2 = ss_3(ss_4, ss_5, v825_1((45)))
-        ss_1 = ((ss_1 * ss_2))
-        ss_0 = ss_1
+        ss_0 = (((ss_1 * ss_2)))
         slot_6.CFrame = ss_0
         v908_1 = (slot_3 * 0.85)
         slot_6.Transparency = (((1 - v908_1)))
@@ -60619,8 +58579,7 @@ protos[989] = function(upvalues)
       v721_1 = (v691_1 + v716_1)
       v736_1 = v680_1(v721_1, 0, 1)
       slot_7 = nil
-      slot_7 = v736_1
-      v761_1 = (slot_7 ^ 2)
+      v761_1 = (v736_1 ^ 2)
       slot_8 = nil
       slot_8 = v761_1
       v801_1 = (((slot_6 - slot_5)) * slot_8)
@@ -60631,8 +58590,7 @@ protos[989] = function(upvalues)
       v837_1 = (slot_0 * v836_1)
       v862_1 = (((slot_4 % 2)) == 0)
       ss_0 = v837_1
-      ss_1 = v862_1 and ((-(1.8)))
-      ss_1 = ss_1 or (1.8)
+      ss_1 = (v862_1 and ((-(1.8)))) or (1.8)
       v950_3 = (ss_0 * ss_1)
       slot_10 = nil
       slot_10 = v950_3
@@ -61301,8 +59259,7 @@ protos[998] = function(upvalues)
       ss_3 = slot_4
       ss_4 = slot_4
       ss_5 = slot_4
-      ss_0 = ss_2(ss_3, ss_4, ss_5)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4, ss_5))
       temp_0.Size = temp_2
       temp_0 = (cell_get(upvalues[4]))
       v508_1 = env.CFrame.new
@@ -61314,8 +59271,7 @@ protos[998] = function(upvalues)
       v566_1 = (v509_1 + v561_1)
       ss_2 = v508_1
       ss_3 = v566_1
-      ss_0 = ss_2(ss_3)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3))
       temp_0.CFrame = temp_2
       temp_0 = (cell_get(upvalues[4]))
       v638_1 = (slot_3 * 0.9)
@@ -62026,8 +59982,7 @@ protos[1007] = function(upvalues)
       v397_1 = (slot_0 * v396_1)
       v412_1 = (slot_3 == 1)
       ss_0 = v397_1
-      ss_1 = v412_1 and (2.2)
-      ss_1 = ss_1 or ((-(2.2)))
+      ss_1 = (v412_1 and (2.2)) or ((-(2.2)))
       v562_3 = (ss_0 * ss_1)
       slot_5 = nil
       slot_5 = v562_3
@@ -62206,9 +60161,7 @@ protos[1009] = function(upvalues, argument_1)
   ss_4 = 0
   ss_5 = 0
   ss_2 = ss_3(ss_4, ss_5, v299_1((90)))
-  ss_1 = ((ss_1 * ss_2))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 * ss_2))))
   temp_0.CFrame = temp_2
   cell_get(slot_4).Transparency = 0.2
   v398_1 = new_table(0)
@@ -62659,8 +60612,7 @@ protos[1013] = function(upvalues)
         ss_3 = 0.06
         ss_4 = 0.05
         ss_5 = slot_11
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3, ss_4, ss_5))
         temp_5.Size = temp_7
         v1090_1 = (cell_get(upvalues[6]))[slot_5]
         slot_12 = nil
@@ -62706,8 +60658,7 @@ protos[1013] = function(upvalues)
           ss_3 = slot_14
           ss_4 = slot_14
           ss_5 = slot_14
-          ss_0 = ss_2(ss_3, ss_4, ss_5)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4, ss_5))
           temp_5.Size = temp_7
         end
       end
@@ -63199,8 +61150,7 @@ end
 protos[1021] = function(upvalues, argument_1)
   local ss_0
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = argument_1 and (true)
-  ss_0 = ss_0 or (false)
+  ss_0 = (argument_1 and (true)) or (false)
   upvalues[1] = cell_set_or_create(upvalues[1], ss_0)
   return
 end
@@ -63420,8 +61370,7 @@ protos[1029] = function(upvalues)
     if not ss_0 then
       if not ((((cell_get(upvalues[4])).MoveDirection.Magnitude <= 0.1))) then
         slot_0 = (env.os.clock())
-        ss_0 = (cell_get(upvalues[1])).WalkStepInterval or (0.22)
-        slot_1 = ss_0
+        slot_1 = ((cell_get(upvalues[1])).WalkStepInterval or (0.22))
         if ((slot_1 < 0.05)) then
           slot_1 = 0.05
         end
@@ -63443,8 +61392,7 @@ protos[1029] = function(upvalues)
           v579_1 = -(10)
           v585_1 = v568_1(0, v579_1, 0)
           slot_3 = (v541_1(v536_1, v556_1, v585_1, slot_2))
-          ss_0 = slot_3 and slot_3.Position
-          v652_1 = ss_0
+          v652_1 = (slot_3 and slot_3.Position)
           ss_0 = v652_1
           if not v652_1 then
             v673_1 = (cell_get(upvalues[3])).Position
@@ -63845,7 +61793,7 @@ protos[1030] = function(upvalues)
 end
 
 protos[1031] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, ss_1, v6_1, v98_1
+  local slot_0, slot_1, ss_0, v6_1, v98_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   v6_1 = not slot_0
@@ -63858,15 +61806,12 @@ protos[1031] = function(upvalues, argument_1)
     return false
   end
   slot_1 = (slot_0.Name:lower())
-  ss_1 = (slot_1:find("gun")) or ((slot_1:find("revolver")))
-  ss_1 = ss_1 or ((slot_1:find("pistol")))
-  ss_1 = ((ss_1 ~= nil))
-  return ss_1
+  return ((((((slot_1:find("gun")) or ((slot_1:find("revolver")))) or ((slot_1:find("pistol")))) ~= nil)))
 end
 
 protos[1032] = function(upvalues, argument_1)
-  local slot_0, slot_2, slot_3, slot_4, slot_5, slot_6, ss_0, ss_1, ss_2, ss_3, temp_0, temp_1, temp_2, v102_1, v107_1, v12_1, v2_1, v22_1, v27_1, v281_1, v291_1, v302_1, v312_1, v323_1, v328_1
-  local v333_1, v341_1, v346_1, v366_1, v376_1, v382_1, v398_1, v403_1, v414_1, v425_1, v430_1, v436_1, v44_1, v451_1, v468_1, v483_1, v49_1, v69_1, v7_1, v79_1, v84_1, v89_1
+  local slot_0, slot_2, slot_3, slot_4, slot_5, slot_6, ss_0, ss_1, ss_2, ss_3, temp_0, temp_1, temp_2, v102_1, v107_1, v12_1, v2_1, v22_1, v27_1, v323_1, v328_1
+  local v333_1, v341_1, v346_1, v398_1, v414_1, v425_1, v44_1, v49_1, v69_1, v7_1, v84_1, v89_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = {argument_1}
   local function capture_0()
@@ -63890,8 +61835,7 @@ protos[1032] = function(upvalues, argument_1)
     ss_3 = v107_1
     ss_0, ss_1 = ss_2(ss_3)
     slot_2 = ss_1
-    ss_0 = ss_0 and slot_2
-    if ss_0 then
+    if (ss_0 and slot_2) then
       return slot_2
     end
     temp_0 = (cell_get(upvalues[1]))
@@ -63906,35 +61850,25 @@ protos[1032] = function(upvalues, argument_1)
     slot_4 = new_cell()
     v69_1 = ss_1
     slot_4 = cell_set_or_create(slot_4, v69_1)
-    v79_1 = ss_0
-    slot_3 = v79_1
-    v84_1 = slot_3
+    v84_1 = ss_0
     v89_1 = not v84_1
     ss_0 = v89_1
     if not v89_1 then
       v398_1 = cell_get(slot_4)
-      v403_1 = not v398_1
-      ss_0 = v403_1
+      ss_0 = (not v398_1)
     end
     v414_1 = ss_0
     ss_0 = v414_1
     if not v414_1 then
       v425_1 = cell_get(slot_4)
-      v430_1 = #v425_1
-      v436_1 = (v430_1 == 0)
-      ss_0 = v436_1
+      ss_0 = (((#v425_1) == 0))
     end
-    v451_1 = ss_0
-    if v451_1 then
+    if ss_0 then
       return nil
     end
-    v281_1 = cell_get(upvalues[1])
-    temp_0 = v281_1
-    v291_1 = cell_get(slot_0)
-    temp_1 = v291_1
-    v302_1 = cell_get(slot_4)
-    v312_1 = v302_1[1]
-    temp_2 = v312_1
+    temp_0 = (cell_get(upvalues[1]))
+    temp_1 = (cell_get(slot_0))
+    temp_2 = (cell_get(slot_4))[1]
     v323_1 = temp_0
     v328_1 = temp_1
     v333_1 = temp_2
@@ -63944,19 +61878,8 @@ protos[1032] = function(upvalues, argument_1)
     ss_2 = v341_1
     ss_3 = v346_1
     ss_0, ss_1 = ss_2(ss_3)
-    v366_1 = ss_1
-    slot_6 = v366_1
-    v376_1 = ss_0
-    slot_5 = v376_1
-    v382_1 = slot_5
-    ss_1 = v382_1
-    if v382_1 then
-      v468_1 = slot_6
-      ss_1 = v468_1
-    end
-    v483_1 = ss_1
-    ss_1 = v483_1 or (nil)
-    return ss_1
+    slot_6 = ss_1
+    return ((ss_0 and slot_6) or (nil))
   end
   v44_1 = env.pcall
   v49_1 = closure(1034, {capture_0()})
@@ -63966,35 +61889,25 @@ protos[1032] = function(upvalues, argument_1)
   slot_4 = new_cell()
   v69_1 = ss_1
   slot_4 = cell_set_or_create(slot_4, v69_1)
-  v79_1 = ss_0
-  slot_3 = v79_1
-  v84_1 = slot_3
+  v84_1 = ss_0
   v89_1 = not v84_1
   ss_0 = v89_1
   if not v89_1 then
     v398_1 = cell_get(slot_4)
-    v403_1 = not v398_1
-    ss_0 = v403_1
+    ss_0 = (not v398_1)
   end
   v414_1 = ss_0
   ss_0 = v414_1
   if not v414_1 then
     v425_1 = cell_get(slot_4)
-    v430_1 = #v425_1
-    v436_1 = (v430_1 == 0)
-    ss_0 = v436_1
+    ss_0 = (((#v425_1) == 0))
   end
-  v451_1 = ss_0
-  if v451_1 then
+  if ss_0 then
     return nil
   end
-  v281_1 = cell_get(upvalues[1])
-  temp_0 = v281_1
-  v291_1 = cell_get(slot_0)
-  temp_1 = v291_1
-  v302_1 = cell_get(slot_4)
-  v312_1 = v302_1[1]
-  temp_2 = v312_1
+  temp_0 = (cell_get(upvalues[1]))
+  temp_1 = (cell_get(slot_0))
+  temp_2 = (cell_get(slot_4))[1]
   v323_1 = temp_0
   v328_1 = temp_1
   v333_1 = temp_2
@@ -64004,19 +61917,8 @@ protos[1032] = function(upvalues, argument_1)
   ss_2 = v341_1
   ss_3 = v346_1
   ss_0, ss_1 = ss_2(ss_3)
-  v366_1 = ss_1
-  slot_6 = v366_1
-  v376_1 = ss_0
-  slot_5 = v376_1
-  v382_1 = slot_5
-  ss_1 = v382_1
-  if v382_1 then
-    v468_1 = slot_6
-    ss_1 = v468_1
-  end
-  v483_1 = ss_1
-  ss_1 = v483_1 or (nil)
-  return ss_1
+  slot_6 = ss_1
+  return ((ss_0 and slot_6) or (nil))
 end
 
 protos[1033] = function(upvalues)
@@ -64043,16 +61945,13 @@ protos[1035] = function(upvalues)
 end
 
 protos[1036] = function(upvalues, argument_1)
-  local slot_0, ss_1
+  local slot_0
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
     return nil
   end
-  ss_1 = (slot_0:FindFirstChild("RightHand")) or ((slot_0:FindFirstChild("Right Arm")))
-  ss_1 = ss_1 or ((slot_0:FindFirstChild("Torso")))
-  ss_1 = ss_1 or ((slot_0:FindFirstChild("UpperTorso")))
-  return ss_1
+  return ((((slot_0:FindFirstChild("RightHand")) or ((slot_0:FindFirstChild("Right Arm")))) or ((slot_0:FindFirstChild("Torso")))) or ((slot_0:FindFirstChild("UpperTorso"))))
 end
 
 protos[1037] = function(upvalues, argument_1)
@@ -64173,9 +62072,7 @@ protos[1041] = function(upvalues)
           slot_5 = new_cell()
           slot_4 = __loopKey_1041_1
           slot_5 = cell_set_or_create(slot_5, __loopValue_1041_1)
-          ss_0 = ((cell_get(slot_5)):IsA("WeldConstraint")) or (((cell_get(slot_5)):IsA("Weld")))
-          ss_0 = ss_0 and (((((cell_get(slot_5)).Name:sub(1, 15)) == "AquaGunSkinWeld")))
-          if ss_0 then
+          if ((((cell_get(slot_5)):IsA("WeldConstraint")) or (((cell_get(slot_5)):IsA("Weld")))) and (((((cell_get(slot_5)).Name:sub(1, 15)) == "AquaGunSkinWeld")))) then
             v625_1 = env.pcall
             v630_1 = closure(1042, {capture_5()})
             v625_1(v630_1)
@@ -64197,7 +62094,7 @@ protos[1042] = destroyCapturedObject1042
 end
 
 protos[1043] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, ss_0, temp_0, temp_2, v18_1, v318_1, v334_1, v339_1, v90_1
+  local slot_0, slot_1, slot_2, temp_0, temp_2, v18_1, v318_1, v334_1, v339_1, v90_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   local function capture_1()
@@ -64217,9 +62114,7 @@ protos[1043] = function(upvalues, argument_1)
   slot_2 = new_cell()
   v90_1 = closure(1044, {capture_1(), capture_2()})
   slot_2 = cell_set_or_create(slot_2, v90_1)
-  ss_0 = (slot_0:IsA("BasePart")) or ((slot_0:IsA("MeshPart")))
-  ss_0 = ss_0 or ((slot_0:IsA("UnionOperation")))
-  if ss_0 then
+  if (((slot_0:IsA("BasePart")) or ((slot_0:IsA("MeshPart")))) or ((slot_0:IsA("UnionOperation")))) then
     temp_0 = slot_0
     temp_2 = (cell_get(slot_1))
     temp_0.Parent = temp_2
@@ -64247,15 +62142,10 @@ protos[1044] = function(upvalues, argument_1)
   for __loopKey_1044_0, __loopValue_1044_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_1 = __loopKey_1044_0
     slot_2 = __loopValue_1044_0
-    ss_0 = (slot_2:IsA("BasePart")) or ((slot_2:IsA("MeshPart")))
-    ss_0 = ss_0 or ((slot_2:IsA("UnionOperation")))
-    if ss_0 then
+    if (((slot_2:IsA("BasePart")) or ((slot_2:IsA("MeshPart")))) or ((slot_2:IsA("UnionOperation")))) then
       slot_2.Parent = ((cell_get(upvalues[1])))
     else
-      ss_0 = (slot_2:IsA("Model")) or ((slot_2:IsA("Folder")))
-      ss_0 = ss_0 or ((slot_2:IsA("Tool")))
-      ss_0 = ss_0 or ((slot_2:IsA("Accoutrement")))
-      if ss_0 then
+      if ((((slot_2:IsA("Model")) or ((slot_2:IsA("Folder")))) or ((slot_2:IsA("Tool")))) or ((slot_2:IsA("Accoutrement")))) then
         v525_1 = cell_get(upvalues[2])
         v525_1(slot_2)
       end
@@ -64374,8 +62264,7 @@ protos[1045] = function(upvalues, argument_1)
                       v1159_1 = cell_get(slot_7)
                       v1159_1:Destroy()
                     else
-                      ss_0 = ((cell_get(slot_7)):FindFirstChild("Handle")) or slot_8[1]
-                      slot_11 = ss_0
+                      slot_11 = (((cell_get(slot_7)):FindFirstChild("Handle")) or slot_8[1])
                       cell_get(slot_7).PrimaryPart = slot_11
                       ss_2 = env.ipairs
                       ss_3 = slot_8
@@ -64424,9 +62313,7 @@ protos[1045] = function(upvalues, argument_1)
                       ss_3 = v1696_1
                       ss_5 = v1712_1
                       ss_2 = ss_3(ss_5((1000), (9999)))
-                      ss_1 = ((ss_1 .. ss_2))
-                      ss_0 = ss_1
-                      temp_2 = ss_0
+                      temp_2 = ((((ss_1 .. ss_2))))
                       temp_0.Name = temp_2
                       slot_16.Part0 = slot_2
                       slot_16.Part1 = slot_11
@@ -64533,8 +62420,7 @@ protos[1049] = function(upvalues)
         temp_11 = slot_6
         temp_12 = true
         temp_10[temp_11] = temp_12
-        ss_0 = (cell_get(upvalues[2])).CustomGunSkinEnabled and (((cell_get(upvalues[3]))(slot_6)))
-        if ss_0 then
+        if ((cell_get(upvalues[2])).CustomGunSkinEnabled and (((cell_get(upvalues[3]))(slot_6)))) then
           v742_1 = cell_get(upvalues[4])
           v742_1(slot_6)
           v758_1 = cell_get(upvalues[5])
@@ -64567,8 +62453,7 @@ protos[1049] = function(upvalues)
         temp_11 = slot_8
         temp_12 = true
         temp_10[temp_11] = temp_12
-        ss_0 = (cell_get(upvalues[2])).CustomGunSkinEnabled and (((cell_get(upvalues[3]))(slot_8)))
-        if ss_0 then
+        if ((cell_get(upvalues[2])).CustomGunSkinEnabled and (((cell_get(upvalues[3]))(slot_8)))) then
           v1083_1 = cell_get(upvalues[4])
           v1083_1(slot_8)
           v1099_1 = cell_get(upvalues[5])
@@ -64787,14 +62672,10 @@ protos[1058] = function(upvalues, argument_1)
   for __loopKey_1058_0, __loopValue_1058_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_6 = __loopKey_1058_0
     slot_7 = __loopValue_1058_0
-    ss_0 = slot_7.IsPlaying and (((slot_7.WeightCurrent > 0)))
-    if ss_0 then
+    if (slot_7.IsPlaying and (((slot_7.WeightCurrent > 0)))) then
       slot_8 = slot_7.Name
-      ss_0 = ((slot_8 == "")) or (((slot_8 == "Animation")))
-      if ss_0 then
-        ss_0 = slot_7.Animation and slot_7.Animation.AnimationId
-        ss_0 = ss_0 or ("Unknown")
-        slot_8 = ss_0
+      if (((slot_8 == "")) or (((slot_8 == "Animation")))) then
+        slot_8 = ((slot_7.Animation and slot_7.Animation.AnimationId) or ("Unknown"))
       end
       slot_5 = slot_8
       v506_1 = (cell_get(upvalues[1]))(slot_8)
@@ -64807,8 +62688,8 @@ protos[1058] = function(upvalues, argument_1)
 end
 
 protos[1059] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, v164_1, v174_1, v28_1, v302_1, v312_1, v313_1, v323_1, v345_1, v355_1, v356_1, v366_1, v381_1, v39_1
-  local v393_1, v403_1, v404_1, v414_1, v429_1, v6_1, v92_1
+  local slot_0, slot_1, ss_0, v28_1, v312_1, v313_1, v323_1, v355_1, v356_1, v381_1, v39_1
+  local v403_1, v404_1, v6_1, v92_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   v6_1 = not slot_0
@@ -64824,68 +62705,51 @@ protos[1059] = function(upvalues, argument_1)
   v39_1 = slot_0.Name
   slot_1 = (v28_1(v39_1))
   if (cell_get(upvalues[1])).DualKnifeEnabled then
-    ss_0 = (env.string.find(slot_1, "knife")) or ((env.string.find(slot_1, "нож")))
-    if ss_0 then
+    if ((env.string.find(slot_1, "knife")) or ((env.string.find(slot_1, "нож")))) then
       return true, "knife"
     end
-    v164_1 = cell_get(upvalues[1])
-    v174_1 = v164_1.DualGunEnabled
-    if v174_1 then
-      v302_1 = env.string
-      v312_1 = v302_1.find
+    if (cell_get(upvalues[1])).DualGunEnabled then
+      v312_1 = env.string.find
       v313_1 = slot_1
       v323_1 = v312_1(v313_1, "gun")
       ss_0 = v323_1
       if not v323_1 then
-        v345_1 = env.string
-        v355_1 = v345_1.find
+        v355_1 = env.string.find
         v356_1 = slot_1
-        v366_1 = v355_1(v356_1, "пистолет")
-        ss_0 = v366_1
+        ss_0 = (v355_1(v356_1, "пистолет"))
       end
       v381_1 = ss_0
       ss_0 = v381_1
       if not v381_1 then
-        v393_1 = env.string
-        v403_1 = v393_1.find
+        v403_1 = env.string.find
         v404_1 = slot_1
-        v414_1 = v403_1(v404_1, "револьвер")
-        ss_0 = v414_1
+        ss_0 = (v403_1(v404_1, "револьвер"))
       end
-      v429_1 = ss_0
-      if v429_1 then
+      if ss_0 then
         return true, "gun"
       end
       return false, nil
     end
     return false, nil
   end
-  v164_1 = cell_get(upvalues[1])
-  v174_1 = v164_1.DualGunEnabled
-  if v174_1 then
-    v302_1 = env.string
-    v312_1 = v302_1.find
+  if (cell_get(upvalues[1])).DualGunEnabled then
+    v312_1 = env.string.find
     v313_1 = slot_1
     v323_1 = v312_1(v313_1, "gun")
     ss_0 = v323_1
     if not v323_1 then
-      v345_1 = env.string
-      v355_1 = v345_1.find
+      v355_1 = env.string.find
       v356_1 = slot_1
-      v366_1 = v355_1(v356_1, "пистолет")
-      ss_0 = v366_1
+      ss_0 = (v355_1(v356_1, "пистолет"))
     end
     v381_1 = ss_0
     ss_0 = v381_1
     if not v381_1 then
-      v393_1 = env.string
-      v403_1 = v393_1.find
+      v403_1 = env.string.find
       v404_1 = slot_1
-      v414_1 = v403_1(v404_1, "револьвер")
-      ss_0 = v414_1
+      ss_0 = (v403_1(v404_1, "револьвер"))
     end
-    v429_1 = ss_0
-    if v429_1 then
+    if ss_0 then
       return true, "gun"
     end
     return false, nil
@@ -64930,8 +62794,7 @@ protos[1061] = function(upvalues)
   for __loopKey_1061_0, __loopValue_1061_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_0 = __loopKey_1061_0
     slot_1 = __loopValue_1061_0
-    ss_0 = slot_1 and slot_1.Parent
-    if ss_0 then
+    if (slot_1 and slot_1.Parent) then
       slot_1:Destroy()
     end
   end
@@ -65023,8 +62886,7 @@ protos[1065] = function(upvalues, argument_1)
   for __loopKey_1065_0, __loopValue_1065_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_2 = __loopKey_1065_0
     slot_4 = (slot_0:FindFirstChild(__loopValue_1065_0))
-    ss_0 = slot_4 and ((slot_4:IsA("BasePart")))
-    if ss_0 then
+    if (slot_4 and ((slot_4:IsA("BasePart")))) then
       slot_4.CanCollide = false
       slot_4.Massless = true
       slot_4.CanTouch = false
@@ -65103,8 +62965,7 @@ protos[1066] = function(upvalues, argument_1, argument_2)
       v596_1 = v591_1.FindFirstChild
       v611_1 = slot_5[2]
       slot_7 = (v596_1(v591_1, v611_1))
-      ss_0 = slot_6 and slot_7
-      if ss_0 then
+      if (slot_6 and slot_7) then
         slot_8 = (env.Instance.new("Weld"))
         v750_1 = slot_5[1]
         slot_8.Name = ((("Dual_" .. v750_1)))
@@ -65120,8 +62981,7 @@ protos[1066] = function(upvalues, argument_1, argument_2)
           ss_2 = v1023_1
           ss_3 = v1022_1
           ss_4 = v1038_1
-          ss_0 = ss_2(ss_3, ss_4)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4))
           temp_5.C0 = temp_7
         else
           temp_5 = slot_8
@@ -65139,8 +62999,7 @@ protos[1066] = function(upvalues, argument_1, argument_2)
   else
     slot_9 = (slot_0:FindFirstChild("Left Arm"))
     slot_10 = (slot_0:FindFirstChild("Right Arm"))
-    ss_0 = slot_9 and slot_10
-    if ss_0 then
+    if (slot_9 and slot_10) then
       slot_11 = (env.Instance.new("Weld"))
       slot_11.Name = "Dual_LeftArm"
       slot_11.Part0 = slot_10
@@ -65157,8 +63016,7 @@ protos[1066] = function(upvalues, argument_1, argument_2)
         ss_2 = v1493_1
         ss_3 = v1492_1
         ss_4 = v1508_1
-        ss_0 = ss_2(ss_3, ss_4)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4))
         temp_0.C0 = temp_2
       else
         temp_0 = slot_11
@@ -65169,8 +63027,7 @@ protos[1066] = function(upvalues, argument_1, argument_2)
         ss_3 = v1583_1
         ss_4 = 0
         ss_5 = 0
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5))
         temp_0.C0 = temp_2
       end
       temp_0 = slot_11
@@ -65357,8 +63214,7 @@ protos[1068] = function(upvalues)
       v1388_1 = -(2)
       ss_2 = v1382_1
       ss_3 = v1388_1
-      ss_0 = ss_2(ss_3, (0), (0))
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3, (0), (0)))
       temp_5.C0 = temp_7
     end
   end
@@ -65391,14 +63247,9 @@ protos[1070] = function(upvalues, argument_1, argument_2)
   slot_1 = argument_2
   ss_0 = (not slot_0) or ((not slot_1))
   if not ss_0 then
-    ss_0 = slot_0.Parent and slot_0.Parent.Name
-    slot_2 = ss_0
-    ss_0 = slot_2 and ((slot_1:FindFirstChild(slot_2, true)))
-    ss_0 = ss_0 or slot_1
-    slot_3 = ss_0
-    ss_0 = (slot_0:IsA("ParticleEmitter")) or ((slot_0:IsA("Beam")))
-    ss_0 = ss_0 or ((slot_0:IsA("Light")))
-    if ss_0 then
+    slot_2 = (slot_0.Parent and slot_0.Parent.Name)
+    slot_3 = ((slot_2 and ((slot_1:FindFirstChild(slot_2, true)))) or slot_1)
+    if (((slot_0:IsA("ParticleEmitter")) or ((slot_0:IsA("Beam")))) or ((slot_0:IsA("Light")))) then
       v350_1 = slot_3
       v355_1 = v350_1.FindFirstChild
       v370_1 = slot_0.Name
@@ -65538,12 +63389,9 @@ protos[1075] = function(upvalues, argument_1, argument_2)
   slot_1 = argument_2
   v2_1 = cell_get(upvalues[1])
   v2_1()
-  ss_0 = (slot_0:FindFirstChild("LeftHand")) or ((slot_0:FindFirstChild("Left Arm")))
-  slot_2 = ss_0
-  ss_0 = (slot_0:FindFirstChild("RightHand")) or ((slot_0:FindFirstChild("Right Arm")))
-  slot_3 = ss_0
-  ss_0 = (not slot_1) or ((not slot_2))
-  ss_0 = ss_0 or ((not slot_3))
+  slot_2 = ((slot_0:FindFirstChild("LeftHand")) or ((slot_0:FindFirstChild("Left Arm"))))
+  slot_3 = ((slot_0:FindFirstChild("RightHand")) or ((slot_0:FindFirstChild("Right Arm"))))
+  ss_0 = ((not slot_1) or ((not slot_2))) or ((not slot_3))
   if not ss_0 then
     v220_1 = slot_1:Clone()
     slot_4 = nil
@@ -65634,8 +63482,7 @@ protos[1075] = function(upvalues, argument_1, argument_2)
         end
       end
     end
-    ss_0 = (slot_4:FindFirstChild("Handle")) or ((slot_4:FindFirstChildWhichIsA("BasePart")))
-    slot_12 = ss_0
+    slot_12 = ((slot_4:FindFirstChild("Handle")) or ((slot_4:FindFirstChildWhichIsA("BasePart"))))
     if (not slot_12) then
       slot_4:Destroy()
     else
@@ -65679,8 +63526,7 @@ protos[1076] = function(upvalues)
   ss_0 = (cell_get(upvalues[1])).DualGunEnabled or (cell_get(upvalues[1])).DualKnifeEnabled
   if (not ss_0) then
     v135_1 = (cell_get(upvalues[2])).activeWelds
-    ss_0 = (((#v135_1) > 0)) or (cell_get(upvalues[2])).clonedToolModel
-    if ss_0 then
+    if ((((#v135_1) > 0)) or (cell_get(upvalues[2])).clonedToolModel) then
       v194_1 = cell_get(upvalues[3])
       v194_1()
       v205_1 = cell_get(upvalues[4])
@@ -65708,11 +63554,8 @@ protos[1076] = function(upvalues)
       slot_5 = ss_1
       slot_4 = ss_0
       slot_6 = ((slot_2 ~= nil))
-      ss_0 = slot_6 and ((not slot_4))
-      slot_7 = ss_0
-      ss_0 = (cell_get(upvalues[2])).wasCustomAnimActive and ((not slot_4))
-      ss_0 = ss_0 and slot_7
-      if ss_0 then
+      slot_7 = (slot_6 and ((not slot_4)))
+      if (((cell_get(upvalues[2])).wasCustomAnimActive and ((not slot_4))) and slot_7) then
         v585_1 = cell_get(upvalues[9])
         v585_1(slot_1)
       end
@@ -65751,8 +63594,7 @@ protos[1076] = function(upvalues)
             v951_1 = (cell_get(upvalues[2])).clonedToolModel
             ss_0 = (not v951_1)
           end
-          ss_0 = ss_0 or ((((cell_get(upvalues[2])).clonedToolModel.Parent ~= slot_1)))
-          if ss_0 then
+          if (ss_0 or ((((cell_get(upvalues[2])).clonedToolModel.Parent ~= slot_1)))) then
             v1021_1 = cell_get(upvalues[12])
             v1021_1(slot_1, slot_2)
           end
@@ -65822,10 +63664,8 @@ protos[1078] = function(upvalues)
   if ss_0 then
     return (cell_get(upvalues[3])).Position
   end
-  ss_0 = ((cell_get(upvalues[1])):FindFirstChild("LeftHand")) or (((cell_get(upvalues[1])):FindFirstChild("Left Arm")))
-  slot_0 = ss_0
-  ss_0 = slot_0 and ((slot_0:IsA("BasePart")))
-  if ss_0 then
+  slot_0 = (((cell_get(upvalues[1])):FindFirstChild("LeftHand")) or (((cell_get(upvalues[1])):FindFirstChild("Left Arm"))))
+  if (slot_0 and ((slot_0:IsA("BasePart")))) then
     v242_1 = cell_get(upvalues[3])
     v258_1 = (cell_get(upvalues[2])).CFrame
     v259_1 = v258_1.ToObjectSpace
@@ -65943,9 +63783,7 @@ protos[1079] = function(upvalues, argument_1)
           v1323_1 = (cell_get(upvalues[6]))._TracerFx
           slot_10 = new_cell()
           slot_10 = cell_set_or_create(slot_10, v1323_1)
-          ss_0 = (cell_get(slot_10)) and (cell_get(slot_10)).Enabled
-          ss_0 = ss_0 and ((((cell_get(slot_10)).Style ~= "None")))
-          if ss_0 then
+          if (((cell_get(slot_10)) and (cell_get(slot_10)).Enabled) and ((((cell_get(slot_10)).Style ~= "None")))) then
             v1468_1 = env.pcall
             v1473_1 = closure(1081, {upvalues[7], capture_10(), capture_6(), capture_4(), capture_5()})
             v1468_1(v1473_1)
@@ -65981,22 +63819,19 @@ protos[1081] = function(upvalues)
 end
 
 protos[1082] = function(upvalues)
-  local slot_0, slot_1, slot_2, ss_0, v130_1, v267_1, v278_1, v283_1, v288_1
+  local slot_0, slot_1, slot_2, v130_1, v267_1, v278_1, v283_1, v288_1
   local vm_frame_random = math.random(0, 2147483646)
   local function capture_2()
     if not slot_2 then slot_2 = {} end
     return slot_2
   end
   slot_0 = 0
-  ss_0 = (cell_get(upvalues[1])) and (cell_get(upvalues[1])).GunFiredSignal
-  slot_1 = ss_0
+  slot_1 = ((cell_get(upvalues[1])) and (cell_get(upvalues[1])).GunFiredSignal)
   while true do
-    ss_0 = (not slot_1) and (((slot_0 < 40)))
-    if ss_0 then
+    if ((not slot_1) and (((slot_0 < 40)))) then
       v130_1 = env.task.wait
       v130_1(0.5)
-      ss_0 = (cell_get(upvalues[1])) and (cell_get(upvalues[1])).GunFiredSignal
-      slot_1 = ss_0
+      slot_1 = ((cell_get(upvalues[1])) and (cell_get(upvalues[1])).GunFiredSignal)
       slot_0 = ((slot_0 + 1))
       continue
     end
@@ -66036,8 +63871,7 @@ protos[1083] = function(upvalues, argument_1, argument_2)
   if ss_0 then
     return true
   end
-  ss_0 = (((env.typeof(slot_0)) == "Instance")) and (cell_get(upvalues[1])).Character
-  v238_1 = ss_0
+  v238_1 = ((((env.typeof(slot_0)) == "Instance")) and (cell_get(upvalues[1])).Character)
   ss_0 = v238_1
   if v238_1 then
     v264_1 = (cell_get(upvalues[1])).Character
@@ -66069,8 +63903,7 @@ protos[1083] = function(upvalues, argument_1, argument_2)
   if ss_0 then
     return true
   end
-  ss_0 = (((env.typeof(slot_1)) == "Instance")) and (cell_get(upvalues[1])).Character
-  v511_1 = ss_0
+  v511_1 = ((((env.typeof(slot_1)) == "Instance")) and (cell_get(upvalues[1])).Character)
   ss_0 = v511_1
   if v511_1 then
     v537_1 = (cell_get(upvalues[1])).Character
@@ -66101,8 +63934,7 @@ protos[1084] = function(upvalues, ...)
     if not ((not v34_1)) then
       ss_0 = (new_table(1))
       ss_2 = varargs
-      ss_0 = set_list_values(ss_0, 1, unpack_values(ss_2, 1, ss_2.n))
-      slot_0 = ss_0
+      slot_0 = (set_list_values(ss_0, 1, unpack_values(ss_2, 1, ss_2.n)))
       v77_1 = cell_get(upvalues[3])
       v92_1 = slot_0[1]
       v103_1 = slot_0[2]
@@ -66485,8 +64317,7 @@ protos[1087] = function(upvalues)
   for __loopKey_1087_0, __loopValue_1087_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_0 = __loopKey_1087_0
     slot_1 = __loopValue_1087_0
-    ss_0 = slot_1 and slot_1.Parent
-    if ss_0 then
+    if (slot_1 and slot_1.Parent) then
       slot_1:Destroy()
     end
   end
@@ -66555,8 +64386,7 @@ protos[1091] = function(upvalues)
   ss_1 = v12_1
   ss_2 = v13_1
   ss_2 = set_list_values(ss_2, 2, v64_1((1), v80_1))
-  ss_0 = ss_1(ss_2)
-  slot_0 = ss_0
+  slot_0 = (ss_1(ss_2))
   v108_1 = env.pairs
   v113_1 = cell_get(upvalues[2])
   ss_2 = v108_1
@@ -66565,8 +64395,7 @@ protos[1091] = function(upvalues)
   for __loopKey_1091_0, __loopValue_1091_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_1 = __loopKey_1091_0
     slot_2 = __loopValue_1091_0
-    ss_0 = slot_2 and slot_2.Parent
-    if ss_0 then
+    if (slot_2 and slot_2.Parent) then
       slot_2.Color = slot_0
     end
   end
@@ -67085,8 +64914,7 @@ protos[1094] = function(upvalues, argument_1, argument_2, argument_3)
   v325_1 = (cell_get(upvalues[1])).WaterAuraColor
   ss_2 = v314_1
   ss_3 = v325_1
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.Color = temp_2
   temp_0 = slot_3
   temp_1 = "Parent"
@@ -67112,8 +64940,7 @@ protos[1095] = function(upvalues)
   for __loopKey_1095_0, __loopValue_1095_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_1 = __loopKey_1095_0
     slot_2 = __loopValue_1095_0
-    ss_0 = slot_2 and slot_2.Parent
-    if ss_0 then
+    if (slot_2 and slot_2.Parent) then
       slot_2.Color = slot_0
     end
   end
@@ -67131,8 +64958,7 @@ protos[1096] = function(upvalues)
   for __loopKey_1096_0, __loopValue_1096_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_0 = __loopKey_1096_0
     slot_1 = __loopValue_1096_0
-    ss_0 = slot_1 and slot_1.Parent
-    if ss_0 then
+    if (slot_1 and slot_1.Parent) then
       slot_1:Destroy()
     end
   end
@@ -67185,8 +65011,7 @@ protos[1097] = function(upvalues)
     ss_6 = 0
     ss_7 = v149_1
     ss_8 = 0
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_4 = ss_0
+    slot_4 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v191_1 = new_table(0)
     v191_1.LightEmission = 1
     v191_1.LightInfluence = 0
@@ -67357,8 +65182,7 @@ protos[1097] = function(upvalues)
     ss_6 = 0
     ss_7 = v1540_1
     ss_8 = v1546_1
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_5 = ss_0
+    slot_5 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v1573_1 = cell_get(upvalues[3])
     v1594_1 = env.Vector3.new
     v1605_1 = -(2.5)
@@ -67369,8 +65193,7 @@ protos[1097] = function(upvalues)
     ss_6 = 0
     ss_7 = v1605_1
     ss_8 = 3.75
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_6 = ss_0
+    slot_6 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v1637_1 = cell_get(upvalues[3])
     v1658_1 = env.Vector3.new
     v1664_1 = -(1.5)
@@ -67383,8 +65206,7 @@ protos[1097] = function(upvalues)
     ss_6 = v1664_1
     ss_7 = v1670_1
     ss_8 = v1676_1
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_7 = ss_0
+    slot_7 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v1703_1 = cell_get(upvalues[3])
     v1724_1 = env.Vector3.new
     v1735_1 = -(2.5)
@@ -67396,8 +65218,7 @@ protos[1097] = function(upvalues)
     ss_6 = 2
     ss_7 = v1735_1
     ss_8 = v1741_1
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_8 = ss_0
+    slot_8 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v1768_1 = cell_get(upvalues[3])
     v1789_1 = env.Vector3.new
     v1800_1 = -(2.5)
@@ -67408,8 +65229,7 @@ protos[1097] = function(upvalues)
     ss_6 = 1
     ss_7 = v1800_1
     ss_8 = 1.75
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_9 = ss_0
+    slot_9 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v1832_1 = cell_get(upvalues[3])
     v1853_1 = env.Vector3.new
     v1859_1 = -(2)
@@ -67421,8 +65241,7 @@ protos[1097] = function(upvalues)
     ss_6 = v1859_1
     ss_7 = v1865_1
     ss_8 = 0.75
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_10 = ss_0
+    slot_10 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v1897_1 = cell_get(upvalues[3])
     v1918_1 = env.Vector3.new
     v1924_1 = -(1.5)
@@ -67434,8 +65253,7 @@ protos[1097] = function(upvalues)
     ss_6 = v1924_1
     ss_7 = 0
     ss_8 = v1935_1
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_11 = ss_0
+    slot_11 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v1962_1 = cell_get(upvalues[3])
     v1983_1 = env.Vector3.new
     v1999_1 = -(1.25)
@@ -67446,8 +65264,7 @@ protos[1097] = function(upvalues)
     ss_6 = 2
     ss_7 = 2
     ss_8 = v1999_1
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_12 = ss_0
+    slot_12 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v2026_1 = cell_get(upvalues[3])
     v2047_1 = env.Vector3.new
     ss_1 = slot_1
@@ -67457,8 +65274,7 @@ protos[1097] = function(upvalues)
     ss_6 = 1
     ss_7 = 1.5
     ss_8 = 1.75
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_13 = ss_0
+    slot_13 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v2089_1 = cell_get(upvalues[3])
     v2110_1 = env.Vector3.new
     v2116_1 = -(2)
@@ -67469,8 +65285,7 @@ protos[1097] = function(upvalues)
     ss_6 = v2116_1
     ss_7 = 0.5
     ss_8 = 0.75
-    ss_0 = ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8))
-    slot_14 = ss_0
+    slot_14 = (ss_1(ss_2, ss_3, ss_5(ss_6, ss_7, ss_8)))
     v2168_1 = new_table(0)
     v2168_1.LightEmission = 1
     v2168_1.LightInfluence = 0
@@ -67673,9 +65488,7 @@ protos[1101] = function(upvalues)
   for __loopKey_1101_0, __loopValue_1101_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_1 = __loopKey_1101_0
     slot_2 = __loopValue_1101_0
-    ss_0 = slot_2 and slot_2.Parent
-    ss_0 = ss_0 and ((slot_2:IsA("ParticleEmitter")) or ((slot_2:IsA("Beam"))))
-    if ss_0 then
+    if ((slot_2 and slot_2.Parent) and ((slot_2:IsA("ParticleEmitter")) or ((slot_2:IsA("Beam"))))) then
       slot_2.Color = slot_0
     end
   end
@@ -67693,8 +65506,7 @@ protos[1102] = function(upvalues)
   for __loopKey_1102_0, __loopValue_1102_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_0 = __loopKey_1102_0
     slot_1 = __loopValue_1102_0
-    ss_0 = slot_1 and slot_1.Parent
-    if ss_0 then
+    if (slot_1 and slot_1.Parent) then
       slot_1:Destroy()
     end
   end
@@ -68302,8 +66114,7 @@ protos[1103] = function(upvalues)
       ss_7 = 25
       ss_8 = 0
       ss_9 = 0
-      ss_0 = ss_1(ss_2, ss_3, ss_4, ss_6(ss_7, ss_8, ss_9))
-      slot_18 = ss_0
+      slot_18 = (ss_1(ss_2, ss_3, ss_4, ss_6(ss_7, ss_8, ss_9)))
       regs.v5587_1 = cell_get(slot_3)
       regs.v5592_1 = slot_18
       v5597_1 = new_table(0)
@@ -68489,7 +66300,7 @@ protos[1103] = function(upvalues)
 end
 
 protos[1104] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_1, temp_2
+  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, temp_2
   local v415_1, v416_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -68499,12 +66310,9 @@ protos[1104] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   slot_4 = (env.Instance.new("Attachment"))
   temp_2 = slot_1
   slot_4.Name = temp_2
-  ss_1 = slot_2 or ((env.Vector3.new()))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((slot_2 or ((env.Vector3.new()))))
   slot_4.Position = temp_2
-  ss_1 = slot_3 or ((env.Vector3.new()))
-  ss_0 = ss_1
+  ss_0 = (slot_3 or ((env.Vector3.new())))
   slot_4.Rotation = ss_0
   slot_4.Visible = false
   temp_2 = slot_0
@@ -68961,8 +66769,7 @@ protos[1107] = function(upvalues)
       ss_7 = 179.996
       ss_8 = v2943_1
       ss_9 = v2949_1
-      ss_0 = ss_1(ss_2, ss_3, ss_4, ss_6(ss_7, ss_8, ss_9))
-      slot_6 = ss_0
+      slot_6 = (ss_1(ss_2, ss_3, ss_4, ss_6(ss_7, ss_8, ss_9)))
       v2987_1 = env.Instance.new("PointLight")
       slot_7 = nil
       slot_7 = v2987_1
@@ -69067,8 +66874,7 @@ protos[1107] = function(upvalues)
       ss_7 = regs.v4126_1
       ss_8 = 61.431
       ss_9 = regs.v4137_1
-      ss_0 = ss_1(ss_2, ss_3, ss_4, ss_6(ss_7, ss_8, ss_9))
-      slot_8 = ss_0
+      slot_8 = (ss_1(ss_2, ss_3, ss_4, ss_6(ss_7, ss_8, ss_9)))
       regs.v4175_1 = env.Instance.new("PointLight")
       slot_9 = nil
       slot_9 = regs.v4175_1
@@ -69188,7 +66994,7 @@ protos[1108] = function(upvalues, argument_1, argument_2)
 end
 
 protos[1109] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_1, temp_2
+  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, temp_2
   local v445_1, v446_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -69198,12 +67004,9 @@ protos[1109] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   slot_4 = (env.Instance.new("Attachment"))
   temp_2 = slot_1
   slot_4.Name = temp_2
-  ss_1 = slot_2 or ((env.Vector3.new(0, 0, 0)))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((slot_2 or ((env.Vector3.new(0, 0, 0)))))
   slot_4.Position = temp_2
-  ss_1 = slot_3 or ((env.Vector3.new(0, 0, 0)))
-  ss_0 = ss_1
+  ss_0 = (slot_3 or ((env.Vector3.new(0, 0, 0))))
   slot_4.Rotation = ss_0
   slot_4.Visible = false
   temp_2 = slot_0
@@ -69228,8 +67031,7 @@ protos[1110] = function(upvalues)
   for __loopKey_1110_0, __loopValue_1110_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_2 = __loopKey_1110_0
     slot_3 = __loopValue_1110_0
-    ss_0 = slot_3 and slot_3.Parent
-    if ss_0 then
+    if (slot_3 and slot_3.Parent) then
       if (slot_3:IsA("ParticleEmitter")) then
         temp_5 = slot_3
         temp_7 = slot_1
@@ -69589,9 +67391,7 @@ protos[1118] = function(upvalues)
   for __loopKey_1118_0, __loopValue_1118_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_0 = __loopKey_1118_0
     slot_1 = __loopValue_1118_0
-    ss_0 = (slot_1:IsA("Sky")) or ((slot_1:IsA("PostEffect")))
-    ss_0 = ss_0 or ((slot_1:IsA("Atmosphere")))
-    if ss_0 then
+    if (((slot_1:IsA("Sky")) or ((slot_1:IsA("PostEffect")))) or ((slot_1:IsA("Atmosphere")))) then
       slot_1:Destroy()
     end
   end
@@ -69765,8 +67565,7 @@ protos[1126] = function(upvalues, argument_1)
       temp_2 = __loopKey_1126_1
       slot_6 = __loopKey_1126_1
       slot_7 = __loopValue_1126_1
-      ss_0 = slot_7 and (((slot_7 ~= "")))
-      if ss_0 then
+      if (slot_7 and (((slot_7 ~= "")))) then
         slot_2[slot_6] = slot_7
       end
     end
@@ -71571,7 +69370,7 @@ protos[1151] = function(upvalues, argument_1)
 end
 
 protos[1152] = function(upvalues, argument_1, argument_2, argument_3)
-  local slot_0, slot_1, slot_2, slot_3, ss_0, ss_2, temp_0, temp_1, temp_2, v110_1, v225_1, v241_1, v258_1
+  local slot_0, slot_1, slot_2, slot_3, ss_0, temp_0, temp_1, temp_2, v110_1, v225_1, v241_1, v258_1
   local v69_1, v75_1
   math.random(0, 2147483646)
   slot_0 = argument_1
@@ -71593,14 +69392,11 @@ protos[1152] = function(upvalues, argument_1, argument_2, argument_3)
   v69_1 = env.Color3.fromHSV
   v75_1 = cell_get(upvalues[2])
   v110_1 = (((((((slot_1 / v75_1)) * 0.7)) + slot_2)) % 1)
-  ss_2 = v69_1
-  ss_0 = ss_2(v110_1, (0.75), (1))
+  ss_0 = v69_1(v110_1, (0.75), (1))
   slot_3.flash = ss_0
   temp_0 = slot_3
   temp_1 = "t0"
-  ss_2 = env.os.clock
-  ss_0 = ss_2()
-  temp_2 = ss_0
+  temp_2 = (env.os.clock())
   temp_0.t0 = temp_2
   return
 end
@@ -71608,8 +69404,8 @@ end
 protos[1153] = function(upvalues)
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, ss_0, ss_1, ss_2, temp_0, temp_1, temp_2, temp_3, temp_4, v1009_1, v1022_1, v1027_1, v1032_1, v1054_1, v1059_1, v1065_1, v1070_1, v1075_1, v1081_1
   local v1107_1, v1113_1, v124_1, v140_1, v193_1, v231_1, v236_1, v246_1, v251_1, v327_1
-  local v495_1, v501_1, v522_1, v539_1, v545_1, v546_1, v551_1, v597_1, v688_1, v694_1, v737_1, v826_1, v837_1, v847_1, v848_1
-  local v853_1, v858_1, v863_1, v874_1, v879_1, v884_1, v899_1, v949_1
+  local v495_1, v501_1, v522_1, v539_1, v545_1, v546_1, v551_1, v597_1, v688_1, v694_1, v737_1, v847_1, v848_1
+  local v853_1, v858_1, v863_1, v874_1, v879_1, v899_1, v949_1
   local vm_frame_random = math.random(0, 2147483646)
   local function capture_2()
     if not slot_2 then slot_2 = {} end
@@ -71620,8 +69416,7 @@ protos[1153] = function(upvalues)
     return slot_11
   end
   slot_0 = (cell_get(upvalues[1])).Character
-  ss_0 = slot_0 and ((slot_0:FindFirstChild("HumanoidRootPart")))
-  slot_1 = ss_0
+  slot_1 = (slot_0 and ((slot_0:FindFirstChild("HumanoidRootPart"))))
   v124_1 = env.workspace.CurrentCamera
   slot_2 = new_cell()
   slot_2 = cell_set_or_create(slot_2, v124_1)
@@ -71653,8 +69448,7 @@ protos[1153] = function(upvalues)
       temp_2 = temp_3
       slot_6 = temp_3
       slot_7 = temp_4
-      ss_0 = ((slot_7.Transparency < 0.95)) and (((slot_7.Size.Magnitude > 0.5)))
-      if ss_0 then
+      if (((slot_7.Transparency < 0.95)) and (((slot_7.Size.Magnitude > 0.5)))) then
         v688_1 = env.table.insert
         v694_1 = new_table(0)
         v694_1.part = slot_7
@@ -71680,10 +69474,8 @@ protos[1153] = function(upvalues)
     while true do
       if ((temp_2 > 0)) then
         if ((temp_3 <= temp_1)) then
-          v826_1 = temp_3
-          slot_10 = v826_1
-          v837_1 = env.table
-          v847_1 = v837_1.insert
+          slot_10 = temp_3
+          v847_1 = env.table.insert
           v848_1 = slot_9
           v853_1 = slot_5
           v858_1 = slot_10
@@ -71691,17 +69483,14 @@ protos[1153] = function(upvalues)
           v847_1(v848_1, v863_1)
           v874_1 = temp_3
           v879_1 = temp_2
-          v884_1 = (v874_1 + v879_1)
-          temp_3 = v884_1
+          temp_3 = ((v874_1 + v879_1))
           continue
         end
         break
       end
       if ((temp_3 >= temp_1)) then
-        v826_1 = temp_3
-        slot_10 = v826_1
-        v837_1 = env.table
-        v847_1 = v837_1.insert
+        slot_10 = temp_3
+        v847_1 = env.table.insert
         v848_1 = slot_9
         v853_1 = slot_5
         v858_1 = slot_10
@@ -71709,8 +69498,7 @@ protos[1153] = function(upvalues)
         v847_1(v848_1, v863_1)
         v874_1 = temp_3
         v879_1 = temp_2
-        v884_1 = (v874_1 + v879_1)
-        temp_3 = v884_1
+        temp_3 = ((v874_1 + v879_1))
         continue
       end
       break
@@ -71788,8 +69576,7 @@ protos[1156] = function(upvalues, argument_1)
   ss_3 = v45_1
   ss_4 = v66_1
   ss_5 = 0
-  ss_0 = ss_1(ss_3(ss_4, ss_5, (1)))
-  slot_2 = ss_0
+  slot_2 = (ss_1(ss_3(ss_4, ss_5, (1))))
   if (cell_get(upvalues[3])) then
     temp_0 = (cell_get(upvalues[3]))
     temp_1 = "r"
@@ -71875,15 +69662,11 @@ protos[1156] = function(upvalues, argument_1)
       ss_3 = v1088_1
       ss_4 = v1104_1
       ss_5 = v1115_1
-      ss_0 = ss_2(ss_3, ss_4, ss_5)
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3, ss_4, ss_5))
       slot_5.Color = temp_7
       temp_5 = slot_5
       temp_6 = "Material"
-      ss_1 = ((slot_7 > 0.25)) and env.Enum.Material.Neon
-      ss_1 = ss_1 or slot_6.material
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = (((((slot_7 > 0.25)) and env.Enum.Material.Neon) or slot_6.material))
       temp_5.Material = temp_7
     end
   end
@@ -72175,8 +69958,7 @@ protos[1162] = function(upvalues, argument_1)
     v47_1 = (cell_get(upvalues[1])).Character
     slot_2 = nil
     slot_2 = v47_1
-    ss_0 = slot_2 and ((slot_2:FindFirstChild("HumanoidRootPart")))
-    slot_3 = ss_0
+    slot_3 = (slot_2 and ((slot_2:FindFirstChild("HumanoidRootPart"))))
     slot_4 = 0
     if slot_3 then
       v1846_1 = slot_3.AssemblyLinearVelocity
@@ -72263,8 +70045,7 @@ protos[1162] = function(upvalues, argument_1)
     ss_3 = v679_1
     ss_4 = v712_1
     ss_5 = 0
-    ss_0 = ss_1(ss_3(ss_4, ss_5, (1)))
-    slot_11 = ss_0
+    slot_11 = (ss_1(ss_3(ss_4, ss_5, (1))))
     v747_1 = new_table(0)
     v764_1 = env.Color3.fromHSV
     v780_1 = (slot_10 * 0.5)
@@ -72503,13 +70284,10 @@ protos[1168] = function(upvalues)
       v324_1 = env.table.find
       v325_1 = cell_get(upvalues[2])
       v340_1 = slot_1.Image
-      ss_0 = (v324_1(v325_1, v340_1)) or (((slot_2 == "shiftlockcursor")))
-      ss_0 = ss_0 or (((slot_2 == "cursor")))
-      v423_1 = ss_0
+      v423_1 = (((v324_1(v325_1, v340_1)) or (((slot_2 == "shiftlockcursor")))) or (((slot_2 == "cursor"))))
       ss_0 = v423_1
       if not v423_1 then
-        ss_0 = (env.string.find(slot_2, "shift")) and ((env.string.find(slot_2, "lock")))
-        v523_1 = ss_0
+        v523_1 = ((env.string.find(slot_2, "shift")) and ((env.string.find(slot_2, "lock"))))
         ss_0 = v523_1
         if v523_1 then
           v556_1 = env.string.find(slot_2, "button")
@@ -72589,8 +70367,7 @@ protos[1171] = function(upvalues)
   for __loopKey_1171_0, __loopValue_1171_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_0 = __loopKey_1171_0
     slot_1 = __loopValue_1171_0
-    ss_0 = slot_1 and slot_1.Parent
-    if ss_0 then
+    if (slot_1 and slot_1.Parent) then
       if (cell_get(upvalues[2])).ShiftLockEnabled then
         v258_1 = cell_get(upvalues[3])
         v258_1(slot_1)
@@ -72620,13 +70397,10 @@ protos[1172] = function(upvalues, argument_1)
       v262_1 = env.table.find
       v263_1 = cell_get(upvalues[1])
       v278_1 = slot_0.Image
-      ss_0 = (v262_1(v263_1, v278_1)) or (((slot_1 == "shiftlockcursor")))
-      ss_0 = ss_0 or (((slot_1 == "cursor")))
-      v361_1 = ss_0
+      v361_1 = (((v262_1(v263_1, v278_1)) or (((slot_1 == "shiftlockcursor")))) or (((slot_1 == "cursor"))))
       ss_0 = v361_1
       if not v361_1 then
-        ss_0 = (env.string.find(slot_1, "shift")) and ((env.string.find(slot_1, "lock")))
-        v461_1 = ss_0
+        v461_1 = ((env.string.find(slot_1, "shift")) and ((env.string.find(slot_1, "lock"))))
         ss_0 = v461_1
         if v461_1 then
           v494_1 = env.string.find(slot_1, "button")
@@ -72676,8 +70450,7 @@ protos[1173] = function(upvalues)
     for __loopKey_1173_0, __loopValue_1173_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
       slot_0 = __loopKey_1173_0
       slot_1 = __loopValue_1173_0
-      ss_0 = slot_1 and slot_1.Parent
-      if ss_0 then
+      if (slot_1 and slot_1.Parent) then
         slot_1.Rotation = ((cell_get(upvalues[2])))
       end
     end
@@ -72917,8 +70690,7 @@ protos[1178] = function(upvalues)
     slot_5 = v512_1
     slot_4 = nil
     slot_4 = v501_1
-    ss_0 = slot_4 or slot_5
-    slot_6 = ss_0
+    slot_6 = (slot_4 or slot_5)
     v616_1 = (cell_get(upvalues[1])).Colors
     slot_7 = nil
     slot_7 = v616_1
@@ -72938,16 +70710,11 @@ protos[1178] = function(upvalues)
         v850_1 = slot_9.Character
         slot_10 = nil
         slot_10 = v850_1
-        ss_0 = slot_10 and ((slot_10:FindFirstChild("HumanoidRootPart")))
-        slot_11 = ss_0
-        ss_0 = slot_10 and slot_11
-        if ss_0 then
-          ss_0 = (cell_get(upvalues[3]))[slot_9] or (((cell_get(upvalues[9]))(slot_9)))
-          slot_12 = ss_0
-          ss_0 = (cell_get(upvalues[10]))[slot_9] or ("Unknown")
-          slot_13 = ss_0
-          ss_0 = slot_7[slot_13] or slot_7.Unknown
-          slot_14 = ss_0
+        slot_11 = (slot_10 and ((slot_10:FindFirstChild("HumanoidRootPart"))))
+        if (slot_10 and slot_11) then
+          slot_12 = ((cell_get(upvalues[3]))[slot_9] or (((cell_get(upvalues[9]))(slot_9))))
+          slot_13 = ((cell_get(upvalues[10]))[slot_9] or ("Unknown"))
+          slot_14 = (slot_7[slot_13] or slot_7.Unknown)
           v1131_1 = slot_12.Highlight
           slot_15 = nil
           slot_15 = v1131_1
@@ -72958,9 +70725,7 @@ protos[1178] = function(upvalues)
               temp_7 = slot_10
               temp_5.Parent = temp_7
             end
-            ss_0 = ((slot_12._color ~= slot_14)) or (((slot_12._fillT ~= slot_2)))
-            ss_0 = ss_0 or (((slot_12._outlineT ~= slot_3)))
-            if ss_0 then
+            if ((((slot_12._color ~= slot_14)) or (((slot_12._fillT ~= slot_2)))) or (((slot_12._outlineT ~= slot_3)))) then
               temp_7 = slot_12
               slot_12._color = slot_14
               temp_7._fillT = slot_2
@@ -73062,8 +70827,7 @@ protos[1178] = function(upvalues)
               temp_6 = "StudsOffset"
               ss_2 = env.Vector3.new
               ss_3 = 0
-              ss_0 = ss_2(ss_3, slot_20, (0))
-              temp_7 = ss_0
+              temp_7 = (ss_2(ss_3, slot_20, (0)))
               temp_5.StudsOffset = temp_7
             end
           end
@@ -73185,8 +70949,7 @@ protos[1183] = function(upvalues, argument_1)
     v36_1 = slot_0.Character
     slot_1 = nil
     slot_1 = v36_1
-    ss_0 = slot_1 and ((slot_1:FindFirstChild("HumanoidRootPart")))
-    slot_2 = ss_0
+    slot_2 = (slot_1 and ((slot_1:FindFirstChild("HumanoidRootPart"))))
     v197_1 = cell_get(upvalues[5])
     slot_3 = nil
     slot_3 = v197_1
@@ -73200,14 +70963,11 @@ protos[1183] = function(upvalues, argument_1)
       if (not v238_1) then
         temp_0 = (cell_get(upvalues[4]))
         temp_1 = slot_0
-        ss_2 = (cell_get(upvalues[6]))
-        ss_0 = ss_2()
-        temp_2 = ss_0
+        temp_2 = (((cell_get(upvalues[6])))())
         temp_0[temp_1] = temp_2
       end
       ss_0 = (cell_get(upvalues[7]))[slot_0] or ("Unknown")
-      ss_0 = (cell_get(upvalues[2])).Colors[ss_0] or (cell_get(upvalues[2])).Colors.Unknown
-      slot_5 = ss_0
+      slot_5 = ((cell_get(upvalues[2])).Colors[ss_0] or (cell_get(upvalues[2])).Colors.Unknown)
       v486_1 = slot_2.Position
       slot_6 = nil
       slot_6 = v486_1
@@ -73222,14 +70982,11 @@ protos[1183] = function(upvalues, argument_1)
         v587_1 = -(1)
         ss_0 = (v571_1(0, 0, v587_1))
       end
-      ss_0 = ss_0 or slot_7.Unit
-      slot_7 = ss_0
+      slot_7 = (ss_0 or slot_7.Unit)
       v683_1 = (env.Vector3.new(0, 1, 0)):Cross(slot_7)
       slot_8 = nil
       slot_8 = v683_1
-      ss_0 = ((slot_8.Magnitude == 0)) and ((env.Vector3.new(1, 0, 0)))
-      ss_0 = ss_0 or slot_8.Unit
-      slot_8 = ss_0
+      slot_8 = ((((slot_8.Magnitude == 0)) and ((env.Vector3.new(1, 0, 0)))) or slot_8.Unit)
       v860_1 = ((5) / 2)
       v865_1 = (slot_8 * v860_1)
       slot_11 = nil
@@ -73290,8 +71047,7 @@ protos[1183] = function(upvalues, argument_1)
         ss_2 = v1549_1
         ss_3 = v1560_1
         ss_4 = v1571_1
-        ss_0 = ss_2(ss_3, ss_4)
-        temp_6 = ss_0
+        temp_6 = (ss_2(ss_3, ss_4))
         temp_4[temp_5] = temp_6
         temp_3 = ((temp_3 + temp_2))
       end
@@ -73357,8 +71113,7 @@ protos[1184] = function(upvalues, argument_1)
     v130_1(v135_1, slot_0)
   else
     slot_1 = slot_0.Character
-    ss_0 = slot_1 and ((slot_1:FindFirstChild("HumanoidRootPart")))
-    slot_2 = ss_0
+    slot_2 = (slot_1 and ((slot_1:FindFirstChild("HumanoidRootPart"))))
     if (not slot_2) then
       v234_1 = cell_get(upvalues[3])
       v239_1 = cell_get(upvalues[4])
@@ -73368,14 +71123,11 @@ protos[1184] = function(upvalues, argument_1)
       if (not v222_1) then
         temp_0 = (cell_get(upvalues[4]))
         temp_1 = slot_0
-        ss_2 = (cell_get(upvalues[5]))
-        ss_0 = ss_2()
-        temp_2 = ss_0
+        temp_2 = (((cell_get(upvalues[5])))())
         temp_0[temp_1] = temp_2
       end
       ss_0 = (cell_get(upvalues[6]))[slot_0] or ("Unknown")
-      ss_0 = (cell_get(upvalues[2])).Colors[ss_0] or (cell_get(upvalues[2])).Colors.Unknown
-      slot_4 = ss_0
+      slot_4 = ((cell_get(upvalues[2])).Colors[ss_0] or (cell_get(upvalues[2])).Colors.Unknown)
       v436_1 = cell_get(upvalues[7])
       v441_1 = v436_1.WorldToViewportPoint
       v456_1 = slot_2.Position
@@ -73386,8 +71138,7 @@ protos[1184] = function(upvalues, argument_1)
       slot_5 = ss_0
       slot_7 = (cell_get(upvalues[4]))[slot_0]
       if ss_1 then
-        ss_0 = (cell_get(upvalues[8])) or (cell_get(upvalues[7])).ViewportSize
-        slot_8 = ss_0
+        slot_8 = ((cell_get(upvalues[8])) or (cell_get(upvalues[7])).ViewportSize)
         v663_1 = env.Vector2.new
         v680_1 = (slot_8.X / 2)
         v695_1 = slot_8.Y
@@ -73429,8 +71180,7 @@ protos[1185] = function(upvalues, argument_1, argument_2)
   slot_0 = argument_1
   slot_1 = argument_2
   v11_1 = (cell_get(upvalues[1])).ObjectBoxESP
-  ss_0 = (not v11_1) or ((not slot_0))
-  v106_1 = ss_0
+  v106_1 = ((not v11_1) or ((not slot_0)))
   ss_0 = v106_1
   if not v106_1 then
     v127_1 = slot_0.Parent
@@ -73441,17 +71191,13 @@ protos[1185] = function(upvalues, argument_1, argument_2)
     v154_1 = cell_get(upvalues[3])
     v149_1(v154_1, slot_0)
   else
-    ss_0 = (slot_0:IsA("BasePart")) and slot_0.Position
-    ss_0 = ss_0 or (slot_0.PrimaryPart and slot_0.PrimaryPart.Position)
-    ss_0 = ss_0 or ((slot_0:FindFirstChildWhichIsA("BasePart")) and (slot_0:FindFirstChildWhichIsA("BasePart")).Position)
-    slot_2 = ss_0
+    slot_2 = ((((slot_0:IsA("BasePart")) and slot_0.Position) or (slot_0.PrimaryPart and slot_0.PrimaryPart.Position)) or ((slot_0:FindFirstChildWhichIsA("BasePart")) and (slot_0:FindFirstChildWhichIsA("BasePart")).Position))
     if (not slot_2) then
       v397_1 = cell_get(upvalues[2])
       v402_1 = cell_get(upvalues[3])
       v397_1(v402_1, slot_0)
     else
-      ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Position
-      ss_0 = ss_0 or ((env.Vector3.new()))
+      ss_0 = ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Position) or ((env.Vector3.new()))
       v502_1 = (slot_2 - ss_0)
       slot_4 = nil
       slot_4 = v502_1
@@ -73462,14 +71208,11 @@ protos[1185] = function(upvalues, argument_1, argument_2)
         v576_1 = -(1)
         ss_0 = (v560_1(0, 0, v576_1))
       end
-      ss_0 = ss_0 or slot_4.Unit
-      slot_4 = ss_0
+      slot_4 = (ss_0 or slot_4.Unit)
       v672_1 = (env.Vector3.new(0, 1, 0)):Cross(slot_4)
       slot_5 = nil
       slot_5 = v672_1
-      ss_0 = ((slot_5.Magnitude == 0)) and ((env.Vector3.new(1, 0, 0)))
-      ss_0 = ss_0 or slot_5.Unit
-      slot_5 = ss_0
+      slot_5 = ((((slot_5.Magnitude == 0)) and ((env.Vector3.new(1, 0, 0)))) or slot_5.Unit)
       v849_1 = ((2) / 2)
       v854_1 = (slot_5 * v849_1)
       slot_8 = nil
@@ -73530,8 +71273,7 @@ protos[1185] = function(upvalues, argument_1, argument_2)
         ss_2 = v1524_1
         ss_3 = v1535_1
         ss_4 = v1546_1
-        ss_0 = ss_2(ss_3, ss_4)
-        temp_6 = ss_0
+        temp_6 = (ss_2(ss_3, ss_4))
         temp_4[temp_5] = temp_6
         temp_3 = ((temp_3 + temp_2))
       end
@@ -73543,9 +71285,7 @@ protos[1185] = function(upvalues, argument_1, argument_2)
       if (not v1481_1) then
         temp_0 = (cell_get(upvalues[3]))
         temp_1 = slot_0
-        ss_2 = (cell_get(upvalues[8]))
-        ss_0 = ss_2()
-        temp_2 = ss_0
+        temp_2 = (((cell_get(upvalues[8])))())
         temp_0[temp_1] = temp_2
       end
       v1608_1 = (cell_get(upvalues[3]))[slot_0]
@@ -73595,8 +71335,7 @@ protos[1186] = function(upvalues, argument_1, argument_2)
   slot_0 = argument_1
   slot_1 = argument_2
   v11_1 = (cell_get(upvalues[1])).ObjectTracerESP
-  ss_0 = (not v11_1) or ((not slot_0))
-  v106_1 = ss_0
+  v106_1 = ((not v11_1) or ((not slot_0)))
   ss_0 = v106_1
   if not v106_1 then
     v127_1 = slot_0.Parent
@@ -73607,10 +71346,7 @@ protos[1186] = function(upvalues, argument_1, argument_2)
     v154_1 = cell_get(upvalues[3])
     v149_1(v154_1, slot_0)
   else
-    ss_0 = (slot_0:IsA("BasePart")) and slot_0.Position
-    ss_0 = ss_0 or (slot_0.PrimaryPart and slot_0.PrimaryPart.Position)
-    ss_0 = ss_0 or ((slot_0:FindFirstChildWhichIsA("BasePart")) and (slot_0:FindFirstChildWhichIsA("BasePart")).Position)
-    slot_2 = ss_0
+    slot_2 = ((((slot_0:IsA("BasePart")) and slot_0.Position) or (slot_0.PrimaryPart and slot_0.PrimaryPart.Position)) or ((slot_0:FindFirstChildWhichIsA("BasePart")) and (slot_0:FindFirstChildWhichIsA("BasePart")).Position))
     if (not slot_2) then
       v450_1 = cell_get(upvalues[2])
       v455_1 = cell_get(upvalues[3])
@@ -73626,15 +71362,12 @@ protos[1186] = function(upvalues, argument_1, argument_2)
       if (not v438_1) then
         temp_0 = (cell_get(upvalues[3]))
         temp_1 = slot_0
-        ss_2 = (cell_get(upvalues[5]))
-        ss_0 = ss_2()
-        temp_2 = ss_0
+        temp_2 = (((cell_get(upvalues[5])))())
         temp_0[temp_1] = temp_2
       end
       slot_5 = (cell_get(upvalues[3]))[slot_0]
       if ss_1 then
-        ss_0 = (cell_get(upvalues[6])) or (cell_get(upvalues[4])).ViewportSize
-        slot_6 = ss_0
+        slot_6 = ((cell_get(upvalues[6])) or (cell_get(upvalues[4])).ViewportSize)
         v714_1 = env.Vector2.new
         v731_1 = (slot_6.X / 2)
         v746_1 = slot_6.Y
@@ -73671,9 +71404,7 @@ protos[1187] = function(upvalues)
   local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, ss_1, ss_2, ss_3, temp_0, temp_1, temp_2, v241_1, v249_1, v254_1
   local v387_1, v438_1, v454_1, v512_1, v517_1, v646_1, v666_1, v673_1, v693_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])).BoxESP or (cell_get(upvalues[1])).TracerESP
-  ss_0 = ss_0 or (cell_get(upvalues[1])).ObjectBoxESP
-  ss_0 = ss_0 or (cell_get(upvalues[1])).ObjectTracerESP
+  ss_0 = (((cell_get(upvalues[1])).BoxESP or (cell_get(upvalues[1])).TracerESP) or (cell_get(upvalues[1])).ObjectBoxESP) or (cell_get(upvalues[1])).ObjectTracerESP
   if not ((not ss_0)) then
     slot_0 = (cell_get(upvalues[2])).Character
     ss_0 = slot_0 and ((slot_0:FindFirstChild("HumanoidRootPart")))
@@ -73800,9 +71531,7 @@ protos[1188] = function(upvalues, argument_1, argument_2, argument_3)
   temp_1 = "Parent"
   temp_2 = slot_5
   temp_0.Parent = temp_2
-  ss_0 = (slot_0:IsA("BasePart")) and slot_0
-  ss_0 = ss_0 or ((slot_0:FindFirstChildWhichIsA("BasePart")))
-  slot_7 = ss_0
+  slot_7 = (((slot_0:IsA("BasePart")) and slot_0) or ((slot_0:FindFirstChildWhichIsA("BasePart"))))
   if slot_7 then
     slot_5.Adornee = slot_7
     temp_0 = slot_5
@@ -73827,13 +71556,11 @@ protos[1189] = function(upvalues, argument_1)
   slot_0 = argument_1
   slot_1 = (cell_get(upvalues[1]))[slot_0]
   if slot_1 then
-    ss_0 = slot_1.Highlight and slot_1.Highlight.Parent
-    if ss_0 then
+    if (slot_1.Highlight and slot_1.Highlight.Parent) then
       v181_1 = slot_1.Highlight
       v181_1:Destroy()
     end
-    ss_0 = slot_1.Billboard and slot_1.Billboard.Parent
-    if ss_0 then
+    if (slot_1.Billboard and slot_1.Billboard.Parent) then
       v298_1 = slot_1.Billboard
       v298_1:Destroy()
     end
@@ -73893,8 +71620,7 @@ protos[1190] = function(upvalues)
       slot_1 = new_cell()
       slot_0 = __loopKey_1190_0
       slot_1 = cell_set_or_create(slot_1, __loopValue_1190_0)
-      ss_0 = (((cell_get(slot_1)).Name == "Trap")) and (((cell_get(slot_1)).Parent:IsA("Folder")) or (((cell_get(slot_1)).Parent:IsA("Model"))))
-      if ss_0 then
+      if ((((cell_get(slot_1)).Name == "Trap")) and (((cell_get(slot_1)).Parent:IsA("Folder")) or (((cell_get(slot_1)).Parent:IsA("Model"))))) then
         v363_1 = cell_get(upvalues[3])
         v368_1 = cell_get(slot_1)
         v373_1 = v363_1[v368_1]
@@ -73948,7 +71674,7 @@ protos[1192] = function(upvalues)
 end
 
 protos[1193] = function(upvalues, argument_1)
-  local slot_0, ss_0, v11_1, v130_1, v135_1, v146_1, v151_1, v172_1, v251_1, v256_1, v277_1
+  local slot_0, v11_1, v130_1, v135_1, v146_1, v151_1, v172_1, v251_1, v256_1, v277_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = {argument_1}
   local function capture_0()
@@ -73957,8 +71683,7 @@ protos[1193] = function(upvalues, argument_1)
   end
   v11_1 = (cell_get(upvalues[1])).Enabled
   if not ((not v11_1)) then
-    ss_0 = (((cell_get(slot_0)).Name == "Trap")) and (cell_get(upvalues[1])).TrapESP
-    if ss_0 then
+    if ((((cell_get(slot_0)).Name == "Trap")) and (cell_get(upvalues[1])).TrapESP) then
       v130_1 = env.pcall
       v135_1 = closure(1194, {capture_0()})
       v130_1(v135_1)
@@ -73967,8 +71692,7 @@ protos[1193] = function(upvalues, argument_1)
       v172_1 = (cell_get(upvalues[1])).Colors.Trap
       v146_1(v151_1, v172_1, "[Trap]")
     else
-      ss_0 = (((cell_get(slot_0)).Name == "GunDrop")) and (cell_get(upvalues[1])).GunDropESP
-      if ss_0 then
+      if ((((cell_get(slot_0)).Name == "GunDrop")) and (cell_get(upvalues[1])).GunDropESP) then
         v251_1 = cell_get(upvalues[2])
         v256_1 = cell_get(slot_0)
         v277_1 = (cell_get(upvalues[1])).Colors.GunDrop
@@ -74037,8 +71761,7 @@ protos[1198] = function(upvalues)
       v167_1 = cell_get(upvalues[2])
       ss_0 = ((v162_1 ~= v167_1))
     end
-    ss_0 = ss_0 and (((slot_0 < 100)))
-    if ss_0 then
+    if (ss_0 and (((slot_0 < 100)))) then
       v83_1 = env.task.wait
       v83_1(0.1)
       slot_0 = ((slot_0 + 1))
@@ -74575,12 +72298,10 @@ protos[1213] = function(upvalues, argument_1, argument_2)
   v1919_1 = (cell_get(upvalues[1])):FindFirstChild("PlayerGui")
   slot_3 = nil
   slot_3 = v1919_1
-  ss_0 = slot_3 and ((slot_3:FindFirstChild("TouchGui")) or ((slot_3:FindFirstChild("TouchControlsGui"))))
-  if ss_0 then
+  if (slot_3 and ((slot_3:FindFirstChild("TouchGui")) or ((slot_3:FindFirstChild("TouchControlsGui"))))) then
     slot_2 = cell_set_or_create(slot_2, true)
   end
-  ss_0 = (cell_get(slot_2)) and (1)
-  ss_0 = ss_0 or (1.25)
+  ss_0 = ((cell_get(slot_2)) and (1)) or (1.25)
   slot_4 = new_cell()
   slot_4 = cell_set_or_create(slot_4, ss_0)
   v2181_1 = ((cell_get(upvalues[2])) .. "/MovementButtons.json")
@@ -74837,8 +72558,7 @@ protos[1214] = function(upvalues)
       for __loopKey_1214_0, __loopValue_1214_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
         slot_2 = __loopKey_1214_0
         slot_3 = __loopValue_1214_0
-        ss_0 = (cell_get(upvalues[3]))[slot_2] and slot_3.X
-        ss_0 = ss_0 and slot_3.Y
+        ss_0 = ((cell_get(upvalues[3]))[slot_2] and slot_3.X) and slot_3.Y
         if ss_0 then
           temp_5 = (cell_get(upvalues[3]))
           v466_1 = env.UDim2.new
@@ -75053,8 +72773,7 @@ protos[1224] = function(upvalues)
       if not ((not slot_0)) then
         slot_1 = (slot_0:FindFirstChildOfClass("Humanoid"))
         slot_2 = (slot_0:FindFirstChild("HumanoidRootPart"))
-        ss_0 = slot_1 and slot_2
-        ss_0 = ss_0 and slot_1.Jump
+        ss_0 = (slot_1 and slot_2) and slot_1.Jump
         if ss_0 then
           slot_3 = ((cell_get(upvalues[4]))(slot_1))
           if ((slot_3 > 0)) then
@@ -75240,8 +72959,7 @@ protos[1233] = function(upvalues, argument_1)
   if not ((not v11_1)) then
     slot_1 = (cell_get(upvalues[2])).Character
     if not ((not slot_1)) then
-      ss_0 = (cell_get(upvalues[1])).SpinBotLevel or (10)
-      slot_2 = ss_0
+      slot_2 = ((cell_get(upvalues[1])).SpinBotLevel or (10))
       if (((cell_get(upvalues[1])).SpinBotMode == "Camera")) then
         slot_3 = (cell_get(upvalues[3])).CurrentCamera
         v283_1 = not slot_3
@@ -75461,8 +73179,7 @@ protos[1241] = function(upvalues)
         ss_3 = 0
         ss_4 = v175_1
         ss_5 = 0
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5))
         temp_0.AssemblyLinearVelocity = temp_2
       end
     end
@@ -75497,8 +73214,7 @@ protos[1241] = function(upvalues)
           ss_3 = v528_1
           ss_4 = v549_1
           ss_5 = v566_1
-          ss_0 = ss_2(ss_3, ss_4, ss_5)
-          temp_2 = ss_0
+          temp_2 = (ss_2(ss_3, ss_4, ss_5))
           temp_0.AssemblyLinearVelocity = temp_2
         end
       else
@@ -75511,8 +73227,7 @@ protos[1241] = function(upvalues)
           ss_3 = 0
           ss_4 = v676_1
           ss_5 = 0
-          ss_0 = ss_2(ss_3, ss_4, ss_5)
-          temp_2 = ss_0
+          temp_2 = (ss_2(ss_3, ss_4, ss_5))
           temp_0.AssemblyLinearVelocity = temp_2
         end
       end
@@ -75593,12 +73308,11 @@ protos[1244] = function(upvalues)
 end
 
 protos[1245] = function(upvalues)
-  local ss_0, temp_0, temp_2, v127_1, v159_1, v331_1, v336_1, v367_1
+  local temp_0, temp_2, v127_1, v159_1, v331_1, v336_1, v367_1
   local vm_frame_random = math.random(0, 2147483646)
   upvalues[1] = cell_set_or_create(upvalues[1], false)
   upvalues[2] = cell_set_or_create(upvalues[2], nil)
-  ss_0 = (cell_get(upvalues[3])) and ((cell_get(upvalues[4])))
-  if ss_0 then
+  if ((cell_get(upvalues[3])) and ((cell_get(upvalues[4])))) then
     temp_0 = (cell_get(upvalues[3]))
     v127_1 = cell_get(upvalues[4])
     v159_1 = env.CFrame.new(0, 0.5, 0)
@@ -75618,8 +73332,7 @@ protos[1245] = function(upvalues)
     v367_1:Destroy()
     upvalues[6] = cell_set_or_create(upvalues[6], nil)
   end
-  ss_0 = (cell_get(upvalues[7])) and ((cell_get(upvalues[8])))
-  if ss_0 then
+  if ((cell_get(upvalues[7])) and ((cell_get(upvalues[8])))) then
     temp_0 = (cell_get(upvalues[7]))
     temp_2 = (cell_get(upvalues[8]))
     temp_0.CameraSubject = temp_2
@@ -75646,8 +73359,7 @@ protos[1246] = function(upvalues)
     slot_0 = v27_1
     upvalues[3] = cell_set_or_create(upvalues[3], slot_0)
     if (cell_get(upvalues[4])) then
-      ss_0 = (cell_get(upvalues[5])) or slot_0
-      slot_1 = ss_0
+      slot_1 = ((cell_get(upvalues[5])) or slot_0)
       v197_1 = cell_get(upvalues[6])
       if (not v197_1) then
         v547_1 = env.Instance.new
@@ -75764,16 +73476,14 @@ protos[1246] = function(upvalues)
         v1969_1 = (slot_3 == v1964_1)
         slot_4 = nil
         slot_4 = v1969_1
-        ss_0 = slot_3 and ((slot_3:IsA("Humanoid")))
-        v2031_1 = ss_0
+        v2031_1 = (slot_3 and ((slot_3:IsA("Humanoid"))))
         ss_0 = v2031_1
         if v2031_1 then
           v2047_1 = cell_get(upvalues[12])
           ss_0 = ((slot_3 ~= v2047_1))
         end
         slot_5 = ss_0
-        ss_0 = slot_3 and ((slot_3:IsA("BasePart")))
-        v2124_1 = ss_0
+        v2124_1 = (slot_3 and ((slot_3:IsA("BasePart"))))
         ss_0 = v2124_1
         if v2124_1 then
           v2140_1 = cell_get(upvalues[1])
@@ -75786,9 +73496,7 @@ protos[1246] = function(upvalues)
           ss_0 = ((slot_3 ~= v2176_1))
         end
         slot_6 = ss_0
-        ss_0 = (not slot_4) and ((not slot_5))
-        ss_0 = ss_0 and ((not slot_6))
-        if ss_0 then
+        if (((not slot_4) and ((not slot_5))) and ((not slot_6))) then
           temp_0 = (cell_get(upvalues[9]))
           temp_2 = (cell_get(upvalues[12]))
           temp_0.CameraSubject = temp_2
@@ -76015,7 +73723,7 @@ protos[1248] = function(upvalues)
 end
 
 protos[1249] = function(upvalues)
-  local slot_0, slot_1, ss_2, temp_0, temp_1, temp_2, temp_3, temp_6, v240_1, v252_1
+  local slot_0, slot_1, temp_0, temp_1, temp_2, temp_3, temp_6, v240_1, v252_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = (env.math.random(10, 20))
   slot_1 = (new_table(0))
@@ -76023,29 +73731,25 @@ protos[1249] = function(upvalues)
   while temp_3 <= temp_1 do
     v240_1 = env.string.char
     v252_1 = env.math.random
-    ss_2 = v240_1
-    temp_6 = ss_2(v252_1((32), (126)))
+    temp_6 = v240_1(v252_1((32), (126)))
     slot_1[temp_3] = temp_6
     temp_3 = ((temp_3 + temp_2))
   end
-  ss_2 = env.table.concat
-  return ss_2(slot_1)
+  return env.table.concat(slot_1)
 end
 
 protos[1250] = function(upvalues, argument_1)
-  local slot_0, ss_1
+  local slot_0
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
     return nil
   end
-  ss_1 = (slot_0:FindFirstChild("HumanoidRootPart")) or ((slot_0:FindFirstChild("Torso")))
-  ss_1 = ss_1 or ((slot_0:FindFirstChild("UpperTorso")))
-  return ss_1
+  return (((slot_0:FindFirstChild("HumanoidRootPart")) or ((slot_0:FindFirstChild("Torso")))) or ((slot_0:FindFirstChild("UpperTorso"))))
 end
 
 protos[1251] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, ss_0, v116_1, v131_1, v177_1, v234_1, v260_1, v275_1, v316_1, v332_1, v352_1, v429_1, v547_1, v548_1, v553_1, v558_1, v579_1, v580_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, v116_1, v131_1, v177_1, v234_1, v260_1, v275_1, v316_1, v332_1, v352_1, v429_1, v547_1, v548_1, v553_1, v558_1, v579_1, v580_1
   local v585_1, v590_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = {argument_1}
@@ -76073,8 +73777,7 @@ protos[1251] = function(upvalues, argument_1)
     if not slot_6 then slot_6 = {} end
     return slot_6
   end
-  ss_0 = (cell_get(upvalues[1])).Character or (((cell_get(upvalues[1])).CharacterAdded:Wait()))
-  slot_1 = ss_0
+  slot_1 = ((cell_get(upvalues[1])).Character or (((cell_get(upvalues[1])).CharacterAdded:Wait())))
   v116_1 = slot_1:FindFirstChildOfClass("Humanoid")
   slot_2 = new_cell()
   slot_2 = cell_set_or_create(slot_2, v116_1)
@@ -76090,8 +73793,7 @@ protos[1251] = function(upvalues, argument_1)
     v234_1 = slot_1:FindFirstChildOfClass("Humanoid")
     slot_2 = cell_set_or_create(slot_2, v234_1)
   end
-  ss_0 = (cell_get(upvalues[2])) or ((cell_get(upvalues[3])))
-  if ss_0 then
+  if ((cell_get(upvalues[2])) or ((cell_get(upvalues[3])))) then
     v316_1 = cell_get(upvalues[2])
     v316_1:Disconnect()
     v332_1 = cell_get(upvalues[3])
@@ -76200,8 +73902,7 @@ protos[1253] = function(upvalues)
     v52_1()
     slot_0 = env.workspace.CurrentCamera
     v79_1 = cell_get(upvalues[1])
-    ss_0 = (not v79_1) and ((cell_get(upvalues[2])))
-    if ss_0 then
+    if ((not v79_1) and ((cell_get(upvalues[2])))) then
       temp_0 = (cell_get(upvalues[2]))
       temp_2 = true
       temp_0.PlatformStand = temp_2
@@ -76299,8 +74000,7 @@ protos[1253] = function(upvalues)
         v1312_1 = (cell_get(upvalues[3])).E
         ss_0 = ((((v1301_1 + v1312_1)) == 0))
       end
-      ss_0 = ss_0 and ((((cell_get(upvalues[4])) ~= 0)))
-      if ss_0 then
+      if (ss_0 and ((((cell_get(upvalues[4])) ~= 0)))) then
         temp_0 = (cell_get(upvalues[5]))
         v1420_1 = slot_0.CFrame.LookVector
         v1431_1 = (cell_get(upvalues[6])).F
@@ -76329,8 +74029,7 @@ protos[1253] = function(upvalues)
         temp_0.Velocity = temp_2
       else
         temp_0 = (cell_get(upvalues[5]))
-        ss_0 = env.Vector3.new((0), (0), (0))
-        temp_2 = ss_0
+        temp_2 = (env.Vector3.new((0), (0), (0)))
         temp_0.Velocity = temp_2
       end
     end
@@ -76372,7 +74071,7 @@ protos[1253] = function(upvalues)
 end
 
 protos[1254] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, ss_0, ss_1, temp_0, temp_2, v150_1, v167_1, v25_1, v336_1, v353_1
+  local slot_0, slot_1, slot_2, ss_1, temp_0, temp_2, v150_1, v167_1, v25_1, v336_1, v353_1
   local v46_1, v488_1, v505_1, v63_1, v640_1, v657_1, v817_1, v834_1, v84_1
   local v89_1
   local vm_frame_random = math.random(0, 2147483646)
@@ -76390,66 +74089,45 @@ protos[1254] = function(upvalues, argument_1, argument_2)
     v63_1 = env.Enum.KeyCode.W
     if ((v46_1 == v63_1)) then
       temp_0 = (cell_get(upvalues[1]))
-      ss_1 = (cell_get(upvalues[2])) and ((cell_get(upvalues[3])))
-      ss_1 = ss_1 or ((cell_get(upvalues[4])))
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((cell_get(upvalues[2])) and ((cell_get(upvalues[3])))) or ((cell_get(upvalues[4])))))
       temp_0.F = temp_2
     else
       v150_1 = slot_0.KeyCode
       v167_1 = env.Enum.KeyCode.S
       if ((v150_1 == v167_1)) then
         temp_0 = (cell_get(upvalues[1]))
-        ss_1 = (cell_get(upvalues[2])) and ((cell_get(upvalues[3])))
-        ss_1 = ss_1 or ((cell_get(upvalues[4])))
-        ss_1 = (-ss_1)
-        ss_0 = ss_1
-        temp_2 = ss_0
+        ss_1 = ((cell_get(upvalues[2])) and ((cell_get(upvalues[3])))) or ((cell_get(upvalues[4])))
+        temp_2 = (((-ss_1)))
         temp_0.B = temp_2
       else
         v336_1 = slot_0.KeyCode
         v353_1 = env.Enum.KeyCode.A
         if ((v336_1 == v353_1)) then
           temp_0 = (cell_get(upvalues[1]))
-          ss_1 = (cell_get(upvalues[2])) and ((cell_get(upvalues[3])))
-          ss_1 = ss_1 or ((cell_get(upvalues[4])))
-          ss_1 = (-ss_1)
-          ss_0 = ss_1
-          temp_2 = ss_0
+          ss_1 = ((cell_get(upvalues[2])) and ((cell_get(upvalues[3])))) or ((cell_get(upvalues[4])))
+          temp_2 = (((-ss_1)))
           temp_0.L = temp_2
         else
           v488_1 = slot_0.KeyCode
           v505_1 = env.Enum.KeyCode.D
           if ((v488_1 == v505_1)) then
             temp_0 = (cell_get(upvalues[1]))
-            ss_1 = (cell_get(upvalues[2])) and ((cell_get(upvalues[3])))
-            ss_1 = ss_1 or ((cell_get(upvalues[4])))
-            ss_0 = ss_1
-            temp_2 = ss_0
+            temp_2 = ((((cell_get(upvalues[2])) and ((cell_get(upvalues[3])))) or ((cell_get(upvalues[4])))))
             temp_0.R = temp_2
           else
             v640_1 = slot_0.KeyCode
             v657_1 = env.Enum.KeyCode.E
-            ss_0 = ((v640_1 == v657_1)) and ((cell_get(upvalues[5])))
-            if ss_0 then
+            if (((v640_1 == v657_1)) and ((cell_get(upvalues[5])))) then
               temp_0 = (cell_get(upvalues[1]))
-              ss_1 = (cell_get(upvalues[2])) and ((cell_get(upvalues[3])))
-              ss_1 = ss_1 or ((cell_get(upvalues[4])))
-              ss_1 = ((ss_1 * 2))
-              ss_0 = ss_1
-              temp_2 = ss_0
+              temp_2 = (((((((cell_get(upvalues[2])) and ((cell_get(upvalues[3])))) or ((cell_get(upvalues[4])))) * 2))))
               temp_0.Q = temp_2
             else
               v817_1 = slot_0.KeyCode
               v834_1 = env.Enum.KeyCode.Q
-              ss_0 = ((v817_1 == v834_1)) and ((cell_get(upvalues[5])))
-              if ss_0 then
+              if (((v817_1 == v834_1)) and ((cell_get(upvalues[5])))) then
                 temp_0 = (cell_get(upvalues[1]))
-                ss_1 = (cell_get(upvalues[2])) and ((cell_get(upvalues[3])))
-                ss_1 = ss_1 or ((cell_get(upvalues[4])))
-                ss_1 = (((-ss_1) * 2))
-                ss_0 = ss_1
-                temp_2 = ss_0
+                ss_1 = ((cell_get(upvalues[2])) and ((cell_get(upvalues[3])))) or ((cell_get(upvalues[4])))
+                temp_2 = (((((-ss_1) * 2))))
                 temp_0.E = temp_2
               end
             end
@@ -76530,11 +74208,10 @@ protos[1256] = function(upvalues, argument_1, argument_2)
 end
 
 protos[1257] = function(upvalues)
-  local ss_0, temp_0, v108_1, v113_1, v124_1, v129_1, v145_1, v150_1
+  local temp_0, v108_1, v113_1, v124_1, v129_1, v145_1, v150_1
   local vm_frame_random = math.random(0, 2147483646)
   upvalues[1] = cell_set_or_create(upvalues[1], false)
-  ss_0 = (cell_get(upvalues[2])) or ((cell_get(upvalues[3])))
-  if ss_0 then
+  if ((cell_get(upvalues[2])) or ((cell_get(upvalues[3])))) then
     v108_1 = cell_get(upvalues[2])
     v113_1 = v108_1.Disconnect
     v113_1(v108_1)
@@ -76542,8 +74219,7 @@ protos[1257] = function(upvalues)
     v129_1 = v124_1.Disconnect
     v129_1(v124_1)
   end
-  ss_0 = (cell_get(upvalues[4])).Character and (((cell_get(upvalues[4])).Character:FindFirstChildOfClass("Humanoid")))
-  if ss_0 then
+  if ((cell_get(upvalues[4])).Character and (((cell_get(upvalues[4])).Character:FindFirstChildOfClass("Humanoid")))) then
     temp_0 = ((cell_get(upvalues[4])).Character:FindFirstChildOfClass("Humanoid"))
     temp_0.PlatformStand = (false)
   end
@@ -76733,7 +74409,7 @@ protos[1262] = function(upvalues)
 end
 
 protos[1263] = function(upvalues)
-  local slot_0, slot_1, slot_2, slot_3, ss_0, ss_1, ss_2, ss_3, ss_4, temp_0, temp_2, v1026_2, v1031_2, v1036_2, v1138_1, v1155_1, v1166_1, v1167_1
+  local slot_0, slot_1, slot_2, slot_3, ss_0, ss_1, ss_2, ss_3, temp_0, temp_2, v1026_2, v1031_2, v1036_2, v1138_1, v1155_1, v1166_1, v1167_1
   local v1229_2, v1234_2, v1239_2, v1316_1, v1333_1, v1344_1, v1345_1, v137_1, v1407_2, v1412_2, v1417_2, v149_1, v154_1, v159_1, v17_1, v179_1, v18_1
   local v191_1, v196_1, v2_1, v201_1, v268_1, v273_1, v278_1, v299_1, v304_1, v309_1, v38_1, v433_1
   local v732_1, v749_1, v760_1, v761_1, v823_2, v828_2, v833_2, v935_1, v952_1, v963_1, v964_1
@@ -76744,8 +74420,7 @@ protos[1263] = function(upvalues)
   upvalues[1] = cell_set_or_create(upvalues[1], v18_1)
   v38_1 = env.workspace.CurrentCamera
   upvalues[4] = cell_set_or_create(upvalues[4], v38_1)
-  ss_0 = ((cell_get(upvalues[3])).Character:FindFirstChildWhichIsA("Humanoid")) and ((cell_get(upvalues[1])))
-  v137_1 = ss_0
+  v137_1 = (((cell_get(upvalues[3])).Character:FindFirstChildWhichIsA("Humanoid")) and ((cell_get(upvalues[1]))))
   ss_0 = v137_1
   if v137_1 then
     v149_1 = cell_get(upvalues[1])
@@ -76795,14 +74470,10 @@ protos[1263] = function(upvalues)
       ss_1 = v732_1
       ss_2 = v749_1
       ss_3 = v760_1
-      ss_4 = v761_1 and ((cell_get(upvalues[11])))
-      ss_4 = ss_4 or ((cell_get(upvalues[12])))
-      v823_2 = (ss_4 * 50)
+      v823_2 = (((v761_1 and ((cell_get(upvalues[11])))) or ((cell_get(upvalues[12])))) * 50)
       v828_2 = (ss_3 * v823_2)
       v833_2 = (ss_2 * v828_2)
-      ss_1 = ((ss_1 + v833_2))
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((ss_1 + v833_2))))
       temp_0.Velocity = temp_2
     end
     if ((slot_3.X < 0)) then
@@ -76814,14 +74485,10 @@ protos[1263] = function(upvalues)
       ss_1 = v935_1
       ss_2 = v952_1
       ss_3 = v963_1
-      ss_4 = v964_1 and ((cell_get(upvalues[11])))
-      ss_4 = ss_4 or ((cell_get(upvalues[12])))
-      v1026_2 = (ss_4 * 50)
+      v1026_2 = (((v964_1 and ((cell_get(upvalues[11])))) or ((cell_get(upvalues[12])))) * 50)
       v1031_2 = (ss_3 * v1026_2)
       v1036_2 = (ss_2 * v1031_2)
-      ss_1 = ((ss_1 + v1036_2))
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((ss_1 + v1036_2))))
       temp_0.Velocity = temp_2
     end
     if ((slot_3.Z > 0)) then
@@ -76833,14 +74500,10 @@ protos[1263] = function(upvalues)
       ss_1 = v1138_1
       ss_2 = v1155_1
       ss_3 = v1166_1
-      ss_4 = v1167_1 and ((cell_get(upvalues[11])))
-      ss_4 = ss_4 or ((cell_get(upvalues[12])))
-      v1229_2 = (ss_4 * 50)
+      v1229_2 = (((v1167_1 and ((cell_get(upvalues[11])))) or ((cell_get(upvalues[12])))) * 50)
       v1234_2 = (ss_3 * v1229_2)
       v1239_2 = (ss_2 * v1234_2)
-      ss_1 = ((ss_1 - v1239_2))
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((ss_1 - v1239_2))))
       temp_0.Velocity = temp_2
     end
     if ((slot_3.Z < 0)) then
@@ -76852,14 +74515,10 @@ protos[1263] = function(upvalues)
       ss_1 = v1316_1
       ss_2 = v1333_1
       ss_3 = v1344_1
-      ss_4 = v1345_1 and ((cell_get(upvalues[11])))
-      ss_4 = ss_4 or ((cell_get(upvalues[12])))
-      v1407_2 = (ss_4 * 50)
+      v1407_2 = (((v1345_1 and ((cell_get(upvalues[11])))) or ((cell_get(upvalues[12])))) * 50)
       v1412_2 = (ss_3 * v1407_2)
       v1417_2 = (ss_2 * v1412_2)
-      ss_1 = ((ss_1 - v1417_2))
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((ss_1 - v1417_2))))
       temp_0.Velocity = temp_2
     end
   end
@@ -76937,8 +74596,7 @@ protos[1266] = function(upvalues)
     v33_1 = env.Instance.new("ScreenGui")
     upvalues[1] = cell_set_or_create(upvalues[1], v33_1)
     temp_0 = (cell_get(upvalues[1]))
-    ss_2 = (cell_get(upvalues[2]))
-    ss_0 = ss_2()
+    ss_0 = ((cell_get(upvalues[2])))()
     temp_0.Name = ss_0
     temp_0 = (cell_get(upvalues[1]))
     temp_2 = false
@@ -76954,8 +74612,7 @@ protos[1266] = function(upvalues)
       ss_2 = v2321_1.WaitForChild
       ss_3 = v2321_1
       ss_4 = "PlayerGui"
-      ss_0 = ss_2(ss_3, ss_4)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4))
       temp_0.Parent = temp_2
     end
     v282_1 = env.Instance.new("TextButton")
@@ -77621,7 +75278,7 @@ protos[1278] = function(upvalues)
 end
 
 protos[1279] = function(upvalues)
-  local slot_0, slot_1, ss_2, temp_0, temp_1, temp_2, temp_3, temp_6, v240_1, v252_1
+  local slot_0, slot_1, temp_0, temp_1, temp_2, temp_3, temp_6, v240_1, v252_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = (env.math.random(10, 20))
   slot_1 = (new_table(0))
@@ -77629,34 +75286,29 @@ protos[1279] = function(upvalues)
   while temp_3 <= temp_1 do
     v240_1 = env.string.char
     v252_1 = env.math.random
-    ss_2 = v240_1
-    temp_6 = ss_2(v252_1((32), (126)))
+    temp_6 = v240_1(v252_1((32), (126)))
     slot_1[temp_3] = temp_6
     temp_3 = ((temp_3 + temp_2))
   end
-  ss_2 = env.table.concat
-  return ss_2(slot_1)
+  return env.table.concat(slot_1)
 end
 
 protos[1280] = function(upvalues)
-  local slot_0, slot_1, slot_2, ss_0, temp_0, temp_2, v268_1, v290_1, v327_1
+  local slot_0, slot_1, slot_2, temp_0, temp_2, v268_1, v290_1, v327_1
   local vm_frame_random = math.random(0, 2147483646)
   while (cell_get(upvalues[1])) do
     slot_0 = (cell_get(upvalues[2])).Character
-    ss_0 = slot_0 and ((slot_0:FindFirstChild("HumanoidRootPart")))
-    slot_1 = ss_0
+    slot_1 = (slot_0 and ((slot_0:FindFirstChild("HumanoidRootPart"))))
     if slot_1 then
       slot_2 = slot_1.AssemblyLinearVelocity
       temp_0 = slot_1
-      ss_0 = env.Vector3.new((0), (5000), (0))
-      temp_2 = ss_0
+      temp_2 = (env.Vector3.new((0), (5000), (0)))
       temp_0.AssemblyLinearVelocity = temp_2
       v268_1 = (cell_get(upvalues[3])).Stepped
       v268_1:Wait()
       v290_1 = (cell_get(upvalues[3])).Heartbeat
       v290_1:Wait()
-      ss_0 = slot_1 and slot_1.Parent
-      if ss_0 then
+      if (slot_1 and slot_1.Parent) then
         temp_0 = slot_1
         temp_2 = slot_2
         temp_0.AssemblyLinearVelocity = temp_2
@@ -77681,18 +75333,10 @@ protos[1281] = function(upvalues)
     ss_0 = (not v43_1)
   end
   if not ss_0 then
-    ss_0 = (cell_get(upvalues[2])) and ((cell_get(upvalues[3])))
-    ss_0 = ss_0 or ((cell_get(upvalues[4])))
-    slot_0 = ss_0
-    ss_0 = (cell_get(upvalues[2])) and (0.2)
-    ss_0 = ss_0 or (0.6)
-    slot_1 = ss_0
-    ss_0 = (cell_get(upvalues[2])) and ((env.Color3.fromRGB(255, 255, 255)))
-    ss_0 = ss_0 or ((cell_get(upvalues[5])))
-    slot_2 = ss_0
-    ss_0 = (cell_get(upvalues[6])) and (cell_get(upvalues[6])).currentSize
-    ss_0 = ss_0 or ((cell_get(upvalues[7])))
-    slot_3 = ss_0
+    slot_0 = (((cell_get(upvalues[2])) and ((cell_get(upvalues[3])))) or ((cell_get(upvalues[4]))))
+    slot_1 = (((cell_get(upvalues[2])) and (0.2)) or (0.6))
+    slot_2 = (((cell_get(upvalues[2])) and ((env.Color3.fromRGB(255, 255, 255)))) or ((cell_get(upvalues[5]))))
+    slot_3 = (((cell_get(upvalues[6])) and (cell_get(upvalues[6])).currentSize) or ((cell_get(upvalues[7]))))
     v392_1 = cell_get(upvalues[8])
     v397_1 = v392_1.Create
     v402_1 = cell_get(upvalues[1])
@@ -77757,8 +75401,7 @@ protos[1283] = function(upvalues)
     v33_1 = env.Instance.new("ScreenGui")
     upvalues[1] = cell_set_or_create(upvalues[1], v33_1)
     temp_0 = (cell_get(upvalues[1]))
-    ss_2 = (cell_get(upvalues[2]))
-    ss_0 = ss_2()
+    ss_0 = ((cell_get(upvalues[2])))()
     temp_0.Name = ss_0
     temp_0 = (cell_get(upvalues[1]))
     temp_2 = false
@@ -77774,8 +75417,7 @@ protos[1283] = function(upvalues)
       ss_2 = v2245_1.WaitForChild
       ss_3 = v2245_1
       ss_4 = "PlayerGui"
-      ss_0 = ss_2(ss_3, ss_4)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4))
       temp_0.Parent = temp_2
     end
     v282_1 = env.Instance.new("TextButton")
@@ -78368,16 +76010,14 @@ protos[1294] = function(upvalues, argument_1)
     if not slot_17 then slot_17 = {} end
     return slot_17
   end
-  ss_0 = (cell_get(slot_0)).guiRef and (cell_get(slot_0)).guiRef[1]
-  if ss_0 then
+  if ((cell_get(slot_0)).guiRef and (cell_get(slot_0)).guiRef[1]) then
     return
   end
   v33_1 = env.math.floor
   ss_2 = (cell_get(slot_0)).size or (90)
   v148_1 = cell_get(upvalues[1])
   ss_2 = ((ss_2 * v148_1))
-  ss_0 = v33_1(ss_2)
-  slot_1 = ss_0
+  slot_1 = (v33_1(ss_2))
   v184_1 = (cell_get(slot_0)).deepColor
   v195_1 = (cell_get(slot_0)).aquaColor
   v206_1 = (cell_get(slot_0)).foamColor
@@ -78408,8 +76048,7 @@ protos[1294] = function(upvalues, argument_1)
     ss_2 = v1001_1.WaitForChild
     ss_3 = v1001_1
     ss_4 = "PlayerGui"
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.Parent = temp_2
   end
   v506_1 = env.Instance.new("TextButton")
@@ -78753,14 +76392,9 @@ protos[1300] = function(upvalues)
   end
   if not ss_0 then
     slot_0 = ((cell_get(upvalues[2])).getActive())
-    ss_0 = slot_0 and ((cell_get(upvalues[3])))
-    ss_0 = ss_0 or ((cell_get(upvalues[4])))
-    slot_1 = ss_0
-    ss_0 = slot_0 and (0.15)
-    ss_0 = ss_0 or (0.6)
-    slot_2 = ss_0
-    ss_0 = slot_0 and ((env.Color3.fromRGB(255, 255, 255)))
-    ss_0 = ss_0 or ((cell_get(upvalues[5])))
+    slot_1 = ((slot_0 and ((cell_get(upvalues[3])))) or ((cell_get(upvalues[4]))))
+    slot_2 = ((slot_0 and (0.15)) or (0.6))
+    ss_0 = (slot_0 and ((env.Color3.fromRGB(255, 255, 255)))) or ((cell_get(upvalues[5])))
     v346_1 = cell_get(upvalues[6])
     v351_1 = v346_1.Create
     v356_1 = cell_get(upvalues[1])
@@ -78999,8 +76633,7 @@ protos[1304] = function(upvalues, argument_1)
       end
       v167_1 = (cell_get(upvalues[8]))._isButtonMovable
       v178_1 = (cell_get(upvalues[6])).buttonName
-      ss_0 = (v167_1(v178_1)) and (cell_get(upvalues[6])).buttonType
-      v371_1 = ss_0
+      v371_1 = ((v167_1(v178_1)) and (cell_get(upvalues[6])).buttonType)
       ss_0 = v371_1
       if v371_1 then
         v382_1 = cell_get(upvalues[9])
@@ -79227,17 +76860,8 @@ protos[1315] = getCapturedValue1315
 end
 
 protos[1316] = function(upvalues)
-  local ss_1, v74_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_1 = (cell_get(upvalues[1])) and (cell_get(upvalues[1])).FlyEnabled
-  v74_1 = ss_1
-  ss_1 = v74_1
-  if not v74_1 then
-    ss_1 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).IsFlying
-    ss_1 = ss_1 and (((cell_get(upvalues[2])).IsFlying()))
-  end
-  ss_1 = ss_1 or (false)
-  return ss_1
+  return (((((cell_get(upvalues[1])) and (cell_get(upvalues[1])).FlyEnabled)) or (((cell_get(upvalues[2])) and (cell_get(upvalues[2])).IsFlying) and (((cell_get(upvalues[2])).IsFlying())))) or (false))
 end
 
 do
@@ -80042,8 +77666,7 @@ protos[1319] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3[ss_4] = ss_5
   ss_3.ZIndex = 5101
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_41 = ss_0
+  slot_41 = (ss_1(ss_2, ss_3))
   regs.v5685_1 = cell_get(upvalues[1])
   v5695_1 = new_table(0)
   regs.v5701_1 = cell_get(slot_19)
@@ -80112,8 +77735,7 @@ protos[1319] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3[ss_4] = ss_5
   ss_3.ZIndex = 5004
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_45 = ss_0
+  slot_45 = (ss_1(ss_2, ss_3))
   regs.v6357_1 = cell_get(upvalues[1])
   v6367_1 = new_table(0)
   v6367_1.Parent = slot_45
@@ -81572,14 +79194,11 @@ protos[1352] = function(upvalues)
 end
 
 protos[1353] = function(upvalues)
-  local slot_0, slot_2, ss_0, temp_0, v304_1
+  local slot_0, slot_2, temp_0, v304_1
   local vm_frame_random = math.random(0, 2147483646)
   while (cell_get(upvalues[1])).Parent do
     slot_0 = ((cell_get(upvalues[2])):FindFirstChild("PlayerGui"))
-    ss_0 = slot_0 and ((slot_0:FindFirstChild("TouchGui")) or ((slot_0:FindFirstChild("TouchControlsGui"))))
-    ss_0 = ss_0 and ("PHONE")
-    ss_0 = ss_0 or ("PC")
-    slot_2 = ss_0
+    slot_2 = (((slot_0 and ((slot_0:FindFirstChild("TouchGui")) or ((slot_0:FindFirstChild("TouchControlsGui"))))) and ("PHONE")) or ("PC"))
     if (((cell_get(upvalues[1])).Text ~= slot_2)) then
       temp_0 = (cell_get(upvalues[1]))
       temp_0.Text = slot_2
@@ -81608,8 +79227,7 @@ protos[1354] = function(upvalues, argument_1)
       slot_3 = new_cell()
       slot_2 = __loopKey_1354_0
       slot_3 = cell_set_or_create(slot_3, __loopValue_1354_0)
-      ss_0 = (cell_get(slot_3)).obj and (cell_get(slot_3)).obj.Parent
-      if ss_0 then
+      if ((cell_get(slot_3)).obj and (cell_get(slot_3)).obj.Parent) then
         v292_1 = env.pcall
         v297_1 = closure(1355, {capture_3()})
         v292_1(v297_1)
@@ -81667,10 +79285,7 @@ protos[1356] = function(upvalues, argument_1)
     temp_1 = (cell_get(slot_0))
     regs.v75_1 = (cell_get(upvalues[1])).pageAnimGen
     regs.v76_1 = cell_get(slot_0)
-    ss_1 = regs.v75_1[regs.v76_1] or (0)
-    ss_1 = ((ss_1 + 1))
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((((regs.v75_1[regs.v76_1] or (0)) + 1))))
     temp_0[temp_1] = temp_2
     v194_1 = (cell_get(upvalues[1])).pageAnimGen
     v195_1 = cell_get(slot_0)
@@ -81761,9 +79376,7 @@ protos[1356] = function(upvalues, argument_1)
               v1394_1.val = v1432_1
               v1388_1(slot_12, v1394_1)
             end
-            ss_0 = (slot_14:IsA("TextLabel")) or ((slot_14:IsA("TextBox")))
-            ss_0 = ss_0 or ((slot_14:IsA("TextButton")))
-            if ss_0 then
+            if (((slot_14:IsA("TextLabel")) or ((slot_14:IsA("TextBox")))) or ((slot_14:IsA("TextButton")))) then
               v1569_1 = env.table.insert
               v1575_1 = new_table(0)
               v1575_1.obj = slot_14
@@ -81772,8 +79385,7 @@ protos[1356] = function(upvalues, argument_1)
               v1575_1.val = v1613_1
               v1569_1(slot_12, v1575_1)
             end
-            ss_0 = (slot_14:IsA("ImageLabel")) or ((slot_14:IsA("ImageButton")))
-            if ss_0 then
+            if ((slot_14:IsA("ImageLabel")) or ((slot_14:IsA("ImageButton")))) then
               v1707_1 = env.table.insert
               v1713_1 = new_table(0)
               v1713_1.obj = slot_14
@@ -81859,9 +79471,7 @@ protos[1356] = function(upvalues, argument_1)
         temp_5 = slot_17
         temp_6 = slot_19.scroller
         v2265_1 = slot_19.scroller
-        ss_1 = slot_17[v2265_1] or ((new_table(0)))
-        ss_0 = ss_1
-        temp_7 = ss_0
+        temp_7 = ((slot_17[v2265_1] or ((new_table(0)))))
         temp_5[temp_6] = temp_7
         v2375_1 = env.table.insert
         v2391_1 = slot_19.scroller
@@ -81942,8 +79552,7 @@ protos[1359] = function(upvalues)
     for __loopKey_1359_0, __loopValue_1359_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
       slot_0 = __loopKey_1359_0
       slot_1 = __loopValue_1359_0
-      ss_0 = slot_1.obj and slot_1.obj.Parent
-      if ss_0 then
+      if (slot_1.obj and slot_1.obj.Parent) then
         v325_1 = cell_get(upvalues[5])
         v340_1 = slot_1.obj
         v341_1 = new_table(0)
@@ -82258,8 +79867,7 @@ protos[1362] = function(upvalues, argument_1, argument_2, argument_3)
   ss_7 = set_list_values(ss_7, 3, ss_10(ss_11, ss_12))
   ss_5 = ss_6(ss_7)
   ss_3[ss_4] = ss_5
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_5 = ss_0
+  slot_5 = (ss_1(ss_2, ss_3))
   v784_1 = cell_get(upvalues[1])
   v794_1 = new_table(0)
   v794_1.Parent = slot_3
@@ -82443,8 +80051,7 @@ protos[1364] = function(upvalues, argument_1, argument_2)
     ss_2 = v518_1
     ss_3 = v529_1
     ss_4 = slot_0 or (0.18)
-    ss_0 = ss_1(ss_2, ss_3, ss_4)
-    slot_6 = ss_0
+    slot_6 = (ss_1(ss_2, ss_3, ss_4))
     if slot_6 then
       temp_5 = (cell_get(slot_2))
       v615_1 = cell_get(slot_2)
@@ -82616,8 +80223,7 @@ protos[1368] = function(upvalues, argument_1)
       temp_2 = __loopKey_1368_0
       slot_4 = __loopKey_1368_0
       slot_5 = __loopValue_1368_0
-      ss_0 = slot_5.page.Visible and (((slot_5.name ~= slot_0)))
-      if ss_0 then
+      if (slot_5.page.Visible and (((slot_5.name ~= slot_0)))) then
         v878_1 = (cell_get(upvalues[1])).flushPageFadeables
         v889_1 = slot_5.page
         v878_1(v889_1)
@@ -82628,8 +80234,7 @@ protos[1368] = function(upvalues, argument_1)
       end
       v797_1 = (slot_5.name == slot_0)
       slot_6 = nil
-      slot_6 = v797_1
-      if slot_6 then
+      if v797_1 then
         slot_5.tab.BackgroundColor3 = (cell_get(upvalues[2])).colors.panel
         slot_5.tab.BackgroundTransparency = 0.3
         slot_5.stroke.Color = (cell_get(upvalues[2])).colors.accent
@@ -82657,8 +80262,7 @@ protos[1368] = function(upvalues, argument_1)
         ss_7 = 1
         ss_8 = 0.75
         ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-        ss_0 = ss_2(ss_3)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3))
         temp_5.Transparency = temp_7
       else
         slot_5.tab.BackgroundColor3 = (cell_get(upvalues[2])).colors.panel
@@ -82684,8 +80288,7 @@ protos[1368] = function(upvalues, argument_1)
         ss_7 = 1
         ss_8 = 1
         ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-        ss_0 = ss_2(ss_3)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3))
         temp_5.Transparency = temp_7
       end
     end
@@ -84211,11 +81814,8 @@ protos[1388] = function(upvalues)
     v229_1 = cell_get(upvalues[5])
     v234_1 = cell_get(upvalues[6])
     ss_1 = "#"
-    ss_3 = v213_1
-    ss_2 = ss_3(v219_1(v224_1, v229_1, v234_1))
-    ss_1 = ((ss_1 .. ss_2))
-    ss_0 = ss_1
-    temp_2 = ss_0
+    ss_2 = v213_1(v219_1(v224_1, v229_1, v234_1))
+    temp_2 = ((((ss_1 .. ss_2))))
     temp_0.Text = temp_2
   end
   return
@@ -84605,8 +82205,7 @@ protos[1401] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = "TextButton"
   ss_3 = v665_1
   ss_4 = "BackgroundColor3"
-  ss_5 = v790_1 and (cell_get(upvalues[3])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[3])).colors.panel
+  ss_5 = (v790_1 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.panel
   ss_3[ss_4] = ss_5
   ss_3.BackgroundTransparency = 0.1
   ss_3.BorderSizePixel = 0
@@ -84683,13 +82282,11 @@ protos[1401] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = "UIStroke"
   ss_3 = v1365_1
   ss_4 = "Color"
-  ss_5 = v1382_1 and (cell_get(upvalues[3])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[3])).colors.stroke
+  ss_5 = (v1382_1 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.stroke
   ss_3[ss_4] = ss_5
   v1469_1 = cell_get(slot_11)
   ss_4 = "Transparency"
-  ss_5 = v1469_1 and (0.2)
-  ss_5 = ss_5 or (0.6)
+  ss_5 = (v1469_1 and (0.2)) or (0.6)
   ss_3[ss_4] = ss_5
   ss_3.Thickness = 1.5
   ss_0 = ss_1(ss_2, ss_3)
@@ -84750,8 +82347,7 @@ protos[1401] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = "UIStroke"
   ss_3 = v1926_1
   ss_4 = "Color"
-  ss_5 = v1943_1 and (cell_get(upvalues[3])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[3])).colors.stroke
+  ss_5 = (v1943_1 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.stroke
   ss_3[ss_4] = ss_5
   ss_3.Transparency = 0.5
   ss_3.Thickness = 1
@@ -84817,9 +82413,7 @@ protos[1402] = function(upvalues)
     v33_1 = cell_get(upvalues[1])
     ss_0, ss_1 = v28_1(v33_1)
     slot_1 = ss_1
-    ss_1 = ss_0 and slot_1
-    ss_1 = ss_1 or (false)
-    return ss_1
+    return ((ss_0 and slot_1) or (false))
   end
   return false
 end
@@ -84852,11 +82446,9 @@ protos[1403] = function(upvalues)
     ss_5 = v66_1
     ss_6 = v71_1
     ss_7 = "BackgroundColor3"
-    ss_8 = v77_1 and (cell_get(upvalues[5])).colors.accent
-    ss_8 = ss_8 or (cell_get(upvalues[5])).colors.panel
+    ss_8 = (v77_1 and (cell_get(upvalues[5])).colors.accent) or (cell_get(upvalues[5])).colors.panel
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v204_1 = ss_1
+    v204_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v204_1.Play
     ss_2 = v204_1
     ss_1(ss_2)
@@ -84913,16 +82505,13 @@ protos[1403] = function(upvalues)
     ss_5 = v556_1
     ss_6 = v561_1
     ss_7 = "Color"
-    ss_8 = v567_1 and (cell_get(upvalues[5])).colors.accent
-    ss_8 = ss_8 or (cell_get(upvalues[5])).colors.stroke
+    ss_8 = (v567_1 and (cell_get(upvalues[5])).colors.accent) or (cell_get(upvalues[5])).colors.stroke
     ss_6[ss_7] = ss_8
     v654_1 = cell_get(upvalues[2])
     ss_7 = "Transparency"
-    ss_8 = v654_1 and (0.2)
-    ss_8 = ss_8 or (0.6)
+    ss_8 = (v654_1 and (0.2)) or (0.6)
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v717_1 = ss_1
+    v717_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v717_1.Play
     ss_2 = v717_1
     ss_1(ss_2)
@@ -84959,8 +82548,7 @@ protos[1403] = function(upvalues)
       ss_8 = (v913_1(0, 3, 0.5, v940_1))
     end
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v966_1 = ss_1
+    v966_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v966_1.Play
     ss_2 = v966_1
     ss_1(ss_2)
@@ -84976,11 +82564,9 @@ protos[1403] = function(upvalues)
     ss_5 = v1010_1
     ss_6 = v1015_1
     ss_7 = "Color"
-    ss_8 = v1021_1 and (cell_get(upvalues[5])).colors.accent
-    ss_8 = ss_8 or (cell_get(upvalues[5])).colors.stroke
+    ss_8 = (v1021_1 and (cell_get(upvalues[5])).colors.accent) or (cell_get(upvalues[5])).colors.stroke
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v1108_1 = ss_1
+    v1108_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v1108_1.Play
     ss_2 = v1108_1
     ss_1(ss_2)
@@ -84999,8 +82585,7 @@ protos[1403] = function(upvalues)
     ss_2 = "Frame"
     ss_3 = v1129_1
     ss_4 = "BackgroundColor3"
-    ss_5 = v1265_1 and (cell_get(upvalues[5])).colors.accent
-    ss_5 = ss_5 or (cell_get(upvalues[5])).colors.stroke
+    ss_5 = (v1265_1 and (cell_get(upvalues[5])).colors.accent) or (cell_get(upvalues[5])).colors.stroke
     ss_3[ss_4] = ss_5
     ss_3.BackgroundTransparency = 0.5
     ss_3.BorderSizePixel = 0
@@ -85107,15 +82692,12 @@ protos[1408] = function(upvalues, argument_1)
   local v1773_1, v1784_1, v1804_1, v1826_1, v1842_1, v1853_1, v1879_1, v1891_1, v1896_1, v1901_1, v1923_1, v1928_1, v1934_1, v2021_1, v2042_1, v2047_1, v289_1, v316_1
   local v317_1, v329_1, v351_1, v352_1, v374_1, v396_1, v422_1, v444_1, v445_1, v457_1, v479_1, v480_1, v502_1, v524_1, v829_1
   local v83_1, v856_1, v862_1, v873_1, v883_1, v88_1, v894_1, v914_1, v936_1, v93_1, v952_1, v963_1
-  local ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, ss_7, ss_8, temp_0, temp_2
+  local ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, ss_7, ss_8, temp_0, temp_2
   local vm_frame_random = math.random(0, 2147483646)
   upvalues[1] = cell_set_or_create(upvalues[1], argument_1)
   if (cell_get(upvalues[2])).isApplyingConfig then
     temp_0 = (cell_get(upvalues[3]))
-    ss_1 = (cell_get(upvalues[1])) and (cell_get(upvalues[4])).colors.accent
-    ss_1 = ss_1 or (cell_get(upvalues[4])).colors.panel
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[1])) and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.panel))
     temp_0.BackgroundColor3 = temp_2
     temp_0 = (cell_get(upvalues[5]))
     v289_1 = cell_get(upvalues[1])
@@ -85156,20 +82738,13 @@ protos[1408] = function(upvalues, argument_1)
       ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
       ss_1 = ss_2(ss_3)
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[6]))
-    ss_1 = (cell_get(upvalues[1])) and (cell_get(upvalues[4])).colors.accent
-    ss_1 = ss_1 or (cell_get(upvalues[4])).colors.stroke
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[1])) and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.stroke))
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[6]))
-    ss_1 = (cell_get(upvalues[1])) and (0.2)
-    ss_1 = ss_1 or (0.6)
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[1])) and (0.2)) or (0.6)))
     temp_0.Transparency = temp_2
     temp_0 = (cell_get(upvalues[7]))
     v829_1 = cell_get(upvalues[1])
@@ -85190,14 +82765,10 @@ protos[1408] = function(upvalues, argument_1)
       v963_1 = ((-v952_1) / 2)
       ss_1 = (v936_1(0, 3, 0.5, v963_1))
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Position = temp_2
     temp_0 = (cell_get(upvalues[9]))
-    ss_1 = (cell_get(upvalues[1])) and (cell_get(upvalues[4])).colors.accent
-    ss_1 = ss_1 or (cell_get(upvalues[4])).colors.stroke
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[1])) and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.stroke))
     temp_0.Color = temp_2
   else
     v83_1 = cell_get(upvalues[10])
@@ -85212,11 +82783,9 @@ protos[1408] = function(upvalues, argument_1)
     ss_5 = v115_1
     ss_6 = v120_1
     ss_7 = "BackgroundColor3"
-    ss_8 = v126_1 and (cell_get(upvalues[4])).colors.accent
-    ss_8 = ss_8 or (cell_get(upvalues[4])).colors.panel
+    ss_8 = (v126_1 and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.panel
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v1214_1 = ss_1
+    v1214_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v1214_1.Play
     ss_2 = v1214_1
     ss_1(ss_2)
@@ -85259,8 +82828,7 @@ protos[1408] = function(upvalues, argument_1)
       ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
       ss_1 = ss_2(ss_3)
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Color = temp_2
     v1534_1 = cell_get(upvalues[10])
     v1539_1 = v1534_1.Create
@@ -85274,11 +82842,9 @@ protos[1408] = function(upvalues, argument_1)
     ss_5 = v1566_1
     ss_6 = v1571_1
     ss_7 = "Color"
-    ss_8 = v1577_1 and (cell_get(upvalues[4])).colors.accent
-    ss_8 = ss_8 or (cell_get(upvalues[4])).colors.stroke
+    ss_8 = (v1577_1 and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.stroke
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v1664_1 = ss_1
+    v1664_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v1664_1.Play
     ss_2 = v1664_1
     ss_1(ss_2)
@@ -85312,8 +82878,7 @@ protos[1408] = function(upvalues, argument_1)
       ss_8 = (v1826_1(0, 3, 0.5, v1853_1))
     end
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v1879_1 = ss_1
+    v1879_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v1879_1.Play
     ss_2 = v1879_1
     ss_1(ss_2)
@@ -85329,11 +82894,9 @@ protos[1408] = function(upvalues, argument_1)
     ss_5 = v1923_1
     ss_6 = v1928_1
     ss_7 = "Color"
-    ss_8 = v1934_1 and (cell_get(upvalues[4])).colors.accent
-    ss_8 = ss_8 or (cell_get(upvalues[4])).colors.stroke
+    ss_8 = (v1934_1 and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.stroke
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v2021_1 = ss_1
+    v2021_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v2021_1.Play
     ss_2 = v2021_1
     ss_1(ss_2)
@@ -85817,8 +83380,7 @@ protos[1410] = function(upvalues, argument_1, argument_2)
   temp_0.Position = ss_0
   temp_0 = (cell_get(upvalues[8]))
   temp_0.Position = (cell_get(upvalues[7])).Position
-  ss_0 = slot_1 and ((cell_get(upvalues[9])))
-  if ss_0 then
+  if (slot_1 and ((cell_get(upvalues[9])))) then
     v509_1 = cell_get(upvalues[9])
     v509_1(slot_2)
   end
@@ -86168,8 +83730,7 @@ protos[1423] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   v12_1 = (cell_get(upvalues[1]))(slot_1)
   slot_6 = nil
   slot_6 = v12_1
-  ss_0 = (cell_get(slot_3)) and (((cell_get(slot_3))()))
-  ss_0 = ss_0 or ((env.Color3.fromRGB(255, 255, 255)))
+  ss_0 = ((cell_get(slot_3)) and (((cell_get(slot_3))()))) or ((env.Color3.fromRGB(255, 255, 255)))
   slot_7 = new_cell()
   slot_7 = cell_set_or_create(slot_7, ss_0)
   v163_1 = cell_get(upvalues[2])
@@ -86360,8 +83921,7 @@ protos[1424] = function(upvalues)
   local v660_1, v665_1, v670_1, v708_1, v730_1, v741_1, v752_1, v779_1, v796_1, v803_1, v808_1, v813_1, v846_1
   local v863_1, v96_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = ((cell_get(upvalues[1])).isVisible()) and (((cell_get(upvalues[1])).getCurrentPicker()))
-  v96_1 = ss_0
+  v96_1 = (((cell_get(upvalues[1])).isVisible()) and (((cell_get(upvalues[1])).getCurrentPicker())))
   ss_0 = v96_1
   if v96_1 then
     v129_1 = ((cell_get(upvalues[1])).getCurrentPicker()).circle
@@ -86372,9 +83932,7 @@ protos[1424] = function(upvalues)
     v170_1 = (cell_get(upvalues[1])).setPopupVisible
     v170_1(false)
   else
-    ss_0 = (cell_get(upvalues[3])) and (((cell_get(upvalues[3]))()))
-    ss_0 = ss_0 or ((env.Color3.new(1, 1, 1)))
-    slot_0 = ss_0
+    slot_0 = (((cell_get(upvalues[3])) and (((cell_get(upvalues[3]))()))) or ((env.Color3.new(1, 1, 1))))
     ss_2 = (cell_get(upvalues[4]))
     ss_3 = slot_0
     ss_0, ss_1, ss_2 = ss_2(ss_3)
@@ -86509,7 +84067,7 @@ protos[1430] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   local v2322_1, v2332_1, v2338_1, v2371_1, v2383_1, v2393_1, v2399_1, v2426_1, v2476_1, v2646_1, v2902_1, v2929_1, v308_1, v3281_1, v3392_1, v3530_1, v3627_1, v3733_1, v392_1
   local v540_1, v601_1, v684_1, v912_1, v953_1
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, slot_16, slot_17, slot_18, slot_19, slot_20, slot_21, slot_22, slot_23, slot_24, slot_25, slot_26, slot_27, slot_28, slot_29, slot_30, slot_31, slot_32, slot_33, slot_34
-  local slot_35, slot_36, slot_37, slot_38, ss_0, ss_3, ss_5, temp_0, temp_1, temp_2, temp_3
+  local slot_35, slot_36, slot_37, slot_38, ss_3, ss_5, temp_0, temp_1, temp_2, temp_3
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
@@ -86629,8 +84187,7 @@ protos[1430] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     if not slot_37 then slot_37 = {} end
     return slot_37
   end
-  ss_0 = slot_2 or ((new_table(0)))
-  slot_2 = ss_0
+  slot_2 = (slot_2 or ((new_table(0))))
   regs.v79_1 = (cell_get(upvalues[1]))(slot_1)
   slot_10 = nil
   slot_10 = regs.v79_1
@@ -86835,8 +84392,7 @@ protos[1430] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   v2123_1 = (cell_get(upvalues[3])).colors.fill
   ss_3.ImageColor3 = v2123_1
   ss_3.ZIndex = 5008
-  ss_0 = v1983_1(("ImageLabel"), ss_3)
-  slot_24 = ss_0
+  slot_24 = (v1983_1(("ImageLabel"), ss_3))
   v2152_1 = cell_get(upvalues[2])
   v2162_1 = new_table(0)
   v2162_1.Parent = slot_15
@@ -86924,8 +84480,7 @@ protos[1430] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     regs.v3008_1 = cell_get(slot_29)
     if (((#regs.v3008_1) > 0)) then
       temp_0 = (cell_get(slot_28))
-      ss_0 = (cell_get(slot_3)) or (1)
-      temp_1 = ss_0
+      temp_1 = ((cell_get(slot_3)) or (1))
       temp_2 = true
       temp_0[temp_1] = temp_2
     end
@@ -87062,8 +84617,7 @@ protos[1431] = function(upvalues)
         temp_3, temp_4 = __loopKey_1431_0, __loopValue_1431_0
         temp_2 = temp_3
         slot_2 = temp_3
-        ss_0 = temp_4 and (cell_get(upvalues[1]))[slot_2]
-        if ss_0 then
+        if (temp_4 and (cell_get(upvalues[1]))[slot_2]) then
           v560_1 = env.table.insert
           v576_1 = (cell_get(upvalues[1]))[slot_2]
           v560_1(slot_1, v576_1)
@@ -87073,8 +84627,7 @@ protos[1431] = function(upvalues)
         temp_0 = (cell_get(upvalues[2]))
         ss_2 = (cell_get(upvalues[7]))
         ss_3 = "none"
-        ss_0 = ss_2(ss_3)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3))
         temp_0.Text = temp_2
         temp_0 = (cell_get(upvalues[2]))
         temp_1 = "TextColor3"
@@ -87090,9 +84643,7 @@ protos[1431] = function(upvalues)
             v966_1 = slot_1[1]
             ss_1 = (v951_1(v966_1))
           end
-          ss_1 = ss_1 or slot_1[1]
-          ss_0 = ss_1
-          temp_2 = ss_0
+          temp_2 = ((ss_1 or slot_1[1]))
           temp_0.Text = temp_2
           temp_0 = (cell_get(upvalues[2]))
           temp_1 = "TextColor3"
@@ -87155,8 +84706,7 @@ protos[1431] = function(upvalues)
         slot_0 = (cell_get(upvalues[1]))[slot_4]
       end
     end
-    ss_0 = slot_0 and ((cell_get(upvalues[9])))
-    if ss_0 then
+    if (slot_0 and ((cell_get(upvalues[9])))) then
       v1530_1 = (cell_get(upvalues[9]))(slot_0)
       slot_6 = nil
       slot_6 = v1530_1
@@ -87168,8 +84718,7 @@ protos[1431] = function(upvalues)
         ss_4 = 16
         ss_5 = 0
         ss_6 = 16
-        ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
         temp_0.Size = temp_2
         cell_get(upvalues[4]).Visible = true
         temp_0 = (cell_get(upvalues[2]))
@@ -87181,8 +84730,7 @@ protos[1431] = function(upvalues)
         ss_4 = v1937_1
         ss_5 = 0
         ss_6 = 0
-        ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
         temp_0.Position = temp_2
       else
         cell_get(upvalues[4]).Visible = false
@@ -87195,8 +84743,7 @@ protos[1431] = function(upvalues)
         ss_4 = v2079_1
         ss_5 = 0
         ss_6 = 0
-        ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
         temp_0.Position = temp_2
       end
     else
@@ -87210,8 +84757,7 @@ protos[1431] = function(upvalues)
       ss_4 = v1654_1
       ss_5 = 0
       ss_6 = 0
-      ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       temp_0.Position = temp_2
     end
   end
@@ -87236,8 +84782,7 @@ protos[1432] = function(upvalues)
     if ss_0 then
       v302_1 = cell_get(upvalues[3])
       v317_1 = (cell_get(upvalues[4]))[slot_0]
-      ss_0 = (v302_1(v317_1)) or (cell_get(upvalues[4]))[slot_0]
-      slot_3 = ss_0
+      slot_3 = ((v302_1(v317_1)) or (cell_get(upvalues[4]))[slot_0])
       v365_1 = cell_get(upvalues[5])
       ss_0 = v365_1
       if v365_1 then
@@ -87245,10 +84790,8 @@ protos[1432] = function(upvalues)
         v397_1 = (cell_get(upvalues[4]))[slot_0]
         ss_0 = (v382_1(v397_1))
       end
-      ss_0 = ss_0 or (nil)
-      slot_4 = ss_0
-      ss_0 = slot_4 and (((slot_4 ~= "")))
-      if ss_0 then
+      slot_4 = (ss_0 or (nil))
+      if (slot_4 and (((slot_4 ~= "")))) then
         v574_1 = env.tostring(slot_4)
         v589_1 = (" • </font>" .. slot_3)
         v594_1 = (v574_1 .. v589_1)
@@ -87259,10 +84802,7 @@ protos[1432] = function(upvalues)
       temp_5.Text = temp_7
     end
     temp_5 = slot_1.text
-    ss_1 = slot_2 and (cell_get(upvalues[6])).colors.fill
-    ss_1 = ss_1 or (cell_get(upvalues[6])).colors.text
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((slot_2 and (cell_get(upvalues[6])).colors.fill) or (cell_get(upvalues[6])).colors.text))
     temp_5.TextColor3 = temp_7
     if slot_2 then
       slot_1.checkBox.BackgroundColor3 = (cell_get(upvalues[6])).colors.fill
@@ -87474,8 +85014,7 @@ protos[1434] = function(upvalues)
     ss_2 = v149_1
     ss_3 = v150_1
     ss_4 = "BackgroundTransparency"
-    ss_5 = v166_1 and (0.05)
-    ss_5 = ss_5 or (0.3)
+    ss_5 = (v166_1 and (0.05)) or (0.3)
     ss_3[ss_4] = ss_5
     ss_4 = 0.22
     ss_1(ss_2, ss_3, ss_4)
@@ -87489,8 +85028,7 @@ protos[1434] = function(upvalues)
     ss_2 = v286_1
     ss_3 = v287_1
     ss_4 = "Transparency"
-    ss_5 = v303_1 and (0.1)
-    ss_5 = ss_5 or (0.5)
+    ss_5 = (v303_1 and (0.1)) or (0.5)
     ss_3[ss_4] = ss_5
     ss_4 = 0.22
     ss_1(ss_2, ss_3, ss_4)
@@ -87579,8 +85117,7 @@ protos[1436] = function(upvalues, argument_1, argument_2)
     ss_4 = 12
     ss_5 = 0
     ss_6 = 12
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.Size = temp_2
     v824_1 = cell_get(upvalues[1])
     v839_1 = (cell_get(slot_0)).checkIconHolder
@@ -87632,8 +85169,7 @@ protos[1436] = function(upvalues, argument_1, argument_2)
   ss_2 = v711_1
   ss_3 = v712_1
   ss_4 = "TextColor3"
-  ss_5 = slot_1 and (cell_get(upvalues[3])).colors.fill
-  ss_5 = ss_5 or (cell_get(upvalues[3])).colors.text
+  ss_5 = (slot_1 and (cell_get(upvalues[3])).colors.fill) or (cell_get(upvalues[3])).colors.text
   ss_3[ss_4] = ss_5
   ss_4 = 0.35
   v696_1(ss_2, ss_3, ss_4)
@@ -87735,9 +85271,7 @@ protos[1441] = function(upvalues)
     slot_3 = nil
     slot_2 = cell_set_or_create(slot_2, __loopKey_1441_0)
     slot_3 = __loopValue_1441_0
-    ss_0 = (cell_get(upvalues[4])) and (((cell_get(upvalues[4]))(slot_3)))
-    ss_0 = ss_0 or (nil)
-    slot_4 = ss_0
+    slot_4 = (((cell_get(upvalues[4])) and (((cell_get(upvalues[4]))(slot_3)))) or (nil))
     regs.v480_1 = cell_get(upvalues[5])
     v490_1 = new_table(0)
     regs.v496_1 = cell_get(upvalues[1])
@@ -87773,14 +85307,9 @@ protos[1441] = function(upvalues)
     regs.v767_1 = regs.v700_1("UIStroke", v710_1)
     slot_6 = new_cell()
     slot_6 = cell_set_or_create(slot_6, regs.v767_1)
-    ss_0 = (cell_get(upvalues[8])) and (((cell_get(upvalues[8]))(slot_3)))
-    ss_0 = ss_0 or (nil)
-    slot_7 = ss_0
-    ss_0 = (cell_get(upvalues[9])) and (((cell_get(upvalues[9]))(slot_3)))
-    ss_0 = ss_0 or slot_3
-    slot_8 = ss_0
-    ss_0 = slot_7 and (((slot_7 ~= "")))
-    if ss_0 then
+    slot_7 = (((cell_get(upvalues[8])) and (((cell_get(upvalues[8]))(slot_3)))) or (nil))
+    slot_8 = (((cell_get(upvalues[9])) and (((cell_get(upvalues[9]))(slot_3)))) or slot_3)
+    if (slot_7 and (((slot_7 ~= "")))) then
       v1039_1 = env.tostring(slot_7)
       v1054_1 = (" • </font>" .. slot_3)
       v1059_1 = (v1039_1 .. v1054_1)
@@ -88075,8 +85604,7 @@ protos[1444] = function(upvalues)
       temp_0, temp_1, temp_2 = ss_0, ss_1, ss_2
       for __loopKey_1444_0, __loopValue_1444_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
         slot_2 = __loopKey_1444_0
-        ss_0 = __loopValue_1444_0 and (cell_get(upvalues[7]))[slot_2]
-        if ss_0 then
+        if (__loopValue_1444_0 and (cell_get(upvalues[7]))[slot_2]) then
           v842_1 = env.table.insert
           v858_1 = (cell_get(upvalues[7]))[slot_2]
           v842_1(slot_1, v858_1)
@@ -88612,7 +86140,7 @@ end
 protos[1462] = function(upvalues, argument_1, argument_2, argument_3, argument_4, argument_5, argument_6)
   local regs = {}
   local v1026_1, v1042_1, v1052_1, v1058_1, v1091_1, v1103_1, v1113_1, v1119_1, v1146_1, v1170_1, v1186_1, v1196_1, v1202_1, v1245_1, v1267_1, v1278_1, v1289_1, v1290_1, v12_1
-  local v135_1, v1434_1, v1468_1, v1486_1, v1496_1, v1502_1, v1524_1, v1535_1, v1546_1, v1589_1, v1638_1, v1672_1, v1695_1, v1708_1, v1724_1, v1729_1, v1755_1, v1765_1
+  local v1434_1, v1468_1, v1486_1, v1496_1, v1502_1, v1524_1, v1535_1, v1546_1, v1589_1, v1638_1, v1672_1, v1695_1, v1708_1, v1724_1, v1729_1, v1755_1, v1765_1
   local v1771_1, v177_1, v1793_1, v1804_1, v1815_1, v1858_1, v187_1, v1907_1, v1941_1, v1964_1, v1977_1, v2012_1, v2048_1, v2049_1, v2054_1, v2075_1, v2076_1, v2081_1, v2102_1
   local v2103_1, v2108_1, v2129_1, v2130_1, v2135_1, v2146_1, v2151_1, v2156_1, v2177_1, v2188_1, v2189_1, v2195_1, v2206_1, v2217_1, v2228_1, v2250_1, v2321_1, v2326_1, v236_1, v263_1
   local v320_1, v336_1, v346_1, v352_1, v385_1, v397_1, v407_1, v413_1, v440_1, v464_1, v480_1, v48_1, v490_1, v496_1, v518_1, v519_1, v685_1, v810_1, v871_1
@@ -88666,14 +86194,7 @@ protos[1462] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   v48_1 = ((env["type"](slot_2)) == "function")
   slot_7 = nil
   slot_7 = v48_1
-  ss_0 = slot_7 and ((slot_2()))
-  v135_1 = ss_0
-  ss_0 = v135_1
-  if not v135_1 then
-    ss_0 = slot_2 and (((cell_get(upvalues[1]))(slot_2)))
-    ss_0 = ss_0 or (((cell_get(upvalues[1]))("click_to_activate")))
-  end
-  slot_8 = ss_0
+  slot_8 = (((slot_7 and ((slot_2())))) or ((slot_2 and (((cell_get(upvalues[1]))(slot_2)))) or (((cell_get(upvalues[1]))("click_to_activate")))))
   v177_1 = cell_get(upvalues[2])
   v187_1 = new_table(0)
   v187_1.Parent = slot_0
@@ -88871,8 +86392,7 @@ protos[1462] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   v1977_1 = v1755_1("TextLabel", v1765_1)
   slot_17 = nil
   slot_17 = v1977_1
-  ss_0 = slot_2 and ((not slot_7))
-  if ss_0 then
+  if (slot_2 and ((not slot_7))) then
     v2321_1 = cell_get(upvalues[5])
     v2326_1 = v2321_1.register
     v2326_1(v2321_1, slot_17, "Text", slot_2)
@@ -90261,8 +87781,7 @@ protos[1489] = function(upvalues)
   v8_1 = closure(1490, {upvalues[1], upvalues[2]})
   ss_0, ss_1 = v3_1(v8_1)
   slot_1 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_1)) == "table")))
-  if ss_0 then
+  if (ss_0 and ((((env["type"](slot_1)) == "table")))) then
     return slot_1
   end
   return (new_table(0))
@@ -90318,9 +87837,7 @@ protos[1493] = function(upvalues)
   v8_1 = closure(1494, {upvalues[1], upvalues[2]})
   ss_0, ss_1 = v3_1(v8_1)
   slot_1 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_1)) == "table")))
-  ss_0 = ss_0 and slot_1.name
-  if ss_0 then
+  if ((ss_0 and ((((env["type"](slot_1)) == "table")))) and slot_1.name) then
     return slot_1.name
   end
   return nil
@@ -90408,16 +87925,14 @@ protos[1498] = function(upvalues, argument_1)
 end
 
 protos[1499] = function(upvalues)
-  local slot_0, ss_0, v120_1, v18_1, v23_1, v29_1, v34_1
+  local slot_0, v120_1, v18_1, v23_1, v29_1, v34_1
   math.random(0, 2147483646)
   v18_1 = env.game:GetService("MarketplaceService")
   v23_1 = v18_1.GetProductInfo
   v29_1 = env.tonumber
   v34_1 = cell_get(upvalues[1])
-  ss_0 = v23_1(v18_1, v29_1(v34_1))
-  slot_0 = ss_0
-  ss_0 = slot_0 and slot_0.Name
-  if ss_0 then
+  slot_0 = (v23_1(v18_1, v29_1(v34_1)))
+  if (slot_0 and slot_0.Name) then
     v120_1 = slot_0.Name
     upvalues[2] = cell_set_or_create(upvalues[2], v120_1)
   end
@@ -90435,8 +87950,7 @@ protos[1500] = function(upvalues)
   ss_3 = v8_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_1 = ss_1
-  ss_0 = (not ss_0) or ((((env["type"](slot_1)) ~= "table")))
-  if ss_0 then
+  if ((not ss_0) or ((((env["type"](slot_1)) ~= "table")))) then
     return (new_table(0))
   end
   v60_1 = new_table(0)
@@ -90463,8 +87977,7 @@ protos[1500] = function(upvalues)
       temp_6 = slot_6
       ss_2 = (cell_get(upvalues[3]))
       ss_3 = slot_6
-      ss_0 = ss_2(ss_3)
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3))
       temp_5[temp_6] = temp_7
     else
       if (((env["type"](slot_5)) == "table")) then
@@ -90482,15 +87995,13 @@ protos[1500] = function(upvalues)
         for __loopKey_1500_1, __loopValue_1500_1 in function(state, control) return temp_5(state, control) end, temp_6, temp_7 do
           slot_8 = __loopValue_1500_1
           slot_9 = (env.tostring(__loopKey_1500_1))
-          ss_0 = (((env["type"](slot_8)) == "string")) and (((slot_8 == slot_9)))
-          if ss_0 then
+          if ((((env["type"](slot_8)) == "string")) and (((slot_8 == slot_9)))) then
             slot_3 = true
             temp_10 = slot_2[slot_4]
             temp_11 = slot_9
             ss_2 = (cell_get(upvalues[3]))
             ss_3 = slot_9
-            ss_0 = ss_2(ss_3)
-            temp_12 = ss_0
+            temp_12 = (ss_2(ss_3))
             temp_10[temp_11] = temp_12
           else
             temp_10 = slot_2[slot_4]
@@ -90553,8 +88064,7 @@ protos[1503] = function(upvalues)
   for __loopKey_1503_0, __loopValue_1503_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_2 = __loopKey_1503_0
     slot_3 = __loopValue_1503_0
-    ss_0 = (((env["type"](slot_3)) == "table")) and (((slot_3[slot_1] ~= nil)))
-    if ss_0 then
+    if ((((env["type"](slot_3)) == "table")) and (((slot_3[slot_1] ~= nil)))) then
       return slot_2
     end
   end
@@ -90937,8 +88447,7 @@ protos[1510] = function(upvalues)
   if not regs.v2217_1 then
     ss_1 = false
   end
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ss_1
   temp_0.jumpEffectEnabled = temp_2
   temp_0 = slot_1.settings
   regs.v2296_1 = slot_0
@@ -90951,8 +88460,7 @@ protos[1510] = function(upvalues)
   if not regs.v2333_1 then
     ss_1 = (new_table(0))
   end
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ss_1
   temp_0.jumpEffectTypes = temp_2
   temp_0 = slot_1.settings
   regs.v2408_1 = slot_0
@@ -90965,8 +88473,7 @@ protos[1510] = function(upvalues)
   if not regs.v2445_1 then
     ss_1 = false
   end
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ss_1
   temp_0.walkEffectEnabled = temp_2
   temp_0 = slot_1.settings
   regs.v2524_1 = slot_0
@@ -90979,8 +88486,7 @@ protos[1510] = function(upvalues)
   if not regs.v2561_1 then
     ss_1 = (new_table(0))
   end
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ss_1
   temp_0.walkEffectTypes = temp_2
   temp_0 = slot_1.settings
   regs.v2636_1 = slot_0
@@ -90993,8 +88499,7 @@ protos[1510] = function(upvalues)
   if not regs.v2673_1 then
     ss_1 = 0.22
   end
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ss_1
   temp_0.walkStepInterval = temp_2
   temp_0 = slot_1.settings
   regs.v2752_1 = slot_0
@@ -91007,8 +88512,7 @@ protos[1510] = function(upvalues)
   if not regs.v2789_1 then
     ss_1 = false
   end
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ss_1
   temp_0.movementEffectsEnabled = temp_2
   temp_0 = slot_1.settings
   temp_1 = "movementEffectTypes"
@@ -91022,8 +88526,7 @@ protos[1510] = function(upvalues)
   if not regs.v2905_1 then
     ss_1 = (new_table(0))
   end
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ss_1
   temp_0.movementEffectTypes = temp_2
   regs.v2955_1 = env.pairs
   regs.v2970_1 = (cell_get(upvalues[3])).colors
@@ -91038,8 +88541,7 @@ protos[1510] = function(upvalues)
     temp_6 = temp_3
     ss_2 = (cell_get(upvalues[5]))
     ss_3 = temp_4
-    ss_0 = ss_2(ss_3)
-    temp_7 = ss_0
+    temp_7 = (ss_2(ss_3))
     temp_5[temp_6] = temp_7
   end
   regs.v3175_1 = env.pairs
@@ -91053,9 +88555,7 @@ protos[1510] = function(upvalues)
     temp_2 = temp_3
     temp_5 = slot_1.toggles
     temp_6 = temp_3
-    ss_2 = temp_4.get
-    ss_0 = ss_2()
-    temp_7 = ss_0
+    temp_7 = (temp_4.get())
     temp_5[temp_6] = temp_7
   end
   regs.v3396_1 = env.pairs
@@ -91069,9 +88569,7 @@ protos[1510] = function(upvalues)
     temp_2 = temp_3
     temp_5 = slot_1.sliders
     temp_6 = temp_3
-    ss_2 = temp_4.get
-    ss_0 = ss_2()
-    temp_7 = ss_0
+    temp_7 = (temp_4.get())
     temp_5[temp_6] = temp_7
   end
   regs.v3617_1 = env.pairs
@@ -91088,8 +88586,7 @@ protos[1510] = function(upvalues)
     regs.v3800_1 = __loopValue_1510_4.get
     ss_2 = regs.v3784_1
     ss_4 = regs.v3800_1
-    ss_0 = ss_2(ss_4())
-    temp_7 = ss_0
+    temp_7 = (ss_2(ss_4()))
     temp_5[temp_6] = temp_7
   end
   regs.v3849_1 = env.pairs
@@ -91104,9 +88601,7 @@ protos[1510] = function(upvalues)
     slot_22 = __loopValue_1510_5
     temp_5 = slot_1.dropdowns
     temp_6 = slot_21
-    ss_2 = slot_22.get
-    ss_0 = ss_2()
-    temp_7 = ss_0
+    temp_7 = (slot_22.get())
     temp_5[temp_6] = temp_7
   end
   regs.v4070_1 = env.pairs
@@ -91121,9 +88616,7 @@ protos[1510] = function(upvalues)
     slot_24 = __loopValue_1510_6
     temp_5 = slot_1.keybinds
     temp_6 = slot_23
-    ss_2 = slot_24.get
-    ss_0 = ss_2()
-    temp_7 = ss_0
+    temp_7 = (slot_24.get())
     temp_5[temp_6] = temp_7
   end
   regs.v4291_1 = env.pairs
@@ -91138,9 +88631,7 @@ protos[1510] = function(upvalues)
     slot_26 = __loopValue_1510_7
     temp_5 = slot_1.textboxes
     temp_6 = slot_25
-    ss_2 = slot_26.get
-    ss_0 = ss_2()
-    temp_7 = ss_0
+    temp_7 = (slot_26.get())
     temp_5[temp_6] = temp_7
   end
   regs.v4520_1 = (cell_get(upvalues[1])).musicPlayer
@@ -91191,8 +88682,7 @@ protos[1511] = function(upvalues)
   slot_1 = (slot_0.getCurrentlyAppliedId())
   slot_2 = nil
   if slot_1 then
-    ss_0 = (slot_0.getAllAnimations()) or ((new_table(0)))
-    slot_3 = ss_0
+    slot_3 = ((slot_0.getAllAnimations()) or ((new_table(0))))
     ss_2 = env.ipairs
     ss_0, ss_1, ss_2 = ss_2(slot_3)
     temp_0, temp_1, temp_2 = ss_0, ss_1, ss_2
@@ -91210,14 +88700,9 @@ protos[1511] = function(upvalues)
       slot_2 = slot_5.name
     end
   end
-  ss_0 = slot_0.getMappingFilters and ((slot_0.getMappingFilters()))
-  ss_0 = ss_0 or ((new_table(0)))
-  slot_6 = ss_0
-  ss_0 = slot_0.getAppliedIds and ((slot_0.getAppliedIds()))
-  ss_0 = ss_0 or ((new_table(0)))
-  slot_7 = ss_0
-  ss_0 = slot_0.getKnownNames and ((slot_0.getKnownNames()))
-  ss_0 = ss_0 or ((new_table(0)))
+  slot_6 = ((slot_0.getMappingFilters and ((slot_0.getMappingFilters()))) or ((new_table(0))))
+  slot_7 = ((slot_0.getAppliedIds and ((slot_0.getAppliedIds()))) or ((new_table(0))))
+  ss_0 = (slot_0.getKnownNames and ((slot_0.getKnownNames()))) or ((new_table(0)))
   v683_1 = new_table(0)
   v701_1 = slot_0.getEnabled()
   v683_1.enabled = v701_1
@@ -91260,8 +88745,7 @@ protos[1512] = function(upvalues)
     v340_1 = slot_4.enabled
     ss_1 = v324_1
     ss_2 = "enabled"
-    ss_3 = v340_1 and (true)
-    ss_3 = ss_3 or (false)
+    ss_3 = (v340_1 and (true)) or (false)
     ss_1[ss_2] = ss_3
     v432_1 = slot_4.color
     ss_1.color = v432_1
@@ -91269,8 +88753,7 @@ protos[1512] = function(upvalues)
     ss_1.shape = v449_1
     v466_1 = slot_4.drag
     ss_2 = "drag"
-    ss_3 = v466_1 and (true)
-    ss_3 = ss_3 or (false)
+    ss_3 = (v466_1 and (true)) or (false)
     ss_1[ss_2] = ss_3
     v535_1 = slot_4.size
     ss_1.size = v535_1
@@ -91280,23 +88763,19 @@ protos[1512] = function(upvalues)
     ss_1.textSize = v569_1
     v586_1 = slot_4.glow
     ss_2 = "glow"
-    ss_3 = v586_1 and (true)
-    ss_3 = ss_3 or (false)
+    ss_3 = (v586_1 and (true)) or (false)
     ss_1[ss_2] = ss_3
     v655_1 = slot_4.hideInMenu
     ss_2 = "hideInMenu"
-    ss_3 = v655_1 and (true)
-    ss_3 = ss_3 or (false)
+    ss_3 = (v655_1 and (true)) or (false)
     ss_1[ss_2] = ss_3
     v724_1 = slot_4.holdOnMove
     ss_2 = "holdOnMove"
-    ss_3 = v724_1 and (true)
-    ss_3 = ss_3 or (false)
+    ss_3 = (v724_1 and (true)) or (false)
     ss_1[ss_2] = ss_3
     v793_1 = slot_4.loop
     ss_2 = "loop"
-    ss_3 = v793_1 and (true)
-    ss_3 = ss_3 or (false)
+    ss_3 = (v793_1 and (true)) or (false)
     ss_1[ss_2] = ss_3
     v862_1 = slot_4.px
     ss_1.px = v862_1
@@ -91313,7 +88792,7 @@ protos[1512] = function(upvalues)
 end
 
 protos[1513] = function(upvalues)
-  local slot_0, slot_2, ss_0, ss_1, v112_1, v127_1, v38_1
+  local slot_0, slot_2, ss_0, ss_1, v112_1, v127_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = (cell_get(upvalues[1])).skinch
   ss_0 = slot_0 and slot_0.getSelected
@@ -91322,15 +88801,12 @@ protos[1513] = function(upvalues)
     v127_1 = slot_0.getSelected
     ss_0, ss_1 = v112_1(v127_1)
     slot_2 = ss_1
-    ss_0 = ss_0 and ((((env["type"](slot_2)) == "table")))
-    if ss_0 then
+    if (ss_0 and ((((env["type"](slot_2)) == "table")))) then
       return slot_2
     end
-    v38_1 = new_table(0)
-    return v38_1
+    return (new_table(0))
   end
-  v38_1 = new_table(0)
-  return v38_1
+  return (new_table(0))
 end
 
 protos[1514] = function(upvalues, argument_1)
@@ -91384,9 +88860,7 @@ protos[1515] = function(upvalues)
   ss_0 = (cell_get(upvalues[3])).visualsBackend and (cell_get(upvalues[3])).visualsBackend.ESPConfig
   slot_2 = new_cell()
   slot_2 = cell_set_or_create(slot_2, ss_0)
-  ss_0 = (cell_get(slot_2)) and (cell_get(upvalues[3])).visualsBackend
-  ss_0 = ss_0 and (cell_get(upvalues[3])).visualsBackend.Shaders
-  if ss_0 then
+  if (((cell_get(slot_2)) and (cell_get(upvalues[3])).visualsBackend) and (cell_get(upvalues[3])).visualsBackend.Shaders) then
     v395_1 = env.task.defer
     v396_1 = closure(1531, {capture_2(), upvalues[3]})
     v395_1(v396_1)
@@ -91394,15 +88868,12 @@ protos[1515] = function(upvalues)
   v289_1 = (cell_get(upvalues[3])).feAnimsSearcher
   slot_3 = new_cell()
   slot_3 = cell_set_or_create(slot_3, v289_1)
-  ss_0 = (cell_get(slot_3)) and (cell_get(slot_3)).getEnabled
-  ss_0 = ss_0 and (cell_get(upvalues[1])).feAnims
-  if ss_0 then
+  if (((cell_get(slot_3)) and (cell_get(slot_3)).getEnabled) and (cell_get(upvalues[1])).feAnims) then
     v506_1 = env.task.defer
     v507_1 = closure(1534, {capture_3(), upvalues[1]})
     v506_1(v507_1)
   end
-  ss_0 = (cell_get(upvalues[3])).skinch and (cell_get(upvalues[3])).skinch.restore
-  if ss_0 then
+  if ((cell_get(upvalues[3])).skinch and (cell_get(upvalues[3])).skinch.restore) then
     v606_1 = env.task.defer
     v607_1 = closure(1540, {upvalues[3], upvalues[1]})
     v606_1(v607_1)
@@ -91410,9 +88881,7 @@ protos[1515] = function(upvalues)
   v532_1 = (cell_get(upvalues[3])).feEmoteManager
   slot_4 = new_cell()
   slot_4 = cell_set_or_create(slot_4, v532_1)
-  ss_0 = (cell_get(slot_4)) and (cell_get(slot_4)).setButtonConfigs
-  ss_0 = ss_0 and (cell_get(upvalues[1])).feEmotes
-  v681_1 = ss_0
+  v681_1 = (((cell_get(slot_4)) and (cell_get(slot_4)).setButtonConfigs) and (cell_get(upvalues[1])).feEmotes)
   ss_0 = v681_1
   if v681_1 then
     v693_1 = env["type"]
@@ -91477,8 +88946,7 @@ protos[1516] = function(upvalues)
       ss_3 = regs.v391_1
       ss_4 = 0.5
       ss_5 = 2
-      ss_0 = ss_2(ss_3, ss_4, ss_5)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4, ss_5))
       temp_0.uiScale = temp_2
     end
     if (cell_get(upvalues[3])).mainScale then
@@ -91490,8 +88958,7 @@ protos[1516] = function(upvalues)
       ss_3 = v514_1 or (1)
       ss_4 = 0.5
       ss_5 = 2
-      ss_0 = ss_2(ss_3, ss_4, ss_5)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4, ss_5))
       temp_0.Scale = temp_2
     end
     v454_1 = (cell_get(upvalues[1])).settings.language
@@ -91529,8 +88996,7 @@ protos[1516] = function(upvalues)
         temp_6 = slot_2
         ss_2 = (cell_get(upvalues[5]))
         ss_3 = slot_3
-        ss_0 = ss_2(ss_3)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3))
         temp_5[temp_6] = temp_7
       end
     end
@@ -91565,8 +89031,7 @@ protos[1516] = function(upvalues)
       v1390_1 = (cell_get(upvalues[7])).toggles[temp_3]
       slot_8 = nil
       slot_8 = v1390_1
-      ss_0 = slot_8 and slot_8.set
-      if ss_0 then
+      if (slot_8 and slot_8.set) then
         v1512_1 = env.pcall
         v1527_1 = slot_8.set
         v1512_1(v1527_1, slot_7)
@@ -91595,8 +89060,7 @@ protos[1516] = function(upvalues)
       v1762_1 = (cell_get(upvalues[7])).sliders[temp_3]
       slot_12 = nil
       slot_12 = v1762_1
-      ss_0 = slot_12 and slot_12.set
-      if ss_0 then
+      if (slot_12 and slot_12.set) then
         v1884_1 = env.pcall
         v1899_1 = slot_12.set
         v1884_1(v1899_1, slot_11)
@@ -91622,8 +89086,7 @@ protos[1516] = function(upvalues)
       v2119_1 = (cell_get(upvalues[7])).colorpickers[temp_3]
       slot_15 = nil
       slot_15 = v2119_1
-      ss_0 = slot_15 and slot_15.set
-      if ss_0 then
+      if (slot_15 and slot_15.set) then
         v2192_1 = env.pcall
         v2207_1 = slot_15.set
         v2209_1 = cell_get(upvalues[5])
@@ -91649,8 +89112,7 @@ protos[1516] = function(upvalues)
       v2411_1 = (cell_get(upvalues[7])).keybinds[temp_3]
       slot_18 = nil
       slot_18 = v2411_1
-      ss_0 = slot_18 and slot_18.set
-      if ss_0 then
+      if (slot_18 and slot_18.set) then
         v2484_1 = env.pcall
         v2499_1 = slot_18.set
         v2484_1(v2499_1, slot_17)
@@ -91671,8 +89133,7 @@ protos[1516] = function(upvalues)
       regs.v2709_1 = (cell_get(upvalues[7])).textboxes[temp_3]
       slot_21 = nil
       slot_21 = regs.v2709_1
-      ss_0 = slot_21 and slot_21.set
-      if ss_0 then
+      if (slot_21 and slot_21.set) then
         regs.v2782_1 = env.pcall
         regs.v2797_1 = slot_21.set
         regs.v2782_1(regs.v2797_1, slot_20)
@@ -91696,8 +89157,7 @@ protos[1516] = function(upvalues)
       regs.v3022_1 = (cell_get(upvalues[7])).dropdowns[temp_3]
       slot_25 = nil
       slot_25 = regs.v3022_1
-      ss_0 = slot_25 and slot_25.set
-      if ss_0 then
+      if (slot_25 and slot_25.set) then
         regs.v3144_1 = env.pcall
         regs.v3159_1 = slot_25.set
         regs.v3144_1(regs.v3159_1, slot_24)
@@ -91713,19 +89173,13 @@ protos[1516] = function(upvalues)
   regs.v2824_1()
   if (cell_get(upvalues[1])).tracerFx then
     temp_0 = (cell_get(upvalues[8]))._TracerFx
-    ss_1 = (cell_get(upvalues[1])).tracerFx.enabled and (true)
-    ss_1 = ss_1 or (false)
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[1])).tracerFx.enabled and (true)) or (false)))
     temp_0.Enabled = temp_2
     temp_0 = (cell_get(upvalues[8]))._TracerFx
     temp_1 = "Style"
-    ss_1 = (cell_get(upvalues[1])).tracerFx.style or ("None")
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((cell_get(upvalues[1])).tracerFx.style or ("None")))
     temp_0.Style = temp_2
-    ss_0 = (cell_get(upvalues[3])).tracerFxDropdown and (cell_get(upvalues[8]))._TracerEffects
-    if ss_0 then
+    if ((cell_get(upvalues[3])).tracerFxDropdown and (cell_get(upvalues[8]))._TracerEffects) then
       regs.v3535_1 = env.pcall
       regs.v3540_1 = closure(1519, {upvalues[3], upvalues[8]})
       regs.v3535_1(regs.v3540_1)
@@ -91733,8 +89187,7 @@ protos[1516] = function(upvalues)
     regs.v3477_1 = (cell_get(upvalues[7])).toggles["Visuals/enable_tracer_fx"]
     slot_26 = nil
     slot_26 = regs.v3477_1
-    ss_0 = slot_26 and slot_26.set
-    if ss_0 then
+    if (slot_26 and slot_26.set) then
       regs.v3592_1 = env.pcall
       regs.v3607_1 = slot_26.set
       regs.v3624_1 = (cell_get(upvalues[8]))._TracerFx.Enabled
@@ -91742,13 +89195,10 @@ protos[1516] = function(upvalues)
     end
   end
   if (cell_get(upvalues[1])).movementFx then
-    ss_0 = (cell_get(upvalues[1])).movementFx.enabled and (true)
-    ss_0 = ss_0 or (false)
-    slot_27 = ss_0
+    slot_27 = (((cell_get(upvalues[1])).movementFx.enabled and (true)) or (false))
     regs.v3789_1 = env["type"]
     regs.v3810_1 = (cell_get(upvalues[1])).movementFx.types
-    ss_0 = (((regs.v3789_1(regs.v3810_1)) == "table")) and (cell_get(upvalues[1])).movementFx.types
-    ss_0 = ss_0 or ((new_table(0)))
+    ss_0 = ((((regs.v3789_1(regs.v3810_1)) == "table")) and (cell_get(upvalues[1])).movementFx.types) or ((new_table(0)))
     slot_28 = new_cell()
     slot_28 = cell_set_or_create(slot_28, ss_0)
     cell_get(upvalues[8])._MovementFx.Enabled = slot_27
@@ -91756,8 +89206,7 @@ protos[1516] = function(upvalues)
     temp_1 = "Types"
     temp_2 = (cell_get(slot_28))
     temp_0.Types = temp_2
-    ss_0 = (cell_get(upvalues[3])).visualsBackend and (cell_get(upvalues[3])).visualsBackend.ESPConfig
-    slot_29 = ss_0
+    slot_29 = ((cell_get(upvalues[3])).visualsBackend and (cell_get(upvalues[3])).visualsBackend.ESPConfig)
     if slot_29 then
       slot_29.MovementEffectsEnabled = slot_27
       temp_0 = slot_29
@@ -91768,14 +89217,12 @@ protos[1516] = function(upvalues)
     regs.v4101_1 = (cell_get(upvalues[7])).toggles["Visuals/enable_movement_effects"]
     slot_30 = nil
     slot_30 = regs.v4101_1
-    ss_0 = slot_30 and slot_30.set
-    if ss_0 then
+    if (slot_30 and slot_30.set) then
       regs.v4289_1 = env.pcall
       regs.v4304_1 = slot_30.set
       regs.v4289_1(regs.v4304_1, slot_27)
     end
-    ss_0 = (cell_get(upvalues[3])).movementFxDropdown and (cell_get(upvalues[8]))._MovementEffects
-    if ss_0 then
+    if ((cell_get(upvalues[3])).movementFxDropdown and (cell_get(upvalues[8]))._MovementEffects) then
       regs.v4372_1 = env.pcall
       regs.v4377_1 = closure(1520, {upvalues[3], upvalues[8], capture_28()})
       regs.v4372_1(regs.v4377_1)
@@ -91794,13 +89241,10 @@ protos[1516] = function(upvalues)
   else
     ss_0 = (cell_get(upvalues[1])).settings and ((((cell_get(upvalues[1])).settings.movementEffectsEnabled ~= nil)))
     if ss_0 then
-      ss_0 = (cell_get(upvalues[1])).settings.movementEffectsEnabled and (true)
-      ss_0 = ss_0 or (false)
-      slot_31 = ss_0
+      slot_31 = (((cell_get(upvalues[1])).settings.movementEffectsEnabled and (true)) or (false))
       regs.v4593_1 = env["type"]
       regs.v4614_1 = (cell_get(upvalues[1])).settings.movementEffectTypes
-      ss_0 = (((regs.v4593_1(regs.v4614_1)) == "table")) and (cell_get(upvalues[1])).settings.movementEffectTypes
-      ss_0 = ss_0 or ((new_table(0)))
+      ss_0 = ((((regs.v4593_1(regs.v4614_1)) == "table")) and (cell_get(upvalues[1])).settings.movementEffectTypes) or ((new_table(0)))
       slot_32 = new_cell()
       slot_32 = cell_set_or_create(slot_32, ss_0)
       cell_get(upvalues[8])._MovementFx.Enabled = slot_31
@@ -91808,8 +89252,7 @@ protos[1516] = function(upvalues)
       temp_1 = "Types"
       temp_2 = (cell_get(slot_32))
       temp_0.Types = temp_2
-      ss_0 = (cell_get(upvalues[3])).visualsBackend and (cell_get(upvalues[3])).visualsBackend.ESPConfig
-      slot_33 = ss_0
+      slot_33 = ((cell_get(upvalues[3])).visualsBackend and (cell_get(upvalues[3])).visualsBackend.ESPConfig)
       if slot_33 then
         slot_33.MovementEffectsEnabled = slot_31
         temp_0 = slot_33
@@ -91835,8 +89278,7 @@ protos[1516] = function(upvalues)
   regs.v3662_1 = (cell_get(upvalues[3])).visualsBackend
   slot_34 = new_cell()
   slot_34 = cell_set_or_create(slot_34, regs.v3662_1)
-  ss_0 = (cell_get(slot_34)) and (cell_get(slot_34)).ESPConfig
-  if ss_0 then
+  if ((cell_get(slot_34)) and (cell_get(slot_34)).ESPConfig) then
     if (cell_get(upvalues[1])).settings then
       if (((cell_get(upvalues[1])).settings.jumpEffectEnabled ~= nil)) then
         temp_0 = (cell_get(slot_34)).ESPConfig
@@ -91851,8 +89293,7 @@ protos[1516] = function(upvalues)
         regs.v5361_1 = (cell_get(upvalues[7])).toggles["Visuals/enable_jump_effect"]
         slot_35 = nil
         slot_35 = regs.v5361_1
-        ss_0 = slot_35 and slot_35.set
-        if ss_0 then
+        if (slot_35 and slot_35.set) then
           regs.v5469_1 = env.pcall
           regs.v5484_1 = slot_35.set
           regs.v5501_1 = (cell_get(upvalues[1])).settings.jumpEffectEnabled
@@ -91871,8 +89312,7 @@ protos[1516] = function(upvalues)
           regs.v5689_1 = (cell_get(upvalues[1])).settings.jumpEffectTypes
           regs.v5672_1(regs.v5689_1)
         end
-        ss_0 = (cell_get(upvalues[3])).jumpFxDropdown and (cell_get(slot_34)).JumpEffects
-        if ss_0 then
+        if ((cell_get(upvalues[3])).jumpFxDropdown and (cell_get(slot_34)).JumpEffects) then
           regs.v5737_1 = env.pcall
           regs.v5742_1 = closure(1527, {upvalues[3], capture_34(), upvalues[1]})
           regs.v5737_1(regs.v5742_1)
@@ -91891,8 +89331,7 @@ protos[1516] = function(upvalues)
         regs.v5910_1 = (cell_get(upvalues[7])).toggles["Visuals/enable_walk_effect"]
         slot_36 = nil
         slot_36 = regs.v5910_1
-        ss_0 = slot_36 and slot_36.set
-        if ss_0 then
+        if (slot_36 and slot_36.set) then
           regs.v6018_1 = env.pcall
           regs.v6033_1 = slot_36.set
           regs.v6050_1 = (cell_get(upvalues[1])).settings.walkEffectEnabled
@@ -91911,8 +89350,7 @@ protos[1516] = function(upvalues)
           regs.v6238_1 = (cell_get(upvalues[1])).settings.walkEffectTypes
           regs.v6221_1(regs.v6238_1)
         end
-        ss_0 = (cell_get(upvalues[3])).walkFxDropdown and (cell_get(slot_34)).WalkEffects
-        if ss_0 then
+        if ((cell_get(upvalues[3])).walkFxDropdown and (cell_get(slot_34)).WalkEffects) then
           regs.v6286_1 = env.pcall
           regs.v6291_1 = closure(1528, {upvalues[3], capture_34(), upvalues[1]})
           regs.v6286_1(regs.v6291_1)
@@ -91927,33 +89365,25 @@ protos[1516] = function(upvalues)
     end
     if (cell_get(upvalues[1])).shaders then
       temp_0 = (cell_get(slot_34)).ESPConfig
-      ss_1 = (cell_get(upvalues[1])).shaders.enabled and (true)
-      ss_1 = ss_1 or (false)
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((cell_get(upvalues[1])).shaders.enabled and (true)) or (false)))
       temp_0.ShadersEnabled = temp_2
       temp_0 = (cell_get(slot_34)).ESPConfig
       temp_1 = "ShadersPreset"
-      ss_1 = (cell_get(upvalues[1])).shaders.preset or ("Night")
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = (((cell_get(upvalues[1])).shaders.preset or ("Night")))
       temp_0.ShadersPreset = temp_2
-      ss_0 = (cell_get(upvalues[3])).presetDropdown and (cell_get(slot_34)).Shaders
-      if ss_0 then
+      if ((cell_get(upvalues[3])).presetDropdown and (cell_get(slot_34)).Shaders) then
         regs.v6688_1 = env.pcall
         regs.v6693_1 = closure(1529, {upvalues[3], capture_34()})
         regs.v6688_1(regs.v6693_1)
       end
     else
-      ss_0 = (cell_get(upvalues[1])).settings and ((((cell_get(upvalues[1])).settings.shadersEnabled ~= nil)))
-      if ss_0 then
+      if ((cell_get(upvalues[1])).settings and ((((cell_get(upvalues[1])).settings.shadersEnabled ~= nil)))) then
         temp_0 = (cell_get(slot_34)).ESPConfig
         temp_1 = "ShadersEnabled"
         temp_2 = (cell_get(upvalues[1])).settings.shadersEnabled
         temp_0.ShadersEnabled = temp_2
       end
-      ss_0 = (cell_get(upvalues[1])).settings and (cell_get(upvalues[1])).settings.shadersPreset
-      if ss_0 then
+      if ((cell_get(upvalues[1])).settings and (cell_get(upvalues[1])).settings.shadersPreset) then
         temp_0 = (cell_get(slot_34)).ESPConfig
         temp_1 = "ShadersPreset"
         temp_2 = (cell_get(upvalues[1])).settings.shadersPreset
@@ -91961,9 +89391,7 @@ protos[1516] = function(upvalues)
       end
     end
   end
-  ss_0 = (cell_get(upvalues[1])).music and (cell_get(upvalues[3])).musicPlayer
-  ss_0 = ss_0 and (cell_get(upvalues[3])).musicPlayer.applySettings
-  if ss_0 then
+  if (((cell_get(upvalues[1])).music and (cell_get(upvalues[3])).musicPlayer) and (cell_get(upvalues[3])).musicPlayer.applySettings) then
     regs.v7054_1 = env.pcall
     regs.v7075_1 = (cell_get(upvalues[3])).musicPlayer.applySettings
     regs.v7086_1 = (cell_get(upvalues[1])).music
@@ -92046,10 +89474,7 @@ protos[1517] = function(upvalues, argument_1, argument_2)
         temp_2 = __loopKey_1517_3
         slot_2 = __loopKey_1517_3
         slot_3 = __loopValue_1517_3
-        ss_0 = slot_0.ButtonPositions[slot_2] and ((((env["type"](slot_3)) == "table")))
-        ss_0 = ss_0 and slot_3.X
-        ss_0 = ss_0 and slot_3.Y
-        if ss_0 then
+        if (((slot_0.ButtonPositions[slot_2] and ((((env["type"](slot_3)) == "table")))) and slot_3.X) and slot_3.Y) then
           temp_5 = slot_0.ButtonPositions
           temp_6 = slot_2
           v469_1 = env.UDim2.new
@@ -92062,8 +89487,7 @@ protos[1517] = function(upvalues, argument_1, argument_2)
           ss_4 = v503_1
           ss_5 = v520_1
           ss_6 = v537_1
-          ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4, ss_5, ss_6))
           temp_5[temp_6] = temp_7
         end
       end
@@ -92129,8 +89553,7 @@ protos[1517] = function(upvalues, argument_1, argument_2)
                   slot_11 = slot_0.ButtonNameMap[__loopKey_1517_2]
                   if slot_11 then
                     slot_12 = (slot_8:FindFirstChild(slot_11, true))
-                    ss_0 = slot_12 and ((slot_12:IsA("GuiObject")))
-                    if ss_0 then
+                    if (slot_12 and ((slot_12:IsA("GuiObject")))) then
                       slot_12.Position = slot_10
                     end
                   end
@@ -92309,20 +89732,17 @@ protos[1534] = function(upvalues)
   v2_1 = env.pcall
   v7_1 = closure(1535, {upvalues[1]})
   v2_1(v7_1)
-  ss_0 = (cell_get(upvalues[2])).feAnims.filters and (cell_get(upvalues[1])).setMappingFilters
-  if ss_0 then
+  if ((cell_get(upvalues[2])).feAnims.filters and (cell_get(upvalues[1])).setMappingFilters) then
     v150_1 = env.pcall
     v155_1 = closure(1536, {upvalues[1], upvalues[2]})
     v150_1(v155_1)
   end
   v55_1 = (cell_get(upvalues[1])).setEnabled
-  ss_2 = (cell_get(upvalues[2])).feAnims.enabled and (true)
-  ss_2 = ss_2 or (false)
+  ss_2 = ((cell_get(upvalues[2])).feAnims.enabled and (true)) or (false)
   v55_1(ss_2)
   v218_1 = env["type"]
   v239_1 = (cell_get(upvalues[2])).feAnims.ids
-  ss_0 = (((v218_1(v239_1)) == "table")) and (cell_get(upvalues[2])).feAnims.ids
-  ss_0 = ss_0 or ((new_table(0)))
+  ss_0 = ((((v218_1(v239_1)) == "table")) and (cell_get(upvalues[2])).feAnims.ids) or ((new_table(0)))
   slot_0 = new_cell()
   slot_0 = cell_set_or_create(slot_0, ss_0)
   v325_1 = cell_get(slot_0)
@@ -92438,8 +89858,7 @@ protos[1541] = function(upvalues)
     v231_1 = slot_2.enabled
     ss_1 = v215_1
     ss_2 = "enabled"
-    ss_3 = v231_1 and (true)
-    ss_3 = ss_3 or (false)
+    ss_3 = (v231_1 and (true)) or (false)
     ss_1[ss_2] = ss_3
     v326_1 = slot_2.color
     ss_1.color = v326_1
@@ -92449,8 +89868,7 @@ protos[1541] = function(upvalues)
     ss_1[ss_2] = ss_3
     v386_1 = slot_2.drag
     ss_2 = "drag"
-    ss_3 = v386_1 and (true)
-    ss_3 = ss_3 or (false)
+    ss_3 = (v386_1 and (true)) or (false)
     ss_1[ss_2] = ss_3
     v455_1 = slot_2.size
     ss_2 = "size"
@@ -92468,8 +89886,7 @@ protos[1541] = function(upvalues)
     ss_1.glow = v590_1
     v611_1 = slot_2.hideInMenu
     ss_2 = "hideInMenu"
-    ss_3 = v611_1 and (true)
-    ss_3 = ss_3 or (false)
+    ss_3 = (v611_1 and (true)) or (false)
     ss_1[ss_2] = ss_3
     v686_1 = (slot_2.holdOnMove == true)
     ss_1.holdOnMove = v686_1
@@ -92537,8 +89954,7 @@ protos[1545] = function(upvalues)
         slot_0 = new_cell()
         slot_0 = cell_set_or_create(slot_0, ss_0)
         v171_1 = cell_get(slot_0)
-        ss_0 = (not v171_1) or ((((cell_get(slot_0)) == "—")))
-        ss_0 = ss_0 or ((((cell_get(slot_0)) == "")))
+        ss_0 = ((not v171_1) or ((((cell_get(slot_0)) == "—")))) or ((((cell_get(slot_0)) == "")))
         if not ss_0 then
           if (cell_get(upvalues[1])).autoSaveTimer then
             v363_1 = env.pcall
@@ -96143,8 +93559,7 @@ protos[1563] = function(upvalues, argument_1)
         for __loopKey_1563_0, __loopValue_1563_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
           slot_2 = __loopKey_1563_0
           slot_3 = __loopValue_1563_0
-          ss_0 = ((slot_3.nameKey == "enable_custom_gun_skin")) and slot_3.set
-          if ss_0 then
+          if (((slot_3.nameKey == "enable_custom_gun_skin")) and slot_3.set) then
             v509_1 = env.pcall
             v524_1 = slot_3.set
             v509_1(v524_1, false)
@@ -96197,8 +93612,7 @@ protos[1566] = function(upvalues, argument_1)
         for __loopKey_1566_0, __loopValue_1566_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
           slot_2 = __loopKey_1566_0
           slot_3 = __loopValue_1566_0
-          ss_0 = ((slot_3.nameKey == "dual_gun")) and slot_3.set
-          if ss_0 then
+          if (((slot_3.nameKey == "dual_gun")) and slot_3.set) then
             v476_1 = env.pcall
             v491_1 = slot_3.set
             v476_1(v491_1, false)
@@ -96240,8 +93654,7 @@ protos[1569] = function(upvalues, argument_1)
   local slot_0, slot_1, ss_0, temp_0
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = (cell_get(upvalues[1]))._TracerEffects and (((cell_get(upvalues[1]))._TracerEffects.keyForDisplay(slot_0)))
-  ss_0 = ss_0 or ("None")
+  ss_0 = ((cell_get(upvalues[1]))._TracerEffects and (((cell_get(upvalues[1]))._TracerEffects.keyForDisplay(slot_0)))) or ("None")
   temp_0 = (cell_get(upvalues[1]))._TracerFx
   temp_0.Style = ss_0
   return
@@ -96840,8 +94253,7 @@ protos[1615] = function(upvalues, argument_1)
   slot_0 = argument_1
   temp_0 = (cell_get(upvalues[1])).ESPConfig
   v44_1 = (cell_get(upvalues[2]))("flick_mode_camera")
-  ss_1 = ((slot_0 == v44_1)) and ("camera")
-  ss_1 = ss_1 or ("character")
+  ss_1 = (((slot_0 == v44_1)) and ("camera")) or ("character")
   temp_0.FlickShotMode = ss_1
   return
 end
@@ -96874,8 +94286,7 @@ protos[1617] = function(upvalues, argument_1)
   for __loopKey_1617_0, __loopValue_1617_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_1 = __loopKey_1617_0
     slot_2 = __loopValue_1617_0
-    ss_0 = slot_2 and slot_2.Parent
-    if ss_0 then
+    if (slot_2 and slot_2.Parent) then
       if slot_0 then
         if slot_2.Visible then
           slot_2.Visible = false
@@ -96885,8 +94296,7 @@ protos[1617] = function(upvalues, argument_1)
           ss_4 = 0
           ss_5 = 0
           ss_6 = 0
-          ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4, ss_5, ss_6))
           temp_5.Size = temp_7
         end
       else
@@ -96897,8 +94307,7 @@ protos[1617] = function(upvalues, argument_1)
         ss_4 = 0
         ss_5 = 0
         ss_6 = 60
-        ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3, ss_4, ss_5, ss_6))
         temp_5.Size = temp_7
       end
     end
@@ -97296,8 +94705,7 @@ protos[1649] = function(upvalues, argument_1)
       for __loopKey_1649_0, __loopValue_1649_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
         slot_5 = __loopKey_1649_0
         slot_6 = __loopValue_1649_0
-        ss_0 = (slot_6:IsA("BasePart")) and ((((cell_get(upvalues[3]))[slot_6] ~= nil)))
-        if ss_0 then
+        if ((slot_6:IsA("BasePart")) and ((((cell_get(upvalues[3]))[slot_6] ~= nil)))) then
           temp_5 = slot_6
           temp_6 = "CanCollide"
           temp_7 = (cell_get(upvalues[3]))[slot_6]
@@ -97511,19 +94919,14 @@ protos[1662] = function(upvalues, argument_1)
   slot_0 = argument_1
   ss_2 = env.tostring
   ss_3 = slot_0 or ("")
-  ss_1 = ss_2(ss_3)
-  v79_1 = ss_1
+  v79_1 = (ss_2(ss_3))
   ss_1 = v79_1.lower
   ss_2 = v79_1
-  ss_0 = ss_1(ss_2)
-  slot_1 = ss_0
+  slot_1 = (ss_1(ss_2))
   v115_1 = (cell_get(upvalues[1]))("spin_mode_camera")
-  ss_0 = ((slot_0 == v115_1)) or ((((slot_1:find("камер")) ~= nil)))
-  ss_0 = ss_0 or ((((slot_1:find("camera")) ~= nil)))
+  ss_0 = (((slot_0 == v115_1)) or ((((slot_1:find("камер")) ~= nil)))) or ((((slot_1:find("camera")) ~= nil)))
   temp_0 = (cell_get(upvalues[2])).ESPConfig
-  ss_1 = ss_0 and ("Camera")
-  ss_1 = ss_1 or ("Character")
-  ss_0 = ss_1
+  ss_0 = ((ss_0 and ("Camera")) or ("Character"))
   temp_0.SpinBotMode = ss_0
   if (cell_get(upvalues[2])).ESPConfig.SpinBotEnabled then
     v373_1 = env.pcall
@@ -98219,8 +95622,7 @@ protos[1706] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = 50
   ss_5 = 200
   ss_7 = v76_1
-  ss_8 = v87_1 or (1)
-  ss_8 = ((ss_8 * 100))
+  ss_8 = (((v87_1 or (1)) * 100))
   ss_6 = ss_7(ss_8)
   v174_1 = (slot_3 + 1)
   v179_1 = closure(1707, {capture_1(), upvalues[2], upvalues[3]})
@@ -98237,8 +95639,7 @@ protos[1706] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = 0
   ss_5 = 90
   ss_7 = v237_1
-  ss_8 = v248_1 or (0)
-  ss_8 = ((ss_8 * 100))
+  ss_8 = (((v248_1 or (0)) * 100))
   ss_6 = ss_7(ss_8)
   v300_1 = (slot_3 + 2)
   v305_1 = closure(1708, {capture_1(), upvalues[2], upvalues[3]})
@@ -98278,8 +95679,7 @@ protos[1706] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = 0
   ss_5 = 100
   ss_7 = v557_1
-  ss_8 = v568_1 or (2)
-  ss_8 = ((ss_8 * 10))
+  ss_8 = (((v568_1 or (2)) * 10))
   ss_6 = ss_7(ss_8)
   v620_1 = (slot_3 + 5)
   v625_1 = closure(1712, {capture_1(), upvalues[2], upvalues[3]})
@@ -98484,20 +95884,17 @@ protos[1719] = function(upvalues)
 end
 
 protos[1720] = function(upvalues)
-  local ss_0, v108_1, v176_1, v198_1, v210_1, v226_1, v241_1, v304_1
+  local v108_1, v176_1, v198_1, v210_1, v226_1, v241_1, v304_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])) and (cell_get(upvalues[1])).ResetButtonPositions
-  if ss_0 then
+  if ((cell_get(upvalues[1])) and (cell_get(upvalues[1])).ResetButtonPositions) then
     v108_1 = (cell_get(upvalues[1])).ResetButtonPositions
     v108_1()
   end
-  ss_0 = (cell_get(upvalues[2])) and (cell_get(upvalues[2])).ResetButtonPositions
-  if ss_0 then
+  if ((cell_get(upvalues[2])) and (cell_get(upvalues[2])).ResetButtonPositions) then
     v176_1 = (cell_get(upvalues[2])).ResetButtonPositions
     v176_1()
   end
-  ss_0 = (cell_get(upvalues[3])) and (cell_get(upvalues[3])).ResetButtonPositions
-  if ss_0 then
+  if ((cell_get(upvalues[3])) and (cell_get(upvalues[3])).ResetButtonPositions) then
     v304_1 = (cell_get(upvalues[3])).ResetButtonPositions
     v304_1()
   end
@@ -98583,7 +95980,7 @@ protos[1725] = function(upvalues, argument_1)
 end
 
 protos[1726] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, temp_0, v125_1, v137_1, v153_1, v168_1, v311_1, v323_1, v339_1, v354_1, v381_1, v403_1
+  local slot_0, slot_1, temp_0, v125_1, v137_1, v153_1, v168_1, v311_1, v323_1, v339_1, v354_1, v381_1, v403_1
   local v415_1, v431_1, v446_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -98591,9 +95988,7 @@ protos[1726] = function(upvalues, argument_1)
   temp_0.autoSaveOn = slot_0
   if slot_0 then
     slot_1 = ((cell_get(upvalues[2])).getSelectedConfigName())
-    ss_0 = slot_1 and (((slot_1 ~= "—")))
-    ss_0 = ss_0 and (((slot_1 ~= "")))
-    if ss_0 then
+    if ((slot_1 and (((slot_1 ~= "—")))) and (((slot_1 ~= "")))) then
       v311_1 = (cell_get(upvalues[3])).show
       v323_1 = (cell_get(upvalues[4]))("auto_save_on")
       v339_1 = (cell_get(upvalues[4]))("auto_save_hint")
@@ -98636,11 +96031,7 @@ protos[1727] = function(upvalues)
       v269_1()
     end
     slot_2 = ((cell_get(upvalues[7])).GetValue())
-    ss_0 = slot_1[slot_0] and slot_2
-    ss_0 = ss_0 and (((slot_2 ~= "—")))
-    ss_0 = ss_0 and (((slot_2 ~= "")))
-    ss_0 = ss_0 and (((slot_0 ~= slot_2)))
-    if ss_0 then
+    if ((((slot_1[slot_0] and slot_2) and (((slot_2 ~= "—")))) and (((slot_2 ~= "")))) and (((slot_0 ~= slot_2)))) then
       slot_0 = slot_2
     end
     ss_0 = (cell_get(upvalues[5])).serializeConfig()
@@ -98742,10 +96133,7 @@ protos[1730] = function(upvalues)
   v8_1 = closure(1731, {})
   ss_0, ss_1 = v3_1(v8_1)
   slot_1 = ss_1
-  ss_0 = ss_0 and slot_1
-  ss_0 = ss_0 and slot_1.Name
-  ss_0 = ss_0 or env.game.Name
-  ss_0 = ss_0 or ("Unknown")
+  ss_0 = (((ss_0 and slot_1) and slot_1.Name) or env.game.Name) or ("Unknown")
   v221_1 = env.tostring
   v236_1 = env.game.PlaceId
   v237_1 = v221_1(v236_1)
@@ -98763,12 +96151,11 @@ protos[1731] = function(upvalues)
 end
 
 protos[1732] = function(upvalues)
-  local slot_0, ss_0, v145_1, v157_1, v173_1, v188_1, v241_1, v263_1, v275_1, v297_1
+  local slot_0, v145_1, v157_1, v173_1, v188_1, v241_1, v263_1, v275_1, v297_1
   local v371_1, v388_1, v400_1, v420_1, v452_1, v474_1, v486_1, v506_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = ((cell_get(upvalues[1])).GetValue())
-  ss_0 = (not slot_0) or (((slot_0 == "—")))
-  if ss_0 then
+  if ((not slot_0) or (((slot_0 == "—")))) then
     v145_1 = (cell_get(upvalues[2])).show
     v157_1 = (cell_get(upvalues[3]))("auto_load_failed")
     v173_1 = (cell_get(upvalues[3]))("no_selected")
@@ -98779,8 +96166,7 @@ protos[1732] = function(upvalues)
       v241_1 = (cell_get(upvalues[5])).cancelPendingAutoSave
       v241_1()
     end
-    ss_0 = (cell_get(upvalues[6])).getPlaceAutoLoadName and (((((cell_get(upvalues[6])).getPlaceAutoLoadName()) == slot_0)))
-    if ss_0 then
+    if ((cell_get(upvalues[6])).getPlaceAutoLoadName and (((((cell_get(upvalues[6])).getPlaceAutoLoadName()) == slot_0)))) then
       v371_1 = (cell_get(upvalues[6])).clearPlaceAutoLoad
       v371_1()
       v388_1 = (cell_get(upvalues[2])).show
@@ -99111,13 +96497,11 @@ protos[1757] = function(upvalues)
 end
 
 protos[1758] = function(upvalues, argument_1)
-  local slot_1, ss_0, v1_1, v139_1, v160_1, v165_1, v17_1, v216_1
+  local slot_1, v1_1, v139_1, v160_1, v165_1, v17_1, v216_1
   local vm_frame_random = math.random(0, 2147483646)
   v1_1 = argument_1
   v17_1 = (cell_get(upvalues[1]))("lang_en")
-  ss_0 = ((v1_1 == v17_1)) and ("en")
-  ss_0 = ss_0 or ("ru")
-  slot_1 = ss_0
+  slot_1 = ((((v1_1 == v17_1)) and ("en")) or ("ru"))
   v139_1 = (cell_get(upvalues[2])).current
   if ((slot_1 ~= v139_1)) then
     v160_1 = cell_get(upvalues[2])
@@ -99535,13 +96919,10 @@ protos[1797] = function(upvalues, argument_1)
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   v12_1 = (cell_get(upvalues[1])).show
-  ss_2 = slot_0 and (((cell_get(upvalues[2]))("confirmed")))
-  ss_2 = ss_2 or (((cell_get(upvalues[2]))("cancelled")))
-  ss_3 = slot_0 and (((cell_get(upvalues[2]))("yes")))
-  ss_3 = ss_3 or (((cell_get(upvalues[2]))("no")))
+  ss_2 = (slot_0 and (((cell_get(upvalues[2]))("confirmed")))) or (((cell_get(upvalues[2]))("cancelled")))
+  ss_3 = (slot_0 and (((cell_get(upvalues[2]))("yes")))) or (((cell_get(upvalues[2]))("no")))
   v216_1 = (cell_get(upvalues[3])).Success
-  ss_6 = slot_0 and ("success")
-  ss_6 = ss_6 or ("info")
+  ss_6 = (slot_0 and ("success")) or ("info")
   v12_1(ss_2, ss_3, v216_1, (2), ss_6)
   return
 end
@@ -99655,10 +97036,7 @@ protos[1803] = function(upvalues, argument_1)
   end
   temp_0 = (cell_get(upvalues[1]))
   temp_1 = slot_0
-  ss_1 = (cell_get(upvalues[1]))[slot_0] or (0)
-  ss_1 = ((ss_1 + 1))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((((cell_get(upvalues[1]))[slot_0] or (0)) + 1))))
   temp_0[temp_1] = temp_2
   slot_1 = (cell_get(upvalues[2]))[slot_0]
   if slot_1 then
@@ -99693,8 +97071,7 @@ protos[1803] = function(upvalues, argument_1)
       slot_6 = new_cell()
       slot_5 = __loopKey_1803_0
       slot_6 = cell_set_or_create(slot_6, __loopValue_1803_0)
-      ss_0 = (cell_get(slot_6)).obj and (cell_get(slot_6)).obj.Parent
-      if ss_0 then
+      if ((cell_get(slot_6)).obj and (cell_get(slot_6)).obj.Parent) then
         v677_1 = env.pcall
         v682_1 = closure(1805, {capture_6()})
         v677_1(v682_1)
@@ -99769,10 +97146,7 @@ protos[1806] = function(upvalues, argument_1)
     temp_1 = (cell_get(slot_0))
     v54_1 = cell_get(upvalues[3])
     v59_1 = cell_get(slot_0)
-    ss_1 = v54_1[v59_1] or (0)
-    ss_1 = ((ss_1 + 1))
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((((v54_1[v59_1] or (0)) + 1))))
     temp_0[temp_1] = temp_2
     v199_1 = cell_get(upvalues[3])
     v204_1 = cell_get(slot_0)
@@ -99828,9 +97202,7 @@ protos[1806] = function(upvalues, argument_1)
             v971_1.val = v1009_1
             v965_1(slot_7, v971_1)
           end
-          ss_0 = (slot_9:IsA("TextLabel")) or ((slot_9:IsA("TextBox")))
-          ss_0 = ss_0 or ((slot_9:IsA("TextButton")))
-          if ss_0 then
+          if (((slot_9:IsA("TextLabel")) or ((slot_9:IsA("TextBox")))) or ((slot_9:IsA("TextButton")))) then
             v1146_1 = env.table.insert
             v1152_1 = new_table(0)
             v1152_1.obj = slot_9
@@ -99839,8 +97211,7 @@ protos[1806] = function(upvalues, argument_1)
             v1152_1.val = v1190_1
             v1146_1(slot_7, v1152_1)
           end
-          ss_0 = (slot_9:IsA("ImageLabel")) or ((slot_9:IsA("ImageButton")))
-          if ss_0 then
+          if ((slot_9:IsA("ImageLabel")) or ((slot_9:IsA("ImageButton")))) then
             v1284_1 = env.table.insert
             v1290_1 = new_table(0)
             v1290_1.obj = slot_9
@@ -100035,8 +97406,7 @@ protos[1810] = function(upvalues)
           temp_6 = (cell_get(upvalues[2]))
           v513_1 = cell_get(upvalues[9])
           v518_1 = cell_get(upvalues[2])
-          ss_1 = v513_1[v518_1] or ((new_table(0)))
-          ss_0 = ss_1
+          ss_0 = (v513_1[v518_1] or ((new_table(0))))
           temp_5[temp_6] = ss_0
           v583_1 = env.table.insert
           v584_1 = cell_get(upvalues[9])
@@ -100071,8 +97441,7 @@ protos[1811] = function(upvalues, argument_1)
       temp_2 = __loopKey_1811_1
       slot_1 = __loopKey_1811_1
       slot_2 = __loopValue_1811_1
-      ss_0 = (((env["type"](slot_2)) == "table")) and slot_2.scroll
-      if ss_0 then
+      if ((((env["type"](slot_2)) == "table")) and slot_2.scroll) then
         if ((slot_1 ~= slot_0)) then
           v477_1 = cell_get(upvalues[2])
           v492_1 = slot_2.scroll
@@ -100106,11 +97475,9 @@ protos[1811] = function(upvalues, argument_1)
       ss_5 = v665_1
       ss_6 = v670_1
       ss_7 = "BackgroundTransparency"
-      ss_8 = slot_5 and (0.3)
-      ss_8 = ss_8 or (0.5)
+      ss_8 = (slot_5 and (0.3)) or (0.5)
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v771_1 = ss_1
+      v771_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v771_1.Play
       ss_2 = v771_1
       ss_1(ss_2)
@@ -100125,11 +97492,9 @@ protos[1811] = function(upvalues, argument_1)
       ss_5 = v821_1
       ss_6 = v826_1
       ss_7 = "BackgroundTransparency"
-      ss_8 = slot_5 and (0.35)
-      ss_8 = ss_8 or (0.85)
+      ss_8 = (slot_5 and (0.35)) or (0.85)
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v895_1 = ss_1
+      v895_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v895_1.Play
       ss_2 = v895_1
       ss_1(ss_2)
@@ -100152,8 +97517,7 @@ protos[1811] = function(upvalues, argument_1)
       ss_7 = 1
       ss_8 = v1067_1
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-      ss_0 = ss_2(ss_3)
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3))
       temp_5.Color = temp_7
       temp_5 = slot_4.tabFillGrad
       v1136_1 = slot_5
@@ -100192,8 +97556,7 @@ protos[1811] = function(upvalues, argument_1)
         ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
         ss_1 = ss_2(ss_3)
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.Transparency = temp_7
       v1441_1 = cell_get(upvalues[4])
       v1446_1 = v1441_1.Create
@@ -100206,19 +97569,15 @@ protos[1811] = function(upvalues, argument_1)
       ss_5 = v1479_1
       ss_6 = v1484_1
       ss_7 = "Color"
-      ss_8 = slot_5 and (cell_get(upvalues[5])).colors.accent
-      ss_8 = ss_8 or (cell_get(upvalues[5])).colors.stroke
+      ss_8 = (slot_5 and (cell_get(upvalues[5])).colors.accent) or (cell_get(upvalues[5])).colors.stroke
       ss_6[ss_7] = ss_8
       ss_7 = "Transparency"
-      ss_8 = slot_5 and (0.15)
-      ss_8 = ss_8 or (0.6)
+      ss_8 = (slot_5 and (0.15)) or (0.6)
       ss_6[ss_7] = ss_8
       ss_7 = "Thickness"
-      ss_8 = slot_5 and (1.5)
-      ss_8 = ss_8 or (1)
+      ss_8 = (slot_5 and (1.5)) or (1)
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v1703_1 = ss_1
+      v1703_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v1703_1.Play
       ss_2 = v1703_1
       ss_1(ss_2)
@@ -100233,11 +97592,9 @@ protos[1811] = function(upvalues, argument_1)
       ss_5 = v1753_1
       ss_6 = v1758_1
       ss_7 = "TextColor3"
-      ss_8 = slot_5 and ((env.Color3.fromRGB(255, 255, 255)))
-      ss_8 = ss_8 or (cell_get(upvalues[5])).colors.muted
+      ss_8 = (slot_5 and ((env.Color3.fromRGB(255, 255, 255)))) or (cell_get(upvalues[5])).colors.muted
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v1866_1 = ss_1
+      v1866_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v1866_1.Play
       ss_2 = v1866_1
       ss_1(ss_2)
@@ -100253,11 +97610,9 @@ protos[1811] = function(upvalues, argument_1)
         ss_5 = v1941_1
         ss_6 = v1946_1
         ss_7 = "ImageColor3"
-        ss_8 = slot_5 and (cell_get(upvalues[5])).colors.text
-        ss_8 = ss_8 or (cell_get(upvalues[5])).colors.muted
+        ss_8 = (slot_5 and (cell_get(upvalues[5])).colors.text) or (cell_get(upvalues[5])).colors.muted
         ss_6[ss_7] = ss_8
-        ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-        v2039_1 = ss_1
+        v2039_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
         ss_1 = v2039_1.Play
         ss_2 = v2039_1
         ss_1(ss_2)
@@ -100406,8 +97761,7 @@ protos[1818] = function(upvalues)
   local v29_1, v34_1, v382_1, v387_1, v39_1, v458_1, v464_1, v526_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = (new_table(0))
-  ss_0 = env.isfolder and env.listfiles
-  ss_0 = ss_0 and env.isfile
+  ss_0 = (env.isfolder and env.listfiles) and env.isfile
   if not ((not ss_0)) then
     v29_1 = env.pcall
     v34_1 = env.listfiles
@@ -100432,8 +97786,7 @@ protos[1818] = function(upvalues)
         ss_3 = v387_1
         ss_4 = slot_4
         ss_0, ss_1 = ss_2(ss_3, ss_4)
-        ss_0 = ss_0 and ss_1
-        if ss_0 then
+        if (ss_0 and ss_1) then
           v526_1 = env.table.insert
           v526_1(slot_0, slot_4)
         end
@@ -100601,7 +97954,7 @@ protos[1827] = function(upvalues)
 end
 
 protos[1828] = function(upvalues)
-  local slot_0, slot_1, slot_2, ss_0, ss_1, temp_0, temp_2
+  local slot_0, slot_1, slot_2, ss_0, temp_0, temp_2
   local v28_1, v54_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = (cell_get(upvalues[1])).currentSound
@@ -100613,17 +97966,11 @@ protos[1828] = function(upvalues)
   end
   slot_1 = ss_0
   temp_0 = (cell_get(upvalues[2]))
-  ss_1 = slot_1 and (cell_get(upvalues[3])).Pause
-  ss_1 = ss_1 or (cell_get(upvalues[3])).Play
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_1 and (cell_get(upvalues[3])).Pause) or (cell_get(upvalues[3])).Play))
   temp_0.Image = temp_2
-  ss_0 = slot_1 and ((cell_get(upvalues[4])))
-  ss_0 = ss_0 or ((cell_get(upvalues[5])))
-  slot_2 = ss_0
+  slot_2 = ((slot_1 and ((cell_get(upvalues[4])))) or ((cell_get(upvalues[5]))))
   temp_0 = (cell_get(upvalues[2]))
-  ss_0 = env.UDim2.new(slot_2, (0), slot_2, (0))
-  temp_2 = ss_0
+  temp_2 = (env.UDim2.new(slot_2, (0), slot_2, (0)))
   temp_0.Size = temp_2
   return
 end
@@ -100660,8 +98007,7 @@ protos[1829] = function(upvalues, argument_1)
     temp_0.Position = temp_2
     if (cell_get(upvalues[5])).currentSound then
       slot_4 = (cell_get(upvalues[5])).currentSound.TimeLength
-      ss_0 = slot_4 and (((slot_4 > 0)))
-      if ss_0 then
+      if (slot_4 and (((slot_4 > 0)))) then
         temp_0 = (cell_get(upvalues[5])).currentSound
         temp_2 = ((slot_3 * slot_4))
         temp_0.TimePosition = temp_2
@@ -100738,7 +98084,7 @@ protos[1832] = function(upvalues, argument_1)
 end
 
 protos[1833] = function(upvalues)
-  local slot_0, slot_1, ss_0, ss_1, ss_2, temp_0, temp_1, temp_2, v241_1, v246_1
+  local slot_0, slot_1, ss_0, ss_1, ss_2, temp_0, temp_1, temp_2, v241_1
   local v57_1, v63_1, v68_1
   local vm_frame_random = math.random(0, 2147483646)
   temp_0 = (cell_get(upvalues[1])).refs
@@ -100755,13 +98101,7 @@ protos[1833] = function(upvalues)
     slot_0 = __loopKey_1833_0
     slot_1 = __loopValue_1833_0
     v241_1 = cell_get(upvalues[3])
-    v246_1 = (slot_1 ~= v241_1)
-    ss_0 = v246_1
-    if v246_1 then
-      ss_0 = (slot_1:IsA("TextButton")) or ((slot_1:IsA("TextLabel")))
-      ss_0 = ss_0 or ((slot_1:IsA("Frame")))
-    end
-    if ss_0 then
+    if (((slot_1 ~= v241_1)) and (((slot_1:IsA("TextButton")) or ((slot_1:IsA("TextLabel")))) or ((slot_1:IsA("Frame"))))) then
       slot_1:Destroy()
     end
   end
@@ -100812,9 +98152,7 @@ protos[1834] = function(upvalues)
   v2_1 = cell_get(upvalues[1])
   v2_1()
   temp_0 = (cell_get(upvalues[2]))
-  ss_2 = (cell_get(upvalues[3]))
-  ss_0 = ss_2()
-  temp_2 = ss_0
+  temp_2 = (((cell_get(upvalues[3])))())
   temp_0.files = temp_2
   temp_0 = (cell_get(upvalues[4]))
   temp_1 = "Visible"
@@ -100979,8 +98317,7 @@ protos[1834] = function(upvalues)
       v1641_1 = v1640_1.Connect
       v1646_1 = closure(1836, {upvalues[9], capture_7(), capture_4(), upvalues[7], capture_5(), capture_6()})
       v1641_1(v1640_1, v1646_1)
-      ss_0 = (cell_get(upvalues[10])).playlists and (cell_get(upvalues[10])).playlists.press
-      if ss_0 then
+      if ((cell_get(upvalues[10])).playlists and (cell_get(upvalues[10])).playlists.press) then
         v1970_1 = (cell_get(upvalues[10])).playlists.press
         v1971_1 = cell_get(slot_4)
         v1970_1(v1971_1, 1)
@@ -102243,8 +99580,7 @@ protos[1856] = function(upvalues, argument_1, argument_2, argument_3)
   ss_2 = "TextButton"
   ss_3 = v645_1
   ss_4 = "BackgroundColor3"
-  ss_5 = v770_1 and (cell_get(upvalues[4])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[4])).colors.panel
+  ss_5 = (v770_1 and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.panel
   ss_3[ss_4] = ss_5
   ss_3.BackgroundTransparency = 0.1
   ss_3.BorderSizePixel = 0
@@ -102321,13 +99657,11 @@ protos[1856] = function(upvalues, argument_1, argument_2, argument_3)
   ss_2 = "UIStroke"
   ss_3 = v1345_1
   ss_4 = "Color"
-  ss_5 = v1362_1 and (cell_get(upvalues[4])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[4])).colors.stroke
+  ss_5 = (v1362_1 and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.stroke
   ss_3[ss_4] = ss_5
   v1449_1 = cell_get(slot_6)
   ss_4 = "Transparency"
-  ss_5 = v1449_1 and (0.2)
-  ss_5 = ss_5 or (0.6)
+  ss_5 = (v1449_1 and (0.2)) or (0.6)
   ss_3[ss_4] = ss_5
   ss_3.Thickness = 1.5
   ss_0 = ss_1(ss_2, ss_3)
@@ -102388,8 +99722,7 @@ protos[1856] = function(upvalues, argument_1, argument_2, argument_3)
   ss_2 = "UIStroke"
   ss_3 = v1906_1
   ss_4 = "Color"
-  ss_5 = v1923_1 and (cell_get(upvalues[4])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[4])).colors.stroke
+  ss_5 = (v1923_1 and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.stroke
   ss_3[ss_4] = ss_5
   ss_3.Transparency = 0.5
   ss_3.Thickness = 1
@@ -102444,16 +99777,13 @@ protos[1857] = function(upvalues, argument_1, argument_2)
   local v1795_1, v1801_1, v1828_1, v1834_1, v1845_1, v1855_1, v1866_1, v1886_1, v1908_1, v1924_1, v1935_1, v1961_1, v1973_1, v1978_1, v1983_1, v2005_1, v2010_1, v2016_1
   local v2103_1, v274_1, v301_1, v302_1, v314_1, v336_1, v337_1, v359_1, v381_1, v407_1, v429_1, v430_1, v442_1, v464_1, v465_1, v487_1, v509_1
   local v68_1, v73_1, v78_1, v814_1, v841_1, v847_1, v858_1, v868_1, v879_1, v899_1, v921_1, v937_1, v948_1
-  local slot_1, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, ss_7, ss_8, temp_0, temp_2
+  local slot_1, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, ss_7, ss_8, temp_0, temp_2
   local vm_frame_random = math.random(0, 2147483646)
   slot_1 = argument_2
   upvalues[1] = cell_set_or_create(upvalues[1], argument_1)
   if slot_1 then
     temp_0 = (cell_get(upvalues[2]))
-    ss_1 = (cell_get(upvalues[1])) and (cell_get(upvalues[3])).colors.accent
-    ss_1 = ss_1 or (cell_get(upvalues[3])).colors.panel
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[1])) and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.panel))
     temp_0.BackgroundColor3 = temp_2
     temp_0 = (cell_get(upvalues[4]))
     v274_1 = cell_get(upvalues[1])
@@ -102494,20 +99824,13 @@ protos[1857] = function(upvalues, argument_1, argument_2)
       ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
       ss_1 = ss_2(ss_3)
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[5]))
-    ss_1 = (cell_get(upvalues[1])) and (cell_get(upvalues[3])).colors.accent
-    ss_1 = ss_1 or (cell_get(upvalues[3])).colors.stroke
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[1])) and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.stroke))
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[5]))
-    ss_1 = (cell_get(upvalues[1])) and (0.2)
-    ss_1 = ss_1 or (0.6)
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[1])) and (0.2)) or (0.6)))
     temp_0.Transparency = temp_2
     temp_0 = (cell_get(upvalues[6]))
     v814_1 = cell_get(upvalues[1])
@@ -102528,14 +99851,10 @@ protos[1857] = function(upvalues, argument_1, argument_2)
       v948_1 = ((-v937_1) / 2)
       ss_1 = (v921_1(0, 3, 0.5, v948_1))
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Position = temp_2
     temp_0 = (cell_get(upvalues[8]))
-    ss_1 = (cell_get(upvalues[1])) and (cell_get(upvalues[3])).colors.accent
-    ss_1 = ss_1 or (cell_get(upvalues[3])).colors.stroke
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[1])) and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.stroke))
     temp_0.Color = temp_2
   else
     v68_1 = cell_get(upvalues[9])
@@ -102550,11 +99869,9 @@ protos[1857] = function(upvalues, argument_1, argument_2)
     ss_5 = v100_1
     ss_6 = v105_1
     ss_7 = "BackgroundColor3"
-    ss_8 = v111_1 and (cell_get(upvalues[3])).colors.accent
-    ss_8 = ss_8 or (cell_get(upvalues[3])).colors.panel
+    ss_8 = (v111_1 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.panel
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v1199_1 = ss_1
+    v1199_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v1199_1.Play
     ss_2 = v1199_1
     ss_1(ss_2)
@@ -102597,8 +99914,7 @@ protos[1857] = function(upvalues, argument_1, argument_2)
       ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
       ss_1 = ss_2(ss_3)
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Color = temp_2
     v1519_1 = cell_get(upvalues[9])
     v1524_1 = v1519_1.Create
@@ -102612,16 +99928,13 @@ protos[1857] = function(upvalues, argument_1, argument_2)
     ss_5 = v1551_1
     ss_6 = v1556_1
     ss_7 = "Color"
-    ss_8 = v1562_1 and (cell_get(upvalues[3])).colors.accent
-    ss_8 = ss_8 or (cell_get(upvalues[3])).colors.stroke
+    ss_8 = (v1562_1 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.stroke
     ss_6[ss_7] = ss_8
     v1649_1 = cell_get(upvalues[1])
     ss_7 = "Transparency"
-    ss_8 = v1649_1 and (0.2)
-    ss_8 = ss_8 or (0.6)
+    ss_8 = (v1649_1 and (0.2)) or (0.6)
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v1712_1 = ss_1
+    v1712_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v1712_1.Play
     ss_2 = v1712_1
     ss_1(ss_2)
@@ -102658,8 +99971,7 @@ protos[1857] = function(upvalues, argument_1, argument_2)
       ss_8 = (v1908_1(0, 3, 0.5, v1935_1))
     end
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v1961_1 = ss_1
+    v1961_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v1961_1.Play
     ss_2 = v1961_1
     ss_1(ss_2)
@@ -102675,11 +99987,9 @@ protos[1857] = function(upvalues, argument_1, argument_2)
     ss_5 = v2005_1
     ss_6 = v2010_1
     ss_7 = "Color"
-    ss_8 = v2016_1 and (cell_get(upvalues[3])).colors.accent
-    ss_8 = ss_8 or (cell_get(upvalues[3])).colors.stroke
+    ss_8 = (v2016_1 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.stroke
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v2103_1 = ss_1
+    v2103_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v2103_1.Play
     ss_2 = v2103_1
     ss_1(ss_2)
@@ -102711,8 +100021,7 @@ protos[1858] = function(upvalues)
   v29_1.Position = v154_1
   v165_1 = cell_get(upvalues[2])
   ss_3 = v29_1
-  ss_5 = v165_1 and (cell_get(upvalues[5])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[5])).colors.stroke
+  ss_5 = (v165_1 and (cell_get(upvalues[5])).colors.accent) or (cell_get(upvalues[5])).colors.stroke
   ss_3.BackgroundColor3 = ss_5
   ss_3.BackgroundTransparency = 0.5
   ss_3.BorderSizePixel = 0
@@ -103040,15 +100349,9 @@ protos[1885] = function(upvalues, argument_1)
   for __loopKey_1885_0, __loopValue_1885_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_1 = __loopKey_1885_0
     slot_2 = __loopValue_1885_0
-    ss_1 = ((slot_1 == slot_0)) and (cell_get(upvalues[4])).colors.accent
-    ss_1 = ss_1 or (cell_get(upvalues[4])).colors.panel
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((((slot_1 == slot_0)) and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.panel))
     slot_2.BackgroundColor3 = temp_7
-    ss_1 = ((slot_1 == slot_0)) and ((env.Color3.fromRGB(255, 255, 255)))
-    ss_1 = ss_1 or (cell_get(upvalues[4])).colors.muted
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((((slot_1 == slot_0)) and ((env.Color3.fromRGB(255, 255, 255)))) or (cell_get(upvalues[4])).colors.muted))
     slot_2.TextColor3 = temp_7
   end
   return
@@ -103090,8 +100393,7 @@ protos[1888] = function(upvalues, argument_1)
     v152_1 = (cell_get(upvalues[1])).files
     ss_0 = (((#v152_1) > 0))
   end
-  ss_0 = ss_0 and (cell_get(upvalues[2])).playIndex
-  if ss_0 then
+  if (ss_0 and (cell_get(upvalues[2])).playIndex) then
     v226_1 = (cell_get(upvalues[2])).playIndex
     v226_1(1)
   end
@@ -103184,10 +100486,8 @@ protos[1893] = function(upvalues)
       v80_1 = (cell_get(upvalues[1])).nowLabel
       ss_0 = (("  •  " .. v80_1))
     end
-    ss_0 = ss_0 or ("")
-    slot_0 = ss_0
-    ss_0 = (cell_get(upvalues[1])).currentSound and (((cell_get(upvalues[2]))("music_playing")))
-    ss_0 = ss_0 or (((cell_get(upvalues[2]))("music_ended")))
+    slot_0 = (ss_0 or (""))
+    ss_0 = ((cell_get(upvalues[1])).currentSound and (((cell_get(upvalues[2]))("music_playing")))) or (((cell_get(upvalues[2]))("music_ended")))
     v269_1 = cell_get(upvalues[3])
     v284_1 = (cell_get(upvalues[1])).nowPath
     v295_1 = ((v269_1(v284_1)) .. slot_0)
@@ -103261,8 +100561,7 @@ protos[1894] = function(upvalues, argument_1, argument_2, argument_3)
       ss_2 = v218_1
       ss_0, ss_1 = ss_2(v223_1, v228_1)
       slot_5 = ss_1
-      ss_0 = (not ss_0) or ((((env["type"](slot_5)) ~= "string")))
-      ss_0 = ss_0 or (((slot_5 == "")))
+      ss_0 = ((not ss_0) or ((((env["type"](slot_5)) ~= "string")))) or (((slot_5 == "")))
       if ss_0 then
         cell_get(upvalues[4]).nowPath = (cell_get(slot_3))
         cell_get(upvalues[4]).nowLabel = (cell_get(slot_2))
@@ -103287,9 +100586,7 @@ protos[1894] = function(upvalues, argument_1, argument_2, argument_3)
         temp_2 = (cell_get(upvalues[8]))
         temp_0.SoundGroup = temp_2
         temp_0 = (cell_get(slot_6))
-        ss_1 = (cell_get(upvalues[4])).fadeIn and (0)
-        ss_1 = ss_1 or (cell_get(upvalues[4])).volume
-        ss_0 = ss_1
+        ss_0 = (((cell_get(upvalues[4])).fadeIn and (0)) or (cell_get(upvalues[4])).volume)
         temp_0.Volume = ss_0
         temp_0 = (cell_get(slot_6))
         temp_1 = "Parent"
@@ -103317,9 +100614,7 @@ protos[1894] = function(upvalues, argument_1, argument_2, argument_3)
         cell_get(upvalues[4]).nowLabel = (cell_get(slot_2))
         temp_0 = (cell_get(upvalues[5]))
         temp_1 = "Text"
-        ss_2 = (cell_get(upvalues[11]))
-        ss_0 = ss_2()
-        temp_2 = ss_0
+        temp_2 = (((cell_get(upvalues[11])))())
         temp_0.Text = temp_2
         v1374_1 = env.pcall
         v1379_1 = closure(1895, {upvalues[12], upvalues[10], upvalues[13], upvalues[5]})
@@ -103518,8 +100813,7 @@ protos[1899] = function(upvalues, argument_1)
       slot_1[__loopKey_1899_0] = __loopValue_1899_0
     end
     slot_4 = 1
-    ss_0 = (((cell_get(upvalues[1])).sequence == "Shuffle")) and ((((#slot_1) > 1)))
-    if ss_0 then
+    if ((((cell_get(upvalues[1])).sequence == "Shuffle")) and ((((#slot_1) > 1)))) then
       v516_1 = env.math.random
       v527_1 = #slot_1
       slot_4 = (v516_1(1, v527_1))
@@ -103560,8 +100854,7 @@ protos[1900] = function(upvalues, argument_1, argument_2)
     for __loopKey_1900_0, __loopValue_1900_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
       slot_2[__loopKey_1900_0] = __loopValue_1900_0
     end
-    ss_0 = (env.tonumber(slot_1)) or (1)
-    slot_1 = ss_0
+    slot_1 = ((env.tonumber(slot_1)) or (1))
     v443_1 = (slot_1 < 1)
     ss_0 = v443_1
     if not v443_1 then
@@ -104112,14 +101405,11 @@ protos[1916] = function(upvalues, argument_1)
     if (slot_4:IsA("GuiObject")) then
       v317_1 = slot_4.BackgroundTransparency
       slot_2(slot_4, "BackgroundTransparency", v317_1)
-      ss_0 = (slot_4:IsA("TextLabel")) or ((slot_4:IsA("TextButton")))
-      ss_0 = ss_0 or ((slot_4:IsA("TextBox")))
-      if ss_0 then
+      if (((slot_4:IsA("TextLabel")) or ((slot_4:IsA("TextButton")))) or ((slot_4:IsA("TextBox")))) then
         v498_1 = slot_4.TextTransparency
         slot_2(slot_4, "TextTransparency", v498_1)
       else
-        ss_0 = (slot_4:IsA("ImageLabel")) or ((slot_4:IsA("ImageButton")))
-        if ss_0 then
+        if ((slot_4:IsA("ImageLabel")) or ((slot_4:IsA("ImageButton")))) then
           v607_1 = slot_4.ImageTransparency
           slot_2(slot_4, "ImageTransparency", v607_1)
         end
@@ -105344,8 +102634,7 @@ protos[1941] = function(upvalues, argument_1, argument_2, argument_3)
   ss_2 = "TextLabel"
   ss_3 = v85_1
   ss_4 = "TextColor3"
-  ss_5 = v221_1 and (cell_get(upvalues[4])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[4])).colors.muted
+  ss_5 = (v221_1 and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.muted
   ss_3[ss_4] = ss_5
   ss_3.TextSize = 10
   v370_1 = env.Enum.Font.GothamBold
@@ -105376,8 +102665,7 @@ protos[1941] = function(upvalues, argument_1, argument_2, argument_3)
   ss_2 = "TextLabel"
   ss_3 = v432_1
   ss_4 = "TextColor3"
-  ss_5 = v569_1 and (cell_get(upvalues[4])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[4])).colors.text
+  ss_5 = (v569_1 and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.text
   ss_3[ss_4] = ss_5
   ss_3.TextSize = 12
   v683_1 = env.Enum.Font.Gotham
@@ -105581,11 +102869,9 @@ protos[1945] = function(upvalues)
   ss_5 = v124_1
   ss_6 = v129_1
   ss_7 = "TextColor3"
-  ss_8 = v135_1 and (cell_get(upvalues[3])).colors.accent
-  ss_8 = ss_8 or (cell_get(upvalues[3])).colors.text
+  ss_8 = (v135_1 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.text
   ss_6[ss_7] = ss_8
-  ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  v257_1 = ss_1
+  v257_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   ss_1 = v257_1.Play
   ss_2 = v257_1
   ss_1(ss_2)
@@ -105601,11 +102887,9 @@ protos[1945] = function(upvalues)
   ss_5 = v301_1
   ss_6 = v306_1
   ss_7 = "TextColor3"
-  ss_8 = v312_1 and (cell_get(upvalues[3])).colors.accent
-  ss_8 = ss_8 or (cell_get(upvalues[3])).colors.muted
+  ss_8 = (v312_1 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.muted
   ss_6[ss_7] = ss_8
-  ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  v399_1 = ss_1
+  v399_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   ss_1 = v399_1.Play
   ss_2 = v399_1
   ss_1(ss_2)
@@ -105861,8 +103145,7 @@ protos[1948] = function(upvalues, argument_1)
   ss_2 = "TextButton"
   ss_3 = v1397_1
   ss_4 = "BackgroundTransparency"
-  ss_5 = v1514_1 and (0.65)
-  ss_5 = ss_5 or (0.12)
+  ss_5 = (v1514_1 and (0.65)) or (0.12)
   ss_3[ss_4] = ss_5
   ss_3.BorderSizePixel = 0
   ss_3.Text = ""
@@ -105914,8 +103197,7 @@ protos[1948] = function(upvalues, argument_1)
   slot_8 = new_cell()
   slot_8 = cell_set_or_create(slot_8, v1957_1)
   v1982_1 = (cell_get(slot_0)).songs
-  ss_0 = (((#v1982_1) == 0)) and (0.65)
-  ss_0 = ss_0 or (0.12)
+  ss_0 = ((((#v1982_1) == 0)) and (0.65)) or (0.12)
   slot_9 = new_cell()
   slot_9 = cell_set_or_create(slot_9, ss_0)
   v2057_1 = cell_get(upvalues[1])
@@ -106408,8 +103690,7 @@ protos[1959] = function(upvalues)
     for __loopKey_1959_0, __loopValue_1959_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
       slot_2 = __loopKey_1959_0
       slot_3 = __loopValue_1959_0
-      ss_0 = (slot_3:IsA("GuiObject")) and (((slot_3.LayoutOrder > 0)))
-      if ss_0 then
+      if ((slot_3:IsA("GuiObject")) and (((slot_3.LayoutOrder > 0)))) then
         temp_6 = (((#slot_1) + 1))
         slot_1[temp_6] = slot_3
       end
@@ -106770,8 +104051,7 @@ protos[1970] = function(upvalues)
     temp_2 = __loopKey_1970_0
     slot_1 = __loopKey_1970_0
     slot_2 = __loopValue_1970_0
-    ss_0 = (((env["type"](slot_2)) == "table")) and slot_2.key
-    ss_0 = ss_0 and slot_2.get
+    ss_0 = ((((env["type"](slot_2)) == "table")) and slot_2.key) and slot_2.get
     if ss_0 then
       v338_1 = env.pcall
       v353_1 = slot_2.get
@@ -106779,8 +104059,7 @@ protos[1970] = function(upvalues)
       ss_3 = v353_1
       ss_0, ss_1 = ss_2(ss_3)
       slot_4 = ss_1
-      ss_0 = ss_0 and (((slot_4 ~= nil)))
-      if ss_0 then
+      if (ss_0 and (((slot_4 ~= nil)))) then
         temp_5 = slot_0.values
         temp_6 = slot_2.key
         temp_5[temp_6] = slot_4
@@ -106795,8 +104074,7 @@ protos[1970] = function(upvalues)
     ss_3 = v563_1
     ss_0, ss_1 = ss_2(ss_3)
     slot_6 = ss_1
-    ss_0 = ss_0 and ((((env["type"](slot_6)) == "table")))
-    if ss_0 then
+    if (ss_0 and ((((env["type"](slot_6)) == "table")))) then
       temp_0 = slot_0
       temp_1 = "playlists"
       temp_2 = slot_6
@@ -106824,9 +104102,7 @@ protos[1971] = function(upvalues, argument_1)
       for __loopKey_1971_0, __loopValue_1971_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
         slot_1 = __loopKey_1971_0
         slot_2 = __loopValue_1971_0
-        ss_0 = (((env["type"](slot_2)) == "table")) and slot_2.key
-        ss_0 = ss_0 and slot_2.set
-        v405_1 = ss_0
+        v405_1 = (((((env["type"](slot_2)) == "table")) and slot_2.key) and slot_2.set)
         ss_0 = v405_1
         if v405_1 then
           v426_1 = slot_0.values
@@ -106860,9 +104136,7 @@ protos[1971] = function(upvalues, argument_1)
     end
     v515_1 = env["type"]
     v530_1 = slot_0.playlists
-    ss_0 = (((v515_1(v530_1)) == "table")) and ((cell_get(upvalues[4])))
-    ss_0 = ss_0 and (cell_get(upvalues[4])).import
-    if ss_0 then
+    if (((((v515_1(v530_1)) == "table")) and ((cell_get(upvalues[4])))) and (cell_get(upvalues[4])).import) then
       v688_1 = env.pcall
       v703_1 = (cell_get(upvalues[4])).import
       v714_1 = slot_0.playlists
@@ -107368,8 +104642,7 @@ protos[1973] = function(upvalues)
   ss_7 = 1
   ss_8 = regs.v5914_1
   ss_3 = set_list_values(ss_3, 5, ss_6(ss_7, ss_8))
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.Color = temp_2
   temp_0 = (cell_get(upvalues[1])).bgG2
   temp_1 = "Color"
@@ -107404,8 +104677,7 @@ protos[1973] = function(upvalues)
   ss_11 = regs.v6182_1
   ss_8 = pack_values(ss_9(ss_10, ss_11, (0.2)))
   ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, unpack_values(ss_8, 1, ss_8.n)))
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.Color = temp_2
   regs.v6240_1 = env.ipairs
   regs.v6255_1 = (cell_get(upvalues[1])).tabList
@@ -107422,8 +104694,7 @@ protos[1973] = function(upvalues)
     regs.v6481_1 = (cell_get(upvalues[1])).hTitle.Text
     regs.v6482_1 = (regs.v6464_1 == regs.v6481_1)
     slot_9 = nil
-    slot_9 = regs.v6482_1
-    if slot_9 then
+    if regs.v6482_1 then
       slot_8.tab.BackgroundColor3 = slot_0.panel
       slot_8.stroke.Color = slot_0.accent
       slot_8.icon.ImageColor3 = slot_0.text
@@ -107432,8 +104703,7 @@ protos[1973] = function(upvalues)
       ss_3 = 255
       ss_4 = 255
       ss_5 = 255
-      ss_0 = ss_2(ss_3, ss_4, ss_5)
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3, ss_4, ss_5))
       temp_5.TextColor3 = temp_7
       temp_5 = slot_8.fillGrad
       temp_6 = "Color"
@@ -107455,8 +104725,7 @@ protos[1973] = function(upvalues)
       ss_7 = 1
       ss_8 = regs.v6963_1
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-      ss_0 = ss_2(ss_3)
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3))
       temp_5.Color = temp_7
     else
       slot_8.tab.BackgroundColor3 = slot_0.panel
@@ -107483,8 +104752,7 @@ protos[1973] = function(upvalues)
       ss_7 = 1
       ss_8 = regs.v7410_1
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-      ss_0 = ss_2(ss_3)
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3))
       temp_5.Color = temp_7
     end
   end
@@ -107524,8 +104792,7 @@ protos[1973] = function(upvalues)
       if not regs.v7837_1 then
         ss_1 = 0.5
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.BackgroundTransparency = temp_7
       temp_5 = slot_11.tabFill
       regs.v7916_1 = slot_12
@@ -107538,8 +104805,7 @@ protos[1973] = function(upvalues)
       if not regs.v7947_1 then
         ss_1 = 0.85
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.BackgroundTransparency = temp_7
       temp_5 = slot_11.tabFillGrad
       regs.v8037_1 = env.ColorSequence.new
@@ -107560,8 +104826,7 @@ protos[1973] = function(upvalues)
       ss_7 = 1
       ss_8 = regs.v8143_1
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-      ss_0 = ss_2(ss_3)
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3))
       temp_5.Color = temp_7
       temp_5 = slot_11.tabFillGrad
       regs.v8212_1 = slot_12
@@ -107600,8 +104865,7 @@ protos[1973] = function(upvalues)
         ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
         ss_1 = ss_2(ss_3)
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.Transparency = temp_7
       temp_5 = slot_11.stroke
       regs.v8542_1 = slot_12
@@ -107614,8 +104878,7 @@ protos[1973] = function(upvalues)
       if not regs.v8579_1 then
         ss_1 = slot_0.stroke
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.Color = temp_7
       temp_5 = slot_11.stroke
       regs.v8664_1 = slot_12
@@ -107628,8 +104891,7 @@ protos[1973] = function(upvalues)
       if not regs.v8695_1 then
         ss_1 = 0.6
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.Transparency = temp_7
       temp_5 = slot_11.stroke
       regs.v8774_1 = slot_12
@@ -107642,8 +104904,7 @@ protos[1973] = function(upvalues)
       if not regs.v8805_1 then
         ss_1 = 1
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.Thickness = temp_7
       temp_5 = slot_11.text
       temp_6 = "TextColor3"
@@ -107657,8 +104918,7 @@ protos[1973] = function(upvalues)
       if not regs.v8942_1 then
         ss_1 = slot_0.muted
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.TextColor3 = temp_7
       if slot_11.icon then
         temp_5 = slot_11.icon
@@ -107673,8 +104933,7 @@ protos[1973] = function(upvalues)
         if not regs.v9089_1 then
           ss_1 = slot_0.muted
         end
-        ss_0 = ss_1
-        temp_7 = ss_0
+        temp_7 = ss_1
         temp_5.ImageColor3 = temp_7
       end
     end
@@ -107718,8 +104977,7 @@ protos[1973] = function(upvalues)
       ss_3 = 255
       ss_4 = 255
       ss_5 = 255
-      ss_0 = ss_2(ss_3, ss_4, ss_5)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4, ss_5))
       temp_0.ImageColor3 = temp_2
     end
     if slot_14.btnStop then
@@ -107789,8 +105047,7 @@ protos[1973] = function(upvalues)
       ss_7 = 1
       ss_8 = regs.v10772_1
       ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
-      ss_0 = ss_2(ss_3)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3))
       temp_0.Color = temp_2
     end
     if slot_14.seekKnobStroke then
@@ -107835,8 +105092,7 @@ protos[1973] = function(upvalues)
         temp_2 = temp_3
         slot_15 = temp_3
         slot_16 = temp_4
-        ss_0 = (((env["type"](slot_16)) == "table")) and slot_16.scroll
-        if ss_0 then
+        if ((((env["type"](slot_16)) == "table")) and slot_16.scroll) then
           temp_5 = slot_16.scroll
           temp_6 = "ScrollBarImageColor3"
           temp_7 = slot_0.accent
@@ -107881,8 +105137,7 @@ protos[1973] = function(upvalues)
       regs.v12106_1(regs.v12121_1)
     end
     if slot_14.seqButtons then
-      ss_0 = slot_14.sequence or ("Normal")
-      slot_17 = ss_0
+      slot_17 = (slot_14.sequence or ("Normal"))
       regs.v12201_1 = env.pairs
       regs.v12216_1 = slot_14.seqButtons
       ss_2 = regs.v12201_1
@@ -107897,17 +105152,11 @@ protos[1973] = function(upvalues)
         slot_20 = nil
         slot_20 = regs.v12350_1
         temp_5 = slot_19
-        ss_1 = slot_20 and slot_0.accent
-        ss_1 = ss_1 or slot_0.panel
-        ss_0 = ss_1
-        temp_7 = ss_0
+        temp_7 = (((slot_20 and slot_0.accent) or slot_0.panel))
         temp_5.BackgroundColor3 = temp_7
         temp_5 = slot_19
         temp_6 = "TextColor3"
-        ss_1 = slot_20 and ((env.Color3.fromRGB(255, 255, 255)))
-        ss_1 = ss_1 or slot_0.muted
-        ss_0 = ss_1
-        temp_7 = ss_0
+        temp_7 = (((slot_20 and ((env.Color3.fromRGB(255, 255, 255)))) or slot_0.muted))
         temp_5.TextColor3 = temp_7
       end
     end
@@ -107923,8 +105172,7 @@ protos[1973] = function(upvalues)
         temp_2 = temp_3
         slot_21 = temp_3
         slot_22 = temp_4
-        ss_0 = slot_22.row and slot_22.row.Parent
-        if ss_0 then
+        if (slot_22.row and slot_22.row.Parent) then
           temp_5 = slot_22.row
           temp_6 = "BackgroundColor3"
           temp_7 = slot_0.row
@@ -108035,8 +105283,7 @@ protos[1973] = function(upvalues)
             ss_7 = 1
             ss_8 = regs.v14351_1
             ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
-            ss_0 = ss_2(ss_3)
-            temp_7 = ss_0
+            temp_7 = (ss_2(ss_3))
             temp_5.Color = temp_7
           end
           if slot_24.knobStroke then
@@ -108054,19 +105301,13 @@ protos[1973] = function(upvalues)
           if slot_24.btn then
             temp_5 = slot_24.btn
             temp_6 = "BackgroundColor3"
-            ss_1 = (slot_24.get()) and slot_0.accent
-            ss_1 = ss_1 or slot_0.panel
-            ss_0 = ss_1
-            temp_7 = ss_0
+            temp_7 = ((((slot_24.get()) and slot_0.accent) or slot_0.panel))
             temp_5.BackgroundColor3 = temp_7
           end
           if slot_24.btnStroke then
             temp_5 = slot_24.btnStroke
             temp_6 = "Color"
-            ss_1 = (slot_24.get()) and slot_0.accent
-            ss_1 = ss_1 or slot_0.stroke
-            ss_0 = ss_1
-            temp_7 = ss_0
+            temp_7 = ((((slot_24.get()) and slot_0.accent) or slot_0.stroke))
             temp_5.Color = temp_7
           end
           if slot_24.resetBtn then
@@ -108087,19 +105328,12 @@ protos[1973] = function(upvalues)
             temp_7 = slot_0.muted
             temp_5.ImageColor3 = temp_7
           end
-          ss_0 = slot_24.toggle and slot_24.toggleGrad
-          ss_0 = ss_0 and slot_24.tStroke
-          ss_0 = ss_0 and slot_24.circle
-          ss_0 = ss_0 and slot_24.circleStroke
-          if ss_0 then
+          if ((((slot_24.toggle and slot_24.toggleGrad) and slot_24.tStroke) and slot_24.circle) and slot_24.circleStroke) then
             regs.v15306_1 = slot_24.get()
             slot_25 = nil
             slot_25 = regs.v15306_1
             temp_5 = slot_24.toggle
-            ss_1 = slot_25 and slot_0.accent
-            ss_1 = ss_1 or slot_0.panel
-            ss_0 = ss_1
-            temp_7 = ss_0
+            temp_7 = (((slot_25 and slot_0.accent) or slot_0.panel))
             temp_5.BackgroundColor3 = temp_7
             temp_5 = slot_24.toggleGrad
             v15470_1 = slot_25
@@ -108140,27 +105374,17 @@ protos[1973] = function(upvalues)
               ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
               ss_1 = ss_2(ss_3)
             end
-            ss_0 = ss_1
-            temp_7 = ss_0
+            temp_7 = ss_1
             temp_5.Color = temp_7
             temp_5 = slot_24.tStroke
-            ss_1 = slot_25 and slot_0.accent
-            ss_1 = ss_1 or slot_0.stroke
-            ss_0 = ss_1
-            temp_7 = ss_0
+            temp_7 = (((slot_25 and slot_0.accent) or slot_0.stroke))
             temp_5.Color = temp_7
             temp_5 = slot_24.tStroke
-            ss_1 = slot_25 and (0.2)
-            ss_1 = ss_1 or (0.6)
-            ss_0 = ss_1
-            temp_7 = ss_0
+            temp_7 = (((slot_25 and (0.2)) or (0.6)))
             temp_5.Transparency = temp_7
             temp_5 = slot_24.circleStroke
             temp_6 = "Color"
-            ss_1 = slot_25 and slot_0.accent
-            ss_1 = ss_1 or slot_0.stroke
-            ss_0 = ss_1
-            temp_7 = ss_0
+            temp_7 = (((slot_25 and slot_0.accent) or slot_0.stroke))
             temp_5.Color = temp_7
           end
         end
@@ -108184,19 +105408,12 @@ protos[1973] = function(upvalues)
     temp_6 = "TextColor3"
     temp_7 = slot_0.text
     temp_5.TextColor3 = temp_7
-    ss_0 = slot_27.toggle and slot_27.toggleGrad
-    ss_0 = ss_0 and slot_27.tStroke
-    ss_0 = ss_0 and slot_27.circle
-    ss_0 = ss_0 and slot_27.circleStroke
-    if ss_0 then
+    if ((((slot_27.toggle and slot_27.toggleGrad) and slot_27.tStroke) and slot_27.circle) and slot_27.circleStroke) then
       regs.v16595_1 = slot_27.get()
       slot_28 = nil
       slot_28 = regs.v16595_1
       temp_5 = slot_27.toggle
-      ss_1 = slot_28 and slot_0.accent
-      ss_1 = ss_1 or slot_0.panel
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = (((slot_28 and slot_0.accent) or slot_0.panel))
       temp_5.BackgroundColor3 = temp_7
       temp_5 = slot_27.toggleGrad
       regs.v16759_1 = slot_28
@@ -108237,8 +105454,7 @@ protos[1973] = function(upvalues)
         ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
         ss_1 = ss_2(ss_3)
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.Color = temp_7
       temp_5 = slot_27.tStroke
       regs.v17049_1 = slot_28
@@ -108251,8 +105467,7 @@ protos[1973] = function(upvalues)
       if not regs.v17086_1 then
         ss_1 = slot_0.stroke
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.Color = temp_7
       temp_5 = slot_27.tStroke
       regs.v17171_1 = slot_28
@@ -108265,8 +105480,7 @@ protos[1973] = function(upvalues)
       if not regs.v17202_1 then
         ss_1 = 0.6
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.Transparency = temp_7
       temp_5 = slot_27.circleStroke
       temp_6 = "Color"
@@ -108280,8 +105494,7 @@ protos[1973] = function(upvalues)
       if not regs.v17318_1 then
         ss_1 = slot_0.stroke
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.Color = temp_7
     end
   end
@@ -108318,8 +105531,7 @@ protos[1973] = function(upvalues)
     ss_7 = 1
     ss_8 = regs.v18026_1
     ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
-    ss_0 = ss_2(ss_3)
-    temp_7 = ss_0
+    temp_7 = (ss_2(ss_3))
     temp_5.Color = temp_7
     temp_5 = slot_30.knobStroke
     temp_6 = "Color"
@@ -108447,8 +105659,7 @@ protos[1973] = function(upvalues)
     ss_7 = 1
     ss_8 = regs.v20623_1
     ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
-    ss_0 = ss_2(ss_3)
-    temp_7 = ss_0
+    temp_7 = (ss_2(ss_3))
     temp_5.Color = temp_7
     slot_40.iconBox.BackgroundColor3 = slot_0.panel
     slot_40.iconStroke.Color = slot_0.accent
@@ -108506,8 +105717,7 @@ protos[1973] = function(upvalues)
       ss_7 = 1
       ss_8 = regs.v21590_1
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-      ss_0 = ss_2(ss_3)
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3))
       temp_5.Color = temp_7
     else
       if slot_44.line then
@@ -108706,8 +105916,7 @@ protos[1975] = function(upvalues)
         v636_1 = (v598_1 + v631_1)
         ss_2 = v481_1
         ss_3 = v530_1
-        ss_0 = ss_2(ss_3, v583_1, v636_1)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3, v583_1, v636_1))
         temp_5[temp_6] = temp_7
       end
     end
@@ -108800,8 +106009,7 @@ protos[1976] = function(upvalues, argument_1)
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   temp_0 = (cell_get(upvalues[1]))._menuOpenRef
-  ss_1 = slot_0 and (true)
-  ss_1 = ss_1 or (false)
+  ss_1 = (slot_0 and (true)) or (false)
   temp_0.open = ss_1
   temp_0 = (cell_get(upvalues[2])).main
   temp_0.Visible = slot_0
@@ -108892,12 +106100,9 @@ protos[1977] = function(upvalues, argument_1)
     temp_5 = slot_3.stroke
     v1287_1 = slot_3.name
     v1304_1 = (cell_get(upvalues[3])).hTitle.Text
-    ss_1 = ((v1287_1 == v1304_1)) and (0.15)
-    ss_1 = ss_1 or (0.6)
+    ss_1 = (((v1287_1 == v1304_1)) and (0.15)) or (0.6)
     v1737_1 = (slot_1 * 0.4)
-    ss_1 = ((ss_1 + v1737_1))
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = ((((ss_1 + v1737_1))))
     temp_5.Transparency = temp_7
     slot_3.icon.ImageTransparency = slot_1
     temp_5 = slot_3.text
@@ -109060,8 +106265,7 @@ protos[1977] = function(upvalues, argument_1)
       temp_10 = slot_13.text
       temp_12 = slot_1
       temp_10.TextTransparency = temp_12
-      ss_0 = slot_13.checkIconHolder and slot_13.checkIconHolder.Visible
-      if ss_0 then
+      if (slot_13.checkIconHolder and slot_13.checkIconHolder.Visible) then
         slot_13.seg1.BackgroundTransparency = ((0 + slot_1))
         temp_10 = slot_13.seg2
         temp_12 = ((0 + slot_1))
@@ -109467,11 +106671,9 @@ protos[1982] = function(upvalues, argument_1, argument_2)
     v49_1 = env.Enum.UserInputType.Keyboard
     if not (((v32_1 ~= v49_1))) then
       if not (cell_get(upvalues[1])).activeDrag then
-        ss_0 = (cell_get(upvalues[1])).searchSystem and (cell_get(upvalues[1])).searchSystem.isOpen
-        ss_0 = ss_0 and (((cell_get(upvalues[1])).searchSystem.isOpen()))
+        ss_0 = ((cell_get(upvalues[1])).searchSystem and (cell_get(upvalues[1])).searchSystem.isOpen) and (((cell_get(upvalues[1])).searchSystem.isOpen()))
         if not ss_0 then
-          ss_0 = (cell_get(upvalues[1])).dialogSystem and (cell_get(upvalues[1])).dialogSystem.isOpen
-          ss_0 = ss_0 and (((cell_get(upvalues[1])).dialogSystem.isOpen()))
+          ss_0 = ((cell_get(upvalues[1])).dialogSystem and (cell_get(upvalues[1])).dialogSystem.isOpen) and (((cell_get(upvalues[1])).dialogSystem.isOpen()))
           if not ss_0 then
             if not (((cell_get(upvalues[2])):GetFocusedTextBox())) then
               v411_1 = cell_get(upvalues[2])
@@ -109514,8 +106716,7 @@ protos[1982] = function(upvalues, argument_1, argument_2)
               v722_1 = (cell_get(upvalues[1])).menuKeyBox
               ss_1 = v707_1
               ss_2 = v722_1 and (cell_get(upvalues[1])).menuKeyBox.Text
-              ss_0 = ss_1(ss_2)
-              slot_5 = ss_0
+              slot_5 = (ss_1(ss_2))
               v776_1 = slot_5
               ss_0 = v776_1
               if v776_1 then
@@ -109523,10 +106724,7 @@ protos[1982] = function(upvalues, argument_1, argument_2)
                 v887_1 = slot_5.key:lower()
                 ss_0 = ((v865_1 == v887_1))
               end
-              ss_0 = ss_0 and (((slot_5.ctrl == slot_2)))
-              ss_0 = ss_0 and (((slot_5.shift == slot_3)))
-              ss_0 = ss_0 and (((slot_5.alt == slot_4)))
-              if ss_0 then
+              if (((ss_0 and (((slot_5.ctrl == slot_2)))) and (((slot_5.shift == slot_3)))) and (((slot_5.alt == slot_4)))) then
                 if (cell_get(upvalues[1])).main.Visible then
                   v1074_1 = cell_get(upvalues[4])
                   v1074_1()
@@ -109558,10 +106756,7 @@ protos[1982] = function(upvalues, argument_1, argument_2)
                     v1376_1 = slot_9.key:lower()
                     ss_0 = ((v1354_1 == v1376_1))
                   end
-                  ss_0 = ss_0 and (((slot_9.ctrl == slot_2)))
-                  ss_0 = ss_0 and (((slot_9.shift == slot_3)))
-                  ss_0 = ss_0 and (((slot_9.alt == slot_4)))
-                  if ss_0 then
+                  if (((ss_0 and (((slot_9.ctrl == slot_2)))) and (((slot_9.shift == slot_3)))) and (((slot_9.alt == slot_4)))) then
                     v1542_1 = env.task.spawn
                     v1543_1 = closure(1983, {capture_7()})
                     v1542_1(v1543_1)
@@ -109776,8 +106971,8 @@ protos[1990] = function(upvalues)
 end
 
 protos[1991] = function(upvalues, argument_1, argument_2)
-  local slot_0, ss_0, v117_1, v134_1, v185_1, v197_1, v202_1, v223_1, v224_1, v25_1, v255_1, v260_1, v281_1, v339_1, v361_1, v371_1, v372_1, v382_1, v388_1, v389_1, v404_1, v414_1, v42_1, v424_1, v43_1
-  local v430_1, v431_1, v451_1, v461_1, v467_1, v63_1, v73_1, v74_1, v84_1, v90_1, v91_1
+  local slot_0, ss_0, v117_1, v134_1, v185_1, v197_1, v202_1, v223_1, v224_1, v25_1, v255_1, v260_1, v281_1, v339_1, v371_1, v388_1, v42_1, v43_1
+  local v467_1, v73_1, v90_1, v91_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if not argument_2 then
@@ -109809,63 +107004,35 @@ protos[1991] = function(upvalues, argument_1, argument_2)
       if not (cell_get(upvalues[2])).activeDrag then
         v339_1 = (cell_get(upvalues[2])).searchSystem.open
         v339_1()
-        v63_1 = slot_0
-        v73_1 = v63_1.UserInputType
-        v74_1 = env.Enum
-        v84_1 = v74_1.UserInputType
-        v90_1 = v84_1.Keyboard
+        v73_1 = slot_0.UserInputType
+        v90_1 = env.Enum.UserInputType.Keyboard
         v91_1 = (v73_1 == v90_1)
         ss_0 = v91_1
         if v91_1 then
-          v361_1 = slot_0
-          v371_1 = v361_1.KeyCode
-          v372_1 = env.Enum
-          v382_1 = v372_1.KeyCode
-          v388_1 = v382_1.Escape
-          v389_1 = (v371_1 == v388_1)
-          ss_0 = v389_1
+          v371_1 = slot_0.KeyCode
+          v388_1 = env.Enum.KeyCode.Escape
+          ss_0 = ((v371_1 == v388_1))
         end
-        v404_1 = ss_0
-        if v404_1 then
-          v414_1 = cell_get(upvalues[2])
-          v424_1 = v414_1.searchSystem
-          v430_1 = v424_1.isOpen
-          v431_1 = v430_1()
-          if v431_1 then
-            v451_1 = cell_get(upvalues[2])
-            v461_1 = v451_1.searchSystem
-            v467_1 = v461_1.close
+        if ss_0 then
+          if ((cell_get(upvalues[2])).searchSystem.isOpen()) then
+            v467_1 = (cell_get(upvalues[2])).searchSystem.close
             v467_1()
           end
         end
       end
     else
-      v63_1 = slot_0
-      v73_1 = v63_1.UserInputType
-      v74_1 = env.Enum
-      v84_1 = v74_1.UserInputType
-      v90_1 = v84_1.Keyboard
+      v73_1 = slot_0.UserInputType
+      v90_1 = env.Enum.UserInputType.Keyboard
       v91_1 = (v73_1 == v90_1)
       ss_0 = v91_1
       if v91_1 then
-        v361_1 = slot_0
-        v371_1 = v361_1.KeyCode
-        v372_1 = env.Enum
-        v382_1 = v372_1.KeyCode
-        v388_1 = v382_1.Escape
-        v389_1 = (v371_1 == v388_1)
-        ss_0 = v389_1
+        v371_1 = slot_0.KeyCode
+        v388_1 = env.Enum.KeyCode.Escape
+        ss_0 = ((v371_1 == v388_1))
       end
-      v404_1 = ss_0
-      if v404_1 then
-        v414_1 = cell_get(upvalues[2])
-        v424_1 = v414_1.searchSystem
-        v430_1 = v424_1.isOpen
-        v431_1 = v430_1()
-        if v431_1 then
-          v451_1 = cell_get(upvalues[2])
-          v461_1 = v451_1.searchSystem
-          v467_1 = v461_1.close
+      if ss_0 then
+        if ((cell_get(upvalues[2])).searchSystem.isOpen()) then
+          v467_1 = (cell_get(upvalues[2])).searchSystem.close
           v467_1()
         end
       end
@@ -109879,28 +107046,24 @@ protos[1992] = function(upvalues)
   local v1486_1, v1487_1, v1499_1, v1511_1, v1659_1, v226_1, v227_1, v337_1, v354_1, v409_1, v427_1, v485_1
   local v570_1, v587_1, v642_1, v660_1, v718_1, v803_1, v820_1, v879_1, v897_1, v925_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])).feAnimsSearcher and (cell_get(upvalues[1])).feAnimsSearcher.rebuild
-  if ss_0 then
+  if ((cell_get(upvalues[1])).feAnimsSearcher and (cell_get(upvalues[1])).feAnimsSearcher.rebuild) then
     v126_1 = env.task.defer
     v127_1 = closure(1993, {upvalues[1]})
     v126_1(v127_1)
   end
-  ss_0 = (cell_get(upvalues[1])).feEmoteManager and (cell_get(upvalues[1])).feEmoteManager.rebuild
-  if ss_0 then
+  if ((cell_get(upvalues[1])).feEmoteManager and (cell_get(upvalues[1])).feEmoteManager.rebuild) then
     v226_1 = env.task.defer
     v227_1 = closure(1994, {upvalues[1]})
     v226_1(v227_1)
   end
   slot_0 = (cell_get(upvalues[1])).visualsBackend
   if not ((not slot_0)) then
-    ss_0 = (cell_get(upvalues[1])).jumpFxDropdown and slot_0.JumpEffects
-    if ss_0 then
+    if ((cell_get(upvalues[1])).jumpFxDropdown and slot_0.JumpEffects) then
       v337_1 = slot_0.JumpEffects.toDisplayNames
       v354_1 = slot_0.ESPConfig.JumpEffectTypes
       ss_1 = v337_1
       ss_2 = v354_1 or ((new_table(0)))
-      ss_0 = ss_1(ss_2)
-      slot_1 = ss_0
+      slot_1 = (ss_1(ss_2))
       v409_1 = (cell_get(upvalues[1])).jumpFxDropdown.UpdateOptions
       v427_1 = slot_0.JumpEffects.getDisplayList
       ss_1 = v409_1
@@ -109911,14 +107074,12 @@ protos[1992] = function(upvalues)
         v485_1(slot_1)
       end
     end
-    ss_0 = (cell_get(upvalues[1])).walkFxDropdown and slot_0.WalkEffects
-    if ss_0 then
+    if ((cell_get(upvalues[1])).walkFxDropdown and slot_0.WalkEffects) then
       v570_1 = slot_0.WalkEffects.toDisplayNames
       v587_1 = slot_0.ESPConfig.WalkEffectTypes
       ss_1 = v570_1
       ss_2 = v587_1 or ((new_table(0)))
-      ss_0 = ss_1(ss_2)
-      slot_2 = ss_0
+      slot_2 = (ss_1(ss_2))
       v642_1 = (cell_get(upvalues[1])).walkFxDropdown.UpdateOptions
       v660_1 = slot_0.WalkEffects.getDisplayList
       ss_1 = v642_1
@@ -109959,14 +107120,12 @@ protos[1992] = function(upvalues)
       v1132_1 = (cell_get(upvalues[1])).tracerFxDropdown.set
       v1132_1(ss_0)
     end
-    ss_0 = (cell_get(upvalues[1])).movementFxDropdown and (cell_get(upvalues[2]))._MovementEffects
-    if ss_0 then
+    if ((cell_get(upvalues[1])).movementFxDropdown and (cell_get(upvalues[2]))._MovementEffects) then
       v1217_1 = (cell_get(upvalues[2]))._MovementEffects.toDisplayNames
       v1234_1 = (cell_get(upvalues[2]))._MovementFx.Types
       ss_1 = v1217_1
       ss_2 = v1234_1 or ((new_table(0)))
-      ss_0 = ss_1(ss_2)
-      slot_5 = ss_0
+      slot_5 = (ss_1(ss_2))
       v1289_1 = (cell_get(upvalues[1])).movementFxDropdown.UpdateOptions
       v1307_1 = (cell_get(upvalues[2]))._MovementEffects.getDisplayList
       ss_1 = v1289_1
@@ -109977,8 +107136,7 @@ protos[1992] = function(upvalues)
         v1365_1(slot_5)
       end
     end
-    ss_0 = (cell_get(upvalues[1])).antiFlingModeDropdown and (cell_get(upvalues[1])).antiFlingState
-    if ss_0 then
+    if ((cell_get(upvalues[1])).antiFlingModeDropdown and (cell_get(upvalues[1])).antiFlingState) then
       slot_6 = (((cell_get(upvalues[1])).antiFlingState.Mode == "With collision"))
       v1486_1 = (cell_get(upvalues[1])).antiFlingModeDropdown.UpdateOptions
       v1487_1 = new_table(2)
@@ -109990,8 +107148,7 @@ protos[1992] = function(upvalues)
       ss_2 = set_list_values(ss_2, 2, v1511_1(("af_with_collision")))
       ss_1(ss_2)
       ss_1 = (cell_get(upvalues[1])).antiFlingModeDropdown.set
-      ss_2 = slot_6 and (((cell_get(upvalues[3]))("af_with_collision")))
-      ss_2 = ss_2 or (((cell_get(upvalues[3]))("af_no_collision")))
+      ss_2 = (slot_6 and (((cell_get(upvalues[3]))("af_with_collision")))) or (((cell_get(upvalues[3]))("af_no_collision")))
       ss_1(ss_2)
     end
     if (cell_get(upvalues[1])).refreshTabHeaders then
@@ -110418,8 +107575,7 @@ protos[1995] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = regs.v2688_1
   ss_3 = "UIStroke"
   ss_4 = v2698_1
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.topStroke = temp_2
   regs.v2787_1 = cell_get(upvalues[7])
   v2797_1 = new_table(0)
@@ -110460,8 +107616,7 @@ protos[1995] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = regs.v3051_1
   ss_3 = "UIStroke"
   ss_4 = v3061_1
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.searchStroke = temp_2
   regs.v3150_1 = cell_get(upvalues[7])
   v3160_1 = new_table(0)
@@ -110498,8 +107653,7 @@ protos[1995] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4.ZIndex = 5015
   regs.v3559_1 = env.Enum.ScaleType.Fit
   ss_4.ScaleType = regs.v3559_1
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.searchIcon = temp_2
   regs.v3593_1 = cell_get(upvalues[7])
   v3603_1 = new_table(0)
@@ -110602,8 +107756,7 @@ protos[1995] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = regs.v4601_1
   ss_3 = "UIStroke"
   ss_4 = v4611_1
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.clearStroke = temp_2
   cell_get(slots[73]).clearBtn = (cell_get(slots[87]))
   regs.v4752_1 = cell_get(upvalues[7])
@@ -111184,8 +108337,7 @@ protos[2001] = function(upvalues, argument_1)
   v43_1 = closure(2002, {capture_0()})
   ss_0, ss_1 = v38_1(v43_1)
   slot_2 = ss_1
-  ss_0 = ss_0 and slot_2
-  if ss_0 then
+  if (ss_0 and slot_2) then
     return slot_2
   end
   return nil
@@ -111212,8 +108364,7 @@ protos[2003] = function(upvalues, argument_1)
   v8_1 = closure(2004, {capture_0()})
   ss_0, ss_1 = v3_1(v8_1)
   slot_2 = ss_1
-  ss_0 = ss_0 and (((slot_2 ~= nil)))
-  if ss_0 then
+  if (ss_0 and (((slot_2 ~= nil)))) then
     return slot_2
   end
   v65_1 = env.tostring
@@ -111231,25 +108382,20 @@ protos[2004] = function(upvalues)
 end
 
 protos[2005] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, ss_0, ss_2, ss_3, ss_4, ss_6, ss_7, ss_8, ss_9, v110_1, v153_1, v168_1, v17_1, v2_1, v247_1, v275_1, v307_1, v323_1
+  local slot_0, slot_1, slot_2, slot_3, ss_2, ss_3, ss_4, ss_6, ss_7, ss_8, ss_9, v110_1, v153_1, v168_1, v17_1, v2_1, v247_1, v275_1, v307_1, v323_1
   local v437_1, v465_1, v497_1, v513_1, v95_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   v2_1 = env.tonumber
   v17_1 = slot_0[1]
-  ss_0 = (v2_1(v17_1)) or (0)
-  slot_1 = ss_0
+  slot_1 = ((v2_1(v17_1)) or (0))
   v95_1 = env.tonumber
   v110_1 = slot_0[2]
-  ss_0 = (v95_1(v110_1)) or (0)
-  slot_2 = ss_0
+  slot_2 = ((v95_1(v110_1)) or (0))
   v153_1 = env.tonumber
   v168_1 = slot_0[3]
-  ss_0 = (v153_1(v168_1)) or (0)
-  slot_3 = ss_0
-  ss_0 = ((slot_1 > 1)) or (((slot_2 > 1)))
-  ss_0 = ss_0 or (((slot_3 > 1)))
-  if ss_0 then
+  slot_3 = ((v153_1(v168_1)) or (0))
+  if ((((slot_1 > 1)) or (((slot_2 > 1)))) or (((slot_3 > 1)))) then
     v437_1 = env.Color3.fromRGB
     v465_1 = env.math.clamp(slot_1, 0, 255)
     v497_1 = env.math.clamp(slot_2, 0, 255)
@@ -111394,9 +108540,7 @@ protos[2011] = function(upvalues, argument_1)
   ss_3 = v546_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_5 = ss_1
-  ss_1 = ss_0 and slot_5
-  ss_1 = ss_1 or (nil)
-  return ss_1
+  return ((ss_0 and slot_5) or (nil))
 end
 
 protos[2012] = function(upvalues)
@@ -111425,8 +108569,7 @@ protos[2013] = function(upvalues, argument_1)
   for __numericIndex_2013_0 = temp_3, temp_1, 1 do
     temp_3 = __numericIndex_2013_0
     slot_3 = slot_0[temp_3]
-    ss_0 = (((env["type"](slot_3)) == "table")) and slot_3.c
-    slot_4 = ss_0
+    slot_4 = ((((env["type"](slot_3)) == "table")) and slot_3.c)
     if (((env["type"](slot_4)) == "table")) then
       temp_4 = (cell_get(slot_1))
       v361_1 = cell_get(slot_1)
@@ -111461,9 +108604,7 @@ protos[2013] = function(upvalues, argument_1)
   ss_3 = v534_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_6 = ss_1
-  ss_1 = ss_0 and slot_6
-  ss_1 = ss_1 or (nil)
-  return ss_1
+  return ((ss_0 and slot_6) or (nil))
 end
 
 protos[2014] = function(upvalues)
@@ -111523,8 +108664,7 @@ protos[2016] = function(upvalues, argument_1)
   ss_3 = v87_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_4 = ss_1
-  ss_0 = ss_0 and slot_4
-  if ss_0 then
+  if (ss_0 and slot_4) then
     return slot_4
   end
   return nil
@@ -111542,13 +108682,11 @@ end
 
 protos[2018] = function(upvalues, argument_1, argument_2)
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_7, ss_0, ss_1, ss_2, ss_3
-  local v364_1, v374_1, v451_1, v461_1, v471_1, v485_1, v495_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
   slot_2 = (env["type"](slot_1))
-  ss_0 = ((slot_2 == "number")) or (((slot_2 == "boolean")))
-  if ss_0 then
+  if (((slot_2 == "number")) or (((slot_2 == "boolean")))) then
     return slot_1
   end
   if ((slot_2 == "userdata")) then
@@ -111571,43 +108709,27 @@ protos[2018] = function(upvalues, argument_1, argument_2)
       if ((slot_4 ~= nil)) then
         return slot_4
       end
-      v364_1 = slot_3
-      v374_1 = (v364_1 == "boolean")
-      if v374_1 then
-        v461_1 = slot_1
-        v471_1 = (v461_1 == "true")
-        if v471_1 then
+      if ((slot_3 == "boolean")) then
+        if ((slot_1 == "true")) then
           return true
         end
-        v485_1 = slot_1
-        v495_1 = (v485_1 == "false")
-        if v495_1 then
+        if ((slot_1 == "false")) then
           return false
         end
-        v451_1 = slot_1
-        return v451_1
+        return slot_1
       end
-      v451_1 = slot_1
-      return v451_1
+      return slot_1
     end
-    v364_1 = slot_3
-    v374_1 = (v364_1 == "boolean")
-    if v374_1 then
-      v461_1 = slot_1
-      v471_1 = (v461_1 == "true")
-      if v471_1 then
+    if ((slot_3 == "boolean")) then
+      if ((slot_1 == "true")) then
         return true
       end
-      v485_1 = slot_1
-      v495_1 = (v485_1 == "false")
-      if v495_1 then
+      if ((slot_1 == "false")) then
         return false
       end
-      v451_1 = slot_1
-      return v451_1
+      return slot_1
     end
-    v451_1 = slot_1
-    return v451_1
+    return slot_1
   end
   if ((slot_2 ~= "table")) then
     return nil
@@ -111716,8 +108838,7 @@ protos[2023] = function(upvalues, argument_1)
   local slot_0, slot_1, slot_3, slot_5, ss_0, ss_1, ss_2, ss_3, v201_1, v206_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = (((env["type"](slot_0)) ~= "string")) or ((((#slot_0) < 32)))
-  if ss_0 then
+  if ((((env["type"](slot_0)) ~= "string")) or ((((#slot_0) < 32)))) then
     return nil
   end
   slot_1 = env.loadstring
@@ -111725,11 +108846,9 @@ protos[2023] = function(upvalues, argument_1)
     v201_1 = env.rawget
     v206_1 = env.getfenv
     ss_1 = v201_1
-    ss_2 = v206_1 and ((env.getfenv()))
-    ss_2 = ss_2 or ((new_table(0)))
+    ss_2 = (v206_1 and ((env.getfenv()))) or ((new_table(0)))
     ss_3 = "loadstring"
-    ss_0 = ss_1(ss_2, ss_3)
-    slot_1 = ss_0
+    slot_1 = (ss_1(ss_2, ss_3))
   end
   if (((env["type"](slot_1)) ~= "function")) then
     return nil
@@ -111738,16 +108857,14 @@ protos[2023] = function(upvalues, argument_1)
   ss_3 = slot_1
   ss_0, ss_1 = ss_2(ss_3, slot_0)
   slot_3 = ss_1
-  ss_0 = (not ss_0) or ((((env["type"](slot_3)) ~= "function")))
-  if ss_0 then
+  if ((not ss_0) or ((((env["type"](slot_3)) ~= "function")))) then
     return nil
   end
   ss_2 = env.pcall
   ss_3 = slot_3
   ss_0, ss_1 = ss_2(ss_3)
   slot_5 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_5)) == "function")))
-  if ss_0 then
+  if (ss_0 and ((((env["type"](slot_5)) == "function")))) then
     return slot_5
   end
   return nil
@@ -111910,8 +109027,7 @@ protos[2029] = function(upvalues)
   v65_1 = env.tostring(slot_0)
   v70_1 = ("mesh_got " .. v65_1)
   v44_1(v70_1)
-  ss_0 = slot_0 and slot_1
-  if ss_0 then
+  if (slot_0 and slot_1) then
     temp_0 = (cell_get(upvalues[5])).meshes
     temp_1 = (cell_get(upvalues[3]))
     temp_2 = slot_1
@@ -111958,8 +109074,7 @@ protos[2031] = function(upvalues, argument_1, argument_2)
   v36_1 = v20_1(v35_1)
   ss_1 = v2_1
   ss_3 = v18_1
-  ss_0 = ss_1(ss_3(v36_1, ("(%d+)")))
-  slot_2 = ss_0
+  slot_2 = (ss_1(ss_3(v36_1, ("(%d+)"))))
   if (not slot_2) then
     return nil
   end
@@ -111974,9 +109089,7 @@ protos[2031] = function(upvalues, argument_1, argument_2)
   ss_3 = (closure(2032, {capture_3(), upvalues[2], capture_0(), upvalues[3], upvalues[4], capture_1()}))
   ss_0, ss_1 = v131_1(ss_3)
   slot_5 = ss_1
-  ss_1 = ss_0 and slot_5
-  ss_1 = ss_1 or (nil)
-  return ss_1
+  return ((ss_0 and slot_5) or (nil))
 end
 
 protos[2032] = function(upvalues)
@@ -112002,8 +109115,7 @@ protos[2033] = function(upvalues, argument_1)
   local v388_1, v409_1, v421_1, v433_1, v448_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = slot_0.display and slot_0.display.nodes
-  slot_1 = ss_0
+  slot_1 = (slot_0.display and slot_0.display.nodes)
   if (((env["type"](slot_1)) ~= "table")) then
     return nil
   end
@@ -112012,8 +109124,7 @@ protos[2033] = function(upvalues, argument_1)
   exit_175 = 1
   while ((temp_3 <= temp_1)) do
     slot_3 = slot_1[temp_3]
-    ss_0 = (((env["type"](slot_3)) == "table")) and (((slot_3.class == "SpecialMesh")))
-    v388_1 = ss_0
+    v388_1 = ((((env["type"](slot_3)) == "table")) and (((slot_3.class == "SpecialMesh"))))
     ss_0 = v388_1
     if v388_1 then
       v409_1 = slot_3.parent
@@ -112026,8 +109137,7 @@ protos[2033] = function(upvalues, argument_1)
       v448_1 = slot_3.props
       ss_0 = (((v433_1(v448_1)) == "table"))
     end
-    ss_0 = ss_0 and slot_3.props.MeshId
-    if ss_0 then
+    if (ss_0 and slot_3.props.MeshId) then
       exit_175 = 2
       break
     end
@@ -112113,14 +109223,12 @@ protos[2036] = function(upvalues, argument_1, argument_2)
 end
 
 protos[2037] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, v226_1, v231_1, v236_1, v251_1, v333_1
-  local v338_1, v343_1, v348_1, v368_1, v378_1, v383_1, v400_1, v405_1, v410_1, v415_1, v420_1, v440_1, v450_1, v455_1, v476_1, v491_1, v501_1, v524_1, v539_1, v549_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, v226_1, v231_1, v333_1
+  local v338_1, v343_1, v348_1, v400_1, v405_1, v410_1, v415_1, v420_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = slot_0.display and slot_0.display.root
-  slot_1 = ss_0
-  ss_0 = slot_1 and slot_1.props
-  slot_2 = ss_0
+  slot_1 = (slot_0.display and slot_0.display.root)
+  slot_2 = (slot_1 and slot_1.props)
   if (((env["type"](slot_2)) ~= "table")) then
     return nil
   end
@@ -112132,10 +109240,8 @@ protos[2037] = function(upvalues, argument_1)
     end
     v226_1 = cell_get(upvalues[2])
     v231_1 = slot_0
-    v236_1 = v226_1(v231_1)
-    slot_5 = v236_1
-    v251_1 = slot_5
-    if v251_1 then
+    slot_5 = (v226_1(v231_1))
+    if slot_5 then
       v400_1 = env.pcall
       v405_1 = cell_get(upvalues[3])
       v410_1 = slot_2
@@ -112147,20 +109253,9 @@ protos[2037] = function(upvalues, argument_1)
       ss_5 = v415_1
       ss_6 = v420_1
       ss_0, ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v440_1 = ss_1
-      slot_7 = v440_1
-      v450_1 = ss_0
-      slot_6 = v450_1
-      v455_1 = slot_6
-      ss_0 = v455_1
-      if v455_1 then
-        v476_1 = slot_7
-        ss_0 = v476_1
-      end
-      v491_1 = ss_0
-      if v491_1 then
-        v501_1 = slot_7
-        return v501_1, true
+      slot_7 = ss_1
+      if (ss_0 and slot_7) then
+        return slot_7, true
       end
       v333_1 = env.pcall
       v338_1 = cell_get(upvalues[4])
@@ -112171,20 +109266,9 @@ protos[2037] = function(upvalues, argument_1)
       ss_4 = v343_1
       ss_5 = v348_1
       ss_0, ss_1 = ss_2(ss_3, ss_4, ss_5)
-      v368_1 = ss_1
-      slot_9 = v368_1
-      v378_1 = ss_0
-      slot_8 = v378_1
-      v383_1 = slot_8
-      ss_0 = v383_1
-      if v383_1 then
-        v524_1 = slot_9
-        ss_0 = v524_1
-      end
-      v539_1 = ss_0
-      if v539_1 then
-        v549_1 = slot_9
-        return v549_1, true
+      slot_9 = ss_1
+      if (ss_0 and slot_9) then
+        return slot_9, true
       end
       return nil
     end
@@ -112197,29 +109281,16 @@ protos[2037] = function(upvalues, argument_1)
     ss_4 = v343_1
     ss_5 = v348_1
     ss_0, ss_1 = ss_2(ss_3, ss_4, ss_5)
-    v368_1 = ss_1
-    slot_9 = v368_1
-    v378_1 = ss_0
-    slot_8 = v378_1
-    v383_1 = slot_8
-    ss_0 = v383_1
-    if v383_1 then
-      v524_1 = slot_9
-      ss_0 = v524_1
-    end
-    v539_1 = ss_0
-    if v539_1 then
-      v549_1 = slot_9
-      return v549_1, true
+    slot_9 = ss_1
+    if (ss_0 and slot_9) then
+      return slot_9, true
     end
     return nil
   end
   v226_1 = cell_get(upvalues[2])
   v231_1 = slot_0
-  v236_1 = v226_1(v231_1)
-  slot_5 = v236_1
-  v251_1 = slot_5
-  if v251_1 then
+  slot_5 = (v226_1(v231_1))
+  if slot_5 then
     v400_1 = env.pcall
     v405_1 = cell_get(upvalues[3])
     v410_1 = slot_2
@@ -112231,20 +109302,9 @@ protos[2037] = function(upvalues, argument_1)
     ss_5 = v415_1
     ss_6 = v420_1
     ss_0, ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v440_1 = ss_1
-    slot_7 = v440_1
-    v450_1 = ss_0
-    slot_6 = v450_1
-    v455_1 = slot_6
-    ss_0 = v455_1
-    if v455_1 then
-      v476_1 = slot_7
-      ss_0 = v476_1
-    end
-    v491_1 = ss_0
-    if v491_1 then
-      v501_1 = slot_7
-      return v501_1, true
+    slot_7 = ss_1
+    if (ss_0 and slot_7) then
+      return slot_7, true
     end
     v333_1 = env.pcall
     v338_1 = cell_get(upvalues[4])
@@ -112255,20 +109315,9 @@ protos[2037] = function(upvalues, argument_1)
     ss_4 = v343_1
     ss_5 = v348_1
     ss_0, ss_1 = ss_2(ss_3, ss_4, ss_5)
-    v368_1 = ss_1
-    slot_9 = v368_1
-    v378_1 = ss_0
-    slot_8 = v378_1
-    v383_1 = slot_8
-    ss_0 = v383_1
-    if v383_1 then
-      v524_1 = slot_9
-      ss_0 = v524_1
-    end
-    v539_1 = ss_0
-    if v539_1 then
-      v549_1 = slot_9
-      return v549_1, true
+    slot_9 = ss_1
+    if (ss_0 and slot_9) then
+      return slot_9, true
     end
     return nil
   end
@@ -112281,20 +109330,9 @@ protos[2037] = function(upvalues, argument_1)
   ss_4 = v343_1
   ss_5 = v348_1
   ss_0, ss_1 = ss_2(ss_3, ss_4, ss_5)
-  v368_1 = ss_1
-  slot_9 = v368_1
-  v378_1 = ss_0
-  slot_8 = v378_1
-  v383_1 = slot_8
-  ss_0 = v383_1
-  if v383_1 then
-    v524_1 = slot_9
-    ss_0 = v524_1
-  end
-  v539_1 = ss_0
-  if v539_1 then
-    v549_1 = slot_9
-    return v549_1, true
+  slot_9 = ss_1
+  if (ss_0 and slot_9) then
+    return slot_9, true
   end
   return nil
 end
@@ -112303,10 +109341,8 @@ protos[2038] = function(upvalues, argument_1)
   local slot_0, slot_1, slot_2, slot_3, ss_0, v163_1, v179_1, v195_1, v197_1, v212_1, v213_1, v269_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = slot_0.display and slot_0.display.root
-  slot_1 = ss_0
-  ss_0 = slot_1 and slot_1.props
-  slot_2 = ss_0
+  slot_1 = (slot_0.display and slot_0.display.root)
+  slot_2 = (slot_1 and slot_1.props)
   v163_1 = ((env["type"](slot_2)) ~= "table")
   ss_0 = v163_1
   if not v163_1 then
@@ -112321,8 +109357,7 @@ protos[2038] = function(upvalues, argument_1)
   v197_1 = env.tostring
   v212_1 = slot_2.MeshId
   v213_1 = v197_1(v212_1)
-  ss_0 = v179_1(v195_1(v213_1, ("(%d+)")))
-  slot_3 = ss_0
+  slot_3 = (v179_1(v195_1(v213_1, ("(%d+)"))))
   if (not slot_3) then
     return false
   end
@@ -112394,21 +109429,17 @@ protos[2041] = destroyCapturedObject2041
 end
 
 protos[2042] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, ss_0
+  local slot_0, slot_1, slot_2, slot_3
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = (cell_get(upvalues[1])).Character
-  ss_0 = slot_1 and ((slot_1:FindFirstChild(slot_0)))
-  slot_2 = ss_0
-  ss_0 = slot_2 and ((slot_2:IsA("Tool")))
-  if ss_0 then
+  slot_2 = (slot_1 and ((slot_1:FindFirstChild(slot_0))))
+  if (slot_2 and ((slot_2:IsA("Tool")))) then
     return slot_2
   end
   slot_3 = ((cell_get(upvalues[1])):FindFirstChildOfClass("Backpack"))
-  ss_0 = slot_3 and ((slot_3:FindFirstChild(slot_0)))
-  slot_2 = ss_0
-  ss_0 = slot_2 and ((slot_2:IsA("Tool")))
-  if ss_0 then
+  slot_2 = (slot_3 and ((slot_3:FindFirstChild(slot_0))))
+  if (slot_2 and ((slot_2:IsA("Tool")))) then
     return slot_2
   end
   return nil
@@ -112420,8 +109451,7 @@ protos[2043] = function(upvalues, argument_1)
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = (slot_0:FindFirstChild("Handle"))
-  ss_0 = slot_1 and ((slot_1:IsA("BasePart")))
-  if ss_0 then
+  if (slot_1 and ((slot_1:IsA("BasePart")))) then
     return slot_1
   end
   v49_1 = env.ipairs
@@ -112461,10 +109491,8 @@ protos[2044] = function(upvalues, argument_1)
     ss_0 = (v44_1(v39_1, v59_1))
   end
   slot_2 = ss_0
-  ss_0 = slot_2 and slot_2.Value
-  slot_3 = ss_0
-  ss_0 = slot_3 and slot_3.Parent
-  if ss_0 then
+  slot_3 = (slot_2 and slot_2.Value)
+  if (slot_3 and slot_3.Parent) then
     return slot_3
   end
   return nil
@@ -112556,8 +109584,7 @@ protos[2046] = function(upvalues, argument_1)
       temp_6 = (cell_get(slot_5))
       temp_7 = nil
       temp_5[temp_6] = temp_7
-      ss_0 = (cell_get(slot_5)) and (cell_get(slot_5)).Parent
-      ss_0 = ss_0 and ((((env["type"](slot_6)) == "table")))
+      ss_0 = ((cell_get(slot_5)) and (cell_get(slot_5)).Parent) and ((((env["type"](slot_6)) == "table")))
       if ss_0 then
         ss_2 = env.pairs
         ss_3 = slot_6
@@ -112741,10 +109768,8 @@ protos[2052] = function(upvalues, argument_1, argument_2, argument_3)
   ss_1 = v488_1
   ss_2 = slot_4
   ss_1(ss_2, v499_1(v504_1, slot_5))
-  ss_0 = slot_0.display and slot_0.display.root
-  slot_7 = ss_0
-  ss_0 = slot_7 and slot_7.props
-  v686_1 = ss_0
+  slot_7 = (slot_0.display and slot_0.display.root)
+  v686_1 = (slot_7 and slot_7.props)
   ss_0 = v686_1
   if v686_1 then
     v698_1 = cell_get(upvalues[8])
@@ -112763,11 +109788,8 @@ protos[2052] = function(upvalues, argument_1, argument_2, argument_3)
   v812_1 = env.pcall
   v817_1 = closure(2053, {capture_2()})
   v812_1(v817_1)
-  ss_0 = slot_0.tool and slot_0.tool.root
-  slot_9 = ss_0
-  ss_0 = slot_9 and slot_9.props
-  ss_0 = ss_0 and slot_9.props.Grip
-  slot_10 = ss_0
+  slot_9 = (slot_0.tool and slot_0.tool.root)
+  slot_10 = ((slot_9 and slot_9.props) and slot_9.props.Grip)
   ss_0 = slot_10 and (((cell_get(upvalues[9]))(slot_10)))
   slot_11 = new_cell()
   slot_11 = cell_set_or_create(slot_11, ss_0)
@@ -113064,14 +110086,12 @@ protos[2060] = function(upvalues, argument_1, argument_2)
       v1103_1 = (cell_get(slot_0)).meta
       ss_1 = v1072_1
       ss_2 = v1088_1
-      ss_3 = v1103_1 and (cell_get(slot_0)).meta.ItemName
-      ss_3 = ss_3 or (cell_get(slot_0)).name
+      ss_3 = (v1103_1 and (cell_get(slot_0)).meta.ItemName) or (cell_get(slot_0)).name
       ss_4 = (cell_get(upvalues[15])).Check
       ss_5 = "success"
       ss_1(ss_2, ss_3, ss_4, ss_5)
     end
-    ss_0 = (cell_get(upvalues[1])).ui and (cell_get(upvalues[1])).ui.rebuild
-    if ss_0 then
+    if ((cell_get(upvalues[1])).ui and (cell_get(upvalues[1])).ui.rebuild) then
       v1249_1 = env.pcall
       v1270_1 = (cell_get(upvalues[1])).ui.rebuild
       v1249_1(v1270_1)
@@ -113082,8 +110102,7 @@ protos[2060] = function(upvalues, argument_1, argument_2)
   temp_1 = (cell_get(slot_2))
   temp_2 = nil
   temp_0[temp_1] = temp_2
-  ss_0 = (cell_get(upvalues[1])).ui and (cell_get(upvalues[1])).ui.rebuild
-  if ss_0 then
+  if ((cell_get(upvalues[1])).ui and (cell_get(upvalues[1])).ui.rebuild) then
     v1334_1 = env.pcall
     v1355_1 = (cell_get(upvalues[1])).ui.rebuild
     v1334_1(v1355_1)
@@ -113100,8 +110119,7 @@ protos[2060] = function(upvalues, argument_1, argument_2)
       v1416_1 = cell_get(slot_7)
       ss_3 = (not v1416_1)
     end
-    ss_3 = ss_3 and ("no tool or display")
-    ss_3 = ss_3 or ("body build failed")
+    ss_3 = (ss_3 and ("no tool or display")) or ("body build failed")
     ss_4 = (cell_get(upvalues[15])).Error
     ss_5 = "error"
     ss_1(ss_2, ss_3, ss_4, ss_5)
@@ -113168,8 +110186,7 @@ protos[2065] = function(upvalues, argument_1, argument_2)
   if (not slot_1) then
     v200_1 = cell_get(upvalues[4])
     v216_1 = (cell_get(upvalues[5]))("skinch_removed")
-    ss_3 = ((slot_0 == "Knife")) and (((cell_get(upvalues[5]))("skinch_knife")))
-    ss_3 = ss_3 or (((cell_get(upvalues[5]))("skinch_gun")))
+    ss_3 = (((slot_0 == "Knife")) and (((cell_get(upvalues[5]))("skinch_knife")))) or (((cell_get(upvalues[5]))("skinch_gun")))
     ss_4 = (cell_get(upvalues[6])).Info
     v200_1(v216_1, ss_3, ss_4, ("info"))
   end
@@ -113193,9 +110210,7 @@ protos[2066] = function(upvalues, argument_1)
   v8_1 = closure(2067, {capture_0()})
   ss_0, ss_1 = v3_1(v8_1)
   slot_2 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_2)) == "string")))
-  ss_0 = ss_0 and ((((#slot_2) > 1024)))
-  if ss_0 then
+  if ((ss_0 and ((((env["type"](slot_2)) == "string")))) and ((((#slot_2) > 1024)))) then
     return slot_2
   end
   return nil
@@ -113307,10 +110322,7 @@ protos[2071] = function(upvalues)
   ss_3 = v19_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_2 = ss_1
-  slot_1 = ss_0
-  ss_0 = slot_1 and ((((env["type"](slot_2)) == "string")))
-  ss_0 = ss_0 and ((((#slot_2) > 1024)))
-  if ss_0 then
+  if ((ss_0 and ((((env["type"](slot_2)) == "string")))) and ((((#slot_2) > 1024)))) then
     slot_0 = slot_2
   end
   v70_1 = cell_get(upvalues[2])
@@ -113318,8 +110330,7 @@ protos[2071] = function(upvalues)
   ss_1 = v70_1
   ss_2 = "mesh_http_done "
   ss_4 = v81_1
-  ss_5 = slot_0 and ((#slot_0))
-  ss_5 = ss_5 or (0)
+  ss_5 = (slot_0 and ((#slot_0))) or (0)
   ss_3 = ss_4(ss_5)
   ss_2 = ((ss_2 .. ss_3))
   ss_1(ss_2)
@@ -113331,9 +110342,7 @@ protos[2071] = function(upvalues)
     ss_0, ss_1 = ss_2(ss_3)
     slot_1 = ss_0
     slot_2 = ss_1
-    ss_0 = slot_1 and ((((env["type"](slot_2)) == "string")))
-    ss_0 = ss_0 and ((((#slot_2) > 1024)))
-    if ss_0 then
+    if ((slot_1 and ((((env["type"](slot_2)) == "string")))) and ((((#slot_2) > 1024)))) then
       slot_0 = slot_2
     end
     v389_1 = cell_get(upvalues[2])
@@ -113341,8 +110350,7 @@ protos[2071] = function(upvalues)
     ss_1 = v389_1
     ss_2 = "mesh_http2_done "
     ss_4 = v400_1
-    ss_5 = slot_0 and ((#slot_0))
-    ss_5 = ss_5 or (0)
+    ss_5 = (slot_0 and ((#slot_0))) or (0)
     ss_3 = ss_4(ss_5)
     ss_2 = ((ss_2 .. ss_3))
     ss_1(ss_2)
@@ -113398,8 +110406,7 @@ protos[2071] = function(upvalues)
   v948_1 = env.tostring(slot_5)
   v953_1 = ("mesh_ran " .. v948_1)
   v927_1(v953_1)
-  ss_0 = slot_5 and ((((env["type"](slot_6)) == "table")))
-  if ss_0 then
+  if (slot_5 and ((((env["type"](slot_6)) == "table")))) then
     return slot_6
   end
   return nil
@@ -113474,13 +110481,11 @@ protos[2074] = function(upvalues, argument_1)
         ss_0[ss_1] = ss_2
         v552_1 = slot_5.Props
         ss_1 = "props"
-        ss_2 = v552_1 or slot_5.props
-        ss_2 = ss_2 or ((new_table(0)))
+        ss_2 = (v552_1 or slot_5.props) or ((new_table(0)))
         ss_0[ss_1] = ss_2
         slot_6 = nil
         slot_6 = ss_0
-        ss_0 = (not slot_1) and (((slot_6.path == "(root)")) or (((slot_6.path == nil))))
-        if ss_0 then
+        if ((not slot_1) and (((slot_6.path == "(root)")) or (((slot_6.path == nil))))) then
           slot_1 = slot_6
         end
         if ((slot_6 ~= slot_1)) then
@@ -113539,8 +110544,7 @@ protos[2074] = function(upvalues, argument_1)
       v1243_1 = (cell_get(slot_2))[slot_10]
       slot_11 = nil
       slot_11 = v1243_1
-      ss_0 = ((slot_11.class == "MeshPart")) and ((slot_9(slot_11)))
-      if ss_0 then
+      if (((slot_11.class == "MeshPart")) and ((slot_9(slot_11)))) then
         exit_1146 = 2
         break
       end
@@ -113564,8 +110568,7 @@ protos[2074] = function(upvalues, argument_1)
       v1550_1 = (cell_get(slot_2))[slot_13]
       slot_14 = nil
       slot_14 = v1550_1
-      ss_0 = ((slot_14.class == "SpecialMesh")) and ((slot_9(slot_14)))
-      if ss_0 then
+      if (((slot_14.class == "SpecialMesh")) and ((slot_9(slot_14)))) then
         exit_1453 = 2
         break
       end
@@ -113640,8 +110643,7 @@ protos[2076] = function(upvalues, argument_1)
     v55_1 = slot_0.props
     ss_1 = (((v40_1(v55_1)) == "table"))
   end
-  ss_1 = ss_1 and (((slot_0.props.MeshId ~= nil)))
-  return ss_1
+  return (ss_1 and (((slot_0.props.MeshId ~= nil))))
 end
 
 protos[2077] = function(upvalues, argument_1)
@@ -113661,15 +110663,10 @@ protos[2077] = function(upvalues, argument_1)
       if (((env["type"](slot_3)) == "table")) then
         v285_1 = env["type"]
         v300_1 = slot_3.Meta
-        ss_0 = (((v285_1(v300_1)) == "table")) and slot_3.Meta
-        ss_0 = ss_0 or ((new_table(0)))
-        slot_4 = ss_0
+        slot_4 = (((((v285_1(v300_1)) == "table")) and slot_3.Meta) or ((new_table(0))))
         slot_5 = slot_4.ItemType
         slot_6 = slot_4.ItemName
-        ss_0 = ((slot_5 == "Gun")) or (((slot_5 == "Knife")))
-        ss_0 = ss_0 and ((((env["type"](slot_6)) == "string")))
-        ss_0 = ss_0 and (((slot_6 ~= "")))
-        if ss_0 then
+        if (((((slot_5 == "Gun")) or (((slot_5 == "Knife")))) and ((((env["type"](slot_6)) == "string")))) and (((slot_6 ~= "")))) then
           slot_7 = ((cell_get(upvalues[1]))(slot_3))
           if slot_7 then
             temp_6 = (((#slot_1) + 1))
@@ -113706,10 +110703,7 @@ protos[2078] = function(upvalues)
   ss_3 = v19_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_2 = ss_1
-  slot_1 = ss_0
-  ss_0 = slot_1 and ((((env["type"](slot_2)) == "string")))
-  ss_0 = ss_0 and ((((#slot_2) > 64)))
-  if ss_0 then
+  if ((ss_0 and ((((env["type"](slot_2)) == "string")))) and ((((#slot_2) > 64)))) then
     slot_0 = cell_set_or_create(slot_0, slot_2)
   end
   v70_1 = cell_get(upvalues[2])
@@ -113736,9 +110730,7 @@ protos[2078] = function(upvalues)
     ss_0, ss_1 = ss_2(ss_3)
     slot_1 = ss_0
     slot_2 = ss_1
-    ss_0 = slot_1 and ((((env["type"](slot_2)) == "string")))
-    ss_0 = ss_0 and ((((#slot_2) > 64)))
-    if ss_0 then
+    if ((slot_1 and ((((env["type"](slot_2)) == "string")))) and ((((#slot_2) > 64)))) then
       slot_0 = cell_set_or_create(slot_0, slot_2)
     end
     v389_1 = cell_get(upvalues[2])
@@ -113768,9 +110760,7 @@ protos[2078] = function(upvalues)
     ss_3 = v624_1
     ss_0, ss_1 = ss_2(ss_3)
     slot_4 = ss_1
-    ss_0 = ss_0 and ((((env["type"](slot_4)) == "string")))
-    ss_0 = ss_0 and ((((#slot_4) > 64)))
-    if ss_0 then
+    if ((ss_0 and ((((env["type"](slot_4)) == "string")))) and ((((#slot_4) > 64)))) then
       slot_0 = cell_set_or_create(slot_0, slot_4)
     end
   end
@@ -113796,8 +110786,7 @@ protos[2078] = function(upvalues)
   v879_1 = env.tostring(slot_5)
   v884_1 = ("db_decode_done " .. v879_1)
   v858_1(v884_1)
-  ss_0 = (not slot_5) or ((((env["type"](slot_6)) ~= "table")))
-  if ss_0 then
+  if ((not slot_5) or ((((env["type"](slot_6)) ~= "table")))) then
     return nil
   end
   return slot_6
@@ -113881,7 +110870,7 @@ protos[2083] = function(upvalues)
 end
 
 protos[2084] = function(upvalues, argument_1)
-  local slot_0, ss_0, v105_1, v116_1, v133_1, v148_1, v230_1, v245_1, v256_1, v37_1
+  local slot_0, ss_0, v105_1, v133_1, v148_1, v230_1, v245_1, v37_1
   local v52_1, v63_1, v90_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -113902,24 +110891,12 @@ protos[2084] = function(upvalues, argument_1)
   end
   v90_1 = env["type"]
   v105_1 = slot_0.meta
-  v116_1 = ((v90_1(v105_1)) == "table")
-  ss_0 = v116_1
-  if v116_1 then
-    ss_0 = ((slot_0.meta.ItemName ~= nil)) or (((slot_0.meta.Rarity ~= nil)))
-    ss_0 = ss_0 or (((slot_0.meta.Name ~= nil)))
-  end
-  if ss_0 then
+  if ((((v90_1(v105_1)) == "table")) and ((((slot_0.meta.ItemName ~= nil)) or (((slot_0.meta.Rarity ~= nil)))) or (((slot_0.meta.Name ~= nil))))) then
     return true
   end
   v230_1 = env["type"]
   v245_1 = slot_0.name
-  v256_1 = ((v230_1(v245_1)) == "string")
-  ss_0 = v256_1
-  if v256_1 then
-    ss_0 = ((slot_0.kind ~= nil)) or (((slot_0.MeshId ~= nil)))
-    ss_0 = ss_0 or (((slot_0.id ~= nil)))
-  end
-  if ss_0 then
+  if ((((v230_1(v245_1)) == "string")) and ((((slot_0.kind ~= nil)) or (((slot_0.MeshId ~= nil)))) or (((slot_0.id ~= nil))))) then
     return true
   end
   return false
@@ -113950,8 +110927,7 @@ protos[2085] = function(upvalues, argument_1, argument_2)
   for __loopKey_2085_0, __loopValue_2085_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_3 = __loopKey_2085_0
     slot_4 = __loopValue_2085_0
-    ss_0 = (((env["type"](slot_4)) == "string")) and (((slot_4 ~= "")))
-    v400_1 = ss_0
+    v400_1 = ((((env["type"](slot_4)) == "string")) and (((slot_4 ~= ""))))
     ss_0 = v400_1
     if v400_1 then
       v443_1 = env.string.find(slot_4, "|", 1, true)
@@ -113967,9 +110943,7 @@ protos[2085] = function(upvalues, argument_1, argument_2)
     end
   end
   if exit_171 == 1 then
-    ss_0 = (((env["type"](slot_1)) == "string")) and (((slot_1 ~= "")))
-    ss_0 = ss_0 and (((slot_1 ~= "entries")))
-    v575_1 = ss_0
+    v575_1 = (((((env["type"](slot_1)) == "string")) and (((slot_1 ~= "")))) and (((slot_1 ~= "entries"))))
     ss_0 = v575_1
     if v575_1 then
       v618_1 = env.string.find(slot_1, "|", 1, true)
@@ -114049,7 +111023,7 @@ end
 
 protos[2088] = function(upvalues, argument_1, argument_2, argument_3, argument_4)
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, ss_0, ss_1, ss_2, temp_0, temp_1, temp_2, v195_1
-  local v283_1, v37_1, v411_1, v426_1, v461_1, v540_1
+  local v283_1, v37_1, v411_1, v426_1, v461_1
   local v742_1, v753_1, v775_1, v780_1, v958_1, v988_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -114082,14 +111056,7 @@ protos[2088] = function(upvalues, argument_1, argument_2, argument_3, argument_4
           if (((v411_1(v426_1)) ~= "string")) then
             temp_0 = slot_0
             temp_1 = "_hint"
-            v540_1 = slot_2
-            ss_1 = v540_1
-            if not v540_1 then
-              ss_1 = (((env["type"](slot_1)) == "string")) and slot_1
-              ss_1 = ss_1 or (nil)
-            end
-            ss_0 = ss_1
-            temp_2 = ss_0
+            temp_2 = (slot_2 or (((((env["type"](slot_1)) == "string")) and slot_1) or (nil)))
             temp_0._hint = temp_2
           end
           temp_0 = (cell_get(upvalues[5]))
@@ -114100,8 +111067,7 @@ protos[2088] = function(upvalues, argument_1, argument_2, argument_3, argument_4
         end
       else
         slot_5 = slot_2
-        ss_0 = (((env["type"](slot_1)) == "string")) and ((((#slot_1) <= 24)))
-        v742_1 = ss_0
+        v742_1 = ((((env["type"](slot_1)) == "string")) and ((((#slot_1) <= 24))))
         ss_0 = v742_1
         if v742_1 then
           v753_1 = cell_get(upvalues[6])
@@ -114131,7 +111097,7 @@ protos[2088] = function(upvalues, argument_1, argument_2, argument_3, argument_4
 end
 
 protos[2089] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, ss_8, v1007_1, v1045_1, v1060_1, v1092_3, v1097_2, v1102_2, v1185_1, v1187_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, ss_8, v1007_1, v1045_1, v1060_1, v1092_3, v1097_2, v1102_2, v1185_1, v1187_1
   local v12_1, v1202_1, v14_1, v1482_1, v1497_1, v1529_3
   local v29_1, v326_1, v328_1, v343_1
   local v713_1, v728_1, v937_1, v939_1, v954_1, v992_1
@@ -114143,20 +111109,11 @@ protos[2089] = function(upvalues, argument_1)
   ss_1 = v12_1
   ss_3 = v14_1
   ss_4 = v29_1 or ("")
-  ss_0 = ss_1(ss_3(ss_4))
-  slot_1 = ss_0
-  ss_0 = ((slot_1 == "gun")) or (((slot_1 == "guns")))
-  ss_0 = ss_0 or (((slot_1 == "pistol")))
-  ss_0 = ss_0 or (((slot_1 == "pistols")))
-  ss_0 = ss_0 or (((slot_1 == "ranged")))
-  if ss_0 then
+  slot_1 = (ss_1(ss_3(ss_4)))
+  if ((((((slot_1 == "gun")) or (((slot_1 == "guns")))) or (((slot_1 == "pistol")))) or (((slot_1 == "pistols")))) or (((slot_1 == "ranged")))) then
     return "Gun"
   end
-  ss_0 = ((slot_1 == "knife")) or (((slot_1 == "knives")))
-  ss_0 = ss_0 or (((slot_1 == "melee")))
-  ss_0 = ss_0 or (((slot_1 == "blade")))
-  ss_0 = ss_0 or (((slot_1 == "daggers")))
-  if ss_0 then
+  if ((((((slot_1 == "knife")) or (((slot_1 == "knives")))) or (((slot_1 == "melee")))) or (((slot_1 == "blade")))) or (((slot_1 == "daggers")))) then
     return "Knife"
   end
   v326_1 = env.string.lower
@@ -114165,25 +111122,16 @@ protos[2089] = function(upvalues, argument_1)
   ss_1 = v326_1
   ss_3 = v328_1
   ss_4 = v343_1 or ("")
-  ss_0 = ss_1(ss_3(ss_4))
-  slot_2 = ss_0
-  ss_0 = ((slot_2 == "gun")) or (((slot_2 == "guns")))
-  ss_0 = ss_0 or (((slot_2 == "pistols")))
-  ss_0 = ss_0 or (((slot_2 == "weapons_gun")))
-  if ss_0 then
+  slot_2 = (ss_1(ss_3(ss_4)))
+  if (((((slot_2 == "gun")) or (((slot_2 == "guns")))) or (((slot_2 == "pistols")))) or (((slot_2 == "weapons_gun")))) then
     return "Gun"
   end
-  ss_0 = ((slot_2 == "knife")) or (((slot_2 == "knives")))
-  ss_0 = ss_0 or (((slot_2 == "melee")))
-  ss_0 = ss_0 or (((slot_2 == "daggers")))
-  if ss_0 then
+  if (((((slot_2 == "knife")) or (((slot_2 == "knives")))) or (((slot_2 == "melee")))) or (((slot_2 == "daggers")))) then
     return "Knife"
   end
   v713_1 = env["type"]
   v728_1 = slot_0.meta
-  ss_0 = (((v713_1(v728_1)) == "table")) and slot_0.meta
-  ss_0 = ss_0 or ((new_table(0)))
-  slot_3 = ss_0
+  slot_3 = (((((v713_1(v728_1)) == "table")) and slot_0.meta) or ((new_table(0))))
   v937_1 = env.string.lower
   v939_1 = env.tostring
   v954_1 = slot_3.Category
@@ -114206,13 +111154,8 @@ protos[2089] = function(upvalues, argument_1)
   v1097_2 = (ss_4 .. v1092_3)
   v1102_2 = (ss_3 .. v1097_2)
   ss_2 = ((ss_2 .. v1102_2))
-  ss_0 = ss_1(ss_2)
-  slot_4 = ss_0
-  ss_0 = (env.string.find(slot_4, "knife", 1, true)) or ((env.string.find(slot_4, "dagger", 1, true)))
-  ss_0 = ss_0 or ((env.string.find(slot_4, "blade", 1, true)))
-  ss_0 = ss_0 or ((env.string.find(slot_4, "sword", 1, true)))
-  ss_0 = ss_0 or ((env.string.find(slot_4, "melee", 1, true)))
-  if ss_0 then
+  slot_4 = (ss_1(ss_2))
+  if (((((env.string.find(slot_4, "knife", 1, true)) or ((env.string.find(slot_4, "dagger", 1, true)))) or ((env.string.find(slot_4, "blade", 1, true)))) or ((env.string.find(slot_4, "sword", 1, true)))) or ((env.string.find(slot_4, "melee", 1, true)))) then
     return "Knife"
   end
   v1185_1 = env.string.lower
@@ -114230,10 +111173,8 @@ protos[2089] = function(upvalues, argument_1)
   ss_4 = ss_5(ss_6)
   v1529_3 = (ss_3 .. ss_4)
   ss_2 = ((ss_2 .. v1529_3))
-  ss_0 = ss_1(ss_2)
-  slot_5 = ss_0
-  ss_0 = (env.string.find(slot_5, "knife", 1, true)) or ((env.string.find(slot_5, "dagger", 1, true)))
-  if ss_0 then
+  slot_5 = (ss_1(ss_2))
+  if ((env.string.find(slot_5, "knife", 1, true)) or ((env.string.find(slot_5, "dagger", 1, true)))) then
     return "Knife"
   end
   return "Gun"
@@ -114264,8 +111205,7 @@ protos[2090] = function(upvalues, argument_1, argument_2)
   v66_1[1] = slot_5
   slot_6 = nil
   slot_6 = v66_1
-  ss_0 = (((env["type"](slot_1)) == "table")) and ((((#slot_1) > 0)))
-  if ss_0 then
+  if ((((env["type"](slot_1)) == "table")) and ((((#slot_1) > 0)))) then
     temp_0 = slot_6
     temp_1 = (((#slot_6) + 1))
     temp_2 = slot_1
@@ -114288,9 +111228,7 @@ protos[2090] = function(upvalues, argument_1, argument_2)
       slot_10 = __loopValue_2090_1
       v634_1 = env["type"]
       v649_1 = slot_10.meta
-      ss_0 = (((v634_1(v649_1)) == "table")) and slot_10.meta
-      ss_0 = ss_0 or ((new_table(0)))
-      slot_11 = ss_0
+      slot_11 = (((((v634_1(v649_1)) == "table")) and slot_10.meta) or ((new_table(0))))
       temp_10 = slot_10
       temp_11 = "meta"
       temp_12 = slot_11
@@ -114298,23 +111236,17 @@ protos[2090] = function(upvalues, argument_1, argument_2)
       v792_1 = env.tostring
       v807_1 = slot_11.ItemName
       ss_1 = v792_1
-      ss_2 = v807_1 or slot_11.Name
-      ss_2 = ss_2 or slot_10.name
-      ss_0 = ss_1(ss_2)
-      slot_12 = ss_0
-      ss_0 = slot_10.kind or (((cell_get(upvalues[2]))(slot_10)))
-      slot_13 = ss_0
-      ss_0 = ((slot_13 ~= "Gun")) and (((slot_13 ~= "Knife")))
-      if ss_0 then
+      ss_2 = (v807_1 or slot_11.Name) or slot_10.name
+      slot_12 = (ss_1(ss_2))
+      slot_13 = (slot_10.kind or (((cell_get(upvalues[2]))(slot_10))))
+      if (((slot_13 ~= "Gun")) and (((slot_13 ~= "Knife")))) then
         slot_13 = ((cell_get(upvalues[2]))(slot_10))
       end
       temp_10 = slot_10
       temp_11 = "kind"
       temp_12 = slot_13
       temp_10.kind = temp_12
-      ss_0 = slot_10.id or slot_10.slug
-      ss_0 = ss_0 or slot_10.name
-      slot_14 = ss_0
+      slot_14 = ((slot_10.id or slot_10.slug) or slot_10.name)
       v1179_1 = env.tostring
       v1194_1 = slot_10.name
       v1195_1 = v1179_1(v1194_1)
@@ -114365,9 +111297,7 @@ protos[2090] = function(upvalues, argument_1, argument_2)
         v1650_2 = (ss_4 .. v1645_2)
         v1655_2 = (ss_3 .. v1650_2)
         v1660_2 = (ss_2 .. v1655_2)
-        ss_1 = ((ss_1 .. v1660_2))
-        ss_0 = ss_1
-        temp_12 = ss_0
+        temp_12 = ((((ss_1 .. v1660_2))))
         temp_10._search = temp_12
         v1711_1 = slot_10.name
         v1712_1 = slot_2[v1711_1]
@@ -114582,11 +111512,9 @@ protos[2095] = function(upvalues)
     ss_5 = v269_1
     ss_6 = v274_1
     ss_7 = "BackgroundTransparency"
-    ss_8 = slot_3 and (0.3)
-    ss_8 = ss_8 or (0.5)
+    ss_8 = (slot_3 and (0.3)) or (0.5)
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v353_1 = ss_1
+    v353_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v353_1.Play
     ss_2 = v353_1
     ss_1(ss_2)
@@ -114601,11 +111529,9 @@ protos[2095] = function(upvalues)
     ss_5 = v403_1
     ss_6 = v408_1
     ss_7 = "BackgroundTransparency"
-    ss_8 = slot_3 and (0.35)
-    ss_8 = ss_8 or (0.85)
+    ss_8 = (slot_3 and (0.35)) or (0.85)
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v477_1 = ss_1
+    v477_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v477_1.Play
     ss_2 = v477_1
     ss_1(ss_2)
@@ -114628,8 +111554,7 @@ protos[2095] = function(upvalues)
     ss_7 = 1
     ss_8 = v631_1
     ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-    ss_0 = ss_2(ss_3)
-    temp_7 = ss_0
+    temp_7 = (ss_2(ss_3))
     temp_5.Color = temp_7
     temp_5 = slot_2.fillGrad
     v700_1 = slot_3
@@ -114668,8 +111593,7 @@ protos[2095] = function(upvalues)
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
       ss_1 = ss_2(ss_3)
     end
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = ss_1
     temp_5.Transparency = temp_7
     v1005_1 = cell_get(upvalues[4])
     v1010_1 = v1005_1.Create
@@ -114682,19 +111606,15 @@ protos[2095] = function(upvalues)
     ss_5 = v1043_1
     ss_6 = v1048_1
     ss_7 = "Color"
-    ss_8 = slot_3 and slot_0.accent
-    ss_8 = ss_8 or slot_0.stroke
+    ss_8 = (slot_3 and slot_0.accent) or slot_0.stroke
     ss_6[ss_7] = ss_8
     ss_7 = "Transparency"
-    ss_8 = slot_3 and (0.15)
-    ss_8 = ss_8 or (0.6)
+    ss_8 = (slot_3 and (0.15)) or (0.6)
     ss_6[ss_7] = ss_8
     ss_7 = "Thickness"
-    ss_8 = slot_3 and (1.5)
-    ss_8 = ss_8 or (1)
+    ss_8 = (slot_3 and (1.5)) or (1)
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v1255_1 = ss_1
+    v1255_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v1255_1.Play
     ss_2 = v1255_1
     ss_1(ss_2)
@@ -114709,11 +111629,9 @@ protos[2095] = function(upvalues)
     ss_5 = v1305_1
     ss_6 = v1310_1
     ss_7 = "TextColor3"
-    ss_8 = slot_3 and ((env.Color3.fromRGB(255, 255, 255)))
-    ss_8 = ss_8 or slot_0.muted
+    ss_8 = (slot_3 and ((env.Color3.fromRGB(255, 255, 255)))) or slot_0.muted
     ss_6[ss_7] = ss_8
-    ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    v1412_1 = ss_1
+    v1412_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     ss_1 = v1412_1.Play
     ss_2 = v1412_1
     ss_1(ss_2)
@@ -114731,11 +111649,9 @@ protos[2095] = function(upvalues)
       ss_5 = v1502_1
       ss_6 = v1507_1
       ss_7 = "BackgroundTransparency"
-      ss_8 = slot_3 and (0.9)
-      ss_8 = ss_8 or (1)
+      ss_8 = (slot_3 and (0.9)) or (1)
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v1593_1 = ss_1
+      v1593_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v1593_1.Play
       ss_2 = v1593_1
       ss_1(ss_2)
@@ -114752,15 +111668,12 @@ protos[2095] = function(upvalues)
       ss_5 = v1668_1
       ss_6 = v1673_1
       ss_7 = "BackgroundColor3"
-      ss_8 = slot_3 and slot_0.accent
-      ss_8 = ss_8 or slot_0.panel
+      ss_8 = (slot_3 and slot_0.accent) or slot_0.panel
       ss_6[ss_7] = ss_8
       ss_7 = "BackgroundTransparency"
-      ss_8 = slot_3 and (0.1)
-      ss_8 = ss_8 or (0.35)
+      ss_8 = (slot_3 and (0.1)) or (0.35)
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v1817_1 = ss_1
+      v1817_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v1817_1.Play
       ss_2 = v1817_1
       ss_1(ss_2)
@@ -114777,15 +111690,12 @@ protos[2095] = function(upvalues)
       ss_5 = v1892_1
       ss_6 = v1897_1
       ss_7 = "Color"
-      ss_8 = slot_3 and slot_0.accent
-      ss_8 = ss_8 or slot_0.stroke
+      ss_8 = (slot_3 and slot_0.accent) or slot_0.stroke
       ss_6[ss_7] = ss_8
       ss_7 = "Transparency"
-      ss_8 = slot_3 and (0.1)
-      ss_8 = ss_8 or (0.6)
+      ss_8 = (slot_3 and (0.1)) or (0.6)
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v2041_1 = ss_1
+      v2041_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v2041_1.Play
       ss_2 = v2041_1
       ss_1(ss_2)
@@ -114802,11 +111712,9 @@ protos[2095] = function(upvalues)
       ss_5 = v2101_1
       ss_6 = v2106_1
       ss_7 = "TextColor3"
-      ss_8 = slot_3 and ((env.Color3.fromRGB(255, 255, 255)))
-      ss_8 = ss_8 or slot_0.muted
+      ss_8 = (slot_3 and ((env.Color3.fromRGB(255, 255, 255)))) or slot_0.muted
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v2208_1 = ss_1
+      v2208_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v2208_1.Play
       ss_2 = v2208_1
       ss_1(ss_2)
@@ -114821,8 +111729,7 @@ protos[2096] = function(upvalues, argument_1, argument_2)
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_2 = argument_2
-  ss_0 = (((env["type"](slot_2)) ~= "string")) or (((slot_2 == "")))
-  if ss_0 then
+  if ((((env["type"](slot_2)) ~= "string")) or (((slot_2 == "")))) then
     return true
   end
   slot_3 = slot_0._search
@@ -114832,10 +111739,8 @@ protos[2096] = function(upvalues, argument_1, argument_2)
     v263_1 = slot_0._display
     ss_1 = v246_1
     ss_3 = v248_1
-    ss_4 = v263_1 or slot_0.name
-    ss_4 = ss_4 or ("")
-    ss_0 = ss_1(ss_3(ss_4))
-    slot_3 = ss_0
+    ss_4 = (v263_1 or slot_0.name) or ("")
+    slot_3 = (ss_1(ss_3(ss_4)))
     temp_0 = slot_0
     temp_1 = "_search"
     temp_2 = slot_3
@@ -114909,8 +111814,7 @@ protos[2099] = function(upvalues)
   v1_1.gun = 0
   v1_1.knife = 0
   slot_0 = v1_1
-  ss_0 = (((cell_get(upvalues[1])).query ~= nil)) and ((((cell_get(upvalues[1])).query ~= "")))
-  slot_1 = ss_0
+  slot_1 = ((((cell_get(upvalues[1])).query ~= nil)) and ((((cell_get(upvalues[1])).query ~= ""))))
   if (cell_get(upvalues[1])).loaded then
     v273_1 = env.ipairs
     v288_1 = (cell_get(upvalues[1])).list
@@ -114957,8 +111861,7 @@ protos[2099] = function(upvalues)
       v906_1 = slot_0[slot_4]
       ss_1 = v891_1
       ss_2 = v906_1 or (0)
-      ss_0 = ss_1(ss_2)
-      slot_6 = ss_0
+      slot_6 = (ss_1(ss_2))
       temp_5 = slot_5.badgeText
       temp_7 = slot_6
       temp_5.Text = temp_7
@@ -114973,8 +111876,7 @@ protos[2099] = function(upvalues)
         v1181_1 = v1144_1(v1166_1, 28, 48)
         ss_2 = v1127_1
         ss_3 = 0
-        ss_0 = ss_2(ss_3, v1181_1, (0), (18))
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3, v1181_1, (0), (18)))
         temp_5.Size = temp_7
       end
     end
@@ -115144,15 +112046,11 @@ protos[2101] = function(upvalues, argument_1, argument_2, argument_3)
   ss_2 = "UIStroke"
   ss_3 = v297_1
   ss_4 = "Color"
-  ss_5 = v314_1 or ((cell_get(slot_3)))
-  ss_5 = ss_5 and (cell_get(upvalues[4])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[4])).colors.stroke
+  ss_5 = ((v314_1 or ((cell_get(slot_3)))) and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.stroke
   ss_3[ss_4] = ss_5
   v462_1 = cell_get(slot_2)
   ss_4 = "Transparency"
-  ss_5 = v462_1 or ((cell_get(slot_3)))
-  ss_5 = ss_5 and (0.35)
-  ss_5 = ss_5 or (0.8)
+  ss_5 = ((v462_1 or ((cell_get(slot_3)))) and (0.35)) or (0.8)
   ss_3[ss_4] = ss_5
   ss_3.Thickness = 1
   ss_0 = ss_1(ss_2, ss_3)
@@ -115227,8 +112125,7 @@ protos[2101] = function(upvalues, argument_1, argument_2, argument_3)
   ss_4 = "Text"
   ss_5 = v1222_1
   ss_6 = " · "
-  ss_7 = v1244_1 and (((cell_get(upvalues[6]))("skinch_knife")))
-  ss_7 = ss_7 or (((cell_get(upvalues[6]))("skinch_gun")))
+  ss_7 = (v1244_1 and (((cell_get(upvalues[6]))("skinch_knife")))) or (((cell_get(upvalues[6]))("skinch_gun")))
   v1323_3 = (ss_6 .. ss_7)
   v1328_2 = (ss_5 .. v1323_3)
   ss_3[ss_4] = v1328_2
@@ -115244,8 +112141,7 @@ protos[2101] = function(upvalues, argument_1, argument_2, argument_3)
   v1440_1 = env.Enum.TextTruncate.AtEnd
   ss_3.TextTruncate = v1440_1
   ss_3.ZIndex = 5007
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_8 = ss_0
+  slot_8 = (ss_1(ss_2, ss_3))
   v1469_1 = cell_get(upvalues[2])
   v1479_1 = new_table(0)
   v1479_1.Parent = slot_4
@@ -115262,13 +112158,11 @@ protos[2101] = function(upvalues, argument_1, argument_2, argument_3)
   ss_2 = "TextButton"
   ss_3 = v1479_1
   ss_4 = "BackgroundColor3"
-  ss_5 = v1616_1 and (cell_get(upvalues[4])).colors.panel
-  ss_5 = ss_5 or (cell_get(upvalues[4])).colors.accent
+  ss_5 = (v1616_1 and (cell_get(upvalues[4])).colors.panel) or (cell_get(upvalues[4])).colors.accent
   ss_3[ss_4] = ss_5
   v1703_1 = cell_get(slot_3)
   ss_4 = "BackgroundTransparency"
-  ss_5 = v1703_1 and (0.25)
-  ss_5 = ss_5 or (0.08)
+  ss_5 = (v1703_1 and (0.25)) or (0.08)
   ss_3[ss_4] = ss_5
   ss_3.BorderSizePixel = 0
   ss_3.Text = ""
@@ -115294,13 +112188,11 @@ protos[2101] = function(upvalues, argument_1, argument_2, argument_3)
   ss_2 = "UIStroke"
   ss_3 = v1903_1
   ss_4 = "Color"
-  ss_5 = v1920_1 and (cell_get(upvalues[4])).colors.stroke
-  ss_5 = ss_5 or (cell_get(upvalues[4])).colors.accent
+  ss_5 = (v1920_1 and (cell_get(upvalues[4])).colors.stroke) or (cell_get(upvalues[4])).colors.accent
   ss_3[ss_4] = ss_5
   v2007_1 = cell_get(slot_3)
   ss_4 = "Transparency"
-  ss_5 = v2007_1 and (0.6)
-  ss_5 = ss_5 or (0.2)
+  ss_5 = (v2007_1 and (0.6)) or (0.2)
   ss_3[ss_4] = ss_5
   ss_3.Thickness = 1
   ss_0 = ss_1(ss_2, ss_3)
@@ -115322,8 +112214,7 @@ protos[2101] = function(upvalues, argument_1, argument_2, argument_3)
   ss_6 = v2141_1
   ss_7 = v2142_1
   ss_10 = 0
-  ss_11 = v2160_1 and (cell_get(upvalues[4])).colors.panel
-  ss_11 = ss_11 or (cell_get(upvalues[4])).colors.accent
+  ss_11 = (v2160_1 and (cell_get(upvalues[4])).colors.panel) or (cell_get(upvalues[4])).colors.accent
   v2246_1 = (v2154_1(ss_10, ss_11))
   ss_7[1] = v2246_1
   v2263_1 = env.ColorSequenceKeypoint.new
@@ -115350,8 +112241,7 @@ protos[2101] = function(upvalues, argument_1, argument_2, argument_3)
   ss_7 = set_list_values(ss_7, 2, ss_10(ss_11, ss_12))
   ss_5 = ss_6(ss_7)
   ss_3[ss_4] = ss_5
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_11 = ss_0
+  slot_11 = (ss_1(ss_2, ss_3))
   regs.v2580_1 = cell_get(upvalues[2])
   v2590_1 = new_table(0)
   regs.v2596_1 = cell_get(slot_9)
@@ -115368,14 +112258,11 @@ protos[2101] = function(upvalues, argument_1, argument_2, argument_3)
   ss_2 = "ImageLabel"
   ss_3 = v2590_1
   ss_4 = "Image"
-  ss_5 = v2737_1 and (cell_get(upvalues[7])).Delete
-  ss_5 = ss_5 or (cell_get(upvalues[7])).Check
-  ss_5 = ss_5 or ("")
+  ss_5 = ((v2737_1 and (cell_get(upvalues[7])).Delete) or (cell_get(upvalues[7])).Check) or ("")
   ss_3[ss_4] = ss_5
   v2838_1 = cell_get(slot_3)
   ss_4 = "ImageColor3"
-  ss_5 = v2838_1 and (cell_get(upvalues[4])).colors.muted
-  ss_5 = ss_5 or ((env.Color3.fromRGB(255, 255, 255)))
+  ss_5 = (v2838_1 and (cell_get(upvalues[4])).colors.muted) or ((env.Color3.fromRGB(255, 255, 255)))
   ss_3[ss_4] = ss_5
   ss_3.ZIndex = 5009
   regs.v2967_1 = env.Enum.ScaleType.Fit
@@ -115399,13 +112286,11 @@ protos[2101] = function(upvalues, argument_1, argument_2, argument_3)
   ss_2 = "TextLabel"
   ss_3 = v2995_1
   ss_4 = "Text"
-  ss_5 = v3110_1 and (((cell_get(upvalues[6]))("skinch_remove")))
-  ss_5 = ss_5 or (((cell_get(upvalues[6]))("skinch_apply")))
+  ss_5 = (v3110_1 and (((cell_get(upvalues[6]))("skinch_remove")))) or (((cell_get(upvalues[6]))("skinch_apply")))
   ss_3[ss_4] = ss_5
   v3195_1 = cell_get(slot_3)
   ss_4 = "TextColor3"
-  ss_5 = v3195_1 and (cell_get(upvalues[4])).colors.muted
-  ss_5 = ss_5 or ((env.Color3.fromRGB(255, 255, 255)))
+  ss_5 = (v3195_1 and (cell_get(upvalues[4])).colors.muted) or ((env.Color3.fromRGB(255, 255, 255)))
   ss_3[ss_4] = ss_5
   ss_3.TextSize = 11
   regs.v3324_1 = env.Enum.Font.GothamBold
@@ -115503,7 +112388,7 @@ protos[2101] = function(upvalues, argument_1, argument_2, argument_3)
 end
 
 protos[2102] = function(upvalues, argument_1)
-  local slot_0, ss_0, ss_1, ss_3, ss_4, ss_5, temp_0, temp_2, v11_1, v1113_1, v1118_1, v1208_1, v1213_1, v1218_1, v1224_1
+  local slot_0, ss_1, ss_3, ss_4, ss_5, temp_0, temp_2, v11_1, v1113_1, v1118_1, v1208_1, v1213_1, v1218_1, v1224_1
   local v359_1, v364_1, v369_1
   local v535_1, v540_1, v545_1, v561_1, v583_1, v600_1, v606_1, v607_1, v612_1, v624_1, v635_1, v729_1, v734_1, v785_1, v790_1, v795_1, v811_1, v833_1, v850_1, v856_1, v862_1, v867_1, v879_1, v890_1, v911_1, v916_1
   local v946_1, v951_1
@@ -115589,10 +112474,7 @@ protos[2102] = function(upvalues, argument_1)
       temp_2 = 0
       temp_0.TextTransparency = temp_2
       temp_0 = (cell_get(upvalues[1]))
-      ss_1 = (cell_get(upvalues[12])) and (0.25)
-      ss_1 = ss_1 or (0.08)
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((cell_get(upvalues[12])) and (0.25)) or (0.08)))
       temp_0.BackgroundTransparency = temp_2
       v1208_1 = cell_get(upvalues[5])
       v1213_1 = cell_get(upvalues[6])
@@ -115601,18 +112483,13 @@ protos[2102] = function(upvalues, argument_1)
       ss_1 = v1208_1
       ss_3 = v1218_1
       ss_4 = "Transparency"
-      ss_5 = v1224_1 and (0.6)
-      ss_5 = ss_5 or (0.2)
+      ss_5 = (v1224_1 and (0.6)) or (0.2)
       ss_3[ss_4] = ss_5
       ss_3.Thickness = 1
       ss_4 = 0.15
       ss_1(v1213_1, ss_3, ss_4)
       temp_0 = (cell_get(upvalues[9]))
-      ss_1 = (cell_get(upvalues[13])) or ((cell_get(upvalues[12])))
-      ss_1 = ss_1 and (0.35)
-      ss_1 = ss_1 or (0.8)
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = (((((cell_get(upvalues[13])) or ((cell_get(upvalues[12])))) and (0.35)) or (0.8)))
       temp_0.Transparency = temp_2
     end
   end
@@ -115767,8 +112644,7 @@ protos[2113] = function(upvalues)
   ss_2 = v7_1
   ss_3 = v12_1
   ss_4 = "Transparency"
-  ss_5 = v18_1 and (0.6)
-  ss_5 = ss_5 or (0.2)
+  ss_5 = (v18_1 and (0.6)) or (0.2)
   ss_3[ss_4] = ss_5
   ss_3.Thickness = 1
   ss_4 = 0.15
@@ -115781,8 +112657,7 @@ protos[2113] = function(upvalues)
   ss_2 = v138_1
   ss_3 = v143_1
   ss_4 = "BackgroundTransparency"
-  ss_5 = v149_1 and (0.25)
-  ss_5 = ss_5 or (0.08)
+  ss_5 = (v149_1 and (0.25)) or (0.08)
   ss_3[ss_4] = ss_5
   ss_4 = 0.15
   ss_1(ss_2, ss_3, ss_4)
@@ -115809,9 +112684,7 @@ protos[2115] = function(upvalues)
   v18_1 = cell_get(upvalues[3])
   ss_3 = v12_1
   ss_4 = "Transparency"
-  ss_5 = v18_1 or ((cell_get(upvalues[4])))
-  ss_5 = ss_5 and (0.35)
-  ss_5 = ss_5 or (0.8)
+  ss_5 = ((v18_1 or ((cell_get(upvalues[4])))) and (0.35)) or (0.8)
   ss_3[ss_4] = ss_5
   ss_4 = 0.15
   v2_1(v7_1, ss_3, ss_4)
@@ -116035,10 +112908,7 @@ protos[2120] = function(upvalues)
     temp_0.Visible = temp_2
     temp_0 = (cell_get(upvalues[4]))
     temp_1 = "Text"
-    ss_1 = (cell_get(upvalues[1])).failed and (((cell_get(upvalues[6]))("skinch_error")))
-    ss_1 = ss_1 or (((cell_get(upvalues[6]))("skinch_loading")))
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[1])).failed and (((cell_get(upvalues[6]))("skinch_error")))) or (((cell_get(upvalues[6]))("skinch_loading")))))
     temp_0.Text = temp_2
   else
     v768_1 = new_table(0)
@@ -116059,8 +112929,7 @@ protos[2120] = function(upvalues)
       v1130_1 = (cell_get(upvalues[1])).picked[__loopValue_2120_1]
       slot_7 = nil
       slot_7 = v1130_1
-      ss_0 = slot_7 and (((cell_get(upvalues[8]))(slot_7)))
-      if ss_0 then
+      if (slot_7 and (((cell_get(upvalues[8]))(slot_7)))) then
         temp_5 = (cell_get(slot_3))
         v1278_1 = cell_get(slot_3)
         temp_6 = (((#v1278_1) + 1))
@@ -116091,8 +112960,7 @@ protos[2120] = function(upvalues)
       slot_10 = __loopValue_2120_2
       v1518_1 = slot_10.name
       v1519_1 = slot_4[v1518_1]
-      ss_0 = (not v1519_1) and (((cell_get(upvalues[8]))(slot_10)))
-      if ss_0 then
+      if ((not v1519_1) and (((cell_get(upvalues[8]))(slot_10)))) then
         temp_5 = (cell_get(slot_3))
         v1612_1 = cell_get(slot_3)
         temp_6 = (((#v1612_1) + 1))
@@ -116110,8 +112978,7 @@ protos[2120] = function(upvalues)
       temp_1 = "Text"
       ss_2 = (cell_get(upvalues[6]))
       ss_3 = "skinch_empty"
-      ss_0 = ss_2(ss_3)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3))
       temp_0.Text = temp_2
     else
       cell_get(upvalues[1]).items = (cell_get(slot_3))
@@ -116128,47 +112995,28 @@ protos[2120] = function(upvalues)
 end
 
 protos[2121] = function(upvalues)
-  local exit_263, slot_0, slot_1, ss_0, temp_0, temp_1, temp_2, temp_3, v149_1, v165_1, v180_1, v191_1, v25_1, v30_1, v31_1, v36_1
-  local v360_1, v361_1, v410_1, v447_1, v479_1, v500_1, v511_1, v533_1, v538_1, v543_1, v558_1, v568_1, v569_1, v574_1, v588_1, v60_1, v609_1, v61_1, v619_1, v625_1, v640_1, v645_1
-  local v650_1, v657_1, v667_1, v682_1, v692_1, v694_1, v715_1, v720_1, v725_1, v735_1, v747_1, v757_1, v763_1, v778_1, v787_1, v798_1, v803_1, v808_1, v809_1, v814_1, v819_1, v824_1, v829_1
+  local exit_263, slot_0, slot_1, temp_0, temp_1, temp_2, temp_3, v149_1, v165_1, v180_1, v191_1, v25_1, v30_1, v31_1
+  local v360_1, v361_1, v410_1, v447_1, v479_1, v500_1, v511_1, v533_1, v538_1, v543_1, v568_1, v569_1, v574_1, v60_1, v61_1, v640_1, v645_1
+  local v650_1, v715_1, v720_1, v735_1, v787_1, v798_1, v803_1, v808_1, v809_1, v814_1, v819_1, v824_1
   local vm_frame_random = math.random(0, 2147483646)
   if not ((((cell_get(upvalues[1])) > 0))) then
     v25_1 = cell_get(upvalues[7])
     v30_1 = #v25_1
     v31_1 = cell_get(upvalues[1])
-    v36_1 = (v30_1 > v31_1)
-    if v36_1 then
-      v558_1 = cell_get(upvalues[2])
-      v568_1 = v558_1.token
+    if ((v30_1 > v31_1)) then
+      v568_1 = (cell_get(upvalues[2])).token
       v569_1 = cell_get(upvalues[3])
       v574_1 = (v568_1 ~= v569_1)
       if not v574_1 then
-        v588_1 = cell_get(upvalues[2])
-        temp_0 = v588_1
+        temp_0 = (cell_get(upvalues[2]))
         temp_1 = "order"
-        v609_1 = cell_get(upvalues[2])
-        v619_1 = v609_1.order
-        v625_1 = (v619_1 + 1)
-        temp_2 = v625_1
+        temp_2 = (((cell_get(upvalues[2])).order + 1))
         v640_1 = temp_0
         v645_1 = temp_1
         v650_1 = temp_2
         v640_1[v645_1] = v650_1
-        v657_1 = cell_get(upvalues[5])
-        v667_1 = v657_1("skinch_all")
-        slot_1 = v667_1
-        v682_1 = cell_get(upvalues[2])
-        v692_1 = v682_1.query
-        v694_1 = (v692_1 ~= nil)
-        ss_0 = v694_1
-        if v694_1 then
-          v747_1 = cell_get(upvalues[2])
-          v757_1 = v747_1.query
-          v763_1 = (v757_1 ~= "")
-          ss_0 = v763_1
-        end
-        v778_1 = ss_0
-        if v778_1 then
+        slot_1 = ((cell_get(upvalues[5]))("skinch_all"))
+        if ((((cell_get(upvalues[2])).query ~= nil)) and ((((cell_get(upvalues[2])).query ~= "")))) then
           v787_1 = slot_1
           v798_1 = env.tostring
           v803_1 = cell_get(upvalues[7])
@@ -116177,13 +113025,11 @@ protos[2121] = function(upvalues)
           v814_1 = (v808_1 - v809_1)
           v819_1 = v798_1(v814_1)
           v824_1 = ("  ·  " .. v819_1)
-          v829_1 = (v787_1 .. v824_1)
-          slot_1 = v829_1
+          slot_1 = ((v787_1 .. v824_1))
         end
         v715_1 = cell_get(upvalues[4])
         v720_1 = slot_1
-        v725_1 = cell_get(upvalues[2])
-        v735_1 = v725_1.order
+        v735_1 = (cell_get(upvalues[2])).order
         v715_1(v720_1, v735_1)
         v533_1 = cell_get(upvalues[8])
         v538_1 = cell_get(upvalues[3])
@@ -116231,39 +113077,20 @@ protos[2121] = function(upvalues)
     v25_1 = cell_get(upvalues[7])
     v30_1 = #v25_1
     v31_1 = cell_get(upvalues[1])
-    v36_1 = (v30_1 > v31_1)
-    if v36_1 then
-      v558_1 = cell_get(upvalues[2])
-      v568_1 = v558_1.token
+    if ((v30_1 > v31_1)) then
+      v568_1 = (cell_get(upvalues[2])).token
       v569_1 = cell_get(upvalues[3])
       v574_1 = (v568_1 ~= v569_1)
       if not v574_1 then
-        v588_1 = cell_get(upvalues[2])
-        temp_0 = v588_1
+        temp_0 = (cell_get(upvalues[2]))
         temp_1 = "order"
-        v609_1 = cell_get(upvalues[2])
-        v619_1 = v609_1.order
-        v625_1 = (v619_1 + 1)
-        temp_2 = v625_1
+        temp_2 = (((cell_get(upvalues[2])).order + 1))
         v640_1 = temp_0
         v645_1 = temp_1
         v650_1 = temp_2
         v640_1[v645_1] = v650_1
-        v657_1 = cell_get(upvalues[5])
-        v667_1 = v657_1("skinch_all")
-        slot_1 = v667_1
-        v682_1 = cell_get(upvalues[2])
-        v692_1 = v682_1.query
-        v694_1 = (v692_1 ~= nil)
-        ss_0 = v694_1
-        if v694_1 then
-          v747_1 = cell_get(upvalues[2])
-          v757_1 = v747_1.query
-          v763_1 = (v757_1 ~= "")
-          ss_0 = v763_1
-        end
-        v778_1 = ss_0
-        if v778_1 then
+        slot_1 = ((cell_get(upvalues[5]))("skinch_all"))
+        if ((((cell_get(upvalues[2])).query ~= nil)) and ((((cell_get(upvalues[2])).query ~= "")))) then
           v787_1 = slot_1
           v798_1 = env.tostring
           v803_1 = cell_get(upvalues[7])
@@ -116272,13 +113099,11 @@ protos[2121] = function(upvalues)
           v814_1 = (v808_1 - v809_1)
           v819_1 = v798_1(v814_1)
           v824_1 = ("  ·  " .. v819_1)
-          v829_1 = (v787_1 .. v824_1)
-          slot_1 = v829_1
+          slot_1 = ((v787_1 .. v824_1))
         end
         v715_1 = cell_get(upvalues[4])
         v720_1 = slot_1
-        v725_1 = cell_get(upvalues[2])
-        v735_1 = v725_1.order
+        v735_1 = (cell_get(upvalues[2])).order
         v715_1(v720_1, v735_1)
         v533_1 = cell_get(upvalues[8])
         v538_1 = cell_get(upvalues[3])
@@ -116352,8 +113177,7 @@ protos[2124] = function(upvalues)
     temp_2 = __loopKey_2124_1
     slot_1 = __loopKey_2124_1
     slot_2 = __loopValue_2124_1
-    ss_0 = slot_2.row and slot_2.row.Parent
-    if ss_0 then
+    if (slot_2.row and slot_2.row.Parent) then
       slot_2.row.BackgroundColor3 = slot_0.row
       slot_2.name.TextColor3 = slot_0.text
       temp_5 = slot_2.sub
@@ -116361,8 +113185,7 @@ protos[2124] = function(upvalues)
       v1237_1 = slot_2.rarity
       ss_2 = v1222_1
       ss_3 = v1237_1
-      ss_0 = ss_2(ss_3)
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3))
       temp_5.TextColor3 = temp_7
       if slot_2.applied then
         slot_2.btn.BackgroundColor3 = slot_0.panel
@@ -116402,8 +113225,7 @@ protos[2124] = function(upvalues)
           ss_12 = v2000_1
           ss_8 = pack_values(ss_9(ss_10, ss_11, ss_12))
           ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, unpack_values(ss_8, 1, ss_8.n)))
-          ss_0 = ss_2(ss_3)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3))
           temp_5.Color = temp_7
         end
       else
@@ -116417,8 +113239,7 @@ protos[2124] = function(upvalues)
           ss_3 = 255
           ss_4 = 255
           ss_5 = 255
-          ss_0 = ss_2(ss_3, ss_4, ss_5)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4, ss_5))
           temp_5.TextColor3 = temp_7
         end
         if slot_2.btnIcon then
@@ -116427,8 +113248,7 @@ protos[2124] = function(upvalues)
           ss_3 = 255
           ss_4 = 255
           ss_5 = 255
-          ss_0 = ss_2(ss_3, ss_4, ss_5)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3, ss_4, ss_5))
           temp_5.ImageColor3 = temp_7
         end
         if slot_2.btnGrad then
@@ -116454,17 +113274,12 @@ protos[2124] = function(upvalues)
           ss_12 = v2465_1
           ss_8 = pack_values(ss_9(ss_10, ss_11, ss_12))
           ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, unpack_values(ss_8, 1, ss_8.n)))
-          ss_0 = ss_2(ss_3)
-          temp_7 = ss_0
+          temp_7 = (ss_2(ss_3))
           temp_5.Color = temp_7
         end
       end
       temp_5 = slot_2.stroke
-      ss_1 = slot_2.pinned or slot_2.applied
-      ss_1 = ss_1 and slot_0.accent
-      ss_1 = ss_1 or slot_0.stroke
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ((((slot_2.pinned or slot_2.applied) and slot_0.accent) or slot_0.stroke))
       temp_5.Color = temp_7
     end
   end
@@ -116477,14 +113292,12 @@ protos[2124] = function(upvalues)
   for __loopKey_2124_0, __loopValue_2124_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_3 = __loopKey_2124_0
     slot_4 = __loopValue_2124_0
-    ss_0 = slot_4.text and slot_4.text.Parent
-    if ss_0 then
+    if (slot_4.text and slot_4.text.Parent) then
       temp_5 = slot_4.text
       temp_7 = slot_0.accent
       temp_5.TextColor3 = temp_7
     end
-    ss_0 = slot_4.line and slot_4.line.Parent
-    if ss_0 then
+    if (slot_4.line and slot_4.line.Parent) then
       temp_5 = slot_4.line
       temp_7 = slot_0.accent
       temp_5.BackgroundColor3 = temp_7
@@ -116635,8 +113448,7 @@ protos[2132] = function(upvalues)
       ss_4 = slot_3
       ss_0, ss_1 = ss_2(ss_3, ss_4)
       slot_5 = ss_1
-      ss_0 = ss_0 and ((((env["type"](slot_5)) == "table")))
-      if ss_0 then
+      if (ss_0 and ((((env["type"](slot_5)) == "table")))) then
         slot_1 = slot_5
       end
     end
@@ -116720,8 +113532,7 @@ protos[2133] = function(upvalues)
   for __loopKey_2133_0, __loopValue_2133_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_1 = __loopKey_2133_0
     slot_2 = __loopValue_2133_0
-    ss_0 = slot_2 and slot_2.name
-    if ss_0 then
+    if (slot_2 and slot_2.name) then
       temp_7 = slot_2.name
       slot_0[slot_1] = temp_7
     end
@@ -116938,8 +113749,7 @@ protos[2139] = function(upvalues)
               v494_1 = v489_1.FindFirstChild
               v499_1 = cell_get(upvalues[7])
               slot_6 = (v494_1(v489_1, v499_1))
-              ss_0 = (not slot_6) or (slot_3 and ((slot_6:GetAttribute("SkinFallback"))))
-              if ss_0 then
+              if ((not slot_6) or (slot_3 and ((slot_6:GetAttribute("SkinFallback"))))) then
                 v608_1 = env.pcall
                 v613_1 = cell_get(upvalues[8])
                 v608_1(v613_1, slot_2, slot_4, slot_5)
@@ -116952,8 +113762,7 @@ protos[2139] = function(upvalues)
             v654_1 = v649_1.FindFirstChild
             v659_1 = cell_get(upvalues[7])
             slot_8 = (v654_1(v649_1, v659_1))
-            ss_0 = (not slot_8) or (slot_3 and ((slot_8:GetAttribute("SkinFallback"))))
-            if ss_0 then
+            if ((not slot_8) or (slot_3 and ((slot_8:GetAttribute("SkinFallback"))))) then
               v768_1 = env.pcall
               v773_1 = cell_get(upvalues[10])
               v768_1(v773_1, slot_2, slot_7)
@@ -117008,8 +113817,7 @@ protos[2142] = function(upvalues, argument_1)
     v219_1 = slot_0:lower()
     ss_1 = v203_1[v219_1]
   end
-  ss_1 = ss_1 or ("Circle")
-  return ss_1
+  return (ss_1 or ("Circle"))
 end
 
 protos[2143] = function(upvalues, argument_1)
@@ -117056,7 +113864,7 @@ protos[2144] = function(upvalues, argument_1, argument_2)
 end
 
 protos[2145] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, ss_0, ss_2, ss_3, ss_5, ss_6, v12_1, v279_1, v29_1, v296_1, v307_1
+  local slot_0, slot_1, slot_2, ss_2, ss_3, ss_5, ss_6, v12_1, v279_1, v29_1, v296_1, v307_1
   local v363_1, v380_1, v391_1, v41_1, v434_1, v451_1, v462_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -117066,11 +113874,9 @@ protos[2145] = function(upvalues, argument_1, argument_2)
   v41_1 = env.tonumber(slot_1)
   ss_2 = 24
   ss_5 = v41_1 or (64)
-  ss_0 = v12_1(ss_2, v29_1(ss_5))
-  slot_1 = ss_0
+  slot_1 = (v12_1(ss_2, v29_1(ss_5)))
   slot_2 = ((cell_get(upvalues[1]))(slot_0))
-  ss_0 = ((slot_2 == "Circle")) or (((slot_2 == "Pill")))
-  if ss_0 then
+  if (((slot_2 == "Circle")) or (((slot_2 == "Pill")))) then
     return slot_1
   end
   if ((slot_2 == "Rounded")) then
@@ -117107,7 +113913,7 @@ protos[2145] = function(upvalues, argument_1, argument_2)
 end
 
 protos[2146] = function(upvalues, argument_1, argument_2)
-  local slot_0, slot_1, slot_2, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, v12_1, v185_1, v192_1, v29_1
+  local slot_0, slot_1, slot_2, ss_1, ss_2, ss_3, ss_4, ss_5, v12_1, v185_1, v192_1, v29_1
   local v41_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -117119,12 +113925,9 @@ protos[2146] = function(upvalues, argument_1, argument_2)
   ss_2 = 24
   ss_4 = v29_1
   ss_5 = v41_1 or (64)
-  ss_0 = ss_1(ss_2, ss_4(ss_5))
-  slot_1 = ss_0
+  slot_1 = (ss_1(ss_2, ss_4(ss_5)))
   slot_2 = ((cell_get(upvalues[1]))(slot_0))
-  ss_0 = ((slot_2 == "Circle")) or (((slot_2 == "Pill")))
-  ss_0 = ss_0 or (cell_get(upvalues[2]))[slot_2]
-  if ss_0 then
+  if ((((slot_2 == "Circle")) or (((slot_2 == "Pill")))) or (cell_get(upvalues[2]))[slot_2]) then
     ss_2 = env.UDim.new
     ss_3 = 1
     ss_4 = 0
@@ -117176,16 +113979,14 @@ protos[2147] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_8 = v212_1
   ss_9 = slot_2
   ss_7 = pack_values(ss_8(ss_9))
-  ss_0 = ss_2(ss_3, ss_5(ss_6, unpack_values(ss_7, 1, ss_7.n)))
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_5(ss_6, unpack_values(ss_7, 1, ss_7.n))))
   slot_8.Size = temp_2
   ss_2 = env.UDim2.new
   ss_3 = 0.5
   ss_4 = slot_4 or (0)
   ss_5 = 0.5
   ss_6 = slot_5 or (0)
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   slot_8.Position = temp_2
   ss_0 = (slot_3 or (0))
   slot_8.Rotation = ss_0
@@ -117316,8 +114117,7 @@ protos[2148] = function(upvalues, argument_1, argument_2, argument_3, argument_4
         slot_20 = v1247_1
         v1272_1 = (slot_7 * 0.92)
         slot_21 = nil
-        slot_21 = v1272_1
-        v1307_1 = (((slot_21 - slot_20)) / slot_19)
+        v1307_1 = (((v1272_1 - slot_20)) / slot_19)
         slot_22 = nil
         slot_22 = v1307_1
         v1337_1 = (slot_19 - 1)
@@ -117404,7 +114204,7 @@ protos[2148] = function(upvalues, argument_1, argument_2, argument_3, argument_4
 end
 
 protos[2149] = function(upvalues, argument_1, argument_2, argument_3)
-  local slot_0, slot_1, slot_2, slot_3, ss_0, ss_1, ss_2, ss_3, ss_4, temp_0, temp_2
+  local slot_0, slot_1, slot_2, slot_3, ss_0, ss_2, ss_3, ss_4, temp_0, temp_2
   math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
@@ -117431,16 +114231,13 @@ protos[2149] = function(upvalues, argument_1, argument_2, argument_3)
     temp_0.Parent = temp_2
   end
   temp_0 = slot_3
-  ss_1 = slot_2 or slot_0.ZIndex
-  ss_1 = ((ss_1 + 1))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((((slot_2 or slot_0.ZIndex) + 1))))
   temp_0.ZIndex = temp_2
   return slot_3
 end
 
 protos[2150] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, temp_2
+  local slot_0, slot_1, ss_0, ss_2, ss_3, ss_4, ss_5, temp_2
   math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = (slot_0:FindFirstChild("EmoteLabel"))
@@ -117470,9 +114267,7 @@ protos[2150] = function(upvalues, argument_1)
     slot_1.TextColor3 = ss_0
     temp_2 = 12
     slot_1.TextSize = temp_2
-    ss_1 = slot_0.ZIndex or (1)
-    ss_1 = ((ss_1 + 20))
-    ss_0 = ss_1
+    ss_0 = ((((slot_0.ZIndex or (1)) + 20)))
     slot_1.ZIndex = ss_0
     temp_2 = slot_0
     slot_1.Parent = temp_2
@@ -117488,20 +114283,14 @@ protos[2151] = function(upvalues, argument_1, argument_2)
   slot_0 = argument_1
   slot_1 = argument_2
   slot_2 = ((cell_get(upvalues[1]))(slot_0))
-  ss_0 = (slot_0:IsA("TextButton")) or ((slot_0:IsA("TextLabel")))
-  slot_3 = ss_0
+  slot_3 = ((slot_0:IsA("TextButton")) or ((slot_0:IsA("TextLabel"))))
   v157_1 = env.tostring
   v172_1 = slot_1.text
   ss_2 = v157_1
-  ss_3 = v172_1 or (slot_3 and slot_0.Text)
-  ss_3 = ss_3 or ("")
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  ss_3 = (v172_1 or (slot_3 and slot_0.Text)) or ("")
+  temp_2 = (ss_2(ss_3))
   slot_2.Text = temp_2
-  ss_1 = slot_1.textColor or (slot_3 and slot_0.TextColor3)
-  ss_1 = ss_1 or ((env.Color3.fromRGB(225, 250, 255)))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_1.textColor or (slot_3 and slot_0.TextColor3)) or ((env.Color3.fromRGB(225, 250, 255)))))
   slot_2.TextColor3 = temp_2
   v489_1 = env.math.clamp
   v501_1 = env.math.floor
@@ -117510,22 +114299,16 @@ protos[2151] = function(upvalues, argument_1, argument_2)
   v519_1 = v503_1(v518_1)
   ss_2 = v489_1
   ss_4 = v501_1
-  ss_5 = v519_1 or (slot_3 and slot_0.TextSize)
-  ss_5 = ss_5 or (12)
+  ss_5 = (v519_1 or (slot_3 and slot_0.TextSize)) or (12)
   ss_3 = ss_4(ss_5)
   ss_4 = 6
   ss_5 = 32
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   slot_2.TextSize = temp_2
-  ss_1 = slot_1.font or (slot_3 and slot_0.Font)
-  ss_1 = ss_1 or env.Enum.Font.FredokaOne
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_1.font or (slot_3 and slot_0.Font)) or env.Enum.Font.FredokaOne))
   slot_2.Font = temp_2
   ss_1 = slot_0.Rotation or (0)
-  ss_1 = (-ss_1)
-  ss_0 = ss_1
+  ss_0 = ((-ss_1))
   slot_2.Rotation = ss_0
   v925_1 = env.UDim2.new
   v936_1 = -(6)
@@ -117534,12 +114317,9 @@ protos[2151] = function(upvalues, argument_1, argument_2)
   ss_3 = 1
   ss_4 = v936_1
   ss_5 = 1
-  ss_0 = ss_2(ss_3, ss_4, ss_5, v947_1)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, v947_1))
   slot_2.Size = temp_2
-  ss_1 = slot_0.ZIndex or (1)
-  ss_1 = ((ss_1 + 20))
-  ss_0 = ss_1
+  ss_0 = ((((slot_0.ZIndex or (1)) + 20)))
   slot_2.ZIndex = ss_0
   temp_2 = true
   slot_2.Visible = temp_2
@@ -117553,9 +114333,7 @@ protos[2152] = function(upvalues, argument_1, argument_2)
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_14, slot_15, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, temp_0, temp_2
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  slot_1 = argument_2
-  ss_0 = slot_1 or ((new_table(0)))
-  slot_1 = ss_0
+  slot_1 = (argument_2 or ((new_table(0))))
   v69_1 = cell_get(upvalues[1])
   v84_1 = slot_1.shape
   v85_1 = v69_1(v84_1)
@@ -117570,11 +114348,8 @@ protos[2152] = function(upvalues, argument_1, argument_2)
   ss_2 = 24
   ss_4 = v128_1
   ss_5 = v146_1 or slot_0.AbsoluteSize.Y
-  ss_0 = ss_1(ss_2, ss_4(ss_5))
-  slot_3 = ss_0
-  ss_0 = slot_1.color or slot_0.BackgroundColor3
-  ss_0 = ss_0 or ((env.Color3.fromRGB(255, 255, 255)))
-  slot_4 = ss_0
+  slot_3 = (ss_1(ss_2, ss_4(ss_5)))
+  slot_4 = ((slot_1.color or slot_0.BackgroundColor3) or ((env.Color3.fromRGB(255, 255, 255))))
   v326_1 = env.math.clamp
   v328_1 = env.tonumber
   v343_1 = slot_1.transparency
@@ -117583,10 +114358,8 @@ protos[2152] = function(upvalues, argument_1, argument_2)
   ss_2 = v344_1 or (0.15)
   ss_3 = 0
   ss_4 = 1
-  ss_0 = ss_1(ss_2, ss_3, ss_4)
-  slot_5 = ss_0
-  ss_0 = slot_1.strokeColor or ((env.Color3.fromRGB(225, 250, 255)))
-  slot_6 = ss_0
+  slot_5 = (ss_1(ss_2, ss_3, ss_4))
+  slot_6 = (slot_1.strokeColor or ((env.Color3.fromRGB(225, 250, 255))))
   v490_1 = ((cell_get(upvalues[2]))[slot_2] == true)
   slot_7 = nil
   slot_7 = v490_1
@@ -117599,8 +114372,7 @@ protos[2152] = function(upvalues, argument_1, argument_2)
     temp_2 = slot_0
     temp_0.Parent = temp_2
   end
-  ss_0 = slot_1.stroke or ((slot_0:FindFirstChildOfClass("UIStroke")))
-  slot_9 = ss_0
+  slot_9 = (slot_1.stroke or ((slot_0:FindFirstChildOfClass("UIStroke"))))
   ss_0 = (cell_get(upvalues[3]))[slot_2] or (0)
   slot_0.ClipsDescendants = false
   slot_0.Rotation = ss_0
@@ -117613,8 +114385,7 @@ protos[2152] = function(upvalues, argument_1, argument_2)
   ss_2 = (cell_get(upvalues[5]))
   ss_3 = slot_2
   ss_4 = slot_3
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.CornerRadius = temp_2
   v1001_1 = slot_0:FindFirstChild("EmoteStrokeGroup")
   slot_11 = nil
@@ -117638,8 +114409,7 @@ protos[2152] = function(upvalues, argument_1, argument_2)
     ss_2 = 2
     ss_4 = v1189_1
     ss_5 = v1200_1
-    ss_0 = ss_1(ss_2, ss_4(ss_5))
-    v1240_1 = (ss_0 * 2)
+    v1240_1 = ((ss_1(ss_2, ss_4(ss_5))) * 2)
     v1245_1 = (slot_3 + v1240_1)
     slot_14 = nil
     slot_14 = v1245_1
@@ -117701,8 +114471,7 @@ protos[2152] = function(upvalues, argument_1, argument_2)
       ss_3 = v2281_1
       ss_4 = 0
       ss_5 = 1
-      ss_0 = ss_2(ss_3, ss_4, ss_5)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4, ss_5))
       temp_0.Transparency = temp_2
     end
   end
@@ -117719,8 +114488,7 @@ protos[2152] = function(upvalues, argument_1, argument_2)
     v2409_1 = cell_get(upvalues[8])
     v2409_1(slot_0, slot_1)
   end
-  ss_0 = (slot_0:IsA("TextButton")) or ((slot_0:IsA("TextLabel")))
-  if ss_0 then
+  if ((slot_0:IsA("TextButton")) or ((slot_0:IsA("TextLabel")))) then
     temp_0 = slot_0
     temp_2 = 1
     temp_0.TextTransparency = temp_2
@@ -118028,8 +114796,7 @@ protos[2158] = function(upvalues, argument_1)
     ss_2 = v979_1.WaitForChild
     ss_3 = v979_1
     ss_4 = "PlayerGui"
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.Parent = temp_2
   end
   v780_1 = env.Instance.new("TextButton")
@@ -118043,8 +114810,7 @@ protos[2158] = function(upvalues, argument_1)
   ss_2 = v869_1
   ss_3 = v874_1
   ss_4 = v879_1
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.Size = temp_2
   temp_0 = (cell_get(slot_13))
   v946_1 = (cell_get(slot_0)).position
@@ -118062,8 +114828,7 @@ protos[2158] = function(upvalues, argument_1)
   temp_2 = (cell_get(slot_9))
   temp_0.BackgroundTransparency = temp_2
   temp_0 = (cell_get(slot_13))
-  ss_1 = (cell_get(slot_0)).name or ("EMOTE")
-  ss_0 = ss_1
+  ss_0 = ((cell_get(slot_0)).name or ("EMOTE"))
   temp_0.Text = ss_0
   temp_0 = (cell_get(slot_13))
   temp_2 = (cell_get(slot_4))
@@ -118337,20 +115102,12 @@ protos[2165] = function(upvalues, argument_1)
   v2_1 = cell_get(upvalues[1])
   v7_1 = cell_get(upvalues[2])
   slot_1 = (v2_1(v7_1))
-  ss_0 = (cell_get(upvalues[3])) and ((cell_get(upvalues[4])))
-  ss_0 = ss_0 or ((cell_get(upvalues[5])))
-  slot_2 = ss_0
-  ss_0 = (cell_get(upvalues[3])) and ((cell_get(upvalues[6])))
-  ss_0 = ss_0 or ((cell_get(upvalues[7])))
-  slot_3 = ss_0
-  ss_0 = (cell_get(upvalues[3])) and ((env.Color3.fromRGB(255, 255, 255)))
-  ss_0 = ss_0 or ((cell_get(upvalues[8])))
-  slot_4 = ss_0
+  slot_2 = (((cell_get(upvalues[3])) and ((cell_get(upvalues[4])))) or ((cell_get(upvalues[5]))))
+  slot_3 = (((cell_get(upvalues[3])) and ((cell_get(upvalues[6])))) or ((cell_get(upvalues[7]))))
+  slot_4 = (((cell_get(upvalues[3])) and ((env.Color3.fromRGB(255, 255, 255)))) or ((cell_get(upvalues[8]))))
   slot_5 = ((cell_get(upvalues[9])):FindFirstChild("EmoteFillGroup"))
   slot_6 = ((cell_get(upvalues[9])):FindFirstChild("EmoteStrokeGroup"))
-  ss_0 = (cell_get(upvalues[3])) and (0.05)
-  ss_0 = ss_0 or (0.32)
-  slot_7 = ss_0
+  slot_7 = (((cell_get(upvalues[3])) and (0.05)) or (0.32))
   if slot_1 then
     v448_1 = cell_get(upvalues[10])
     v448_1(slot_2)
@@ -118360,9 +115117,7 @@ protos[2165] = function(upvalues, argument_1)
     temp_2 = slot_2
     temp_0.BackgroundColor3 = temp_2
     temp_0 = (cell_get(upvalues[9]))
-    ss_1 = slot_1 and (1)
-    ss_1 = ss_1 or slot_3
-    ss_0 = ss_1
+    ss_0 = ((slot_1 and (1)) or slot_3)
     temp_0.BackgroundTransparency = ss_0
     temp_0 = (cell_get(upvalues[9]))
     temp_2 = slot_4
@@ -118386,12 +115141,10 @@ protos[2165] = function(upvalues, argument_1)
     v655_1.BackgroundColor3 = slot_2
     ss_2 = v640_1
     ss_6 = v655_1
-    ss_8 = slot_1 and (1)
-    ss_8 = ss_8 or slot_3
+    ss_8 = (slot_1 and (1)) or slot_3
     ss_6.BackgroundTransparency = ss_8
     ss_6.TextColor3 = slot_4
-    ss_1 = ss_2(v635_1, v645_1, slot_8, ss_6)
-    v1013_1 = ss_1
+    v1013_1 = (ss_2(v635_1, v645_1, slot_8, ss_6))
     ss_1 = v1013_1.Play
     ss_2 = v1013_1
     ss_1(ss_2)
@@ -118424,13 +115177,11 @@ end
 protos[2166] = function(upvalues)
   local slot_0, slot_1, slot_2, ss_0, ss_1, ss_2, v162_1, v184_1, v185_1, v235_1, v250_1, v283_1, v298_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])) and (cell_get(upvalues[1]))._ButtonSettings
-  slot_0 = ss_0
+  slot_0 = ((cell_get(upvalues[1])) and (cell_get(upvalues[1]))._ButtonSettings)
   if (not slot_0) then
     return 1
   end
-  ss_0 = slot_0.global or ((new_table(0)))
-  slot_1 = ss_0
+  slot_1 = (slot_0.global or ((new_table(0))))
   v162_1 = slot_0.buttons
   ss_0 = v162_1
   if v162_1 then
@@ -118445,8 +115196,7 @@ protos[2166] = function(upvalues)
   v283_1 = env.tonumber
   v298_1 = ss_0.sizeMultiplier
   ss_2 = (v283_1(v298_1)) or (1)
-  ss_1 = ((ss_1 * ss_2))
-  return ss_1
+  return (((ss_1 * ss_2)))
 end
 
 protos[2167] = function(upvalues)
@@ -118467,13 +115217,11 @@ protos[2167] = function(upvalues)
   ss_2 = v38_1
   ss_3 = v43_1
   ss_4 = "color"
-  ss_5 = v71_1 and ((cell_get(upvalues[7])))
-  ss_5 = ss_5 or ((cell_get(upvalues[8])))
+  ss_5 = (v71_1 and ((cell_get(upvalues[7])))) or ((cell_get(upvalues[8])))
   ss_3[ss_4] = ss_5
   v169_1 = cell_get(upvalues[6])
   ss_4 = "transparency"
-  ss_5 = v169_1 and ((cell_get(upvalues[9])))
-  ss_5 = ss_5 or ((cell_get(upvalues[10])))
+  ss_5 = (v169_1 and ((cell_get(upvalues[9])))) or ((cell_get(upvalues[10])))
   ss_3[ss_4] = ss_5
   v232_1 = cell_get(upvalues[11])
   ss_3.stroke = v232_1
@@ -118482,13 +115230,10 @@ protos[2167] = function(upvalues)
   ss_1(ss_2, ss_3)
   if (cell_get(upvalues[12])) then
     temp_0 = (cell_get(upvalues[12]))
-    ss_2 = (cell_get(upvalues[13]))
-    ss_0 = ss_2()
-    temp_2 = ss_0
+    temp_2 = (((cell_get(upvalues[13])))())
     temp_0.isRound = temp_2
     temp_0 = (cell_get(upvalues[12]))
-    ss_1 = (((cell_get(upvalues[5])) == "Circle")) or ((((cell_get(upvalues[5])) == "Pill")))
-    ss_0 = ss_1
+    ss_0 = ((((cell_get(upvalues[5])) == "Circle")) or ((((cell_get(upvalues[5])) == "Pill"))))
     temp_0.cornerScale = ss_0
     temp_0 = (cell_get(upvalues[12])).base
     temp_0.size = (cell_get(upvalues[4])).Size.X.Offset
@@ -118503,8 +115248,7 @@ protos[2167] = function(upvalues)
     ss_2 = v712_1
     ss_3 = v717_1
     ss_4 = v722_1
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.radius = temp_2
   end
   return
@@ -118932,8 +115676,7 @@ protos[2176] = function(upvalues, argument_1)
   v258_1 = cell_get(upvalues[2])
   ss_2 = v248_1
   ss_3 = v253_1
-  ss_0 = ss_2(ss_3, v258_1)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, v258_1))
   temp_0.Color = temp_2
   if (cell_get(upvalues[8])) then
     temp_0 = (cell_get(upvalues[8])).base
@@ -119021,8 +115764,7 @@ end
 protos[2181] = function(upvalues, argument_1)
   local ss_0, v99_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = argument_1 and (true)
-  ss_0 = ss_0 or (false)
+  ss_0 = (argument_1 and (true)) or (false)
   upvalues[1] = cell_set_or_create(upvalues[1], ss_0)
   v99_1 = cell_get(upvalues[2])
   v99_1(false)
@@ -119852,15 +116594,13 @@ protos[2191] = function(upvalues, argument_1)
   v19_1 = cell_get(upvalues[1])
   ss_0, ss_1 = v3_1(v18_1, v19_1, slot_0)
   slot_2 = ss_1
-  ss_1 = ss_0 and slot_2
-  ss_1 = ss_1 or (nil)
-  return ss_1
+  return ((ss_0 and slot_2) or (nil))
 end
 
 protos[2192] = function(upvalues, argument_1)
   local slot_0, slot_1, slot_2, slot_4, slot_5, slot_6, ss_0, ss_1, ss_2, ss_3, ss_4, v100_1, v17_1, v22_1, v222_1, v227_1, v258_1, v263_1
-  local v350_1, v355_1, v360_1, v370_1, v387_1, v392_1, v397_1, v403_1, v42_1, v507_1, v519_1, v534_1, v58_1, v63_1, v637_1, v642_1, v652_1, v653_1, v663_1, v678_1, v689_1, v694_1, v704_1, v705_1
-  local v711_1, v743_1, v753_1, v758_1, v78_1, v780_1, v785_1, v790_1, v800_1, v815_1, v827_1, v832_1, v842_1, v843_1, v853_1, v868_1, v879_1, v889_1, v895_1, v910_1, v920_1, v930_1, v95_1
+  local v350_1, v355_1, v370_1, v387_1, v392_1, v397_1, v403_1, v42_1, v507_1, v519_1, v534_1, v58_1, v63_1, v637_1, v652_1, v689_1, v704_1, v705_1
+  local v711_1, v758_1, v78_1, v780_1, v785_1, v815_1, v827_1, v842_1, v95_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = {argument_1}
   local function capture_0()
@@ -119875,30 +116615,26 @@ protos[2192] = function(upvalues, argument_1)
   slot_1 = cell_set_or_create(slot_1, nil)
   v17_1 = env.pcall
   v22_1 = closure(2193, {capture_1(), capture_0()})
-  slot_2 = (v17_1(v22_1))
-  v42_1 = slot_2
+  v42_1 = ((v17_1(v22_1)))
   ss_0 = v42_1
   if v42_1 then
     v95_1 = env["type"]
     v100_1 = cell_get(slot_1)
     ss_0 = (((v95_1(v100_1)) == "string"))
   end
-  ss_0 = ss_0 and ((((cell_get(slot_1)) ~= "")))
-  if ss_0 then
+  if (ss_0 and ((((cell_get(slot_1)) ~= "")))) then
     return (cell_get(slot_1))
   end
   v58_1 = env.pcall
   v63_1 = closure(2194, {capture_1(), capture_0()})
-  slot_2 = (v58_1(v63_1))
-  v78_1 = slot_2
+  v78_1 = ((v58_1(v63_1)))
   ss_0 = v78_1
   if v78_1 then
     v258_1 = env["type"]
     v263_1 = cell_get(slot_1)
     ss_0 = (((v258_1(v263_1)) == "string"))
   end
-  ss_0 = ss_0 and ((((cell_get(slot_1)) ~= "")))
-  if ss_0 then
+  if (ss_0 and ((((cell_get(slot_1)) ~= "")))) then
     return (cell_get(slot_1))
   end
   v222_1 = env["type"]
@@ -119915,36 +116651,28 @@ protos[2192] = function(upvalues, argument_1)
     ss_4 = v397_1
     ss_0, ss_1 = ss_2(ss_3, ss_4)
     slot_4 = ss_1
-    ss_0 = ss_0 and ((((env["type"](slot_4)) == "table")))
-    v507_1 = ss_0
+    v507_1 = (ss_0 and ((((env["type"](slot_4)) == "table"))))
     ss_0 = v507_1
     if v507_1 then
       v519_1 = env["type"]
       v534_1 = slot_4.Body
       ss_0 = (((v519_1(v534_1)) == "string"))
     end
-    ss_0 = ss_0 and (((slot_4.Body ~= "")))
-    if ss_0 then
+    if (ss_0 and (((slot_4.Body ~= "")))) then
       return slot_4.Body
     end
     v350_1 = env["type"]
     v355_1 = env.syn
-    v360_1 = v350_1(v355_1)
-    v370_1 = (v360_1 == "table")
+    v370_1 = ((v350_1(v355_1)) == "table")
     ss_0 = v370_1
     if v370_1 then
       v637_1 = env["type"]
-      v642_1 = env.syn
-      v652_1 = v642_1.request
-      v653_1 = v637_1(v652_1)
-      v663_1 = (v653_1 == "function")
-      ss_0 = v663_1
+      v652_1 = env.syn.request
+      ss_0 = (((v637_1(v652_1)) == "function"))
     end
-    v678_1 = ss_0
-    if v678_1 then
+    if ss_0 then
       v689_1 = env.pcall
-      v694_1 = env.syn
-      v704_1 = v694_1.request
+      v704_1 = env.syn.request
       v705_1 = new_table(0)
       v711_1 = cell_get(slot_0)
       v705_1.Url = v711_1
@@ -119953,42 +116681,23 @@ protos[2192] = function(upvalues, argument_1)
       ss_3 = v704_1
       ss_4 = v705_1
       ss_0, ss_1 = ss_2(ss_3, ss_4)
-      v743_1 = ss_1
-      slot_6 = v743_1
-      v753_1 = ss_0
-      slot_5 = v753_1
-      v758_1 = slot_5
+      slot_6 = ss_1
+      v758_1 = ss_0
       ss_0 = v758_1
       if v758_1 then
         v780_1 = env["type"]
         v785_1 = slot_6
-        v790_1 = v780_1(v785_1)
-        v800_1 = (v790_1 == "table")
-        ss_0 = v800_1
+        ss_0 = (((v780_1(v785_1)) == "table"))
       end
       v815_1 = ss_0
       ss_0 = v815_1
       if v815_1 then
         v827_1 = env["type"]
-        v832_1 = slot_6
-        v842_1 = v832_1.Body
-        v843_1 = v827_1(v842_1)
-        v853_1 = (v843_1 == "string")
-        ss_0 = v853_1
+        v842_1 = slot_6.Body
+        ss_0 = (((v827_1(v842_1)) == "string"))
       end
-      v868_1 = ss_0
-      ss_0 = v868_1
-      if v868_1 then
-        v879_1 = slot_6
-        v889_1 = v879_1.Body
-        v895_1 = (v889_1 ~= "")
-        ss_0 = v895_1
-      end
-      v910_1 = ss_0
-      if v910_1 then
-        v920_1 = slot_6
-        v930_1 = v920_1.Body
-        return v930_1
+      if (ss_0 and (((slot_6.Body ~= "")))) then
+        return slot_6.Body
       end
       return nil
     end
@@ -119996,22 +116705,16 @@ protos[2192] = function(upvalues, argument_1)
   end
   v350_1 = env["type"]
   v355_1 = env.syn
-  v360_1 = v350_1(v355_1)
-  v370_1 = (v360_1 == "table")
+  v370_1 = ((v350_1(v355_1)) == "table")
   ss_0 = v370_1
   if v370_1 then
     v637_1 = env["type"]
-    v642_1 = env.syn
-    v652_1 = v642_1.request
-    v653_1 = v637_1(v652_1)
-    v663_1 = (v653_1 == "function")
-    ss_0 = v663_1
+    v652_1 = env.syn.request
+    ss_0 = (((v637_1(v652_1)) == "function"))
   end
-  v678_1 = ss_0
-  if v678_1 then
+  if ss_0 then
     v689_1 = env.pcall
-    v694_1 = env.syn
-    v704_1 = v694_1.request
+    v704_1 = env.syn.request
     v705_1 = new_table(0)
     v711_1 = cell_get(slot_0)
     v705_1.Url = v711_1
@@ -120020,42 +116723,23 @@ protos[2192] = function(upvalues, argument_1)
     ss_3 = v704_1
     ss_4 = v705_1
     ss_0, ss_1 = ss_2(ss_3, ss_4)
-    v743_1 = ss_1
-    slot_6 = v743_1
-    v753_1 = ss_0
-    slot_5 = v753_1
-    v758_1 = slot_5
+    slot_6 = ss_1
+    v758_1 = ss_0
     ss_0 = v758_1
     if v758_1 then
       v780_1 = env["type"]
       v785_1 = slot_6
-      v790_1 = v780_1(v785_1)
-      v800_1 = (v790_1 == "table")
-      ss_0 = v800_1
+      ss_0 = (((v780_1(v785_1)) == "table"))
     end
     v815_1 = ss_0
     ss_0 = v815_1
     if v815_1 then
       v827_1 = env["type"]
-      v832_1 = slot_6
-      v842_1 = v832_1.Body
-      v843_1 = v827_1(v842_1)
-      v853_1 = (v843_1 == "string")
-      ss_0 = v853_1
+      v842_1 = slot_6.Body
+      ss_0 = (((v827_1(v842_1)) == "string"))
     end
-    v868_1 = ss_0
-    ss_0 = v868_1
-    if v868_1 then
-      v879_1 = slot_6
-      v889_1 = v879_1.Body
-      v895_1 = (v889_1 ~= "")
-      ss_0 = v895_1
-    end
-    v910_1 = ss_0
-    if v910_1 then
-      v920_1 = slot_6
-      v930_1 = v920_1.Body
-      return v930_1
+    if (ss_0 and (((slot_6.Body ~= "")))) then
+      return slot_6.Body
     end
     return nil
   end
@@ -120095,9 +116779,7 @@ protos[2195] = function(upvalues)
   v23_1 = closure(2196, {upvalues[1]})
   ss_0, ss_1 = v18_1(v23_1)
   slot_1 = ss_1
-  ss_0 = ss_0 and ((((env["type"](slot_1)) == "string")))
-  ss_0 = ss_0 and ((((#slot_1) > 200)))
-  if ss_0 then
+  if ((ss_0 and ((((env["type"](slot_1)) == "string")))) and ((((#slot_1) > 200)))) then
     return slot_1
   end
   return nil
@@ -120157,7 +116839,7 @@ protos[2198] = function(upvalues)
 end
 
 protos[2199] = function(upvalues, argument_1)
-  local slot_1, slot_2, slot_3, slot_4, v182_1, v216_1, v221_1, v226_1, v241_1, v261_1, v42_1, v47_1, v62_1
+  local slot_1, slot_2, slot_3, slot_4, v182_1, v216_1, v221_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_1 = ((cell_get(upvalues[1]))(argument_1))
   if slot_1 then
@@ -120168,38 +116850,26 @@ protos[2199] = function(upvalues, argument_1)
       return slot_2
     end
     upvalues[4] = cell_set_or_create(upvalues[4], "json decode failed")
-    v42_1 = cell_get(upvalues[5])
-    v47_1 = v42_1()
-    slot_3 = v47_1
-    v62_1 = slot_3
-    if v62_1 then
+    slot_3 = ((cell_get(upvalues[5]))())
+    if slot_3 then
       v216_1 = cell_get(upvalues[2])
       v221_1 = slot_3
-      v226_1 = v216_1(v221_1)
-      slot_4 = v226_1
-      v241_1 = slot_4
-      if v241_1 then
-        v261_1 = slot_4
-        return v261_1
+      slot_4 = (v216_1(v221_1))
+      if slot_4 then
+        return slot_4
       end
       return nil
     end
     return nil
   end
   upvalues[4] = cell_set_or_create(upvalues[4], "http request failed")
-  v42_1 = cell_get(upvalues[5])
-  v47_1 = v42_1()
-  slot_3 = v47_1
-  v62_1 = slot_3
-  if v62_1 then
+  slot_3 = ((cell_get(upvalues[5]))())
+  if slot_3 then
     v216_1 = cell_get(upvalues[2])
     v221_1 = slot_3
-    v226_1 = v216_1(v221_1)
-    slot_4 = v226_1
-    v241_1 = slot_4
-    if v241_1 then
-      v261_1 = slot_4
-      return v261_1
+    slot_4 = (v216_1(v221_1))
+    if slot_4 then
+      return slot_4
     end
     return nil
   end
@@ -120228,8 +116898,7 @@ protos[2200] = function(upvalues)
     upvalues[1] = cell_set_or_create(upvalues[1], "failed")
     return (new_table(0))
   end
-  ss_0 = slot_0.data or slot_0
-  slot_1 = ss_0
+  slot_1 = (slot_0.data or slot_0)
   if (((env["type"](slot_1)) ~= "table")) then
     upvalues[1] = cell_set_or_create(upvalues[1], "failed")
     upvalues[2] = cell_set_or_create(upvalues[2], "unexpected payload")
@@ -120248,8 +116917,7 @@ protos[2200] = function(upvalues)
       v520_1 = env.tonumber
       v535_1 = slot_5.id
       slot_6 = (v520_1(v535_1))
-      ss_0 = slot_6 and (((slot_6 > 0)))
-      v597_1 = ss_0
+      v597_1 = (slot_6 and (((slot_6 > 0))))
       ss_0 = v597_1
       if v597_1 then
         v618_1 = slot_3[slot_6]
@@ -120266,8 +116934,7 @@ protos[2200] = function(upvalues)
         temp_5.id = temp_7
         v744_1 = env["type"]
         v759_1 = slot_5.name
-        ss_0 = (((v744_1(v759_1)) ~= "string")) or (((slot_5.name == "")))
-        if ss_0 then
+        if ((((v744_1(v759_1)) ~= "string")) or (((slot_5.name == "")))) then
           temp_5 = slot_5
           temp_6 = "name"
           temp_7 = (("Emote_" .. slot_6))
@@ -120324,8 +116991,7 @@ protos[2201] = function(upvalues)
       v256_1 = slot_2.enabled
       ss_1 = v240_1
       ss_2 = "enabled"
-      ss_3 = v256_1 and (true)
-      ss_3 = ss_3 or (false)
+      ss_3 = (v256_1 and (true)) or (false)
       ss_1[ss_2] = ss_3
       v387_1 = slot_2.color
       ss_1.color = v387_1
@@ -120333,8 +116999,7 @@ protos[2201] = function(upvalues)
       ss_1.shape = v404_1
       v421_1 = slot_2.drag
       ss_2 = "drag"
-      ss_3 = v421_1 and (true)
-      ss_3 = ss_3 or (false)
+      ss_3 = (v421_1 and (true)) or (false)
       ss_1[ss_2] = ss_3
       v490_1 = slot_2.size
       ss_1.size = v490_1
@@ -120344,23 +117009,19 @@ protos[2201] = function(upvalues)
       ss_1.textSize = v524_1
       v541_1 = slot_2.glow
       ss_2 = "glow"
-      ss_3 = v541_1 and (true)
-      ss_3 = ss_3 or (false)
+      ss_3 = (v541_1 and (true)) or (false)
       ss_1[ss_2] = ss_3
       v610_1 = slot_2.hideInMenu
       ss_2 = "hideInMenu"
-      ss_3 = v610_1 and (true)
-      ss_3 = ss_3 or (false)
+      ss_3 = (v610_1 and (true)) or (false)
       ss_1[ss_2] = ss_3
       v679_1 = slot_2.holdOnMove
       ss_2 = "holdOnMove"
-      ss_3 = v679_1 and (true)
-      ss_3 = ss_3 or (false)
+      ss_3 = (v679_1 and (true)) or (false)
       ss_1[ss_2] = ss_3
       v748_1 = slot_2.loop
       ss_2 = "loop"
-      ss_3 = v748_1 and (true)
-      ss_3 = ss_3 or (false)
+      ss_3 = (v748_1 and (true)) or (false)
       ss_1[ss_2] = ss_3
       v817_1 = slot_2.px
       ss_1.px = v817_1
@@ -120493,7 +117154,7 @@ protos[2206] = function(upvalues, argument_1)
 end
 
 protos[2207] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, ss_1, ss_2, ss_3, temp_0, temp_2, v1009_1, v1024_1, v1078_1, v1093_1, v1147_1, v1162_1, v1216_1, v1231_1, v126_1, v1264_1
+  local slot_0, slot_1, ss_0, ss_2, ss_3, temp_0, temp_2, v1009_1, v1024_1, v1078_1, v1093_1, v1147_1, v1162_1, v1216_1, v1231_1, v126_1, v1264_1
   local v1279_1, v141_1, v199_1, v214_1, v23_1, v336_1, v351_1
   local v535_1, v550_1, v636_1, v651_1
   local vm_frame_random = math.random(0, 2147483646)
@@ -120521,20 +117182,15 @@ protos[2207] = function(upvalues, argument_1)
     slot_1.drag = temp_2
     v336_1 = env.tonumber
     v351_1 = slot_0.size
-    ss_1 = (v336_1(v351_1)) or slot_1.size
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((v336_1(v351_1)) or slot_1.size))
     slot_1.size = temp_2
     v535_1 = env.tonumber
     v550_1 = slot_0.alpha
-    ss_1 = (v535_1(v550_1)) or slot_1.alpha
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((v535_1(v550_1)) or slot_1.alpha))
     slot_1.alpha = temp_2
     v636_1 = env.tonumber
     v651_1 = slot_0.textSize
-    ss_1 = (v636_1(v651_1)) or slot_1.textSize
-    ss_0 = ss_1
+    ss_0 = ((v636_1(v651_1)) or slot_1.textSize)
     slot_1.textSize = ss_0
     slot_1.glow = ((slot_0.glow ~= false))
     slot_1.hideInMenu = ((slot_0.hideInMenu == true))
@@ -120563,13 +117219,11 @@ protos[2207] = function(upvalues, argument_1)
     v1231_1 = slot_0.pyScale
     ss_2 = v1216_1
     ss_3 = v1231_1
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.pyScale = temp_2
     v1264_1 = env["type"]
     v1279_1 = slot_0.name
-    ss_0 = (((v1264_1(v1279_1)) == "string")) and (((slot_0.name ~= "")))
-    if ss_0 then
+    if ((((v1264_1(v1279_1)) == "string")) and (((slot_0.name ~= "")))) then
       temp_0 = slot_1
       temp_2 = slot_0.name
       temp_0.name = temp_2
@@ -120639,8 +117293,7 @@ protos[2210] = function(upvalues)
     ss_3 = v23_1
     ss_0, ss_1 = ss_2(ss_3)
     slot_1 = ss_1
-    ss_0 = (not ss_0) or ((((env["type"](slot_1)) ~= "table")))
-    v238_1 = ss_0
+    v238_1 = ((not ss_0) or ((((env["type"](slot_1)) ~= "table"))))
     ss_0 = v238_1
     if not v238_1 then
       v250_1 = env["type"]
@@ -120686,8 +117339,7 @@ protos[2212] = function(upvalues, argument_1)
   math.random(0, 2147483646)
   slot_0 = argument_1
   slot_0 = (env.string.gsub(slot_0, "http://www%.roblox%.com/asset/%?id=", ""))
-  slot_0 = (env.string.gsub(slot_0, "rbxassetid://", ""))
-  return slot_0
+  return ((env.string.gsub(slot_0, "rbxassetid://", "")))
 end
 
 protos[2213] = function(upvalues, argument_1)
@@ -120705,8 +117357,7 @@ protos[2213] = function(upvalues, argument_1)
     return slot_9
   end
   slot_1 = (env.tonumber(slot_0))
-  ss_0 = (not slot_0) or (((slot_0 == "")))
-  if ss_0 then
+  if ((not slot_0) or (((slot_0 == "")))) then
     return slot_1
   end
   slot_2 = (env.tostring(slot_0))
@@ -120814,17 +117465,14 @@ protos[2215] = function(upvalues)
     v222_1 = slot_0.AnimationId
     ss_0 = (((v207_1(v222_1)) == "string"))
   end
-  ss_0 = ss_0 and (((slot_0.AnimationId ~= "")))
-  if ss_0 then
+  if (ss_0 and (((slot_0.AnimationId ~= "")))) then
     v300_1 = env.tonumber
     v306_1 = cell_get(upvalues[2])
     v321_1 = slot_0.AnimationId
     ss_1 = v300_1
     ss_3 = v306_1
-    ss_0 = ss_1(ss_3(v321_1))
-    slot_3 = ss_0
-    ss_0 = slot_3 and (((slot_3 > 0)))
-    if ss_0 then
+    slot_3 = (ss_1(ss_3(v321_1)))
+    if (slot_3 and (((slot_3 > 0)))) then
       return slot_3
     end
     return nil
@@ -120943,8 +117591,7 @@ protos[2223] = function(upvalues)
     v145_1 = cell_get(slot_1)
     if not ((not v145_1)) then
       slot_2 = false
-      ss_0 = (cell_get(slot_1)).MoveDirection and ((((cell_get(slot_1)).MoveDirection.Magnitude > 0.05)))
-      if ss_0 then
+      if ((cell_get(slot_1)).MoveDirection and ((((cell_get(slot_1)).MoveDirection.Magnitude > 0.05)))) then
         slot_2 = true
       end
       if (cell_get(slot_1)).Jump then
@@ -121049,8 +117696,7 @@ protos[2225] = function(upvalues, argument_1)
           ss_0, ss_1 = v541_1(v546_1)
           slot_8 = new_cell()
           slot_8 = cell_set_or_create(slot_8, ss_1)
-          ss_0 = ss_0 and ((cell_get(slot_8)))
-          if ss_0 then
+          if (ss_0 and ((cell_get(slot_8)))) then
             v626_1 = cell_get(slot_8)
             upvalues[2] = cell_set_or_create(upvalues[2], v626_1)
             v637_1 = env.tostring
@@ -121191,8 +117837,7 @@ protos[2233] = function(upvalues, argument_1)
     v143_1 = (cell_get(slot_0)).name
     ss_2 = v128_1
     ss_3 = v143_1
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.name = temp_2
   end
   v95_1 = (cell_get(slot_2)).enabled
@@ -121253,14 +117898,12 @@ protos[2233] = function(upvalues, argument_1)
     ss_2.onClick = v709_1
     v720_1 = closure(2236, {capture_2(), upvalues[6]})
     ss_2.onDrag = v720_1
-    ss_0 = ss_1(ss_2)
-    slot_4 = ss_0
+    slot_4 = (ss_1(ss_2))
     temp_0 = (cell_get(upvalues[7])).activeButtons
     temp_1 = slot_1
     temp_2 = slot_4
     temp_0[temp_1] = temp_2
-    ss_0 = (((cell_get(upvalues[8])) == slot_1)) and ((cell_get(upvalues[9])))
-    if ss_0 then
+    if ((((cell_get(upvalues[8])) == slot_1)) and ((cell_get(upvalues[9])))) then
       v865_1 = slot_4.setPlaying
       v865_1(true)
     end
@@ -121396,14 +118039,11 @@ protos[2238] = function(upvalues)
       slot_1 = __loopKey_2238_0
       slot_2 = __loopValue_2238_0
       slot_3 = (cell_get(upvalues[1])).nameById[slot_1]
-      ss_0 = slot_3 and slot_2
-      ss_0 = ss_0 and slot_2.setName
-      if ss_0 then
+      if ((slot_3 and slot_2) and slot_2.setName) then
         v362_1 = slot_2.setName
         v362_1(slot_3)
         slot_4 = (cell_get(upvalues[1])).buttonConfigs[slot_1]
-        ss_0 = slot_4 and (((slot_4.name ~= slot_3)))
-        if ss_0 then
+        if (slot_4 and (((slot_4.name ~= slot_3)))) then
           slot_4.name = slot_3
           slot_0 = true
         end
@@ -121445,9 +118085,7 @@ protos[2239] = function(upvalues)
       slot_2 = __loopValue_2239_0
       if slot_2.enabled then
         slot_3 = (env.tostring(slot_1))
-        ss_0 = (cell_get(upvalues[1])).nameById[slot_3] or slot_2.name
-        ss_0 = ss_0 or ((("Emote_" .. slot_3)))
-        slot_4 = ss_0
+        slot_4 = (((cell_get(upvalues[1])).nameById[slot_3] or slot_2.name) or ((("Emote_" .. slot_3))))
         temp_5 = (cell_get(upvalues[1])).nameById
         temp_6 = slot_3
         temp_7 = slot_4
@@ -121462,8 +118100,7 @@ protos[2239] = function(upvalues)
         ss_1[ss_2] = ss_3
         ss_1.name = slot_4
         ss_1.pending = true
-        ss_0 = ss_1
-        temp_7 = ss_0
+        temp_7 = ss_1
         temp_5[temp_6] = temp_7
       end
     end
@@ -121594,10 +118231,7 @@ protos[2242] = function(upvalues)
     if not slot_1 then slot_1 = {} end
     return slot_1
   end
-  ss_0 = (cell_get(upvalues[1])) and (cell_get(upvalues[1])).popupAPI
-  ss_0 = ss_0 and (cell_get(upvalues[1])).popupAPI.isVisible
-  ss_0 = ss_0 and (((cell_get(upvalues[1])).popupAPI.isVisible()))
-  if ss_0 then
+  if ((((cell_get(upvalues[1])) and (cell_get(upvalues[1])).popupAPI) and (cell_get(upvalues[1])).popupAPI.isVisible) and (((cell_get(upvalues[1])).popupAPI.isVisible()))) then
     v201_1 = env.pcall
     v206_1 = closure(2243, {upvalues[1]})
     v201_1(v206_1)
@@ -121606,8 +118240,7 @@ protos[2242] = function(upvalues)
   slot_0 = new_cell()
   slot_0 = cell_set_or_create(slot_0, v16_1)
   upvalues[2] = cell_set_or_create(upvalues[2], nil)
-  ss_0 = (cell_get(slot_0)) and (cell_get(slot_0)).Parent
-  if ss_0 then
+  if ((cell_get(slot_0)) and (cell_get(slot_0)).Parent) then
     v268_1 = env.pcall
     v273_1 = closure(2244, {capture_0()})
     v268_1(v273_1)
@@ -121758,9 +118391,7 @@ protos[2248] = function(upvalues, argument_1)
   v29_1 = v13_1(v28_1)
   slot_1 = new_cell()
   slot_1 = cell_set_or_create(slot_1, v29_1)
-  ss_0 = env.workspace.CurrentCamera and env.workspace.CurrentCamera.ViewportSize
-  ss_0 = ss_0 or ((env.Vector2.new(1280, 720)))
-  slot_2 = ss_0
+  slot_2 = ((env.workspace.CurrentCamera and env.workspace.CurrentCamera.ViewportSize) or ((env.Vector2.new(1280, 720))))
   v197_1 = env.math.min
   v219_1 = (slot_2.X - 40)
   v224_1 = v197_1(380, v219_1)
@@ -122137,8 +118768,7 @@ protos[2249] = function(upvalues)
   v1498_1 = env.Enum.TextTruncate.AtEnd
   ss_3.TextTruncate = v1498_1
   ss_3.ZIndex = 25002
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_8 = ss_0
+  slot_8 = (ss_1(ss_2, ss_3))
   v1527_1 = cell_get(upvalues[1])
   v1537_1 = new_table(0)
   v1537_1.Parent = slot_1
@@ -122462,8 +119092,7 @@ protos[2249] = function(upvalues)
     regs.v4591_1(v4590_1, regs.v4596_1)
   end
   slot_17("fe_emote_section_look")
-  ss_0 = (cell_get(upvalues[25])) and (cell_get(upvalues[25])).F
-  ss_0 = ss_0 and (cell_get(upvalues[25])).F.CreateDropdown
+  ss_0 = ((cell_get(upvalues[25])) and (cell_get(upvalues[25])).F) and (cell_get(upvalues[25])).F.CreateDropdown
   if ss_0 then
     regs.v6772_1 = new_table(0)
     slot_28 = new_cell()
@@ -122823,13 +119452,11 @@ protos[2250] = function(upvalues)
   v100_1 = v84_1(v99_1)
   ss_1 = v70_1
   ss_3 = v82_1
-  ss_4 = v100_1 or (64)
-  ss_4 = ((ss_4 * 0.65))
+  ss_4 = (((v100_1 or (64)) * 0.65))
   ss_2 = ss_3(ss_4)
   ss_3 = 26
   ss_4 = 40
-  ss_0 = ss_1(ss_2, ss_3, ss_4)
-  slot_2 = ss_0
+  slot_2 = (ss_1(ss_2, ss_3, ss_4))
   v217_1 = env.math.clamp
   v219_1 = env.tonumber
   v234_1 = (cell_get(upvalues[2])).alpha
@@ -122857,8 +119484,7 @@ protos[2250] = function(upvalues)
   v449_1 = (cell_get(upvalues[8])).name
   ss_2 = v434_1
   ss_3 = v449_1 or ("")
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.Text = temp_2
   temp_0 = (cell_get(upvalues[7]))
   v539_1 = env.math.clamp
@@ -122868,18 +119494,15 @@ protos[2250] = function(upvalues)
   v569_1 = v553_1(v568_1)
   ss_2 = v539_1
   ss_4 = v551_1
-  ss_5 = v569_1 or (12)
-  ss_5 = ((ss_5 * 0.7))
+  ss_5 = (((v569_1 or (12)) * 0.7))
   ss_3 = ss_4(ss_5)
   ss_4 = 6
   ss_5 = 15
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.TextSize = temp_2
   temp_0 = (cell_get(upvalues[7]))
   ss_1 = (cell_get(upvalues[5])).Rotation or (0)
-  ss_1 = (-ss_1)
-  ss_0 = ss_1
+  ss_0 = ((-ss_1))
   temp_0.Rotation = ss_0
   temp_0 = (cell_get(upvalues[7]))
   ss_2 = env.Vector2.new
@@ -122893,12 +119516,10 @@ protos[2250] = function(upvalues)
   ss_4 = 0
   ss_5 = 0.5
   ss_6 = 0
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Position = temp_2
   temp_0 = (cell_get(upvalues[7]))
-  ss_1 = ((slot_1 == "Diamond")) and ((env.UDim2.new(0.72, 0, 0.72, 0)))
-  v993_1 = ss_1
+  v993_1 = (((slot_1 == "Diamond")) and ((env.UDim2.new(0.72, 0, 0.72, 0))))
   ss_1 = v993_1
   if not v993_1 then
     v1015_1 = env.UDim2.new
@@ -122921,14 +119542,10 @@ protos[2250] = function(upvalues)
   ss_4 = 8
   ss_5 = 0.5
   ss_6 = 0
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Position = temp_2
   temp_0 = (cell_get(upvalues[7]))
-  ss_1 = (cell_get(upvalues[5])).ZIndex or (1)
-  ss_1 = ((ss_1 + 20))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((((cell_get(upvalues[5])).ZIndex or (1)) + 20))))
   temp_0.ZIndex = temp_2
   return
 end
@@ -123138,8 +119755,7 @@ protos[2256] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3[ss_4] = ss_5
   ss_4 = "Position"
-  ss_5 = slot_4 and ((env.UDim2.new(0, 16, 0, 9)))
-  ss_5 = ss_5 or ((env.UDim2.new(0, 16, 0, 0)))
+  ss_5 = (slot_4 and ((env.UDim2.new(0, 16, 0, 9)))) or ((env.UDim2.new(0, 16, 0, 0)))
   ss_3[ss_4] = ss_5
   ss_3.BackgroundTransparency = 1
   v634_1 = (cell_get(upvalues[4]))(slot_0)
@@ -123154,8 +119770,7 @@ protos[2256] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   v730_1 = not slot_4
   ss_3.TextWrapped = v730_1
   ss_4 = "TextTruncate"
-  ss_5 = slot_4 and env.Enum.TextTruncate.AtEnd
-  ss_5 = ss_5 or env.Enum.TextTruncate.None
+  ss_5 = (slot_4 and env.Enum.TextTruncate.AtEnd) or env.Enum.TextTruncate.None
   ss_3[ss_4] = ss_5
   ss_3.ZIndex = 25006
   ss_1(ss_2, ss_3)
@@ -123200,8 +119815,7 @@ protos[2256] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = "TextButton"
   ss_3 = v860_1
   ss_4 = "BackgroundColor3"
-  ss_5 = v1003_1 and (cell_get(upvalues[3])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[5])).Off
+  ss_5 = (v1003_1 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[5])).Off
   ss_3[ss_4] = ss_5
   ss_3.BorderSizePixel = 0
   ss_3.Text = ""
@@ -123226,8 +119840,7 @@ protos[2256] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = "UIStroke"
   ss_3 = v1477_1
   ss_4 = "Color"
-  ss_5 = v1500_1 and (cell_get(upvalues[3])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[3])).colors.stroke
+  ss_5 = (v1500_1 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.stroke
   ss_3[ss_4] = ss_5
   ss_3.Transparency = 0.4
   ss_3.Thickness = 1
@@ -123319,8 +119932,7 @@ protos[2257] = function(upvalues)
   ss_2 = v45_1
   ss_3 = v50_1
   ss_4 = "BackgroundColor3"
-  ss_5 = slot_0 and (cell_get(upvalues[5])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[6])).Off
+  ss_5 = (slot_0 and (cell_get(upvalues[5])).colors.accent) or (cell_get(upvalues[6])).Off
   ss_3[ss_4] = ss_5
   ss_4 = 0.15
   ss_1(ss_2, ss_3, ss_4)
@@ -123331,8 +119943,7 @@ protos[2257] = function(upvalues)
   ss_2 = v183_1
   ss_3 = v188_1
   ss_4 = "Color"
-  ss_5 = slot_0 and (cell_get(upvalues[5])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[5])).colors.stroke
+  ss_5 = (slot_0 and (cell_get(upvalues[5])).colors.accent) or (cell_get(upvalues[5])).colors.stroke
   ss_3[ss_4] = ss_5
   ss_4 = 0.15
   ss_1(ss_2, ss_3, ss_4)
@@ -124359,8 +120970,7 @@ protos[2288] = function(upvalues)
   local v275_1, v307_1, v308_1, v314_1, v325_1, v347_1, v364_1, v365_1, v386_1
   local v586_1, v591_1, v596_1, v634_1, v656_1, v667_1, v678_1, v705_1, v722_1, v729_1, v734_1, v739_1, v772_1, v789_1, v96_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = ((cell_get(upvalues[1])).isVisible()) and (((cell_get(upvalues[1])).getCurrentPicker()))
-  v96_1 = ss_0
+  v96_1 = (((cell_get(upvalues[1])).isVisible()) and (((cell_get(upvalues[1])).getCurrentPicker())))
   ss_0 = v96_1
   if v96_1 then
     v129_1 = ((cell_get(upvalues[1])).getCurrentPicker()).circle
@@ -124553,11 +121163,8 @@ protos[2297] = function(upvalues, argument_1)
 end
 
 protos[2298] = function(upvalues)
-  local ss_1
   math.random(0, 2147483646)
-  ss_1 = (cell_get(upvalues[1])).alpha or (0.15)
-  ss_1 = ((ss_1 * 100))
-  return ss_1
+  return (((((cell_get(upvalues[1])).alpha or (0.15)) * 100)))
 end
 
 protos[2299] = function(upvalues, argument_1)
@@ -124765,16 +121372,14 @@ protos[2308] = function(upvalues, argument_1)
     for __loopKey_2308_0, __loopValue_2308_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
       slot_1 = __loopKey_2308_0
       slot_2 = __loopValue_2308_0
-      ss_0 = (slot_2:IsA("Frame")) and ((slot_2:GetAttribute("EmoteId")))
-      if ss_0 then
+      if ((slot_2:IsA("Frame")) and ((slot_2:GetAttribute("EmoteId")))) then
         slot_3 = (slot_2:GetAttribute("EmoteId"))
         v330_1 = (cell_get(upvalues[1])).buttonConfigs
         v342_1 = env.tostring(slot_3)
         slot_4 = v330_1[v342_1]
         slot_5 = (slot_2:FindFirstChild("PinBadge"))
         slot_6 = (slot_2:FindFirstChild("ActiveStroke"))
-        ss_0 = slot_4 and slot_4.enabled
-        if ss_0 then
+        if (slot_4 and slot_4.enabled) then
           if (not slot_5) then
             v516_1 = cell_get(upvalues[2])
             v516_1(slot_2)
@@ -124885,20 +121490,16 @@ protos[2309] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_0 = slot_6 and slot_6.enabled
   slot_7 = new_cell()
   slot_7 = cell_set_or_create(slot_7, ss_0)
-  ss_0 = (cell_get(slot_7)) and ((env.Color3.fromRGB(12, 72, 44)))
-  ss_0 = ss_0 or (cell_get(upvalues[2])).colors.row
+  ss_0 = ((cell_get(slot_7)) and ((env.Color3.fromRGB(12, 72, 44)))) or (cell_get(upvalues[2])).colors.row
   slot_8 = new_cell()
   slot_8 = cell_set_or_create(slot_8, ss_0)
-  ss_0 = (cell_get(slot_7)) and ((env.Color3.fromRGB(18, 96, 58)))
-  ss_0 = ss_0 or (cell_get(upvalues[2])).colors.panel
+  ss_0 = ((cell_get(slot_7)) and ((env.Color3.fromRGB(18, 96, 58)))) or (cell_get(upvalues[2])).colors.panel
   slot_9 = new_cell()
   slot_9 = cell_set_or_create(slot_9, ss_0)
-  ss_0 = (cell_get(slot_7)) and (cell_get(upvalues[2])).colors.accent
-  ss_0 = ss_0 or (cell_get(upvalues[2])).colors.stroke
+  ss_0 = ((cell_get(slot_7)) and (cell_get(upvalues[2])).colors.accent) or (cell_get(upvalues[2])).colors.stroke
   slot_10 = new_cell()
   slot_10 = cell_set_or_create(slot_10, ss_0)
-  ss_0 = (cell_get(slot_7)) and (0.25)
-  ss_0 = ss_0 or (0.7)
+  ss_0 = ((cell_get(slot_7)) and (0.25)) or (0.7)
   slot_11 = new_cell()
   slot_11 = cell_set_or_create(slot_11, ss_0)
   regs.v498_1 = cell_get(upvalues[3])
@@ -124952,8 +121553,7 @@ protos[2309] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   v865_1 = cell_get(slot_7)
   ss_1 = regs.v816_1
   ss_3 = v826_1
-  ss_5 = v865_1 and (1.5)
-  ss_5 = ss_5 or (1)
+  ss_5 = (v865_1 and (1.5)) or (1)
   ss_3.Thickness = ss_5
   ss_0 = ss_1(("UIStroke"), ss_3)
   slot_13 = new_cell()
@@ -125379,13 +121979,11 @@ protos[2319] = function(upvalues)
   v51_1 = cell_get(upvalues[5])
   ss_3 = v45_1
   ss_4 = "Color"
-  ss_5 = v51_1 and (cell_get(upvalues[6])).colors.accent
-  ss_5 = ss_5 or (cell_get(upvalues[6])).colors.accent
+  ss_5 = (v51_1 and (cell_get(upvalues[6])).colors.accent) or (cell_get(upvalues[6])).colors.accent
   ss_3[ss_4] = ss_5
   v173_1 = cell_get(upvalues[5])
   ss_4 = "Transparency"
-  ss_5 = v173_1 and (0.1)
-  ss_5 = ss_5 or (0.3)
+  ss_5 = (v173_1 and (0.1)) or (0.3)
   ss_3[ss_4] = ss_5
   ss_3.Thickness = 1.5
   ss_4 = 0.2
@@ -125431,8 +122029,7 @@ protos[2320] = function(upvalues)
   v73_1 = cell_get(upvalues[7])
   ss_3 = v45_1
   ss_4 = "Thickness"
-  ss_5 = v73_1 and (1.5)
-  ss_5 = ss_5 or (1)
+  ss_5 = (v73_1 and (1.5)) or (1)
   ss_3[ss_4] = ss_5
   ss_4 = 0.2
   v35_1(v40_1, ss_3, ss_4)
@@ -125488,8 +122085,7 @@ protos[2322] = function(upvalues, argument_1)
   v11_1 = (cell_get(upvalues[1])).renderList
   slot_1 = nil
   slot_1 = v11_1
-  ss_0 = (not slot_1) or ((((#slot_1) == 0)))
-  if ss_0 then
+  if ((not slot_1) or ((((#slot_1) == 0)))) then
     slot_1 = (cell_get(upvalues[1])).filteredEmotes
   end
   v49_1 = (cell_get(upvalues[1])).cellWidth
@@ -125527,8 +122123,7 @@ protos[2322] = function(upvalues, argument_1)
     temp_2 = temp_3
     slot_6 = temp_3
     slot_7 = temp_4
-    ss_0 = (slot_7:IsA("Frame")) and ((slot_7:GetAttribute("EmoteId")))
-    if ss_0 then
+    if ((slot_7:IsA("Frame")) and ((slot_7:GetAttribute("EmoteId")))) then
       v677_1 = slot_7
       v682_1 = v677_1.Destroy
       v682_1(v677_1)
@@ -125543,8 +122138,7 @@ protos[2322] = function(upvalues, argument_1)
   ss_4 = v529_1
   ss_5 = slot_0
   ss_6 = pack_values(v546_1((1), v562_1))
-  ss_0 = ss_1(ss_2, ss_4(ss_5, unpack_values(ss_6, 1, ss_6.n)))
-  slot_0 = ss_0
+  slot_0 = (ss_1(ss_2, ss_4(ss_5, unpack_values(ss_6, 1, ss_6.n))))
   v598_1 = env.math.min
   v619_1 = (cell_get(upvalues[1])).renderRows
   ss_1 = v598_1
@@ -125718,9 +122312,7 @@ protos[2326] = function(upvalues, argument_1)
   ss_4 = slot_1
   ss_0, ss_1 = ss_2(ss_3, ss_4)
   slot_3 = ss_1
-  ss_0 = (not ss_0) or ((((env["type"](slot_3)) ~= "string")))
-  ss_0 = ss_0 or ((((#slot_3) < 100)))
-  if ss_0 then
+  if (((not ss_0) or ((((env["type"](slot_3)) ~= "string")))) or ((((#slot_3) < 100)))) then
     return nil
   end
   v205_1 = env.pcall
@@ -125730,8 +122322,7 @@ protos[2326] = function(upvalues, argument_1)
   ss_4 = slot_1
   ss_0, ss_1 = ss_2(ss_3, ss_4)
   slot_5 = ss_1
-  ss_0 = ss_0 and slot_5
-  if ss_0 then
+  if (ss_0 and slot_5) then
     return slot_5
   end
   return nil
@@ -125775,8 +122366,7 @@ protos[2327] = function(upvalues, argument_1)
     v236_1 = cell_get(slot_4)
     ss_0 = (((v231_1(v236_1)) ~= "string"))
   end
-  ss_0 = ss_0 or ((((cell_get(slot_4)) == "")))
-  if ss_0 then
+  if (ss_0 or ((((cell_get(slot_4)) == "")))) then
     return nil
   end
   v173_1 = env.pcall
@@ -125785,8 +122375,7 @@ protos[2327] = function(upvalues, argument_1)
   ss_3 = v178_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_6 = ss_1
-  ss_0 = (not ss_0) or ((((env["type"](slot_6)) ~= "table")))
-  v451_1 = ss_0
+  v451_1 = ((not ss_0) or ((((env["type"](slot_6)) ~= "table"))))
   ss_0 = v451_1
   if not v451_1 then
     v463_1 = env["type"]
@@ -125806,8 +122395,7 @@ protos[2327] = function(upvalues, argument_1)
   for __loopKey_2327_0, __loopValue_2327_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_8 = __loopKey_2327_0
     slot_9 = __loopValue_2327_0
-    ss_0 = (((env["type"](slot_9)) == "table")) and (((slot_9.state == "Completed")))
-    v700_1 = ss_0
+    v700_1 = ((((env["type"](slot_9)) == "table")) and (((slot_9.state == "Completed"))))
     ss_0 = v700_1
     if v700_1 then
       v712_1 = env["type"]
@@ -125854,8 +122442,7 @@ protos[2330] = function(upvalues, argument_1, argument_2)
   v124_2 = not ss_0
   if not v124_2 then
     slot_2 = (slot_0:FindFirstChild("Thumb", true))
-    ss_0 = slot_2 and slot_2.Parent
-    if ss_0 then
+    if (slot_2 and slot_2.Parent) then
       slot_2.Image = slot_1
     end
     slot_3 = (slot_0:FindFirstChild("Skeleton", true))
@@ -125939,8 +122526,7 @@ protos[2332] = function(upvalues)
     temp_2 = __loopKey_2332_1
     slot_5 = __loopKey_2332_1
     slot_6 = __loopValue_2332_1
-    ss_0 = slot_6.cell and slot_6.cell.Parent
-    if ss_0 then
+    if (slot_6.cell and slot_6.cell.Parent) then
       v600_1 = cell_get(upvalues[2])
       v615_1 = slot_6.id
       v616_1 = v600_1(v615_1)
@@ -125962,8 +122548,7 @@ protos[2332] = function(upvalues)
         v793_1 = slot_6.id
         ss_2 = v778_1
         ss_3 = v793_1
-        ss_0 = ss_2(ss_3)
-        temp_7 = ss_0
+        temp_7 = (ss_2(ss_3))
         temp_5[temp_6] = temp_7
       end
     end
@@ -125999,11 +122584,8 @@ protos[2332] = function(upvalues)
         ss_3 = v1144_1
         ss_0, ss_1 = ss_2(ss_3)
         slot_14 = ss_1
-        ss_0 = ss_0 and ((((env["type"](slot_14)) == "string")))
-        ss_0 = ss_0 and ((((#slot_14) > 100)))
-        if ss_0 then
-          ss_0 = env.writefile and ((((cell_get(upvalues[5])) < 1200)))
-          if ss_0 then
+        if ((ss_0 and ((((env["type"](slot_14)) == "string")))) and ((((#slot_14) > 100)))) then
+          if (env.writefile and ((((cell_get(upvalues[5])) < 1200)))) then
             v1337_1 = cell_get(upvalues[6])
             v1348_1 = env.tostring
             v1363_1 = slot_10.id
@@ -126031,14 +122613,10 @@ protos[2332] = function(upvalues)
           end
         end
       end
-      ss_0 = (not slot_12) and slot_10.cell
-      ss_0 = ss_0 and slot_10.cell.Parent
-      if ss_0 then
-        ss_0 = slot_10.tries or (0)
-        slot_17 = ss_0
+      if (((not slot_12) and slot_10.cell) and slot_10.cell.Parent) then
+        slot_17 = (slot_10.tries or (0))
         v1659_1 = cell_get(slot_8)
-        ss_0 = (not v1659_1) and (((slot_17 < 2)))
-        if ss_0 then
+        if ((not v1659_1) and (((slot_17 < 2)))) then
           slot_10.tries = ((slot_17 + 1))
           temp_5 = (cell_get(upvalues[1]))
           v1787_1 = cell_get(upvalues[1])
@@ -126270,8 +122848,7 @@ protos[2340] = function(upvalues, argument_1)
   ss_2 = "em_layout list="
   ss_3 = v30_1
   ss_4 = " w="
-  ss_6 = v41_1
-  ss_5 = ss_6(v57_1(v74_1))
+  ss_5 = v41_1(v57_1(v74_1))
   v85_3 = (ss_4 .. ss_5)
   v90_2 = (ss_3 .. v85_3)
   ss_2 = ((ss_2 .. v90_2))
@@ -126283,10 +122860,7 @@ protos[2340] = function(upvalues, argument_1)
   slot_1 = v132_1
   if ((slot_1 <= 0)) then
     temp_0 = (cell_get(upvalues[2]))
-    ss_1 = (cell_get(upvalues[2])).layoutRetries or (0)
-    ss_1 = ((ss_1 + 1))
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((((cell_get(upvalues[2])).layoutRetries or (0)) + 1))))
     temp_0.layoutRetries = temp_2
     if (((cell_get(upvalues[2])).layoutRetries <= 200)) then
       v756_1 = env.task.delay
@@ -126322,8 +122896,7 @@ protos[2340] = function(upvalues, argument_1)
     v515_1 = (slot_4 / slot_3)
     ss_2 = v504_1
     ss_3 = v515_1
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.totalRows = temp_2
     if (((cell_get(upvalues[2])).totalRows < 1)) then
       temp_0 = (cell_get(upvalues[2]))
@@ -126342,8 +122915,7 @@ protos[2340] = function(upvalues, argument_1)
       v950_1 = (cell_get(upvalues[9])).CELL_PADDING
       ss_0 = ((v935_1 - v950_1))
     end
-    ss_0 = ss_0 or (0)
-    slot_6 = ss_0
+    slot_6 = (ss_0 or (0))
     temp_0 = (cell_get(upvalues[10]))
     ss_2 = env.UDim2.new
     ss_3 = 1
@@ -126358,8 +122930,7 @@ protos[2340] = function(upvalues, argument_1)
     ss_4 = 0
     ss_5 = 0
     ss_6 = slot_6
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.CanvasSize = temp_2
     if (cell_get(slot_0)) then
       temp_0 = (cell_get(upvalues[3]))
@@ -126378,8 +122949,7 @@ protos[2340] = function(upvalues, argument_1)
     slot_7 = nil
     slot_7 = v1211_1
     slot_8 = 1
-    ss_0 = ((slot_5 > 0)) and (((slot_7 > 0)))
-    if ss_0 then
+    if (((slot_5 > 0)) and (((slot_7 > 0)))) then
       v1690_1 = env.math.max
       v1707_1 = env.math.floor
       v1729_1 = ((cell_get(upvalues[9])).GRID_PADDING * 2)
@@ -126388,8 +122958,7 @@ protos[2340] = function(upvalues, argument_1)
       ss_2 = 1
       ss_4 = v1707_1
       ss_5 = v1744_1
-      ss_0 = ss_1(ss_2, ss_4(ss_5))
-      slot_8 = ss_0
+      slot_8 = (ss_1(ss_2, ss_4(ss_5)))
     end
     cell_get(upvalues[2]).windowRows = slot_8
     cell_get(upvalues[2]).renderRows = ((slot_8 + 2))
@@ -126401,19 +122970,14 @@ protos[2340] = function(upvalues, argument_1)
     ss_3 = 1
     ss_5 = v1556_1
     ss_6 = v1567_1
-    ss_0 = ss_2(ss_3, ss_5(ss_6))
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_5(ss_6)))
     temp_0.stepRows = temp_2
     temp_0 = (cell_get(upvalues[2]))
-    ss_1 = (cell_get(slot_0)) and (true)
-    ss_1 = ss_1 or (false)
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(slot_0)) and (true)) or (false)))
     temp_0.playEntry = temp_2
     slot_9 = 1
     v1852_1 = cell_get(slot_0)
-    ss_0 = (not v1852_1) and (((slot_5 > 0)))
-    if ss_0 then
+    if ((not v1852_1) and (((slot_5 > 0)))) then
       v1957_1 = env.math.floor
       v1980_1 = ((cell_get(upvalues[3])).CanvasPosition.Y / slot_5)
       slot_9 = (((v1957_1(v1980_1)) + 1))
@@ -126428,11 +122992,9 @@ protos[2340] = function(upvalues, argument_1)
 end
 
 protos[2341] = function(upvalues)
-  local ss_0, v120_1, v125_1
+  local v120_1, v125_1
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])) and (cell_get(upvalues[1])).Parent
-  ss_0 = ss_0 and (cell_get(upvalues[2])).Visible
-  if ss_0 then
+  if (((cell_get(upvalues[1])) and (cell_get(upvalues[1])).Parent) and (cell_get(upvalues[2])).Visible) then
     v120_1 = cell_get(upvalues[3])
     v125_1 = cell_get(upvalues[4])
     v120_1(v125_1)
@@ -126530,10 +123092,7 @@ protos[2345] = function(upvalues, argument_1)
   slot_0 = (((slot_0:lower()):gsub("^%s+", "")):gsub("%s+$", ""))
   temp_0 = (cell_get(upvalues[1]))
   temp_1 = "filterToken"
-  ss_1 = (cell_get(upvalues[1])).filterToken or (0)
-  ss_1 = ((ss_1 + 1))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((((cell_get(upvalues[1])).filterToken or (0)) + 1))))
   temp_0.filterToken = temp_2
   v203_1 = (cell_get(upvalues[1])).filterToken
   slot_1 = new_cell()
@@ -126866,8 +123425,7 @@ protos[2357] = function(upvalues)
           v833_1()
         end
         slot_3 = ((cell_get(upvalues[5]))())
-        ss_0 = slot_3 and ((((#slot_3) > 0)))
-        if ss_0 then
+        if (slot_3 and ((((#slot_3) > 0)))) then
           exit_581 = 2
           break
         end
@@ -128031,9 +124589,7 @@ protos[2373] = function(upvalues, argument_1)
   v19_1 = cell_get(upvalues[1])
   ss_0, ss_1 = v3_1(v18_1, v19_1, slot_0)
   slot_2 = ss_1
-  ss_1 = ss_0 and slot_2
-  ss_1 = ss_1 or (nil)
-  return ss_1
+  return ((ss_0 and slot_2) or (nil))
 end
 
 protos[2374] = function(upvalues, argument_1)
@@ -128045,9 +124601,7 @@ protos[2374] = function(upvalues, argument_1)
   v19_1 = cell_get(upvalues[1])
   ss_0, ss_1 = v3_1(v18_1, v19_1, slot_0)
   slot_2 = ss_1
-  ss_1 = ss_0 and slot_2
-  ss_1 = ss_1 or (nil)
-  return ss_1
+  return ((ss_0 and slot_2) or (nil))
 end
 
 protos[2375] = function(upvalues, argument_1)
@@ -128059,8 +124613,7 @@ protos[2375] = function(upvalues, argument_1)
     v33_1 = env.isfile
     ss_0, ss_1 = v28_1(v33_1, slot_0)
     slot_2 = ss_1
-    ss_1 = ss_0 and slot_2
-    return ss_1
+    return (ss_0 and slot_2)
   end
   return false
 end
@@ -128132,8 +124685,7 @@ protos[2378] = function(upvalues)
         temp_0.animationCache = temp_2
       else
         temp_0 = (cell_get(upvalues[4]))
-        ss_0 = (slot_1.entries or ((new_table(0))))
-        temp_2 = ss_0
+        temp_2 = ((slot_1.entries or ((new_table(0)))))
         temp_0.animationCache = temp_2
       end
     end
@@ -128174,9 +124726,7 @@ protos[2380] = function(upvalues, argument_1)
   ss_3 = v8_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_2 = ss_1
-  ss_0 = ss_0 and slot_2
-  ss_0 = ss_0 and (((slot_2 ~= "")))
-  if ss_0 then
+  if ((ss_0 and slot_2) and (((slot_2 ~= "")))) then
     ss_2 = (cell_get(upvalues[1]))
     ss_3 = slot_2
     return ss_2(ss_3)
@@ -128221,8 +124771,7 @@ protos[2382] = function(upvalues)
       v372_1 = env.tonumber
       v387_1 = slot_5.id
       slot_6 = (v372_1(v387_1))
-      ss_0 = slot_6 and (((slot_6 > 0)))
-      v449_1 = ss_0
+      v449_1 = (slot_6 and (((slot_6 > 0))))
       ss_0 = v449_1
       if v449_1 then
         v470_1 = slot_3[slot_6]
@@ -128239,8 +124788,7 @@ protos[2382] = function(upvalues)
         temp_5.id = temp_7
         v596_1 = env["type"]
         v611_1 = slot_5.name
-        ss_0 = (((v596_1(v611_1)) ~= "string")) or (((slot_5.name == "")))
-        if ss_0 then
+        if ((((v596_1(v611_1)) ~= "string")) or (((slot_5.name == "")))) then
           temp_5 = slot_5
           temp_6 = "name"
           temp_7 = (("Animation_" .. slot_6))
@@ -128275,8 +124823,7 @@ protos[2382] = function(upvalues)
           v1183_1 = env.tonumber
           v1198_1 = slot_10.id
           slot_11 = (v1183_1(v1198_1))
-          ss_0 = slot_11 and (((slot_11 > 0)))
-          v1260_1 = ss_0
+          v1260_1 = (slot_11 and (((slot_11 > 0))))
           ss_0 = v1260_1
           if v1260_1 then
             v1281_1 = slot_3[slot_11]
@@ -128293,8 +124840,7 @@ protos[2382] = function(upvalues)
             temp_5.id = temp_7
             v1407_1 = env["type"]
             v1422_1 = slot_10.name
-            ss_0 = (((v1407_1(v1422_1)) ~= "string")) or (((slot_10.name == "")))
-            if ss_0 then
+            if ((((v1407_1(v1422_1)) ~= "string")) or (((slot_10.name == "")))) then
               temp_5 = slot_10
               temp_6 = "name"
               temp_7 = (("Animation_Offsale_" .. slot_11))
@@ -128371,8 +124917,7 @@ protos[2384] = function(upvalues, argument_1)
   local slot_1, ss_0, temp_0, v108_1, v129_1, v213_1, v214_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_1 = (env.tonumber(argument_1))
-  ss_0 = slot_1 and (((slot_1 > 0)))
-  v108_1 = ss_0
+  v108_1 = (slot_1 and (((slot_1 > 0))))
   ss_0 = v108_1
   if v108_1 then
     v129_1 = (cell_get(upvalues[1]))[slot_1]
@@ -128433,9 +124978,7 @@ protos[2385] = function(upvalues, argument_1)
     ss_3 = v282_1
     ss_0, ss_1 = ss_2(ss_3)
     slot_5 = ss_1
-    ss_0 = ss_0 and ((((env["type"](slot_5)) == "table")))
-    ss_0 = ss_0 and ((((#slot_5) > 0)))
-    if ss_0 then
+    if ((ss_0 and ((((env["type"](slot_5)) == "table")))) and ((((#slot_5) > 0)))) then
       exit_184 = 2
       break
     end
@@ -128447,8 +124990,7 @@ protos[2385] = function(upvalues, argument_1)
     ss_3 = v344_1
     ss_0, ss_1 = ss_2(ss_3)
     slot_7 = ss_1
-    ss_0 = ss_0 and slot_7
-    if ss_0 then
+    if (ss_0 and slot_7) then
       v526_1 = new_table(1)
       v526_1[1] = slot_7
       return v526_1
@@ -128479,7 +125021,7 @@ protos[2387] = function(upvalues)
 end
 
 protos[2388] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, ss_0, ss_1, ss_2, ss_3, temp_0, temp_1, temp_2, v2_1, v253_1, v279_1, v306_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, ss_0, ss_1, ss_2, ss_3, temp_0, temp_1, temp_2, v2_1, v253_1, v279_1
   local v316_3, v346_1, v425_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -128493,17 +125035,13 @@ protos[2388] = function(upvalues, argument_1)
   for __loopKey_2388_0, __loopValue_2388_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_3 = __loopKey_2388_0
     slot_4 = __loopValue_2388_0
-    ss_1 = slot_4.category or ("")
-    v253_1 = ss_1
+    v253_1 = (slot_4.category or (""))
     ss_1 = v253_1.lower
     ss_2 = v253_1
     ss_0 = ss_1(ss_2)
     v279_1 = slot_4.name
     ss_1 = "."
-    ss_3 = v279_1 or ("")
-    v306_1 = ss_3
-    ss_3 = v306_1.lower
-    ss_2 = ss_3(v306_1)
+    ss_2 = ((v279_1 or (""))):lower()
     v316_3 = (ss_1 .. ss_2)
     slot_5 = ((ss_0 .. v316_3))
     v346_1 = slot_2[slot_5]
@@ -128615,8 +125153,7 @@ protos[2390] = function(upvalues, argument_1, argument_2)
       for __loopKey_2390_1, __loopValue_2390_1 in function(state, control) return temp_5(state, control) end, temp_6, temp_7 do
         slot_7 = __loopKey_2390_1
         slot_8 = __loopValue_2390_1
-        ss_0 = (slot_8:IsA("NumberValue")) and (((slot_8.Name == "Weight")))
-        if ss_0 then
+        if ((slot_8:IsA("NumberValue")) and (((slot_8.Name == "Weight")))) then
           v693_1 = env.table.insert
           v709_1 = slot_8.Value
           v693_1(slot_6, v709_1)
@@ -128723,8 +125260,7 @@ protos[2394] = function(upvalues, argument_1, argument_2)
     v375_1[1] = v386_1
     ss_2 = v375_1
   end
-  ss_0 = v336_1(ss_2)
-  slot_4 = ss_0
+  slot_4 = (v336_1(ss_2))
   if (((#slot_4) > 0)) then
     temp_0 = (cell_get(upvalues[1])).animationCache
     temp_1 = slot_2
@@ -128738,38 +125274,31 @@ protos[2394] = function(upvalues, argument_1, argument_2)
 end
 
 protos[2395] = function(upvalues, argument_1)
-  local slot_0, ss_1, ss_2, ss_3, ss_4, v101_1, v128_1, v138_3, v75_1
+  local slot_0, ss_1, ss_2, ss_3, v101_1, v138_3, v75_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_2 = slot_0.category or ("")
-  v75_1 = ss_2
+  v75_1 = (slot_0.category or (""))
   ss_2 = v75_1.lower
   ss_3 = v75_1
   ss_1 = ss_2(ss_3)
   v101_1 = slot_0.name
   ss_2 = "."
-  ss_4 = v101_1 or ("")
-  v128_1 = ss_4
-  ss_4 = v128_1.lower
-  ss_3 = ss_4(v128_1)
+  ss_3 = ((v101_1 or (""))):lower()
   v138_3 = (ss_2 .. ss_3)
-  ss_1 = ((ss_1 .. v138_3))
-  return ss_1
+  return (((ss_1 .. v138_3)))
 end
 
 protos[2396] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, ss_0, v160_1, v181_1, v272_1, v277_1
+  local slot_0, slot_1, slot_2, v160_1, v181_1, v272_1, v277_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = slot_0.category or ("")
-  slot_1 = ss_0
+  slot_1 = (slot_0.category or (""))
   if ((slot_1 ~= "")) then
     v160_1 = (slot_1:sub(1, 1)):upper()
     v181_1 = slot_1:sub(2)
     slot_1 = ((v160_1 .. v181_1))
   end
-  ss_0 = slot_0.name or ("?")
-  slot_2 = ss_0
+  slot_2 = (slot_0.name or ("?"))
   if ((slot_1 == "")) then
     return slot_2
   end
@@ -128857,8 +125386,7 @@ protos[2398] = function(upvalues, argument_1)
             temp_12 = __loopKey_2398_2
             slot_9 = __loopKey_2398_2
             slot_10 = __loopValue_2398_2
-            ss_0 = (slot_10:IsA("NumberValue")) and (((slot_10.Name == "Weight")))
-            if ss_0 then
+            if ((slot_10:IsA("NumberValue")) and (((slot_10.Name == "Weight")))) then
               v942_1 = env.table.insert
               v958_1 = slot_10.Value
               v942_1(slot_8, v958_1)
@@ -129032,8 +125560,7 @@ protos[2399] = function(upvalues, argument_1, argument_2)
                 temp_12 = __loopKey_2399_5
                 slot_18 = __loopKey_2399_5
                 slot_19 = __loopValue_2399_5
-                ss_0 = (slot_19:IsA("NumberValue")) and (((slot_19.Name == "Weight")))
-                if ss_0 then
+                if ((slot_19:IsA("NumberValue")) and (((slot_19.Name == "Weight")))) then
                   v1770_1 = slot_19
                   v1775_1 = v1770_1.Destroy
                   v1775_1(v1770_1)
@@ -129152,8 +125679,7 @@ protos[2400] = function(upvalues, argument_1, argument_2)
     v122_1 = slot_0.Parent
     ss_0 = (not v122_1)
   end
-  ss_0 = ss_0 or ((not slot_1))
-  if ss_0 then
+  if (ss_0 or ((not slot_1))) then
     return false
   end
   slot_2 = 0
@@ -129199,8 +125725,7 @@ protos[2400] = function(upvalues, argument_1, argument_2)
           end
           slot_9 = temp_13
           slot_10 = v587_ret2
-          ss_0 = (slot_10:IsA("Animation")) and ((((slot_10.Name:lower()) == slot_6)))
-          if ss_0 then
+          if ((slot_10:IsA("Animation")) and ((((slot_10.Name:lower()) == slot_6)))) then
             exit_571 = 2
             break
           end
@@ -129240,8 +125765,7 @@ protos[2400] = function(upvalues, argument_1, argument_2)
             temp_12 = __loopKey_2400_2
             slot_11 = __loopKey_2400_2
             slot_12 = __loopValue_2400_2
-            ss_0 = (slot_12:IsA("NumberValue")) and (((slot_12.Name == "Weight")))
-            if ss_0 then
+            if ((slot_12:IsA("NumberValue")) and (((slot_12.Name == "Weight")))) then
               slot_12:Destroy()
             end
           end
@@ -129274,9 +125798,7 @@ protos[2401] = function(upvalues, argument_1)
   local v165_1, v170_1, v326_1, v394_1, v410_1, v417_1, v431_1, v437_1, v442_1
   local v716_1, v732_1, v749_1
   local vm_frame_random = math.random(0, 2147483646)
-  slot_0 = argument_1
-  ss_0 = slot_0 or (cell_get(upvalues[1])).Character
-  slot_0 = ss_0
+  slot_0 = (argument_1 or (cell_get(upvalues[1])).Character)
   if (not slot_0) then
     return nil
   end
@@ -129392,7 +125914,7 @@ end
 
 protos[2403] = function(upvalues, argument_1, argument_2)
   local exit_105, exit_636, slot_0, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, ss_0, ss_1, ss_2, ss_4, ss_5, temp_0, temp_1, temp_2, temp_3, temp_4, temp_5, temp_6, temp_7, temp_9, temp_10, temp_11, temp_12
-  local v197_1, v208_1, v213_1, v218_1, v305_1, v334_1, v344_1, v372_1, v378_1, v383_1, v441_ret1, v441_ret2
+  local v197_1, v208_1, v213_1, v305_1, v344_1, v372_1, v378_1, v383_1, v441_ret1, v441_ret2
   local v532_1, v537_1, v583_1, v589_1, v594_1, v6_1, v652_ret1, v652_ret2
   local v83_2
   local vm_frame_random = math.random(0, 2147483646)
@@ -129473,27 +125995,21 @@ protos[2403] = function(upvalues, argument_1, argument_2)
         exit_105 = 3
         break
       end
-      v334_1 = env.task
-      v344_1 = v334_1.wait
+      v344_1 = env.task.wait
       v344_1()
       v208_1 = temp_3
       v213_1 = temp_2
-      v218_1 = (v208_1 + v213_1)
-      temp_3 = v218_1
+      temp_3 = ((v208_1 + v213_1))
       continue
     end
-    v334_1 = env.task
-    v344_1 = v334_1.wait
+    v344_1 = env.task.wait
     v344_1()
     v208_1 = temp_3
     v213_1 = temp_2
-    v218_1 = (v208_1 + v213_1)
-    temp_3 = v218_1
+    temp_3 = ((v208_1 + v213_1))
   end
   if exit_105 == 1 then
-    ss_1 = slot_0 and ((slot_0:FindFirstChild("Animate")))
-    ss_1 = ss_1 or (nil)
-    return ss_1
+    return ((slot_0 and ((slot_0:FindFirstChild("Animate")))) or (nil))
   elseif exit_105 == 2 then
     return nil
   elseif exit_105 == 3 then
@@ -129502,8 +126018,8 @@ protos[2403] = function(upvalues, argument_1, argument_2)
 end
 
 protos[2404] = function(upvalues, argument_1, argument_2, argument_3)
-  local exit_105, slot_0, slot_1, slot_3, slot_4, slot_5, ss_0, ss_1, temp_0, temp_1, temp_2, temp_3, v197_1, v208_1, v213_1, v218_1, v251_1, v273_1
-  local v356_1, v366_1, v6_1, v83_2
+  local exit_105, slot_0, slot_1, slot_3, slot_4, slot_5, ss_0, ss_1, temp_0, temp_1, temp_2, temp_3, v197_1, v208_1, v213_1, v251_1, v273_1
+  local v366_1, v6_1, v83_2
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
@@ -129533,27 +126049,22 @@ protos[2404] = function(upvalues, argument_1, argument_2, argument_3)
     slot_4 = (slot_0:FindFirstChild("Animate"))
     if slot_4 then
       slot_5 = ((cell_get(upvalues[3]))(slot_4, slot_1))
-      ss_0 = slot_5 and ((env.next(slot_5)))
-      if ss_0 then
+      if (slot_5 and ((env.next(slot_5)))) then
         exit_105 = 4
         break
       end
-      v356_1 = env.task
-      v366_1 = v356_1.wait
+      v366_1 = env.task.wait
       v366_1()
       v208_1 = temp_3
       v213_1 = temp_2
-      v218_1 = (v208_1 + v213_1)
-      temp_3 = v218_1
+      temp_3 = ((v208_1 + v213_1))
       continue
     end
-    v356_1 = env.task
-    v366_1 = v356_1.wait
+    v366_1 = env.task.wait
     v366_1()
     v208_1 = temp_3
     v213_1 = temp_2
-    v218_1 = (v208_1 + v213_1)
-    temp_3 = v218_1
+    temp_3 = ((v208_1 + v213_1))
   end
   if exit_105 == 1 then
     return nil, nil
@@ -129568,10 +126079,10 @@ end
 
 protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4, argument_5, argument_6)
   local temps = {}
-  local exit_120, slot_0, slot_1, slot_2, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, ss_0, ss_1, ss_2, ss_3, v1012_1, v1022_1, v1043_1, v1058_1, v1063_1, v1068_1, v144_1, v149_1, v168_1, v173_1
-  local v197_1, v207_1, v21_1, v222_1, v227_1, v232_1, v252_1, v262_1, v263_1, v274_1, v279_1, v289_1, v290_1, v305_1, v319_1, v334_1, v339_1, v356_1, v361_1, v376_1, v381_1, v392_1, v402_1, v403_1, v414_1, v423_1, v433_1, v444_1, v461_1, v466_1
-  local v47_1, v476_1, v491_1, v496_1, v501_1, v511_1, v527_1, v537_1, v549_1, v554_1, v559_1, v564_1, v579_1, v592_1, v597_1, v612_1, v612_2, v612_3, v635_1, v645_1, v657_1, v662_1, v667_1, v672_ret1, v672_ret2, v687_1, v697_1, v703_1, v727_1, v737_1, v747_1, v757_1
-  local v763_1, v782_1, v787_1, v793_1, v813_1, v823_1, v824_1, v829_1, v845_1, v855_1, v866_1, v876_1, v886_1, v891_1, v917_1, v922_1, v927_1, v932_1, v947_1, v967_1, v977_1, v98_2, v988_1, v988_2, v988_3
+  local exit_120, slot_0, slot_1, slot_2, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, ss_0, ss_1, ss_2, ss_3, v1022_1, v1043_1, v1058_1, v1063_1, v1068_1, v144_1, v149_1, v168_1, v173_1
+  local v207_1, v21_1, v222_1, v227_1, v232_1, v262_1, v274_1, v289_1, v334_1, v339_1, v376_1, v402_1, v444_1
+  local v47_1, v496_1, v537_1, v549_1, v554_1, v559_1, v592_1, v597_1, v612_1, v612_2, v612_3, v645_1, v657_1, v662_1, v667_1, v672_ret1, v672_ret2, v687_1
+  local v782_1, v823_1, v824_1, v829_1, v855_1, v886_1, v891_1, v917_1, v922_1, v927_1, v98_2, v988_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
@@ -129595,60 +126106,39 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       v149_1 = temps[1]
       if ((v144_1 <= v149_1)) then
         slot_7 = nil
-        v197_1 = temps[3]
-        slot_7 = v197_1
+        slot_7 = temps[3]
         v207_1 = slot_5
         ss_0 = v207_1
         if v207_1 then
           v274_1 = slot_5
-          v279_1 = cell_get(upvalues[2])
-          v289_1 = v279_1.applyingToken
-          v290_1 = (v274_1 ~= v289_1)
-          ss_0 = v290_1
+          v289_1 = (cell_get(upvalues[2])).applyingToken
+          ss_0 = ((v274_1 ~= v289_1))
         end
-        v305_1 = ss_0
-        if v305_1 then
+        if ss_0 then
           exit_120 = 2
           break
         end
-        v252_1 = cell_get(upvalues[2])
-        v262_1 = v252_1.enabled
-        v263_1 = not v262_1
-        if v263_1 then
+        v262_1 = (cell_get(upvalues[2])).enabled
+        if (not v262_1) then
           exit_120 = 3
           break
         end
-        v319_1 = slot_0
-        slot_8 = v319_1
+        slot_8 = slot_0
         v334_1 = slot_8
         v339_1 = not v334_1
         ss_0 = v339_1
         if not v339_1 then
-          v392_1 = slot_8
-          v402_1 = v392_1.Parent
-          v403_1 = not v402_1
-          ss_0 = v403_1
+          v402_1 = slot_8.Parent
+          ss_0 = (not v402_1)
         end
-        v414_1 = ss_0
-        if v414_1 then
-          v423_1 = cell_get(upvalues[3])
-          v433_1 = v423_1.Character
-          slot_9 = v433_1
+        if ss_0 then
+          slot_9 = (cell_get(upvalues[3])).Character
           v444_1 = slot_9
-          ss_0 = v444_1
-          if v444_1 then
-            v461_1 = slot_9
-            v466_1 = v461_1.FindFirstChild
-            v476_1 = v466_1(v461_1, "Animate")
-            ss_0 = v476_1
-          end
-          v491_1 = ss_0
-          slot_8 = v491_1
+          ss_0 = v444_1 and ((slot_9:FindFirstChild("Animate")))
+          slot_8 = ss_0
           v496_1 = slot_8
-          v501_1 = not v496_1
-          if v501_1 then
-            v527_1 = env.task
-            v537_1 = v527_1.wait
+          if (not v496_1) then
+            v537_1 = env.task.wait
             v537_1()
             v222_1 = temps[3]
             v227_1 = temps[2]
@@ -129656,16 +126146,11 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
             temps[3] = v232_1
             continue
           end
-          v511_1 = slot_8
-          slot_0 = v511_1
-          v356_1 = cell_get(upvalues[4])
-          v361_1 = v356_1()
-          slot_10 = v361_1
+          slot_0 = slot_8
+          slot_10 = ((cell_get(upvalues[4]))())
           v376_1 = slot_10
-          v381_1 = not v376_1
-          if v381_1 then
-            v635_1 = env.task
-            v645_1 = v635_1.wait
+          if (not v376_1) then
+            v645_1 = env.task.wait
             v645_1()
             v222_1 = temps[3]
             v227_1 = temps[2]
@@ -129676,10 +126161,8 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
           v549_1 = cell_get(upvalues[5])
           v554_1 = slot_1
           v559_1 = slot_10
-          v564_1 = v549_1(v554_1, v559_1)
-          slot_11 = v564_1
-          v579_1 = new_table(0)
-          slot_12 = v579_1
+          slot_11 = (v549_1(v554_1, v559_1))
+          slot_12 = (new_table(0))
           v592_1 = env.ipairs
           v597_1 = slot_11
           ss_2 = v592_1
@@ -129698,53 +126181,32 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
             temps[7] = v672_ret1
             v687_1 = temps[7]
             temps[6] = v687_1
-            v697_1 = temps[7]
-            v703_1 = (v697_1 == nil)
-            if v703_1 then
+            if ((temps[7] == nil)) then
               break
             end
             slot_13 = nil
             slot_14 = nil
-            v727_1 = temps[7]
-            slot_13 = v727_1
-            v737_1 = temps[8]
-            slot_14 = v737_1
-            v747_1 = slot_14
-            v757_1 = v747_1.reason
-            v763_1 = (v757_1 ~= "category_missing")
-            if v763_1 then
-              v813_1 = env.table
-              v823_1 = v813_1.insert
+            slot_13 = temps[7]
+            slot_14 = temps[8]
+            if ((slot_14.reason ~= "category_missing")) then
+              v823_1 = env.table.insert
               v824_1 = slot_12
               v829_1 = slot_14
               v823_1(v824_1, v829_1)
             end
           end
           v782_1 = slot_12
-          v787_1 = #v782_1
-          v793_1 = (v787_1 == 0)
-          if v793_1 then
-            v866_1 = slot_6
-            v876_1 = (v866_1 + 1)
-            slot_6 = v876_1
+          if (((#v782_1) == 0)) then
+            slot_6 = ((slot_6 + 1))
             v886_1 = slot_6
             v891_1 = slot_4
             ss_0 = v886_1
-            ss_1 = v891_1
-            if not v891_1 then
-              v967_1 = cell_get(upvalues[1])
-              v977_1 = v967_1.VERIFY_STABLE_FRAMES
-              ss_1 = v977_1
-            end
-            v988_1 = ss_1
-            v988_2 = ss_0
-            v988_3 = (v988_2 >= v988_1)
-            if v988_3 then
+            v988_1 = (v891_1 or (cell_get(upvalues[1])).VERIFY_STABLE_FRAMES)
+            if ((ss_0 >= v988_1)) then
               exit_120 = 4
               break
             end
-            v845_1 = env.task
-            v855_1 = v845_1.wait
+            v855_1 = env.task.wait
             v855_1()
             v222_1 = temps[3]
             v227_1 = temps[2]
@@ -129756,12 +126218,9 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
           v917_1 = cell_get(upvalues[6])
           v922_1 = slot_8
           v927_1 = slot_2
-          v932_1 = v917_1(v922_1, v927_1)
-          slot_15 = v932_1
-          v947_1 = slot_15
-          if v947_1 then
-            v1012_1 = slot_15
-            slot_1 = v1012_1
+          slot_15 = (v917_1(v922_1, v927_1))
+          if slot_15 then
+            slot_1 = slot_15
             v1022_1 = cell_get(upvalues[2])
             temps[4] = v1022_1
             temps[5] = "currentlyAppliedMap"
@@ -129772,8 +126231,7 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
             v1068_1 = temps[6]
             v1058_1[v1063_1] = v1068_1
           end
-          v845_1 = env.task
-          v855_1 = v845_1.wait
+          v855_1 = env.task.wait
           v855_1()
           v222_1 = temps[3]
           v227_1 = temps[2]
@@ -129781,14 +126239,10 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
           temps[3] = v232_1
           continue
         end
-        v356_1 = cell_get(upvalues[4])
-        v361_1 = v356_1()
-        slot_10 = v361_1
+        slot_10 = ((cell_get(upvalues[4]))())
         v376_1 = slot_10
-        v381_1 = not v376_1
-        if v381_1 then
-          v635_1 = env.task
-          v645_1 = v635_1.wait
+        if (not v376_1) then
+          v645_1 = env.task.wait
           v645_1()
           v222_1 = temps[3]
           v227_1 = temps[2]
@@ -129799,10 +126253,8 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
         v549_1 = cell_get(upvalues[5])
         v554_1 = slot_1
         v559_1 = slot_10
-        v564_1 = v549_1(v554_1, v559_1)
-        slot_11 = v564_1
-        v579_1 = new_table(0)
-        slot_12 = v579_1
+        slot_11 = (v549_1(v554_1, v559_1))
+        slot_12 = (new_table(0))
         v592_1 = env.ipairs
         v597_1 = slot_11
         ss_2 = v592_1
@@ -129821,53 +126273,32 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
           temps[7] = v672_ret1
           v687_1 = temps[7]
           temps[6] = v687_1
-          v697_1 = temps[7]
-          v703_1 = (v697_1 == nil)
-          if v703_1 then
+          if ((temps[7] == nil)) then
             break
           end
           slot_13 = nil
           slot_14 = nil
-          v727_1 = temps[7]
-          slot_13 = v727_1
-          v737_1 = temps[8]
-          slot_14 = v737_1
-          v747_1 = slot_14
-          v757_1 = v747_1.reason
-          v763_1 = (v757_1 ~= "category_missing")
-          if v763_1 then
-            v813_1 = env.table
-            v823_1 = v813_1.insert
+          slot_13 = temps[7]
+          slot_14 = temps[8]
+          if ((slot_14.reason ~= "category_missing")) then
+            v823_1 = env.table.insert
             v824_1 = slot_12
             v829_1 = slot_14
             v823_1(v824_1, v829_1)
           end
         end
         v782_1 = slot_12
-        v787_1 = #v782_1
-        v793_1 = (v787_1 == 0)
-        if v793_1 then
-          v866_1 = slot_6
-          v876_1 = (v866_1 + 1)
-          slot_6 = v876_1
+        if (((#v782_1) == 0)) then
+          slot_6 = ((slot_6 + 1))
           v886_1 = slot_6
           v891_1 = slot_4
           ss_0 = v886_1
-          ss_1 = v891_1
-          if not v891_1 then
-            v967_1 = cell_get(upvalues[1])
-            v977_1 = v967_1.VERIFY_STABLE_FRAMES
-            ss_1 = v977_1
-          end
-          v988_1 = ss_1
-          v988_2 = ss_0
-          v988_3 = (v988_2 >= v988_1)
-          if v988_3 then
+          v988_1 = (v891_1 or (cell_get(upvalues[1])).VERIFY_STABLE_FRAMES)
+          if ((ss_0 >= v988_1)) then
             exit_120 = 4
             break
           end
-          v845_1 = env.task
-          v855_1 = v845_1.wait
+          v855_1 = env.task.wait
           v855_1()
           v222_1 = temps[3]
           v227_1 = temps[2]
@@ -129879,12 +126310,9 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
         v917_1 = cell_get(upvalues[6])
         v922_1 = slot_8
         v927_1 = slot_2
-        v932_1 = v917_1(v922_1, v927_1)
-        slot_15 = v932_1
-        v947_1 = slot_15
-        if v947_1 then
-          v1012_1 = slot_15
-          slot_1 = v1012_1
+        slot_15 = (v917_1(v922_1, v927_1))
+        if slot_15 then
+          slot_1 = slot_15
           v1022_1 = cell_get(upvalues[2])
           temps[4] = v1022_1
           temps[5] = "currentlyAppliedMap"
@@ -129895,8 +126323,7 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
           v1068_1 = temps[6]
           v1058_1[v1063_1] = v1068_1
         end
-        v845_1 = env.task
-        v855_1 = v845_1.wait
+        v855_1 = env.task.wait
         v855_1()
         v222_1 = temps[3]
         v227_1 = temps[2]
@@ -129911,60 +126338,39 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     v173_1 = temps[1]
     if ((v168_1 >= v173_1)) then
       slot_7 = nil
-      v197_1 = temps[3]
-      slot_7 = v197_1
+      slot_7 = temps[3]
       v207_1 = slot_5
       ss_0 = v207_1
       if v207_1 then
         v274_1 = slot_5
-        v279_1 = cell_get(upvalues[2])
-        v289_1 = v279_1.applyingToken
-        v290_1 = (v274_1 ~= v289_1)
-        ss_0 = v290_1
+        v289_1 = (cell_get(upvalues[2])).applyingToken
+        ss_0 = ((v274_1 ~= v289_1))
       end
-      v305_1 = ss_0
-      if v305_1 then
+      if ss_0 then
         exit_120 = 2
         break
       end
-      v252_1 = cell_get(upvalues[2])
-      v262_1 = v252_1.enabled
-      v263_1 = not v262_1
-      if v263_1 then
+      v262_1 = (cell_get(upvalues[2])).enabled
+      if (not v262_1) then
         exit_120 = 3
         break
       end
-      v319_1 = slot_0
-      slot_8 = v319_1
+      slot_8 = slot_0
       v334_1 = slot_8
       v339_1 = not v334_1
       ss_0 = v339_1
       if not v339_1 then
-        v392_1 = slot_8
-        v402_1 = v392_1.Parent
-        v403_1 = not v402_1
-        ss_0 = v403_1
+        v402_1 = slot_8.Parent
+        ss_0 = (not v402_1)
       end
-      v414_1 = ss_0
-      if v414_1 then
-        v423_1 = cell_get(upvalues[3])
-        v433_1 = v423_1.Character
-        slot_9 = v433_1
+      if ss_0 then
+        slot_9 = (cell_get(upvalues[3])).Character
         v444_1 = slot_9
-        ss_0 = v444_1
-        if v444_1 then
-          v461_1 = slot_9
-          v466_1 = v461_1.FindFirstChild
-          v476_1 = v466_1(v461_1, "Animate")
-          ss_0 = v476_1
-        end
-        v491_1 = ss_0
-        slot_8 = v491_1
+        ss_0 = v444_1 and ((slot_9:FindFirstChild("Animate")))
+        slot_8 = ss_0
         v496_1 = slot_8
-        v501_1 = not v496_1
-        if v501_1 then
-          v527_1 = env.task
-          v537_1 = v527_1.wait
+        if (not v496_1) then
+          v537_1 = env.task.wait
           v537_1()
           v222_1 = temps[3]
           v227_1 = temps[2]
@@ -129972,16 +126378,11 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
           temps[3] = v232_1
           continue
         end
-        v511_1 = slot_8
-        slot_0 = v511_1
-        v356_1 = cell_get(upvalues[4])
-        v361_1 = v356_1()
-        slot_10 = v361_1
+        slot_0 = slot_8
+        slot_10 = ((cell_get(upvalues[4]))())
         v376_1 = slot_10
-        v381_1 = not v376_1
-        if v381_1 then
-          v635_1 = env.task
-          v645_1 = v635_1.wait
+        if (not v376_1) then
+          v645_1 = env.task.wait
           v645_1()
           v222_1 = temps[3]
           v227_1 = temps[2]
@@ -129992,10 +126393,8 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
         v549_1 = cell_get(upvalues[5])
         v554_1 = slot_1
         v559_1 = slot_10
-        v564_1 = v549_1(v554_1, v559_1)
-        slot_11 = v564_1
-        v579_1 = new_table(0)
-        slot_12 = v579_1
+        slot_11 = (v549_1(v554_1, v559_1))
+        slot_12 = (new_table(0))
         v592_1 = env.ipairs
         v597_1 = slot_11
         ss_2 = v592_1
@@ -130014,53 +126413,32 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
           temps[7] = v672_ret1
           v687_1 = temps[7]
           temps[6] = v687_1
-          v697_1 = temps[7]
-          v703_1 = (v697_1 == nil)
-          if v703_1 then
+          if ((temps[7] == nil)) then
             break
           end
           slot_13 = nil
           slot_14 = nil
-          v727_1 = temps[7]
-          slot_13 = v727_1
-          v737_1 = temps[8]
-          slot_14 = v737_1
-          v747_1 = slot_14
-          v757_1 = v747_1.reason
-          v763_1 = (v757_1 ~= "category_missing")
-          if v763_1 then
-            v813_1 = env.table
-            v823_1 = v813_1.insert
+          slot_13 = temps[7]
+          slot_14 = temps[8]
+          if ((slot_14.reason ~= "category_missing")) then
+            v823_1 = env.table.insert
             v824_1 = slot_12
             v829_1 = slot_14
             v823_1(v824_1, v829_1)
           end
         end
         v782_1 = slot_12
-        v787_1 = #v782_1
-        v793_1 = (v787_1 == 0)
-        if v793_1 then
-          v866_1 = slot_6
-          v876_1 = (v866_1 + 1)
-          slot_6 = v876_1
+        if (((#v782_1) == 0)) then
+          slot_6 = ((slot_6 + 1))
           v886_1 = slot_6
           v891_1 = slot_4
           ss_0 = v886_1
-          ss_1 = v891_1
-          if not v891_1 then
-            v967_1 = cell_get(upvalues[1])
-            v977_1 = v967_1.VERIFY_STABLE_FRAMES
-            ss_1 = v977_1
-          end
-          v988_1 = ss_1
-          v988_2 = ss_0
-          v988_3 = (v988_2 >= v988_1)
-          if v988_3 then
+          v988_1 = (v891_1 or (cell_get(upvalues[1])).VERIFY_STABLE_FRAMES)
+          if ((ss_0 >= v988_1)) then
             exit_120 = 4
             break
           end
-          v845_1 = env.task
-          v855_1 = v845_1.wait
+          v855_1 = env.task.wait
           v855_1()
           v222_1 = temps[3]
           v227_1 = temps[2]
@@ -130072,12 +126450,9 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
         v917_1 = cell_get(upvalues[6])
         v922_1 = slot_8
         v927_1 = slot_2
-        v932_1 = v917_1(v922_1, v927_1)
-        slot_15 = v932_1
-        v947_1 = slot_15
-        if v947_1 then
-          v1012_1 = slot_15
-          slot_1 = v1012_1
+        slot_15 = (v917_1(v922_1, v927_1))
+        if slot_15 then
+          slot_1 = slot_15
           v1022_1 = cell_get(upvalues[2])
           temps[4] = v1022_1
           temps[5] = "currentlyAppliedMap"
@@ -130088,8 +126463,7 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
           v1068_1 = temps[6]
           v1058_1[v1063_1] = v1068_1
         end
-        v845_1 = env.task
-        v855_1 = v845_1.wait
+        v855_1 = env.task.wait
         v855_1()
         v222_1 = temps[3]
         v227_1 = temps[2]
@@ -130097,14 +126471,10 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
         temps[3] = v232_1
         continue
       end
-      v356_1 = cell_get(upvalues[4])
-      v361_1 = v356_1()
-      slot_10 = v361_1
+      slot_10 = ((cell_get(upvalues[4]))())
       v376_1 = slot_10
-      v381_1 = not v376_1
-      if v381_1 then
-        v635_1 = env.task
-        v645_1 = v635_1.wait
+      if (not v376_1) then
+        v645_1 = env.task.wait
         v645_1()
         v222_1 = temps[3]
         v227_1 = temps[2]
@@ -130115,10 +126485,8 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       v549_1 = cell_get(upvalues[5])
       v554_1 = slot_1
       v559_1 = slot_10
-      v564_1 = v549_1(v554_1, v559_1)
-      slot_11 = v564_1
-      v579_1 = new_table(0)
-      slot_12 = v579_1
+      slot_11 = (v549_1(v554_1, v559_1))
+      slot_12 = (new_table(0))
       v592_1 = env.ipairs
       v597_1 = slot_11
       ss_2 = v592_1
@@ -130137,53 +126505,32 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
         temps[7] = v672_ret1
         v687_1 = temps[7]
         temps[6] = v687_1
-        v697_1 = temps[7]
-        v703_1 = (v697_1 == nil)
-        if v703_1 then
+        if ((temps[7] == nil)) then
           break
         end
         slot_13 = nil
         slot_14 = nil
-        v727_1 = temps[7]
-        slot_13 = v727_1
-        v737_1 = temps[8]
-        slot_14 = v737_1
-        v747_1 = slot_14
-        v757_1 = v747_1.reason
-        v763_1 = (v757_1 ~= "category_missing")
-        if v763_1 then
-          v813_1 = env.table
-          v823_1 = v813_1.insert
+        slot_13 = temps[7]
+        slot_14 = temps[8]
+        if ((slot_14.reason ~= "category_missing")) then
+          v823_1 = env.table.insert
           v824_1 = slot_12
           v829_1 = slot_14
           v823_1(v824_1, v829_1)
         end
       end
       v782_1 = slot_12
-      v787_1 = #v782_1
-      v793_1 = (v787_1 == 0)
-      if v793_1 then
-        v866_1 = slot_6
-        v876_1 = (v866_1 + 1)
-        slot_6 = v876_1
+      if (((#v782_1) == 0)) then
+        slot_6 = ((slot_6 + 1))
         v886_1 = slot_6
         v891_1 = slot_4
         ss_0 = v886_1
-        ss_1 = v891_1
-        if not v891_1 then
-          v967_1 = cell_get(upvalues[1])
-          v977_1 = v967_1.VERIFY_STABLE_FRAMES
-          ss_1 = v977_1
-        end
-        v988_1 = ss_1
-        v988_2 = ss_0
-        v988_3 = (v988_2 >= v988_1)
-        if v988_3 then
+        v988_1 = (v891_1 or (cell_get(upvalues[1])).VERIFY_STABLE_FRAMES)
+        if ((ss_0 >= v988_1)) then
           exit_120 = 4
           break
         end
-        v845_1 = env.task
-        v855_1 = v845_1.wait
+        v855_1 = env.task.wait
         v855_1()
         v222_1 = temps[3]
         v227_1 = temps[2]
@@ -130195,12 +126542,9 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       v917_1 = cell_get(upvalues[6])
       v922_1 = slot_8
       v927_1 = slot_2
-      v932_1 = v917_1(v922_1, v927_1)
-      slot_15 = v932_1
-      v947_1 = slot_15
-      if v947_1 then
-        v1012_1 = slot_15
-        slot_1 = v1012_1
+      slot_15 = (v917_1(v922_1, v927_1))
+      if slot_15 then
+        slot_1 = slot_15
         v1022_1 = cell_get(upvalues[2])
         temps[4] = v1022_1
         temps[5] = "currentlyAppliedMap"
@@ -130211,8 +126555,7 @@ protos[2405] = function(upvalues, argument_1, argument_2, argument_3, argument_4
         v1068_1 = temps[6]
         v1058_1[v1063_1] = v1068_1
       end
-      v845_1 = env.task
-      v855_1 = v845_1.wait
+      v855_1 = env.task.wait
       v855_1()
       v222_1 = temps[3]
       v227_1 = temps[2]
@@ -130330,8 +126673,7 @@ protos[2408] = function(upvalues)
             v599_1(v600_1)
           end
           v576_1 = (cell_get(upvalues[4])).isLoadingFe
-          ss_0 = (not v576_1) and ((cell_get(upvalues[5])))
-          if ss_0 then
+          if ((not v576_1) and ((cell_get(upvalues[5])))) then
             v646_1 = env.pcall
             v651_1 = cell_get(upvalues[5])
             v646_1(v651_1)
@@ -130361,10 +126703,10 @@ end
 
 protos[2410] = function(upvalues, argument_1, argument_2)
   local regs = {}
-  local v1114_1, v1124_1, v1549_1, v1559_1, v1575_1, v1580_1, v1585_1, v1596_1, v1601_1, v1611_1, v1626_1, v1631_1, v1641_1, v1677_1, v1682_1, v1687_1, v1699_1, v1704_1, v1714_1, v1729_1
-  local v1734_1, v1740_1, v1754_1, v1790_1, v1795_1, v1800_1, v1812_1, v1817_1, v1827_1, v1828_1, v1833_1, v1848_1, v1853_1, v1859_1, v1873_1, v1909_1, v1914_1, v1919_1, v1930_1, v1940_1
-  local v1946_1, v1956_1, v1963_1, v1969_1, v1979_1, v1986_1, v2002_1, v2007_1, v2012_1, v2019_1, v2029_1, v2030_1, v2040_1, v2041_1, v2051_1, v2052_1, v2057_1, v2067_1, v2103_1, v2108_1
-  local v2113_1, v2125_1, v2130_1, v2141_1, v2146_1, v2163_1, v2168_1, v2173_1, v2193_1, v2203_1, v2208_1, v2213_1, v2225_1, v2235_1, v2236_1, v2246_1, v2247_1, v2257_1, v2268_1, v2278_1
+  local v1580_1, v1611_1, v1626_1, v1677_1, v1682_1, v1687_1, v1699_1, v1704_1, v1714_1, v1729_1
+  local v1790_1, v1795_1, v1800_1, v1812_1, v1827_1, v1828_1, v1833_1, v1848_1, v1909_1, v1914_1, v1919_1
+  local v1963_1, v1979_1, v1986_1, v2002_1, v2007_1, v2012_1, v2029_1, v2040_1, v2051_1, v2052_1, v2103_1, v2108_1
+  local v2113_1, v2125_1, v2130_1, v2146_1, v2163_1, v2168_1, v2173_1, v2193_1, v2203_1, v2208_1, v2213_1, v2235_1, v2246_1, v2257_1
   local v2284_1, v2332_1
   local exit_756, exit_1325, exit_2478, slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_10, slot_11, slot_12, slot_13, slot_14, slot_16, slot_17, slot_18, slot_19, slot_20, slot_21, slot_22, slot_23, slot_24, slot_25, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5
   local temp_0, temp_1, temp_2, temp_3, temp_4, temp_5, temp_6, temp_7
@@ -130542,22 +126884,12 @@ protos[2410] = function(upvalues, argument_1, argument_2)
           temp_2 = false
           temp_0.isApplying = temp_2
         else
-          v1114_1 = slot_1
-          v1124_1 = v1114_1.character
-          ss_0 = v1124_1
-          if not v1124_1 then
-            v1549_1 = cell_get(upvalues[2])
-            v1559_1 = v1549_1.Character
-            ss_0 = v1559_1
-          end
+          ss_0 = slot_1.character or (cell_get(upvalues[2])).Character
           slot_16 = nil
-          v1575_1 = ss_0
-          slot_16 = v1575_1
+          slot_16 = ss_0
           v1580_1 = slot_16
-          v1585_1 = not v1580_1
-          if v1585_1 then
-            v1641_1 = cell_get(upvalues[1])
-            temp_0 = v1641_1
+          if (not v1580_1) then
+            temp_0 = (cell_get(upvalues[1]))
             temp_1 = "isApplying"
             temp_2 = false
             v1677_1 = temp_0
@@ -130565,16 +126897,12 @@ protos[2410] = function(upvalues, argument_1, argument_2)
             v1687_1 = temp_2
             v1677_1[v1682_1] = v1687_1
           else
-            v1596_1 = slot_16
-            v1601_1 = v1596_1.FindFirstChildOfClass
-            v1611_1 = v1601_1(v1596_1, "Humanoid")
+            v1611_1 = slot_16:FindFirstChildOfClass("Humanoid")
             slot_17 = new_cell()
             slot_17 = cell_set_or_create(slot_17, v1611_1)
             v1626_1 = cell_get(slot_17)
-            v1631_1 = not v1626_1
-            if v1631_1 then
-              v1754_1 = cell_get(upvalues[1])
-              temp_0 = v1754_1
+            if (not v1626_1) then
+              temp_0 = (cell_get(upvalues[1]))
               temp_1 = "isApplying"
               temp_2 = false
               v1790_1 = temp_0
@@ -130588,11 +126916,8 @@ protos[2410] = function(upvalues, argument_1, argument_2)
               slot_18 = nil
               slot_18 = v1714_1
               v1729_1 = slot_18
-              v1734_1 = #v1729_1
-              v1740_1 = (v1734_1 == 0)
-              if v1740_1 then
-                v1873_1 = cell_get(upvalues[1])
-                temp_0 = v1873_1
+              if (((#v1729_1) == 0)) then
+                temp_0 = (cell_get(upvalues[1]))
                 temp_1 = "isApplying"
                 temp_2 = false
                 v1909_1 = temp_0
@@ -130601,18 +126926,14 @@ protos[2410] = function(upvalues, argument_1, argument_2)
                 v1909_1[v1914_1] = v1919_1
               else
                 v1812_1 = cell_get(upvalues[7])
-                v1817_1 = slot_0
-                v1827_1 = v1817_1.id
+                v1827_1 = slot_0.id
                 v1828_1 = slot_18
                 v1833_1 = v1812_1(v1827_1, v1828_1)
                 slot_19 = nil
                 slot_19 = v1833_1
                 v1848_1 = slot_19
-                v1853_1 = #v1848_1
-                v1859_1 = (v1853_1 == 0)
-                if v1859_1 then
-                  v2067_1 = cell_get(upvalues[1])
-                  temp_0 = v2067_1
+                if (((#v1848_1) == 0)) then
+                  temp_0 = (cell_get(upvalues[1]))
                   temp_1 = "isApplying"
                   temp_2 = false
                   v2103_1 = temp_0
@@ -130620,15 +126941,10 @@ protos[2410] = function(upvalues, argument_1, argument_2)
                   v2113_1 = temp_2
                   v2103_1[v2108_1] = v2113_1
                 else
-                  v1930_1 = cell_get(upvalues[1])
-                  v1940_1 = v1930_1.appliedBundles
-                  temp_0 = v1940_1
-                  v1946_1 = slot_0
-                  v1956_1 = v1946_1.id
-                  temp_1 = v1956_1
+                  temp_0 = (cell_get(upvalues[1])).appliedBundles
+                  temp_1 = slot_0.id
                   v1963_1 = new_table(0)
-                  v1969_1 = slot_0
-                  v1979_1 = v1969_1.name
+                  v1979_1 = slot_0.name
                   v1963_1.name = v1979_1
                   v1986_1 = slot_19
                   v1963_1.mappings = v1986_1
@@ -130637,28 +126953,20 @@ protos[2410] = function(upvalues, argument_1, argument_2)
                   v2007_1 = temp_1
                   v2012_1 = temp_2
                   v2002_1[v2007_1] = v2012_1
-                  v2019_1 = env.table
-                  v2029_1 = v2019_1.find
-                  v2030_1 = cell_get(upvalues[1])
-                  v2040_1 = v2030_1.appliedOrder
-                  v2041_1 = slot_0
-                  v2051_1 = v2041_1.id
+                  v2029_1 = env.table.find
+                  v2040_1 = (cell_get(upvalues[1])).appliedOrder
+                  v2051_1 = slot_0.id
                   v2052_1 = v2029_1(v2040_1, v2051_1)
-                  v2057_1 = not v2052_1
-                  if v2057_1 then
-                    v2225_1 = env.table
-                    v2235_1 = v2225_1.insert
-                    v2236_1 = cell_get(upvalues[1])
-                    v2246_1 = v2236_1.appliedOrder
-                    v2247_1 = slot_0
-                    v2257_1 = v2247_1.id
+                  if (not v2052_1) then
+                    v2235_1 = env.table.insert
+                    v2246_1 = (cell_get(upvalues[1])).appliedOrder
+                    v2257_1 = slot_0.id
                     v2235_1(v2246_1, v2257_1)
                   end
                   v2125_1 = env.pcall
                   v2130_1 = closure(2411, {capture_17()})
                   v2125_1(v2130_1)
-                  v2141_1 = cell_get(upvalues[8])
-                  v2146_1 = v2141_1()
+                  v2146_1 = (cell_get(upvalues[8]))()
                   slot_20 = new_cell()
                   slot_20 = cell_set_or_create(slot_20, v2146_1)
                   v2163_1 = cell_get(upvalues[9])
@@ -130762,9 +127070,7 @@ protos[2410] = function(upvalues, argument_1, argument_2)
                     regs.v2650_1 = temp_2
                     regs.v2640_1[regs.v2645_1] = regs.v2650_1
                   else
-                    v2268_1 = cell_get(slot_17)
-                    v2278_1 = v2268_1.MoveDirection
-                    v2284_1 = v2278_1.Magnitude
+                    v2284_1 = (cell_get(slot_17)).MoveDirection.Magnitude
                     regs.v2290_1 = (v2284_1 == 0)
                     if regs.v2290_1 then
                       regs.v2932_1 = cell_get(slot_22)
@@ -130868,22 +127174,12 @@ protos[2410] = function(upvalues, argument_1, argument_2)
           end
         end
       else
-        v1114_1 = slot_1
-        v1124_1 = v1114_1.character
-        ss_0 = v1124_1
-        if not v1124_1 then
-          v1549_1 = cell_get(upvalues[2])
-          v1559_1 = v1549_1.Character
-          ss_0 = v1559_1
-        end
+        ss_0 = slot_1.character or (cell_get(upvalues[2])).Character
         slot_16 = nil
-        v1575_1 = ss_0
-        slot_16 = v1575_1
+        slot_16 = ss_0
         v1580_1 = slot_16
-        v1585_1 = not v1580_1
-        if v1585_1 then
-          v1641_1 = cell_get(upvalues[1])
-          temp_0 = v1641_1
+        if (not v1580_1) then
+          temp_0 = (cell_get(upvalues[1]))
           temp_1 = "isApplying"
           temp_2 = false
           v1677_1 = temp_0
@@ -130891,16 +127187,12 @@ protos[2410] = function(upvalues, argument_1, argument_2)
           v1687_1 = temp_2
           v1677_1[v1682_1] = v1687_1
         else
-          v1596_1 = slot_16
-          v1601_1 = v1596_1.FindFirstChildOfClass
-          v1611_1 = v1601_1(v1596_1, "Humanoid")
+          v1611_1 = slot_16:FindFirstChildOfClass("Humanoid")
           slot_17 = new_cell()
           slot_17 = cell_set_or_create(slot_17, v1611_1)
           v1626_1 = cell_get(slot_17)
-          v1631_1 = not v1626_1
-          if v1631_1 then
-            v1754_1 = cell_get(upvalues[1])
-            temp_0 = v1754_1
+          if (not v1626_1) then
+            temp_0 = (cell_get(upvalues[1]))
             temp_1 = "isApplying"
             temp_2 = false
             v1790_1 = temp_0
@@ -130914,11 +127206,8 @@ protos[2410] = function(upvalues, argument_1, argument_2)
             slot_18 = nil
             slot_18 = v1714_1
             v1729_1 = slot_18
-            v1734_1 = #v1729_1
-            v1740_1 = (v1734_1 == 0)
-            if v1740_1 then
-              v1873_1 = cell_get(upvalues[1])
-              temp_0 = v1873_1
+            if (((#v1729_1) == 0)) then
+              temp_0 = (cell_get(upvalues[1]))
               temp_1 = "isApplying"
               temp_2 = false
               v1909_1 = temp_0
@@ -130927,18 +127216,14 @@ protos[2410] = function(upvalues, argument_1, argument_2)
               v1909_1[v1914_1] = v1919_1
             else
               v1812_1 = cell_get(upvalues[7])
-              v1817_1 = slot_0
-              v1827_1 = v1817_1.id
+              v1827_1 = slot_0.id
               v1828_1 = slot_18
               v1833_1 = v1812_1(v1827_1, v1828_1)
               slot_19 = nil
               slot_19 = v1833_1
               v1848_1 = slot_19
-              v1853_1 = #v1848_1
-              v1859_1 = (v1853_1 == 0)
-              if v1859_1 then
-                v2067_1 = cell_get(upvalues[1])
-                temp_0 = v2067_1
+              if (((#v1848_1) == 0)) then
+                temp_0 = (cell_get(upvalues[1]))
                 temp_1 = "isApplying"
                 temp_2 = false
                 v2103_1 = temp_0
@@ -130946,15 +127231,10 @@ protos[2410] = function(upvalues, argument_1, argument_2)
                 v2113_1 = temp_2
                 v2103_1[v2108_1] = v2113_1
               else
-                v1930_1 = cell_get(upvalues[1])
-                v1940_1 = v1930_1.appliedBundles
-                temp_0 = v1940_1
-                v1946_1 = slot_0
-                v1956_1 = v1946_1.id
-                temp_1 = v1956_1
+                temp_0 = (cell_get(upvalues[1])).appliedBundles
+                temp_1 = slot_0.id
                 v1963_1 = new_table(0)
-                v1969_1 = slot_0
-                v1979_1 = v1969_1.name
+                v1979_1 = slot_0.name
                 v1963_1.name = v1979_1
                 v1986_1 = slot_19
                 v1963_1.mappings = v1986_1
@@ -130963,28 +127243,20 @@ protos[2410] = function(upvalues, argument_1, argument_2)
                 v2007_1 = temp_1
                 v2012_1 = temp_2
                 v2002_1[v2007_1] = v2012_1
-                v2019_1 = env.table
-                v2029_1 = v2019_1.find
-                v2030_1 = cell_get(upvalues[1])
-                v2040_1 = v2030_1.appliedOrder
-                v2041_1 = slot_0
-                v2051_1 = v2041_1.id
+                v2029_1 = env.table.find
+                v2040_1 = (cell_get(upvalues[1])).appliedOrder
+                v2051_1 = slot_0.id
                 v2052_1 = v2029_1(v2040_1, v2051_1)
-                v2057_1 = not v2052_1
-                if v2057_1 then
-                  v2225_1 = env.table
-                  v2235_1 = v2225_1.insert
-                  v2236_1 = cell_get(upvalues[1])
-                  v2246_1 = v2236_1.appliedOrder
-                  v2247_1 = slot_0
-                  v2257_1 = v2247_1.id
+                if (not v2052_1) then
+                  v2235_1 = env.table.insert
+                  v2246_1 = (cell_get(upvalues[1])).appliedOrder
+                  v2257_1 = slot_0.id
                   v2235_1(v2246_1, v2257_1)
                 end
                 v2125_1 = env.pcall
                 v2130_1 = closure(2411, {capture_17()})
                 v2125_1(v2130_1)
-                v2141_1 = cell_get(upvalues[8])
-                v2146_1 = v2141_1()
+                v2146_1 = (cell_get(upvalues[8]))()
                 slot_20 = new_cell()
                 slot_20 = cell_set_or_create(slot_20, v2146_1)
                 v2163_1 = cell_get(upvalues[9])
@@ -131088,9 +127360,7 @@ protos[2410] = function(upvalues, argument_1, argument_2)
                   regs.v2650_1 = temp_2
                   regs.v2640_1[regs.v2645_1] = regs.v2650_1
                 else
-                  v2268_1 = cell_get(slot_17)
-                  v2278_1 = v2268_1.MoveDirection
-                  v2284_1 = v2278_1.Magnitude
+                  v2284_1 = (cell_get(slot_17)).MoveDirection.Magnitude
                   regs.v2290_1 = (v2284_1 == 0)
                   if regs.v2290_1 then
                     regs.v2932_1 = cell_get(slot_22)
@@ -131194,22 +127464,12 @@ protos[2410] = function(upvalues, argument_1, argument_2)
         end
       end
     else
-      v1114_1 = slot_1
-      v1124_1 = v1114_1.character
-      ss_0 = v1124_1
-      if not v1124_1 then
-        v1549_1 = cell_get(upvalues[2])
-        v1559_1 = v1549_1.Character
-        ss_0 = v1559_1
-      end
+      ss_0 = slot_1.character or (cell_get(upvalues[2])).Character
       slot_16 = nil
-      v1575_1 = ss_0
-      slot_16 = v1575_1
+      slot_16 = ss_0
       v1580_1 = slot_16
-      v1585_1 = not v1580_1
-      if v1585_1 then
-        v1641_1 = cell_get(upvalues[1])
-        temp_0 = v1641_1
+      if (not v1580_1) then
+        temp_0 = (cell_get(upvalues[1]))
         temp_1 = "isApplying"
         temp_2 = false
         v1677_1 = temp_0
@@ -131217,16 +127477,12 @@ protos[2410] = function(upvalues, argument_1, argument_2)
         v1687_1 = temp_2
         v1677_1[v1682_1] = v1687_1
       else
-        v1596_1 = slot_16
-        v1601_1 = v1596_1.FindFirstChildOfClass
-        v1611_1 = v1601_1(v1596_1, "Humanoid")
+        v1611_1 = slot_16:FindFirstChildOfClass("Humanoid")
         slot_17 = new_cell()
         slot_17 = cell_set_or_create(slot_17, v1611_1)
         v1626_1 = cell_get(slot_17)
-        v1631_1 = not v1626_1
-        if v1631_1 then
-          v1754_1 = cell_get(upvalues[1])
-          temp_0 = v1754_1
+        if (not v1626_1) then
+          temp_0 = (cell_get(upvalues[1]))
           temp_1 = "isApplying"
           temp_2 = false
           v1790_1 = temp_0
@@ -131240,11 +127496,8 @@ protos[2410] = function(upvalues, argument_1, argument_2)
           slot_18 = nil
           slot_18 = v1714_1
           v1729_1 = slot_18
-          v1734_1 = #v1729_1
-          v1740_1 = (v1734_1 == 0)
-          if v1740_1 then
-            v1873_1 = cell_get(upvalues[1])
-            temp_0 = v1873_1
+          if (((#v1729_1) == 0)) then
+            temp_0 = (cell_get(upvalues[1]))
             temp_1 = "isApplying"
             temp_2 = false
             v1909_1 = temp_0
@@ -131253,18 +127506,14 @@ protos[2410] = function(upvalues, argument_1, argument_2)
             v1909_1[v1914_1] = v1919_1
           else
             v1812_1 = cell_get(upvalues[7])
-            v1817_1 = slot_0
-            v1827_1 = v1817_1.id
+            v1827_1 = slot_0.id
             v1828_1 = slot_18
             v1833_1 = v1812_1(v1827_1, v1828_1)
             slot_19 = nil
             slot_19 = v1833_1
             v1848_1 = slot_19
-            v1853_1 = #v1848_1
-            v1859_1 = (v1853_1 == 0)
-            if v1859_1 then
-              v2067_1 = cell_get(upvalues[1])
-              temp_0 = v2067_1
+            if (((#v1848_1) == 0)) then
+              temp_0 = (cell_get(upvalues[1]))
               temp_1 = "isApplying"
               temp_2 = false
               v2103_1 = temp_0
@@ -131272,15 +127521,10 @@ protos[2410] = function(upvalues, argument_1, argument_2)
               v2113_1 = temp_2
               v2103_1[v2108_1] = v2113_1
             else
-              v1930_1 = cell_get(upvalues[1])
-              v1940_1 = v1930_1.appliedBundles
-              temp_0 = v1940_1
-              v1946_1 = slot_0
-              v1956_1 = v1946_1.id
-              temp_1 = v1956_1
+              temp_0 = (cell_get(upvalues[1])).appliedBundles
+              temp_1 = slot_0.id
               v1963_1 = new_table(0)
-              v1969_1 = slot_0
-              v1979_1 = v1969_1.name
+              v1979_1 = slot_0.name
               v1963_1.name = v1979_1
               v1986_1 = slot_19
               v1963_1.mappings = v1986_1
@@ -131289,28 +127533,20 @@ protos[2410] = function(upvalues, argument_1, argument_2)
               v2007_1 = temp_1
               v2012_1 = temp_2
               v2002_1[v2007_1] = v2012_1
-              v2019_1 = env.table
-              v2029_1 = v2019_1.find
-              v2030_1 = cell_get(upvalues[1])
-              v2040_1 = v2030_1.appliedOrder
-              v2041_1 = slot_0
-              v2051_1 = v2041_1.id
+              v2029_1 = env.table.find
+              v2040_1 = (cell_get(upvalues[1])).appliedOrder
+              v2051_1 = slot_0.id
               v2052_1 = v2029_1(v2040_1, v2051_1)
-              v2057_1 = not v2052_1
-              if v2057_1 then
-                v2225_1 = env.table
-                v2235_1 = v2225_1.insert
-                v2236_1 = cell_get(upvalues[1])
-                v2246_1 = v2236_1.appliedOrder
-                v2247_1 = slot_0
-                v2257_1 = v2247_1.id
+              if (not v2052_1) then
+                v2235_1 = env.table.insert
+                v2246_1 = (cell_get(upvalues[1])).appliedOrder
+                v2257_1 = slot_0.id
                 v2235_1(v2246_1, v2257_1)
               end
               v2125_1 = env.pcall
               v2130_1 = closure(2411, {capture_17()})
               v2125_1(v2130_1)
-              v2141_1 = cell_get(upvalues[8])
-              v2146_1 = v2141_1()
+              v2146_1 = (cell_get(upvalues[8]))()
               slot_20 = new_cell()
               slot_20 = cell_set_or_create(slot_20, v2146_1)
               v2163_1 = cell_get(upvalues[9])
@@ -131414,9 +127650,7 @@ protos[2410] = function(upvalues, argument_1, argument_2)
                 regs.v2650_1 = temp_2
                 regs.v2640_1[regs.v2645_1] = regs.v2650_1
               else
-                v2268_1 = cell_get(slot_17)
-                v2278_1 = v2268_1.MoveDirection
-                v2284_1 = v2278_1.Magnitude
+                v2284_1 = (cell_get(slot_17)).MoveDirection.Magnitude
                 regs.v2290_1 = (v2284_1 == 0)
                 if regs.v2290_1 then
                   regs.v2932_1 = cell_get(slot_22)
@@ -131580,8 +127814,7 @@ protos[2413] = function(upvalues)
   slot_1 = cell_set_or_create(slot_1, v153_1)
   slot_2 = (slot_0:FindFirstChild("Animate"))
   v199_1 = cell_get(slot_1)
-  ss_0 = (not v199_1) or ((not slot_2))
-  if ss_0 then
+  if ((not v199_1) or ((not slot_2))) then
     return false
   end
   v227_1 = env.pcall
@@ -131942,12 +128175,10 @@ protos[2420] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     ss_2 = "Frame"
     ss_3 = v844_1
     ss_4 = "BackgroundColor3"
-    ss_5 = slot_9 and (cell_get(upvalues[3])).colors.accent
-    ss_5 = ss_5 or (cell_get(upvalues[4])).Off
+    ss_5 = (slot_9 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[4])).Off
     ss_3[ss_4] = ss_5
     ss_4 = "BackgroundTransparency"
-    ss_5 = slot_9 and (0.05)
-    ss_5 = ss_5 or (0.4)
+    ss_5 = (slot_9 and (0.05)) or (0.4)
     ss_3[ss_4] = ss_5
     ss_3.BorderSizePixel = 0
     ss_3.ZIndex = 25003
@@ -131969,12 +128200,10 @@ protos[2420] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     ss_2 = "UIStroke"
     ss_3 = v1238_1
     ss_4 = "Color"
-    ss_5 = slot_9 and (cell_get(upvalues[3])).colors.accent
-    ss_5 = ss_5 or (cell_get(upvalues[3])).colors.stroke
+    ss_5 = (slot_9 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.stroke
     ss_3[ss_4] = ss_5
     ss_4 = "Transparency"
-    ss_5 = slot_9 and (0.1)
-    ss_5 = ss_5 or (0.5)
+    ss_5 = (slot_9 and (0.1)) or (0.5)
     ss_3[ss_4] = ss_5
     ss_3.Thickness = 1.5
     ss_0 = ss_1(ss_2, ss_3)
@@ -132023,8 +128252,7 @@ protos[2420] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     ss_2 = "TextLabel"
     ss_3 = v1677_1
     ss_4 = "TextColor3"
-    ss_5 = slot_9 and (cell_get(upvalues[3])).colors.text
-    ss_5 = ss_5 or (cell_get(upvalues[3])).colors.muted
+    ss_5 = (slot_9 and (cell_get(upvalues[3])).colors.text) or (cell_get(upvalues[3])).colors.muted
     ss_3[ss_4] = ss_5
     ss_3.TextSize = 12
     v1928_1 = env.Enum.Font.GothamMedium
@@ -132062,29 +128290,17 @@ protos[2421] = function(upvalues)
   v6_1 = cell_get(upvalues[2])
   slot_0 = ((v1_1[v6_1] ~= false))
   temp_0 = (cell_get(upvalues[3]))
-  ss_1 = slot_0 and (cell_get(upvalues[4])).colors.accent
-  ss_1 = ss_1 or (cell_get(upvalues[5])).Off
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_0 and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[5])).Off))
   temp_0.BackgroundColor3 = temp_2
   temp_0 = (cell_get(upvalues[3]))
-  ss_1 = slot_0 and (0.05)
-  ss_1 = ss_1 or (0.4)
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_0 and (0.05)) or (0.4)))
   temp_0.BackgroundTransparency = temp_2
   temp_0 = (cell_get(upvalues[6]))
-  ss_1 = slot_0 and (cell_get(upvalues[4])).colors.accent
-  ss_1 = ss_1 or (cell_get(upvalues[4])).colors.stroke
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_0 and (cell_get(upvalues[4])).colors.accent) or (cell_get(upvalues[4])).colors.stroke))
   temp_0.Color = temp_2
   temp_0 = (cell_get(upvalues[6]))
   temp_1 = "Transparency"
-  ss_1 = slot_0 and (0.1)
-  ss_1 = ss_1 or (0.5)
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_0 and (0.1)) or (0.5)))
   temp_0.Transparency = temp_2
   cell_get(upvalues[7]).Visible = slot_0
   v579_1 = env.ipairs
@@ -132097,9 +128313,7 @@ protos[2421] = function(upvalues)
     slot_1 = __loopKey_2421_0
     slot_2 = __loopValue_2421_0
     if (slot_2:IsA("TextLabel")) then
-      ss_1 = slot_0 and (cell_get(upvalues[4])).colors.text
-      ss_1 = ss_1 or (cell_get(upvalues[4])).colors.muted
-      ss_0 = ss_1
+      ss_0 = ((slot_0 and (cell_get(upvalues[4])).colors.text) or (cell_get(upvalues[4])).colors.muted)
       slot_2.TextColor3 = ss_0
     end
   end
@@ -132210,9 +128424,7 @@ protos[2425] = function(upvalues, argument_1)
   end
   regs.v2_1 = cell_get(upvalues[1])
   regs.v2_1()
-  ss_0 = env.workspace.CurrentCamera and env.workspace.CurrentCamera.ViewportSize
-  ss_0 = ss_0 or ((env.Vector2.new(1280, 720)))
-  slot_1 = ss_0
+  slot_1 = ((env.workspace.CurrentCamera and env.workspace.CurrentCamera.ViewportSize) or ((env.Vector2.new(1280, 720))))
   v165_1 = env.math.min
   v187_1 = (slot_1.X - 40)
   v192_1 = v165_1(420, v187_1)
@@ -132844,8 +129056,7 @@ protos[2435] = function(upvalues)
     slot_0 = v33_1[v51_1]
     ss_0 = slot_0 and ((((#slot_0) > 0)))
     if ss_0 then
-      ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent
-      if ss_0 then
+      if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent) then
         v298_1 = cell_get(upvalues[4])
         v298_1:Destroy()
       end
@@ -132854,13 +129065,10 @@ protos[2435] = function(upvalues)
       v251_1 = cell_get(upvalues[7])
       v251_1()
     else
-      ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent
-      if ss_0 then
+      if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent) then
         temp_0 = (cell_get(upvalues[4]))
         temp_1 = "Text"
-        ss_2 = (cell_get(upvalues[8]))
-        ss_0 = ss_2(("fe_anims_scanning"))
-        temp_2 = ss_0
+        temp_2 = (((cell_get(upvalues[8])))(("fe_anims_scanning")))
         temp_0.Text = temp_2
       end
       v319_1 = cell_get(upvalues[9])
@@ -132872,8 +129080,7 @@ protos[2435] = function(upvalues)
         v445_1[1] = v456_1
         ss_2 = v445_1
       end
-      ss_0 = v319_1(ss_2)
-      slot_1 = ss_0
+      slot_1 = (v319_1(ss_2))
       v497_1 = (cell_get(upvalues[1])).filterPanel
       v498_1 = not v497_1
       ss_0 = v498_1
@@ -132883,8 +129090,7 @@ protos[2435] = function(upvalues)
         ss_0 = ((v535_1 ~= v536_1))
       end
       if not ss_0 then
-        ss_0 = (cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent
-        if ss_0 then
+        if ((cell_get(upvalues[4])) and (cell_get(upvalues[4])).Parent) then
           v627_1 = cell_get(upvalues[4])
           v627_1:Destroy()
         end
@@ -133001,13 +129207,11 @@ protos[2437] = function(upvalues, argument_1, argument_2)
     for __loopKey_2437_0, __loopValue_2437_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
       slot_2 = __loopKey_2437_0
       slot_3 = __loopValue_2437_0
-      ss_0 = (slot_3:IsA("Frame")) and ((slot_3:GetAttribute("BundleId")))
-      if ss_0 then
+      if ((slot_3:IsA("Frame")) and ((slot_3:GetAttribute("BundleId")))) then
         slot_4 = (slot_3:FindFirstChild("ActiveBadge"))
         slot_5 = (slot_3:GetAttribute("BundleId"))
         slot_6 = (slot_3:FindFirstChild("ActiveStroke"))
-        ss_0 = ((slot_1 == nil)) or (((slot_5 ~= slot_1)))
-        if ss_0 then
+        if (((slot_1 == nil)) or (((slot_5 ~= slot_1)))) then
           if slot_4 then
             slot_4:Destroy()
           end
@@ -133548,8 +129752,7 @@ protos[2446] = function(upvalues)
           end
         else
           slot_3 = (cell_get(upvalues[7])).Character
-          ss_0 = slot_3 and ((slot_3:FindFirstChild("Animate")))
-          slot_4 = ss_0
+          slot_4 = (slot_3 and ((slot_3:FindFirstChild("Animate"))))
           if slot_4 then
             slot_5 = ((cell_get(upvalues[8]))())
             if (((#slot_5) > 0)) then
@@ -133586,8 +129789,7 @@ protos[2446] = function(upvalues)
       ss_1 = v172_1
       ss_2 = v183_1 or (100)
       ss_3 = 80
-      ss_0 = ss_1(ss_2, ss_3)
-      slot_7 = ss_0
+      slot_7 = (ss_1(ss_2, ss_3))
       v1020_1 = cell_get(upvalues[13])
       v1030_1 = new_table(0)
       v1046_1 = (cell_get(upvalues[1])).cell
@@ -133658,13 +129860,11 @@ protos[2448] = function(upvalues)
   v79_1 = (cell_get(upvalues[2])).isApplied
   ss_3 = v63_1
   ss_4 = "Color"
-  ss_5 = v79_1 and (cell_get(upvalues[3])).Success
-  ss_5 = ss_5 or (cell_get(upvalues[4])).colors.accent
+  ss_5 = (v79_1 and (cell_get(upvalues[3])).Success) or (cell_get(upvalues[4])).colors.accent
   ss_3[ss_4] = ss_5
   v201_1 = (cell_get(upvalues[2])).isApplied
   ss_4 = "Transparency"
-  ss_5 = v201_1 and (0.1)
-  ss_5 = ss_5 or (0.3)
+  ss_5 = (v201_1 and (0.1)) or (0.3)
   ss_3[ss_4] = ss_5
   ss_3.Thickness = 1.5
   ss_4 = 0.2
@@ -133710,8 +129910,7 @@ protos[2449] = function(upvalues)
   v113_1 = (cell_get(upvalues[2])).isApplied
   ss_3 = v63_1
   ss_4 = "Thickness"
-  ss_5 = v113_1 and (1.5)
-  ss_5 = ss_5 or (1)
+  ss_5 = (v113_1 and (1.5)) or (1)
   ss_3[ss_4] = ss_5
   ss_4 = 0.2
   v47_1(v62_1, ss_3, ss_4)
@@ -133757,8 +129956,7 @@ protos[2450] = function(upvalues)
       end
       slot_1 = temp_3
       slot_2 = v141_ret2
-      ss_0 = slot_2.showing and slot_2.skeleton.Visible
-      if ss_0 then
+      if (slot_2.showing and slot_2.skeleton.Visible) then
         exit_125 = 2
         break
       end
@@ -133853,8 +130051,7 @@ protos[2452] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = env.UDim2.fromOffset
   ss_3 = slot_2
   ss_4 = slot_3
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.Size = temp_2
   v310_1 = slot_0.cell
   v311_1 = v310_1.SetAttribute
@@ -133869,8 +130066,7 @@ protos[2452] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = v386_1
   ss_5 = 0
   ss_6 = v402_1
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Size = temp_2
   temp_0 = slot_0.thumbOuter
   ss_2 = env.UDim2.new
@@ -133878,8 +130074,7 @@ protos[2452] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = 4
   ss_5 = 0
   ss_6 = 4
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Position = temp_2
   v525_1 = env.tostring
   v540_1 = slot_1.id
@@ -133895,28 +130090,16 @@ protos[2452] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_2 = slot_5
   temp_0.isApplied = temp_2
   temp_0 = slot_0
-  ss_1 = slot_5 and ((env.Color3.fromRGB(12, 72, 44)))
-  ss_1 = ss_1 or (cell_get(upvalues[2])).colors.row
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_5 and ((env.Color3.fromRGB(12, 72, 44)))) or (cell_get(upvalues[2])).colors.row))
   temp_0.baseBg = temp_2
   temp_0 = slot_0
-  ss_1 = slot_5 and ((env.Color3.fromRGB(18, 96, 58)))
-  ss_1 = ss_1 or (cell_get(upvalues[2])).colors.panel
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_5 and ((env.Color3.fromRGB(18, 96, 58)))) or (cell_get(upvalues[2])).colors.panel))
   temp_0.hoverBg = temp_2
   temp_0 = slot_0
-  ss_1 = slot_5 and (cell_get(upvalues[3])).Success
-  ss_1 = ss_1 or (cell_get(upvalues[2])).colors.stroke
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_5 and (cell_get(upvalues[3])).Success) or (cell_get(upvalues[2])).colors.stroke))
   temp_0.baseStrokeColor = temp_2
   temp_0 = slot_0
-  ss_1 = slot_5 and (0.25)
-  ss_1 = ss_1 or (0.7)
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_5 and (0.25)) or (0.7)))
   temp_0.baseStrokeTrans = temp_2
   slot_0.cell.BackgroundColor3 = slot_0.baseBg
   slot_0.cell.BackgroundTransparency = 0
@@ -133925,10 +130108,7 @@ protos[2452] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_2 = slot_0.baseStrokeTrans
   temp_0.Transparency = temp_2
   temp_0 = slot_0.stroke
-  ss_1 = slot_5 and (1.5)
-  ss_1 = ss_1 or (1)
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_5 and (1.5)) or (1)))
   temp_0.Thickness = temp_2
   slot_0.nameLabel.Text = slot_1.name
   temp_0 = slot_0.nameLabel
@@ -133989,17 +130169,11 @@ protos[2452] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     end
   end
   temp_0 = slot_0.plusBtn
-  ss_1 = slot_9 and (cell_get(upvalues[3])).Warn
-  ss_1 = ss_1 or (cell_get(upvalues[2])).colors.accent
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_9 and (cell_get(upvalues[3])).Warn) or (cell_get(upvalues[2])).colors.accent))
   temp_0.BackgroundColor3 = temp_2
   temp_0 = slot_0.plusStroke
   temp_1 = "Color"
-  ss_1 = slot_9 and (cell_get(upvalues[3])).Warn
-  ss_1 = ss_1 or ((env.Color3.fromRGB(255, 255, 255)))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((slot_9 and (cell_get(upvalues[3])).Warn) or ((env.Color3.fromRGB(255, 255, 255)))))
   temp_0.Color = temp_2
   if ((slot_0.thumbId ~= slot_4)) then
     temp_0 = slot_0.thumb
@@ -134017,7 +130191,7 @@ protos[2452] = function(upvalues, argument_1, argument_2, argument_3, argument_4
 end
 
 protos[2453] = function(upvalues, argument_1)
-  local v1001_1, v1072_1, v11_1, v1268_1, v1283_1, v1284_1, v1429_1, v1454_1, v1479_1, v1484_1, v1489_1, v1550_1, v1561_1, v1614_1, v1625_1, v1636_1, v1656_1, v1657_1
+  local v1001_1, v1072_1, v11_1, v1268_1, v1283_1, v1284_1, v1429_1, v1454_1, v1479_1, v1484_1, v1550_1, v1561_1, v1614_1, v1625_1, v1636_1, v1656_1, v1657_1
   local v1662_1, v1667_1, v1682_1, v1702_1, v1703_1, v1708_1, v1745_1, v1750_1, v1755_1, v1785_1, v1951_1, v2000_1, v2017_1, v2034_1, v2051_1, v2074_1, v2179_1, v2190_1, v2195_1
   local v2376_1, v2615_1, v2616_1, v379_1, v396_1, v489_1, v49_1, v531_1, v552_1, v60_1, v71_1, v810_1, v82_1
   local v920_1, v967_1, v986_1
@@ -134044,8 +130218,7 @@ protos[2453] = function(upvalues, argument_1)
   v11_1 = (cell_get(upvalues[1])).renderList
   slot_1 = nil
   slot_1 = v11_1
-  ss_0 = (not slot_1) or ((((#slot_1) == 0)))
-  if ss_0 then
+  if ((not slot_1) or ((((#slot_1) == 0)))) then
     slot_1 = (cell_get(upvalues[1])).filteredAnimations
   end
   v49_1 = (cell_get(upvalues[1])).cellWidth
@@ -134060,16 +130233,13 @@ protos[2453] = function(upvalues, argument_1)
   slot_3 = v60_1
   slot_2 = nil
   slot_2 = v49_1
-  ss_0 = (not slot_4) or (((slot_4 < 1)))
-  if ss_0 then
+  if ((not slot_4) or (((slot_4 < 1)))) then
     slot_4 = 3
   end
-  ss_0 = (not slot_2) or (((slot_2 < 1)))
-  if ss_0 then
+  if ((not slot_2) or (((slot_2 < 1)))) then
     slot_2 = 100
   end
-  ss_0 = (not slot_3) or (((slot_3 < 1)))
-  if ss_0 then
+  if ((not slot_3) or (((slot_3 < 1)))) then
     slot_3 = 120
   end
   v379_1 = env.math.max
@@ -134080,8 +130250,7 @@ protos[2453] = function(upvalues, argument_1)
   ss_5 = slot_0 or (1)
   v489_1 = env.math.max
   ss_6 = pack_values(v489_1((1), slot_5))
-  ss_0 = ss_1(ss_2, ss_4(ss_5, unpack_values(ss_6, 1, ss_6.n)))
-  slot_0 = ss_0
+  slot_0 = (ss_1(ss_2, ss_4(ss_5, unpack_values(ss_6, 1, ss_6.n))))
   v531_1 = env.math.min
   v552_1 = (cell_get(upvalues[1])).renderRows
   ss_1 = v531_1
@@ -134089,8 +130258,7 @@ protos[2453] = function(upvalues, argument_1)
   ss_3 = slot_0
   ss_4 = v552_1 or (cell_get(upvalues[2])).WINDOW_ROWS
   ss_3 = ((((ss_3 + ss_4)) - 1))
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_6 = ss_0
+  slot_6 = (ss_1(ss_2, ss_3))
   if ((slot_5 < 1)) then
     slot_6 = 0
   end
@@ -134099,10 +130267,7 @@ protos[2453] = function(upvalues, argument_1)
   temp_0.windowStartRow = temp_2
   temp_0 = (cell_get(upvalues[1]))
   temp_1 = "entryToken"
-  ss_1 = (cell_get(upvalues[1])).entryToken or (0)
-  ss_1 = ((ss_1 + 1))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((((cell_get(upvalues[1])).entryToken or (0)) + 1))))
   temp_0.entryToken = temp_2
   v810_1 = (cell_get(upvalues[1])).entryToken
   slot_7 = new_cell()
@@ -134123,8 +130288,7 @@ protos[2453] = function(upvalues, argument_1)
       ss_3 = slot_2
       ss_4 = slot_3
       ss_5 = v1001_1
-      ss_0 = ss_2(ss_3, ss_4, ss_5)
-      temp_2 = ss_0
+      temp_2 = (ss_2(ss_3, ss_4, ss_5))
       temp_0[temp_1] = temp_2
       continue
     end
@@ -134214,14 +130378,12 @@ protos[2453] = function(upvalues, argument_1)
         end
         v1479_1 = temp_7
         v1484_1 = temp_6
-        v1489_1 = (v1479_1 + v1484_1)
-        temp_7 = v1489_1
+        temp_7 = ((v1479_1 + v1484_1))
         continue
       end
       v1479_1 = temp_7
       v1484_1 = temp_6
-      v1489_1 = (v1479_1 + v1484_1)
-      temp_7 = v1489_1
+      temp_7 = ((v1479_1 + v1484_1))
     end
     temp_3 = ((temp_3 + temp_2))
   end
@@ -134375,8 +130537,7 @@ protos[2456] = function(upvalues, argument_1, argument_2)
     v233_1 = cell_get(slot_4)
     ss_0 = (((v228_1(v233_1)) ~= "string"))
   end
-  ss_0 = ss_0 or ((((cell_get(slot_4)) == "")))
-  if ss_0 then
+  if (ss_0 or ((((cell_get(slot_4)) == "")))) then
     return nil
   end
   v170_1 = env.pcall
@@ -134385,8 +130546,7 @@ protos[2456] = function(upvalues, argument_1, argument_2)
   ss_3 = v175_1
   ss_0, ss_1 = ss_2(ss_3)
   slot_6 = ss_1
-  ss_0 = (not ss_0) or ((((env["type"](slot_6)) ~= "table")))
-  v448_1 = ss_0
+  v448_1 = ((not ss_0) or ((((env["type"](slot_6)) ~= "table"))))
   ss_0 = v448_1
   if not v448_1 then
     v460_1 = env["type"]
@@ -134406,16 +130566,14 @@ protos[2456] = function(upvalues, argument_1, argument_2)
   for __loopKey_2456_0, __loopValue_2456_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
     slot_8 = __loopKey_2456_0
     slot_9 = __loopValue_2456_0
-    ss_0 = (((env["type"](slot_9)) == "table")) and (((slot_9.state == "Completed")))
-    v697_1 = ss_0
+    v697_1 = ((((env["type"](slot_9)) == "table")) and (((slot_9.state == "Completed"))))
     ss_0 = v697_1
     if v697_1 then
       v709_1 = env["type"]
       v724_1 = slot_9.imageUrl
       ss_0 = (((v709_1(v724_1)) == "string"))
     end
-    ss_0 = ss_0 and (((slot_9.imageUrl ~= "")))
-    if ss_0 then
+    if (ss_0 and (((slot_9.imageUrl ~= "")))) then
       v812_1 = env.tostring
       v827_1 = slot_9.targetId
       temp_6 = (v812_1(v827_1))
@@ -134462,8 +130620,7 @@ protos[2459] = function(upvalues, argument_1)
       ss_0 = slot_3.showing and (((slot_3.thumbId == slot_0)))
       if ss_0 then
         temp_5 = slot_3.thumb
-        ss_1 = slot_1 or ((cell_get(upvalues[2])).Anims or (""))
-        ss_0 = ss_1
+        ss_0 = (slot_1 or ((cell_get(upvalues[2])).Anims or ("")))
         temp_5.Image = ss_0
         temp_5 = slot_3.skeleton
         temp_5.Visible = (false)
@@ -134502,8 +130659,7 @@ protos[2461] = function(upvalues)
   slot_0 = v1_1
   while true do
     v52_1 = cell_get(upvalues[1])
-    ss_0 = (((#v52_1) > 0)) and ((((#slot_0) < 8)))
-    if ss_0 then
+    if ((((#v52_1) > 0)) and ((((#slot_0) < 8)))) then
       v89_1 = env.table.remove
       v90_1 = cell_get(upvalues[1])
       v100_1 = v89_1(v90_1, 1)
@@ -134575,8 +130731,7 @@ protos[2461] = function(upvalues)
       end
     end
     if (((#slot_3) > 0)) then
-      ss_0 = ((cell_get(upvalues[4]))("https://thumbnails.roblox.com/v1/assets?assetIds=", slot_3)) or ((new_table(0)))
-      slot_8 = ss_0
+      slot_8 = (((cell_get(upvalues[4]))("https://thumbnails.roblox.com/v1/assets?assetIds=", slot_3)) or ((new_table(0))))
       ss_2 = env.ipairs
       ss_3 = slot_3
       ss_0, ss_1, ss_2 = ss_2(ss_3)
@@ -134597,8 +130752,7 @@ protos[2461] = function(upvalues)
         else
           v1390_1 = (cell_get(upvalues[3])).thumbRetry
           v1391_1 = cell_get(slot_10)
-          ss_0 = v1390_1[v1391_1] or (0)
-          v1428_2 = (ss_0 + 1)
+          v1428_2 = ((v1390_1[v1391_1] or (0)) + 1)
           slot_11 = nil
           slot_11 = v1428_2
           temp_5 = (cell_get(upvalues[3])).thumbRetry
@@ -134724,8 +130878,7 @@ protos[2464] = function(upvalues)
     for __loopKey_2464_0, __loopValue_2464_0 in function(state, control) return temp_0(state, control) end, temp_1, temp_2 do
       slot_3 = __loopKey_2464_0
       slot_4 = __loopValue_2464_0
-      ss_0 = slot_4.showing and slot_4.cell.Visible
-      ss_0 = ss_0 and slot_4.anim
+      ss_0 = (slot_4.showing and slot_4.cell.Visible) and slot_4.anim
       if ss_0 then
         slot_5 = slot_4.cell.AbsolutePosition
         slot_6 = slot_4.cell.AbsoluteSize.Y
@@ -134783,8 +130936,7 @@ protos[2465] = function(upvalues, argument_1)
     v359_1 = (slot_4 / slot_3)
     ss_2 = v348_1
     ss_3 = v359_1
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.totalRows = temp_2
     if (((cell_get(upvalues[4])).totalRows < 1)) then
       temp_0 = (cell_get(upvalues[4]))
@@ -134801,8 +130953,7 @@ protos[2465] = function(upvalues, argument_1)
       v622_1 = (cell_get(upvalues[5])).CELL_PADDING
       ss_0 = ((v607_1 - v622_1))
     end
-    ss_0 = ss_0 or (0)
-    slot_6 = ss_0
+    slot_6 = (ss_0 or (0))
     temp_0 = (cell_get(upvalues[6]))
     ss_2 = env.UDim2.new
     ss_3 = 1
@@ -134817,8 +130968,7 @@ protos[2465] = function(upvalues, argument_1)
     ss_4 = 0
     ss_5 = 0
     ss_6 = slot_6
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.CanvasSize = temp_2
     if slot_0 then
       temp_0 = (cell_get(upvalues[2]))
@@ -134836,8 +130986,7 @@ protos[2465] = function(upvalues, argument_1)
     temp_0.Visible = temp_2
     slot_7 = (cell_get(upvalues[2])).AbsoluteSize.Y
     slot_8 = 1
-    ss_0 = ((slot_5 > 0)) and (((slot_7 > 0)))
-    if ss_0 then
+    if (((slot_5 > 0)) and (((slot_7 > 0)))) then
       v1413_1 = env.math.max
       v1430_1 = env.math.floor
       v1452_1 = ((cell_get(upvalues[5])).GRID_PADDING * 2)
@@ -134846,8 +130995,7 @@ protos[2465] = function(upvalues, argument_1)
       ss_2 = 1
       ss_4 = v1430_1
       ss_5 = v1467_1
-      ss_0 = ss_1(ss_2, ss_4(ss_5))
-      slot_8 = ss_0
+      slot_8 = (ss_1(ss_2, ss_4(ss_5)))
     end
     cell_get(upvalues[4]).windowRows = slot_8
     cell_get(upvalues[4]).renderRows = ((slot_8 + 2))
@@ -134859,18 +131007,13 @@ protos[2465] = function(upvalues, argument_1)
     ss_3 = 1
     ss_5 = v1279_1
     ss_6 = v1290_1
-    ss_0 = ss_2(ss_3, ss_5(ss_6))
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_5(ss_6)))
     temp_0.stepRows = temp_2
     temp_0 = (cell_get(upvalues[4]))
-    ss_1 = slot_0 and (true)
-    ss_1 = ss_1 or (false)
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_0 and (true)) or (false)))
     temp_0.playEntry = temp_2
     slot_9 = 1
-    ss_0 = (not slot_0) and (((slot_5 > 0)))
-    if ss_0 then
+    if ((not slot_0) and (((slot_5 > 0)))) then
       v1680_1 = env.math.floor
       v1703_1 = ((cell_get(upvalues[2])).CanvasPosition.Y / slot_5)
       slot_9 = (((v1680_1(v1703_1)) + 1))
@@ -134974,10 +131117,7 @@ protos[2469] = function(upvalues, argument_1)
   slot_0 = (((slot_0:lower()):gsub("^%s+", "")):gsub("%s+$", ""))
   temp_0 = (cell_get(upvalues[1]))
   temp_1 = "filterToken"
-  ss_1 = (cell_get(upvalues[1])).filterToken or (0)
-  ss_1 = ((ss_1 + 1))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((((cell_get(upvalues[1])).filterToken or (0)) + 1))))
   temp_0.filterToken = temp_2
   v203_1 = (cell_get(upvalues[1])).filterToken
   slot_1 = new_cell()
@@ -135463,8 +131603,7 @@ protos[2484] = function(upvalues, argument_1, argument_2)
           temp_2 = temp_3
           slot_3 = temp_3
           slot_4 = temp_4
-          ss_0 = (((env["type"](slot_4)) == "string")) and (((slot_4 ~= "")))
-          if ss_0 then
+          if ((((env["type"](slot_4)) == "string")) and (((slot_4 ~= "")))) then
             temp_5 = (cell_get(upvalues[2])).nameById
             temp_6 = (env.tostring(slot_3))
             temp_7 = slot_4
@@ -135522,15 +131661,13 @@ protos[2484] = function(upvalues, argument_1, argument_2)
           ss_3 = v1291_1 or ((("Pack_" .. slot_12)))
           ss_1[ss_2] = ss_3
           ss_1.pending = true
-          ss_0 = ss_1
-          temp_7 = ss_0
+          temp_7 = ss_1
           temp_5[temp_6] = temp_7
           slot_9 = ((slot_9 + 1))
         end
       end
       if ((slot_9 > 0)) then
-        ss_0 = slot_2 and ((new_table(0)))
-        ss_0 = ss_0 or (cell_get(upvalues[2])).allAnimations
+        ss_0 = (slot_2 and ((new_table(0)))) or (cell_get(upvalues[2])).allAnimations
         ss_2 = env.ipairs
         ss_3 = ss_0
         ss_0, ss_1, ss_2 = ss_2(ss_3)
@@ -135594,8 +131731,7 @@ protos[2486] = function(upvalues)
   temp_1 = "filteredAnimations"
   temp_2 = slot_0
   temp_0.filteredAnimations = temp_2
-  ss_0 = (((env["type"](slot_0)) == "table")) and ((((#slot_0) > 0)))
-  slot_1 = ss_0
+  slot_1 = ((((env["type"](slot_0)) == "table")) and ((((#slot_0) > 0))))
   if slot_1 then
     v417_1 = env.tostring
     v432_1 = (cell_get(upvalues[4])).Text
@@ -135708,8 +131844,7 @@ protos[2490] = function(upvalues)
   v1_1 = cell_get(upvalues[1])
   if (not v1_1) then
     temp_0 = (cell_get(upvalues[2]))
-    ss_1 = (cell_get(upvalues[2])).loadAttempts or (0)
-    ss_1 = ((ss_1 + 1))
+    ss_1 = ((((cell_get(upvalues[2])).loadAttempts or (0)) + 1))
     temp_0.loadAttempts = ss_1
     if (((cell_get(upvalues[2])).loadAttempts <= 5)) then
       v186_1 = cell_get(upvalues[3])
@@ -135729,8 +131864,7 @@ protos[2492] = function(upvalues, argument_1)
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   temp_0 = (cell_get(upvalues[1]))
-  ss_1 = slot_0 and (true)
-  ss_1 = ss_1 or (false)
+  ss_1 = (slot_0 and (true)) or (false)
   temp_0.enabled = ss_1
   v141_1 = cell_get(upvalues[2])
   v141_1()
@@ -135925,8 +132059,7 @@ protos[2502] = function(upvalues)
     v1058_1 = (cell_get(upvalues[2])).animationCache[slot_9]
     slot_10 = nil
     slot_10 = v1058_1
-    ss_0 = slot_10 and ((((#slot_10) > 0)))
-    if ss_0 then
+    if (slot_10 and ((((#slot_10) > 0)))) then
       v1162_1 = (cell_get(upvalues[4]))(slot_8, slot_10)
       slot_11 = nil
       slot_11 = v1162_1
@@ -135987,7 +132120,7 @@ end
 
 protos[2503] = function(upvalues)
   local v225_1, v226_1, v238_1, v245_1, v266_1, v283_1, v299_1, v315_1, v337_1, v338_1, v360_1, v367_1, v388_1, v416_1
-  local ss_0, ss_1, ss_3, ss_6, ss_7, ss_8, ss_9, ss_10, ss_11, temp_0, temp_2
+  local ss_0, ss_3, ss_6, ss_7, ss_8, ss_9, ss_10, ss_11, temp_0, temp_2
   local vm_frame_random = math.random(0, 2147483646)
   cell_get(upvalues[1]).BackgroundColor3 = (cell_get(upvalues[2])).colors.panel
   cell_get(upvalues[3]).Color = (cell_get(upvalues[2])).colors.accent
@@ -136023,19 +132156,13 @@ protos[2503] = function(upvalues)
   ss_11 = v416_1
   ss_8 = pack_values(ss_9(ss_10, ss_11, (0.2)))
   ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, unpack_values(ss_8, 1, ss_8.n)))
-  ss_0 = v225_1(ss_3)
-  temp_2 = ss_0
+  temp_2 = (v225_1(ss_3))
   temp_0.Color = temp_2
   temp_0 = (cell_get(upvalues[7]))
-  ss_1 = (cell_get(upvalues[8])).enabled and (cell_get(upvalues[9])).Success
-  ss_1 = ss_1 or (cell_get(upvalues[9])).Off
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((cell_get(upvalues[8])).enabled and (cell_get(upvalues[9])).Success) or (cell_get(upvalues[9])).Off))
   temp_0.BackgroundColor3 = temp_2
   temp_0 = (cell_get(upvalues[10]))
-  ss_1 = (cell_get(upvalues[8])).enabled and (cell_get(upvalues[9])).Success
-  ss_1 = ss_1 or (cell_get(upvalues[2])).colors.stroke
-  ss_0 = ss_1
+  ss_0 = (((cell_get(upvalues[8])).enabled and (cell_get(upvalues[9])).Success) or (cell_get(upvalues[2])).colors.stroke)
   temp_0.Color = ss_0
   cell_get(upvalues[11]).BackgroundColor3 = (cell_get(upvalues[2])).colors.row
   cell_get(upvalues[12]).Color = (cell_get(upvalues[2])).colors.stroke
@@ -136422,8 +132549,7 @@ protos[2505] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = regs.v2713_1
   ss_5 = regs.v2714_1
   ss_6 = slot_3
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.feAnimsSearcher = temp_2
   temp_0 = (cell_get(slot_10))
   regs.v2777_1 = cell_get(upvalues[17])
@@ -136438,8 +132564,7 @@ protos[2505] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_5 = regs.v2804_1
   ss_6 = regs.v2809_1
   ss_7 = regs.v2814_1
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6, ss_7)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6, ss_7))
   temp_0.feEmoteManager = temp_2
   regs.v2851_1 = cell_get(slot_23)
   regs.v2851_1("packs")
@@ -136465,8 +132590,7 @@ protos[2505] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = regs.v3139_1
   ss_5 = regs.v3144_1
   ss_6 = slot_3
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.skinch = temp_2
   cell_get(slot_10).skinch.onDirty = (closure(2574, {capture_10()}))
   regs.v3254_1 = (cell_get(slot_10)).CreateTabAndPage
@@ -136508,14 +132632,12 @@ protos[2505] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_1 = "CFG"
   temp_2 = slot_37
   temp_0.CFG = temp_2
-  ss_0 = (cell_get(slot_10)).feAnimsSearcher and (cell_get(slot_10)).feAnimsSearcher.setMarkDirtyHook
-  if ss_0 then
+  if ((cell_get(slot_10)).feAnimsSearcher and (cell_get(slot_10)).feAnimsSearcher.setMarkDirtyHook) then
     regs.v3736_1 = (cell_get(slot_10)).feAnimsSearcher.setMarkDirtyHook
     regs.v3737_1 = closure(2682, {capture_10()})
     regs.v3736_1(regs.v3737_1)
   end
-  ss_0 = (cell_get(slot_10)).feEmoteManager and (cell_get(slot_10)).feEmoteManager.setMarkDirtyHook
-  if ss_0 then
+  if ((cell_get(slot_10)).feEmoteManager and (cell_get(slot_10)).feEmoteManager.setMarkDirtyHook) then
     regs.v4477_1 = (cell_get(slot_10)).feEmoteManager.setMarkDirtyHook
     regs.v4478_1 = closure(2683, {capture_10()})
     regs.v4477_1(regs.v4478_1)
@@ -137097,7 +133219,7 @@ protos[2508] = function(upvalues, argument_1)
 end
 
 protos[2509] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, ss_0, v106_1, v112_1, v285_1, v297_1, v298_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, v106_1, v112_1, v285_1, v297_1, v298_1
   local v303_1, v334_1, v340_1, v408_1, v409_1, v450_1, v451_1, v466_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -137106,8 +133228,7 @@ protos[2509] = function(upvalues, argument_1)
     return "Unknown"
   end
   slot_2 = (slot_1:FindFirstChildOfClass("Humanoid"))
-  ss_0 = (not slot_2) or (((slot_2.Health <= 0)))
-  if ss_0 then
+  if ((not slot_2) or (((slot_2.Health <= 0)))) then
     return "Unknown"
   end
   v106_1 = (cell_get(upvalues[1])).roleZombieOverride
@@ -137140,9 +133261,7 @@ protos[2509] = function(upvalues, argument_1)
   v451_1 = cell_get(upvalues[2])
   v466_1 = slot_0.Name
   slot_4 = (v450_1(v451_1, v466_1))
-  ss_0 = slot_4 and (((slot_4 ~= "Unknown")))
-  ss_0 = ss_0 and (((slot_4 ~= "Murderer")))
-  if ss_0 then
+  if ((slot_4 and (((slot_4 ~= "Unknown")))) and (((slot_4 ~= "Murderer")))) then
     return slot_4
   end
   return "Innocent"
@@ -137171,15 +133290,13 @@ protos[2510] = function(upvalues, argument_1)
 end
 
 protos[2511] = function(upvalues, argument_1)
-  local slot_0, ss_1
+  local slot_0
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   if (not slot_0) then
     return nil
   end
-  ss_1 = (slot_0:FindFirstChild("HumanoidRootPart")) or ((slot_0:FindFirstChild("Torso")))
-  ss_1 = ss_1 or ((slot_0:FindFirstChild("UpperTorso")))
-  return ss_1
+  return (((slot_0:FindFirstChild("HumanoidRootPart")) or ((slot_0:FindFirstChild("Torso")))) or ((slot_0:FindFirstChild("UpperTorso"))))
 end
 
 protos[2512] = function(upvalues, argument_1)
@@ -137209,8 +133326,7 @@ protos[2512] = function(upvalues, argument_1)
       slot_2 = __loopKey_2512_0
       slot_3 = cell_set_or_create(slot_3, __loopValue_2512_0)
       if ((cell_get(slot_3)):IsA("BasePart")) then
-        ss_0 = (cell_get(slot_3)).Parent and (((cell_get(slot_3)).Parent:IsA("Accessory")))
-        if ss_0 then
+        if ((cell_get(slot_3)).Parent and (((cell_get(slot_3)).Parent:IsA("Accessory")))) then
           v342_1 = env.pcall
           v347_1 = closure(2513, {capture_3()})
           v342_1(v347_1)
@@ -137302,9 +133418,7 @@ protos[2516] = function(upvalues)
         slot_4 = new_cell()
         slot_3 = __loopKey_2516_0
         slot_4 = cell_set_or_create(slot_4, __loopValue_2516_0)
-        ss_0 = ((cell_get(slot_4)):IsA("BodyVelocity")) or (((cell_get(slot_4)):IsA("BodyAngularVelocity")))
-        ss_0 = ss_0 or ((((cell_get(slot_4)).Name == "EpixVel")))
-        if ss_0 then
+        if ((((cell_get(slot_4)):IsA("BodyVelocity")) or (((cell_get(slot_4)):IsA("BodyAngularVelocity")))) or ((((cell_get(slot_4)).Name == "EpixVel")))) then
           v454_1 = env.pcall
           v459_1 = closure(2517, {capture_4()})
           v454_1(v459_1)
@@ -137341,8 +133455,7 @@ protos[2516] = function(upvalues)
       v721_1 = closure(2520, {capture_2()})
       v716_1(v721_1)
     end
-    ss_0 = (cell_get(upvalues[3])) and ((cell_get(slot_2)))
-    if ss_0 then
+    if ((cell_get(upvalues[3])) and ((cell_get(slot_2)))) then
       temp_0 = (cell_get(upvalues[3]))
       temp_1 = "CameraSubject"
       temp_2 = (cell_get(slot_2))
@@ -137436,9 +133549,9 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   local regs = {}
   local v1004_1, v1014_1, v1044_1, v1049_1, v1081_1, v110_1, v1112_1, v1117_1, v1148_1, v1205_1, v1216_1, v1238_1, v1243_1, v1274_1, v1322_1
   local v1343_1, v1348_1, v136_1, v1379_1, v1427_1, v1444_1, v1454_1, v147_1, v1485_1, v1533_1, v1544_1, v154_1, v1556_1, v1561_1, v1592_1, v1640_1, v1657_1
-  local v1667_1, v310_1, v331_1, v3895_1, v3900_1, v3926_1, v3931_1, v3943_1, v3948_1, v3953_1, v3968_1, v3992_1, v3997_1, v4009_1, v4014_1, v4025_1, v4036_1, v4041_1, v4046_1
-  local v4061_1, v4085_1, v4090_1, v4102_1, v4112_1, v4113_1, v4123_1, v4124_1, v4139_1, v4163_1, v4168_1, v4180_1, v4190_1, v4191_1, v4202_1, v4226_1, v4231_1, v4243_1, v4253_1, v4264_1
-  local v4288_1, v4304_1, v4309_1, v4314_1, v4319_1, v4324_1, v4329_1, v4344_1, v879_1, v889_1, v895_1, v906_1, v916_1, v922_1, v933_1, v938_1, v943_1, v948_1, v953_1
+  local v1667_1, v310_1, v331_1, v3895_1, v3900_1, v3926_1, v3931_1, v3943_1, v3948_1, v3992_1, v3997_1, v4009_1, v4025_1, v4036_1, v4041_1
+  local v4085_1, v4090_1, v4112_1, v4123_1, v4163_1, v4190_1, v4226_1, v4231_1
+  local v4309_1, v4314_1, v4319_1, v4324_1, v895_1, v922_1, v933_1, v938_1, v943_1, v948_1
   local exit_266, slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, slot_10, slot_11, slot_12, slot_13, slot_14, slot_15, slot_16, slot_17, slot_18, slot_19, slot_20, slot_21, slot_22, slot_23, slot_24, slot_25, slot_26, slot_27, slot_28, slot_29, ss_0
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = {argument_1}
@@ -137515,8 +133628,7 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       exit_266 = 4
       break
     end
-    ss_0 = (not slot_3) or (((slot_3.Health <= 0)))
-    if ss_0 then
+    if ((not slot_3) or (((slot_3.Health <= 0)))) then
       exit_266 = 5
       break
     end
@@ -137559,8 +133671,7 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     regs.v748_1 = (regs.v737_1 < regs.v747_1)
     slot_21 = nil
     slot_21 = regs.v748_1
-    ss_0 = slot_20 or slot_21
-    slot_22 = ss_0
+    slot_22 = (slot_20 or slot_21)
     if slot_19 then
       slot_23 = nil
       slot_23 = 0.034
@@ -137656,22 +133767,17 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       regs.v1919_1 = env.task.wait
       regs.v1919_1()
       slot_27 = false
-      v879_1 = cell_get(slot_2)
-      v889_1 = v879_1.Position
-      v895_1 = v889_1.Y
+      v895_1 = (cell_get(slot_2)).Position.Y
       slot_28 = nil
       slot_28 = v895_1
-      v906_1 = cell_get(slot_2)
-      v916_1 = v906_1.Velocity
-      v922_1 = v916_1.Magnitude
+      v922_1 = (cell_get(slot_2)).Velocity.Magnitude
       slot_29 = nil
       slot_29 = v922_1
       v933_1 = slot_28
       v938_1 = slot_4
       v943_1 = cell_get(upvalues[4])
       v948_1 = (v938_1 - v943_1)
-      v953_1 = (v933_1 < v948_1)
-      if v953_1 then
+      if ((v933_1 < v948_1)) then
         slot_27 = true
       end
       v3895_1 = slot_27
@@ -137680,11 +133786,9 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       if v3900_1 then
         v3943_1 = slot_28
         v3948_1 = cell_get(upvalues[5])
-        v3953_1 = (v3943_1 < v3948_1)
-        ss_0 = v3953_1
+        ss_0 = ((v3943_1 < v3948_1))
       end
-      v3968_1 = ss_0
-      if v3968_1 then
+      if ss_0 then
         slot_27 = true
       end
       v3926_1 = slot_27
@@ -137692,79 +133796,57 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       ss_0 = v3931_1
       if v3931_1 then
         v4009_1 = slot_19
-        v4014_1 = not v4009_1
-        ss_0 = v4014_1
+        ss_0 = (not v4009_1)
       end
       v4025_1 = ss_0
       ss_0 = v4025_1
       if v4025_1 then
         v4036_1 = slot_29
         v4041_1 = cell_get(upvalues[6])
-        v4046_1 = (v4036_1 > v4041_1)
-        ss_0 = v4046_1
+        ss_0 = ((v4036_1 > v4041_1))
       end
-      v4061_1 = ss_0
-      if v4061_1 then
+      if ss_0 then
         slot_27 = true
       end
       v3992_1 = slot_27
       v3997_1 = not v3992_1
       ss_0 = v3997_1
       if v3997_1 then
-        v4102_1 = cell_get(slot_2)
-        v4112_1 = v4102_1.Parent
-        v4113_1 = slot_3
-        v4123_1 = v4113_1.Parent
-        v4124_1 = (v4112_1 ~= v4123_1)
-        ss_0 = v4124_1
+        v4112_1 = (cell_get(slot_2)).Parent
+        v4123_1 = slot_3.Parent
+        ss_0 = ((v4112_1 ~= v4123_1))
       end
-      v4139_1 = ss_0
-      if v4139_1 then
+      if ss_0 then
         slot_27 = true
       end
       v4085_1 = slot_27
       v4090_1 = not v4085_1
       ss_0 = v4090_1
       if v4090_1 then
-        v4180_1 = slot_3
-        v4190_1 = v4180_1.Parent
-        v4191_1 = not v4190_1
-        ss_0 = v4191_1
+        v4190_1 = slot_3.Parent
+        ss_0 = (not v4190_1)
       end
-      v4202_1 = ss_0
-      if v4202_1 then
+      if ss_0 then
         slot_27 = true
       end
       v4163_1 = slot_27
-      v4168_1 = not v4163_1
-      ss_0 = v4168_1
-      if v4168_1 then
-        v4243_1 = slot_3
-        v4253_1 = v4243_1.Sit
-        ss_0 = v4253_1
-      end
-      v4264_1 = ss_0
-      if v4264_1 then
+      if ((not v4163_1) and slot_3.Sit) then
         slot_27 = true
       end
       v4226_1 = slot_27
       v4231_1 = not v4226_1
       ss_0 = v4231_1
       if v4231_1 then
-        v4304_1 = env.tick
-        v4309_1 = v4304_1()
+        v4309_1 = env.tick()
         v4314_1 = slot_6
         v4319_1 = cell_get(upvalues[7])
         v4324_1 = (v4314_1 + v4319_1)
-        v4329_1 = (v4309_1 > v4324_1)
-        ss_0 = v4329_1
+        ss_0 = ((v4309_1 > v4324_1))
       end
-      v4344_1 = ss_0
-      if v4344_1 then
+      if ss_0 then
         slot_27 = true
       end
-      v4288_1 = slot_27
-      if v4288_1 then
+      if slot_27 then
         exit_266 = 29
         break
       end
@@ -137838,22 +133920,17 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       regs.v2527_1 = env.task.wait
       regs.v2527_1()
       slot_27 = false
-      v879_1 = cell_get(slot_2)
-      v889_1 = v879_1.Position
-      v895_1 = v889_1.Y
+      v895_1 = (cell_get(slot_2)).Position.Y
       slot_28 = nil
       slot_28 = v895_1
-      v906_1 = cell_get(slot_2)
-      v916_1 = v906_1.Velocity
-      v922_1 = v916_1.Magnitude
+      v922_1 = (cell_get(slot_2)).Velocity.Magnitude
       slot_29 = nil
       slot_29 = v922_1
       v933_1 = slot_28
       v938_1 = slot_4
       v943_1 = cell_get(upvalues[4])
       v948_1 = (v938_1 - v943_1)
-      v953_1 = (v933_1 < v948_1)
-      if v953_1 then
+      if ((v933_1 < v948_1)) then
         slot_27 = true
       end
       v3895_1 = slot_27
@@ -137862,11 +133939,9 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       if v3900_1 then
         v3943_1 = slot_28
         v3948_1 = cell_get(upvalues[5])
-        v3953_1 = (v3943_1 < v3948_1)
-        ss_0 = v3953_1
+        ss_0 = ((v3943_1 < v3948_1))
       end
-      v3968_1 = ss_0
-      if v3968_1 then
+      if ss_0 then
         slot_27 = true
       end
       v3926_1 = slot_27
@@ -137874,79 +133949,57 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       ss_0 = v3931_1
       if v3931_1 then
         v4009_1 = slot_19
-        v4014_1 = not v4009_1
-        ss_0 = v4014_1
+        ss_0 = (not v4009_1)
       end
       v4025_1 = ss_0
       ss_0 = v4025_1
       if v4025_1 then
         v4036_1 = slot_29
         v4041_1 = cell_get(upvalues[6])
-        v4046_1 = (v4036_1 > v4041_1)
-        ss_0 = v4046_1
+        ss_0 = ((v4036_1 > v4041_1))
       end
-      v4061_1 = ss_0
-      if v4061_1 then
+      if ss_0 then
         slot_27 = true
       end
       v3992_1 = slot_27
       v3997_1 = not v3992_1
       ss_0 = v3997_1
       if v3997_1 then
-        v4102_1 = cell_get(slot_2)
-        v4112_1 = v4102_1.Parent
-        v4113_1 = slot_3
-        v4123_1 = v4113_1.Parent
-        v4124_1 = (v4112_1 ~= v4123_1)
-        ss_0 = v4124_1
+        v4112_1 = (cell_get(slot_2)).Parent
+        v4123_1 = slot_3.Parent
+        ss_0 = ((v4112_1 ~= v4123_1))
       end
-      v4139_1 = ss_0
-      if v4139_1 then
+      if ss_0 then
         slot_27 = true
       end
       v4085_1 = slot_27
       v4090_1 = not v4085_1
       ss_0 = v4090_1
       if v4090_1 then
-        v4180_1 = slot_3
-        v4190_1 = v4180_1.Parent
-        v4191_1 = not v4190_1
-        ss_0 = v4191_1
+        v4190_1 = slot_3.Parent
+        ss_0 = (not v4190_1)
       end
-      v4202_1 = ss_0
-      if v4202_1 then
+      if ss_0 then
         slot_27 = true
       end
       v4163_1 = slot_27
-      v4168_1 = not v4163_1
-      ss_0 = v4168_1
-      if v4168_1 then
-        v4243_1 = slot_3
-        v4253_1 = v4243_1.Sit
-        ss_0 = v4253_1
-      end
-      v4264_1 = ss_0
-      if v4264_1 then
+      if ((not v4163_1) and slot_3.Sit) then
         slot_27 = true
       end
       v4226_1 = slot_27
       v4231_1 = not v4226_1
       ss_0 = v4231_1
       if v4231_1 then
-        v4304_1 = env.tick
-        v4309_1 = v4304_1()
+        v4309_1 = env.tick()
         v4314_1 = slot_6
         v4319_1 = cell_get(upvalues[7])
         v4324_1 = (v4314_1 + v4319_1)
-        v4329_1 = (v4309_1 > v4324_1)
-        ss_0 = v4329_1
+        ss_0 = ((v4309_1 > v4324_1))
       end
-      v4344_1 = ss_0
-      if v4344_1 then
+      if ss_0 then
         slot_27 = true
       end
-      v4288_1 = slot_27
-      if v4288_1 then
+      if slot_27 then
         exit_266 = 29
         break
       end
@@ -138016,22 +134069,17 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       regs.v3238_1 = env.task.wait
       regs.v3238_1()
       slot_27 = false
-      v879_1 = cell_get(slot_2)
-      v889_1 = v879_1.Position
-      v895_1 = v889_1.Y
+      v895_1 = (cell_get(slot_2)).Position.Y
       slot_28 = nil
       slot_28 = v895_1
-      v906_1 = cell_get(slot_2)
-      v916_1 = v906_1.Velocity
-      v922_1 = v916_1.Magnitude
+      v922_1 = (cell_get(slot_2)).Velocity.Magnitude
       slot_29 = nil
       slot_29 = v922_1
       v933_1 = slot_28
       v938_1 = slot_4
       v943_1 = cell_get(upvalues[4])
       v948_1 = (v938_1 - v943_1)
-      v953_1 = (v933_1 < v948_1)
-      if v953_1 then
+      if ((v933_1 < v948_1)) then
         slot_27 = true
       end
       v3895_1 = slot_27
@@ -138040,11 +134088,9 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       if v3900_1 then
         v3943_1 = slot_28
         v3948_1 = cell_get(upvalues[5])
-        v3953_1 = (v3943_1 < v3948_1)
-        ss_0 = v3953_1
+        ss_0 = ((v3943_1 < v3948_1))
       end
-      v3968_1 = ss_0
-      if v3968_1 then
+      if ss_0 then
         slot_27 = true
       end
       v3926_1 = slot_27
@@ -138052,79 +134098,57 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       ss_0 = v3931_1
       if v3931_1 then
         v4009_1 = slot_19
-        v4014_1 = not v4009_1
-        ss_0 = v4014_1
+        ss_0 = (not v4009_1)
       end
       v4025_1 = ss_0
       ss_0 = v4025_1
       if v4025_1 then
         v4036_1 = slot_29
         v4041_1 = cell_get(upvalues[6])
-        v4046_1 = (v4036_1 > v4041_1)
-        ss_0 = v4046_1
+        ss_0 = ((v4036_1 > v4041_1))
       end
-      v4061_1 = ss_0
-      if v4061_1 then
+      if ss_0 then
         slot_27 = true
       end
       v3992_1 = slot_27
       v3997_1 = not v3992_1
       ss_0 = v3997_1
       if v3997_1 then
-        v4102_1 = cell_get(slot_2)
-        v4112_1 = v4102_1.Parent
-        v4113_1 = slot_3
-        v4123_1 = v4113_1.Parent
-        v4124_1 = (v4112_1 ~= v4123_1)
-        ss_0 = v4124_1
+        v4112_1 = (cell_get(slot_2)).Parent
+        v4123_1 = slot_3.Parent
+        ss_0 = ((v4112_1 ~= v4123_1))
       end
-      v4139_1 = ss_0
-      if v4139_1 then
+      if ss_0 then
         slot_27 = true
       end
       v4085_1 = slot_27
       v4090_1 = not v4085_1
       ss_0 = v4090_1
       if v4090_1 then
-        v4180_1 = slot_3
-        v4190_1 = v4180_1.Parent
-        v4191_1 = not v4190_1
-        ss_0 = v4191_1
+        v4190_1 = slot_3.Parent
+        ss_0 = (not v4190_1)
       end
-      v4202_1 = ss_0
-      if v4202_1 then
+      if ss_0 then
         slot_27 = true
       end
       v4163_1 = slot_27
-      v4168_1 = not v4163_1
-      ss_0 = v4168_1
-      if v4168_1 then
-        v4243_1 = slot_3
-        v4253_1 = v4243_1.Sit
-        ss_0 = v4253_1
-      end
-      v4264_1 = ss_0
-      if v4264_1 then
+      if ((not v4163_1) and slot_3.Sit) then
         slot_27 = true
       end
       v4226_1 = slot_27
       v4231_1 = not v4226_1
       ss_0 = v4231_1
       if v4231_1 then
-        v4304_1 = env.tick
-        v4309_1 = v4304_1()
+        v4309_1 = env.tick()
         v4314_1 = slot_6
         v4319_1 = cell_get(upvalues[7])
         v4324_1 = (v4314_1 + v4319_1)
-        v4329_1 = (v4309_1 > v4324_1)
-        ss_0 = v4329_1
+        ss_0 = ((v4309_1 > v4324_1))
       end
-      v4344_1 = ss_0
-      if v4344_1 then
+      if ss_0 then
         slot_27 = true
       end
-      v4288_1 = slot_27
-      if v4288_1 then
+      if slot_27 then
         exit_266 = 29
         break
       end
@@ -138218,22 +134242,17 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     regs.v3879_1 = env.task.wait
     regs.v3879_1()
     slot_27 = false
-    v879_1 = cell_get(slot_2)
-    v889_1 = v879_1.Position
-    v895_1 = v889_1.Y
+    v895_1 = (cell_get(slot_2)).Position.Y
     slot_28 = nil
     slot_28 = v895_1
-    v906_1 = cell_get(slot_2)
-    v916_1 = v906_1.Velocity
-    v922_1 = v916_1.Magnitude
+    v922_1 = (cell_get(slot_2)).Velocity.Magnitude
     slot_29 = nil
     slot_29 = v922_1
     v933_1 = slot_28
     v938_1 = slot_4
     v943_1 = cell_get(upvalues[4])
     v948_1 = (v938_1 - v943_1)
-    v953_1 = (v933_1 < v948_1)
-    if v953_1 then
+    if ((v933_1 < v948_1)) then
       slot_27 = true
     end
     v3895_1 = slot_27
@@ -138242,11 +134261,9 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     if v3900_1 then
       v3943_1 = slot_28
       v3948_1 = cell_get(upvalues[5])
-      v3953_1 = (v3943_1 < v3948_1)
-      ss_0 = v3953_1
+      ss_0 = ((v3943_1 < v3948_1))
     end
-    v3968_1 = ss_0
-    if v3968_1 then
+    if ss_0 then
       slot_27 = true
     end
     v3926_1 = slot_27
@@ -138254,79 +134271,57 @@ protos[2523] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     ss_0 = v3931_1
     if v3931_1 then
       v4009_1 = slot_19
-      v4014_1 = not v4009_1
-      ss_0 = v4014_1
+      ss_0 = (not v4009_1)
     end
     v4025_1 = ss_0
     ss_0 = v4025_1
     if v4025_1 then
       v4036_1 = slot_29
       v4041_1 = cell_get(upvalues[6])
-      v4046_1 = (v4036_1 > v4041_1)
-      ss_0 = v4046_1
+      ss_0 = ((v4036_1 > v4041_1))
     end
-    v4061_1 = ss_0
-    if v4061_1 then
+    if ss_0 then
       slot_27 = true
     end
     v3992_1 = slot_27
     v3997_1 = not v3992_1
     ss_0 = v3997_1
     if v3997_1 then
-      v4102_1 = cell_get(slot_2)
-      v4112_1 = v4102_1.Parent
-      v4113_1 = slot_3
-      v4123_1 = v4113_1.Parent
-      v4124_1 = (v4112_1 ~= v4123_1)
-      ss_0 = v4124_1
+      v4112_1 = (cell_get(slot_2)).Parent
+      v4123_1 = slot_3.Parent
+      ss_0 = ((v4112_1 ~= v4123_1))
     end
-    v4139_1 = ss_0
-    if v4139_1 then
+    if ss_0 then
       slot_27 = true
     end
     v4085_1 = slot_27
     v4090_1 = not v4085_1
     ss_0 = v4090_1
     if v4090_1 then
-      v4180_1 = slot_3
-      v4190_1 = v4180_1.Parent
-      v4191_1 = not v4190_1
-      ss_0 = v4191_1
+      v4190_1 = slot_3.Parent
+      ss_0 = (not v4190_1)
     end
-    v4202_1 = ss_0
-    if v4202_1 then
+    if ss_0 then
       slot_27 = true
     end
     v4163_1 = slot_27
-    v4168_1 = not v4163_1
-    ss_0 = v4168_1
-    if v4168_1 then
-      v4243_1 = slot_3
-      v4253_1 = v4243_1.Sit
-      ss_0 = v4253_1
-    end
-    v4264_1 = ss_0
-    if v4264_1 then
+    if ((not v4163_1) and slot_3.Sit) then
       slot_27 = true
     end
     v4226_1 = slot_27
     v4231_1 = not v4226_1
     ss_0 = v4231_1
     if v4231_1 then
-      v4304_1 = env.tick
-      v4309_1 = v4304_1()
+      v4309_1 = env.tick()
       v4314_1 = slot_6
       v4319_1 = cell_get(upvalues[7])
       v4324_1 = (v4314_1 + v4319_1)
-      v4329_1 = (v4309_1 > v4324_1)
-      ss_0 = v4329_1
+      ss_0 = ((v4309_1 > v4324_1))
     end
-    v4344_1 = ss_0
-    if v4344_1 then
+    if ss_0 then
       slot_27 = true
     end
-    v4288_1 = slot_27
-    if v4288_1 then
+    if slot_27 then
       exit_266 = 29
       break
     end
@@ -138416,8 +134411,7 @@ protos[2525] = function(upvalues, argument_1, argument_2, argument_3)
   slot_0 = argument_1
   slot_1 = argument_2
   slot_2 = argument_3
-  ss_0 = slot_2 and (((slot_2 > 0.001)))
-  v77_1 = ss_0
+  v77_1 = (slot_2 and (((slot_2 > 0.001))))
   ss_0 = v77_1
   if v77_1 then
     v99_1 = env.CFrame.new
@@ -138455,7 +134449,7 @@ protos[2526] = function(upvalues)
 end
 
 protos[2527] = function(upvalues, argument_1)
-  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, temp_0, temp_2, v1008_1, v102_1, v1084_1, v1089_1, v1115_1, v1131_1, v1136_1, v1141_1, v1240_1
+  local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_9, ss_0, ss_2, ss_3, ss_4, ss_5, temp_0, temp_2, v1008_1, v102_1, v1084_1, v1089_1, v1115_1, v1131_1, v1136_1, v1141_1, v1240_1
   local v1245_1, v1256_1, v1288_1, v133_1, v148_1, v153_1, v1549_1, v1550_1, v179_1, v190_1, v206_1
   local v26_1, v287_1, v302_1, v60_1, v71_1
   local v899_1, v914_1, v92_1, v97_1, v993_1
@@ -138535,27 +134529,17 @@ protos[2527] = function(upvalues, argument_1)
                 temp_0.target = temp_2
                 slot_6 = (cell_get(upvalues[4])).movementBackend
                 temp_0 = (cell_get(upvalues[1]))
-                ss_1 = slot_6 and slot_6.isDesyncOn
-                ss_1 = ss_1 and ((slot_6.isDesyncOn()))
-                ss_1 = ss_1 or (false)
-                ss_0 = ss_1
-                temp_2 = ss_0
+                temp_2 = ((((slot_6 and slot_6.isDesyncOn) and ((slot_6.isDesyncOn()))) or (false)))
                 temp_0.wasDesync = temp_2
                 temp_0 = (cell_get(upvalues[1]))
-                ss_1 = slot_6 and slot_6.isInvisOn
-                ss_1 = ss_1 and ((slot_6.isInvisOn()))
-                ss_1 = ss_1 or (false)
-                ss_0 = ss_1
-                temp_2 = ss_0
+                temp_2 = ((((slot_6 and slot_6.isInvisOn) and ((slot_6.isInvisOn()))) or (false)))
                 temp_0.wasInvis = temp_2
-                ss_0 = (cell_get(upvalues[1])).wasDesync and slot_6.stopDesync
-                if ss_0 then
+                if ((cell_get(upvalues[1])).wasDesync and slot_6.stopDesync) then
                   v899_1 = env.pcall
                   v914_1 = slot_6.stopDesync
                   v899_1(v914_1)
                 end
-                ss_0 = (cell_get(upvalues[1])).wasInvis and slot_6.stopInvis
-                if ss_0 then
+                if ((cell_get(upvalues[1])).wasInvis and slot_6.stopInvis) then
                   v993_1 = env.pcall
                   v1008_1 = slot_6.stopInvis
                   v993_1(v1008_1)
@@ -138584,8 +134568,7 @@ protos[2527] = function(upvalues, argument_1)
                   temp_2 = (cell_get(slot_7))
                   temp_0.CameraSubject = temp_2
                 else
-                  ss_0 = (cell_get(slot_5)) and ((cell_get(slot_8)))
-                  if ss_0 then
+                  if ((cell_get(slot_5)) and ((cell_get(slot_8)))) then
                     temp_0 = (cell_get(upvalues[5]))
                     temp_2 = (cell_get(slot_5))
                     temp_0.CameraSubject = temp_2
@@ -138607,8 +134590,7 @@ protos[2527] = function(upvalues, argument_1)
                 ss_3 = inf
                 ss_4 = inf
                 ss_5 = inf
-                ss_0 = ss_2(ss_3, ss_4, ss_5)
-                temp_2 = ss_0
+                temp_2 = (ss_2(ss_3, ss_4, ss_5))
                 temp_0.MaxForce = temp_2
                 v1549_1 = env.task.spawn
                 v1550_1 = closure(2530, {capture_8(), capture_7(), capture_4(), upvalues[1], capture_9(), upvalues[8], upvalues[9], capture_2(), capture_1(), capture_5(), capture_3(), upvalues[2], upvalues[3], upvalues[10]})
@@ -138642,7 +134624,7 @@ protos[2529] = function(upvalues)
 end
 
 protos[2530] = function(upvalues)
-  local slot_0, slot_1, slot_2, ss_0, temp_0, temp_2, v122_1, v139_1, v189_1, v204_1, v219_1, v248_1, v279_1, v31_1, v310_1, v322_1, v327_1, v520_1
+  local slot_0, slot_1, slot_2, temp_0, temp_2, v122_1, v139_1, v189_1, v204_1, v219_1, v248_1, v279_1, v31_1, v310_1, v322_1, v327_1, v520_1
   local v567_1, v588_1, v593_1, v619_1, v676_1, v769_1, v770_1, v786_1, v802_1, v807_1
   local vm_frame_random = math.random(0, 2147483646)
   local function capture_0()
@@ -138659,8 +134641,7 @@ protos[2530] = function(upvalues)
   end
   slot_0 = new_cell()
   slot_0 = cell_set_or_create(slot_0, nil)
-  ss_0 = (cell_get(upvalues[1])) and ((cell_get(upvalues[2])))
-  if ss_0 then
+  if ((cell_get(upvalues[1])) and ((cell_get(upvalues[2])))) then
     v122_1 = (cell_get(upvalues[1])).CFrame.Position
     v139_1 = (cell_get(upvalues[2])).CFrame.Position
     if ((((v122_1 - v139_1)).Magnitude > 5)) then
@@ -138690,8 +134671,7 @@ protos[2530] = function(upvalues)
     temp_0 = (cell_get(upvalues[4]))
     temp_2 = nil
     temp_0.target = temp_2
-    ss_0 = (cell_get(upvalues[5])) and (cell_get(upvalues[5])).Parent
-    if ss_0 then
+    if ((cell_get(upvalues[5])) and (cell_get(upvalues[5])).Parent) then
       v567_1 = cell_get(upvalues[5])
       v567_1:Destroy()
     end
@@ -138707,8 +134687,7 @@ protos[2530] = function(upvalues)
     temp_0 = (cell_get(upvalues[4]))
     temp_2 = false
     temp_0.active = temp_2
-    ss_0 = (cell_get(upvalues[5])) and (cell_get(upvalues[5])).Parent
-    if ss_0 then
+    if ((cell_get(upvalues[5])) and (cell_get(upvalues[5])).Parent) then
       v676_1 = cell_get(upvalues[5])
       v676_1:Destroy()
     end
@@ -138776,8 +134755,7 @@ protos[2533] = function(upvalues)
       break
     end
     slot_1 = (cell_get(upvalues[2])).Character
-    ss_0 = slot_1 and (((cell_get(upvalues[3]))(slot_1)))
-    slot_2 = ss_0
+    slot_2 = (slot_1 and (((cell_get(upvalues[3]))(slot_1))))
     if (not slot_2) then
       break
     end
@@ -139283,8 +135261,7 @@ protos[2536] = function(upvalues)
         v291_1(v296_1, v301_1, 0.25)
         cell_get(upvalues[10]).Text = "STOP"
         temp_0 = (cell_get(upvalues[10]))
-        ss_0 = env.Color3.fromRGB((255), (245), (220))
-        temp_2 = ss_0
+        temp_2 = (env.Color3.fromRGB((255), (245), (220)))
         temp_0.TextColor3 = temp_2
         v503_1 = cell_get(upvalues[2])
         if (not v503_1) then
@@ -139592,8 +135569,7 @@ protos[2543] = function(upvalues)
       v435_1 = (cell_get(upvalues[4]))("fling_already")
       v450_1 = (cell_get(upvalues[1])).target
       ss_3 = v435_1
-      ss_4 = v450_1 and (cell_get(upvalues[1])).target.Name
-      ss_4 = ss_4 or ("?")
+      ss_4 = (v450_1 and (cell_get(upvalues[1])).target.Name) or ("?")
       v515_3 = (ss_3 .. ss_4)
       v530_1 = (cell_get(upvalues[5])).Warn
       ss_3 = v515_3
@@ -139651,8 +135627,7 @@ protos[2545] = function(upvalues, argument_1)
   end
   if not ss_0 then
     slot_2 = ((cell_get(upvalues[2]))(slot_0))
-    ss_0 = (cell_get(upvalues[3]))[slot_2] or (cell_get(upvalues[3])).Unknown
-    slot_3 = ss_0
+    slot_3 = ((cell_get(upvalues[3]))[slot_2] or (cell_get(upvalues[3])).Unknown)
     slot_4 = ((cell_get(upvalues[4]))(slot_2))
     if ((slot_1.roleLabel.Text ~= slot_4)) then
       temp_0 = slot_1.roleLabel
@@ -139760,8 +135735,7 @@ protos[2546] = function(upvalues)
     temp_2 = __loopKey_2546_4
     slot_8 = __loopKey_2546_4
     slot_10 = (cell_get(upvalues[1]))[__loopValue_2546_4]
-    ss_0 = slot_10 and slot_10.row.Parent
-    if ss_0 then
+    if (slot_10 and slot_10.row.Parent) then
       temp_5 = slot_10.row
       temp_6 = "LayoutOrder"
       temp_7 = slot_8
@@ -139848,8 +135822,7 @@ protos[2548] = function(upvalues)
       v376_1(v391_1)
     end
   end
-  ss_0 = (cell_get(slot_1)) or ((cell_get(slot_2)))
-  if ss_0 then
+  if ((cell_get(slot_1)) or ((cell_get(slot_2)))) then
     v443_1 = env.task.delay
     v449_1 = closure(2549, {upvalues[4], capture_1(), capture_0(), capture_2()})
     v443_1(0.8, v449_1)
@@ -139858,18 +135831,15 @@ protos[2548] = function(upvalues)
 end
 
 protos[2549] = function(upvalues)
-  local slot_0, slot_1, slot_2, slot_3, ss_0, temp_0, temp_1, temp_2, temp_3, v11_1
+  local slot_0, slot_1, slot_2, slot_3, temp_0, temp_1, temp_2, temp_3, v11_1
   local v415_1, v420_1, v562_1, v676_1, v691_1, v765_1, v780_1
   local vm_frame_random = math.random(0, 2147483646)
   v11_1 = (cell_get(upvalues[1])).Character
   if not ((not v11_1)) then
     slot_0 = (cell_get(upvalues[1])).Character
     slot_1 = (slot_0:FindFirstChild("HumanoidRootPart"))
-    ss_0 = slot_1 and slot_1.CFrame
-    ss_0 = ss_0 or (nil)
-    slot_2 = ss_0
-    ss_0 = slot_1 and slot_2
-    if ss_0 then
+    slot_2 = ((slot_1 and slot_1.CFrame) or (nil))
+    if (slot_1 and slot_2) then
       temp_0, temp_1, temp_2, temp_3 = 1, 5, 1, 1
       for __numericIndex_2549_0 = temp_3, temp_1, 1 do
         temp_3 = __numericIndex_2549_0
@@ -139885,16 +135855,12 @@ protos[2549] = function(upvalues)
         temp_3 = ((temp_3 + temp_2))
       end
     end
-    ss_0 = (cell_get(upvalues[2])) and ((cell_get(upvalues[3])))
-    ss_0 = ss_0 and (cell_get(upvalues[3])).startDesync
-    if ss_0 then
+    if (((cell_get(upvalues[2])) and ((cell_get(upvalues[3])))) and (cell_get(upvalues[3])).startDesync) then
       v676_1 = env.pcall
       v691_1 = (cell_get(upvalues[3])).startDesync
       v676_1(v691_1)
     end
-    ss_0 = (cell_get(upvalues[4])) and ((cell_get(upvalues[3])))
-    ss_0 = ss_0 and (cell_get(upvalues[3])).startInvis
-    if ss_0 then
+    if (((cell_get(upvalues[4])) and ((cell_get(upvalues[3])))) and (cell_get(upvalues[3])).startInvis) then
       v765_1 = env.pcall
       v780_1 = (cell_get(upvalues[3])).startInvis
       v765_1(v780_1)
@@ -140155,19 +136121,15 @@ protos[2564] = function(upvalues)
 end
 
 protos[2565] = function(upvalues, argument_1)
-  local slot_0, ss_0, v156_1, v177_1, v263_1, v284_1
+  local slot_0, v156_1, v177_1, v263_1, v284_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
-  ss_0 = ((slot_0 == "emotes")) and (cell_get(upvalues[1])).feEmoteManager
-  ss_0 = ss_0 and (cell_get(upvalues[1])).feEmoteManager.ensureLoaded
-  if ss_0 then
+  if ((((slot_0 == "emotes")) and (cell_get(upvalues[1])).feEmoteManager) and (cell_get(upvalues[1])).feEmoteManager.ensureLoaded) then
     v156_1 = env.pcall
     v177_1 = (cell_get(upvalues[1])).feEmoteManager.ensureLoaded
     v156_1(v177_1)
   end
-  ss_0 = ((slot_0 == "packs")) and (cell_get(upvalues[1])).feAnimsSearcher
-  ss_0 = ss_0 and (cell_get(upvalues[1])).feAnimsSearcher.ensureLoaded
-  if ss_0 then
+  if ((((slot_0 == "packs")) and (cell_get(upvalues[1])).feAnimsSearcher) and (cell_get(upvalues[1])).feAnimsSearcher.ensureLoaded) then
     v263_1 = env.pcall
     v284_1 = (cell_get(upvalues[1])).feAnimsSearcher.ensureLoaded
     v263_1(v284_1)
@@ -140202,15 +136164,12 @@ protos[2566] = function(upvalues, argument_1)
       v328_1 = cell_get(upvalues[4])
       v328_1(slot_0)
     end
-    ss_0 = ((slot_0 == "emotes")) and (cell_get(upvalues[5])).feEmoteManager
-    if ss_0 then
+    if (((slot_0 == "emotes")) and (cell_get(upvalues[5])).feEmoteManager) then
       v415_1 = env.task.defer
       v416_1 = closure(2567, {upvalues[5]})
       v415_1(v416_1)
     end
-    ss_0 = ((slot_0 == "packs")) and (cell_get(upvalues[5])).feAnimsSearcher
-    ss_0 = ss_0 and (cell_get(upvalues[5])).feAnimsSearcher.rebuild
-    if ss_0 then
+    if ((((slot_0 == "packs")) and (cell_get(upvalues[5])).feAnimsSearcher) and (cell_get(upvalues[5])).feAnimsSearcher.rebuild) then
       v555_1 = env.task.defer
       v556_1 = closure(2568, {upvalues[5]})
       v555_1(v556_1)
@@ -140238,11 +136197,9 @@ protos[2566] = function(upvalues, argument_1)
       ss_5 = v733_1
       ss_6 = v738_1
       ss_7 = "BackgroundTransparency"
-      ss_8 = slot_5 and (0.3)
-      ss_8 = ss_8 or (0.5)
+      ss_8 = (slot_5 and (0.3)) or (0.5)
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v817_1 = ss_1
+      v817_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v817_1.Play
       ss_2 = v817_1
       ss_1(ss_2)
@@ -140257,11 +136214,9 @@ protos[2566] = function(upvalues, argument_1)
       ss_5 = v867_1
       ss_6 = v872_1
       ss_7 = "BackgroundTransparency"
-      ss_8 = slot_5 and (0.35)
-      ss_8 = ss_8 or (0.85)
+      ss_8 = (slot_5 and (0.35)) or (0.85)
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v941_1 = ss_1
+      v941_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v941_1.Play
       ss_2 = v941_1
       ss_1(ss_2)
@@ -140284,8 +136239,7 @@ protos[2566] = function(upvalues, argument_1)
       ss_7 = 1
       ss_8 = v1113_1
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-      ss_0 = ss_2(ss_3)
-      temp_7 = ss_0
+      temp_7 = (ss_2(ss_3))
       temp_5.Color = temp_7
       temp_5 = slot_4.tabFillGrad
       v1182_1 = slot_5
@@ -140324,8 +136278,7 @@ protos[2566] = function(upvalues, argument_1)
         ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
         ss_1 = ss_2(ss_3)
       end
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = ss_1
       temp_5.Transparency = temp_7
       v1487_1 = cell_get(upvalues[7])
       v1492_1 = v1487_1.Create
@@ -140338,19 +136291,15 @@ protos[2566] = function(upvalues, argument_1)
       ss_5 = v1525_1
       ss_6 = v1530_1
       ss_7 = "Color"
-      ss_8 = slot_5 and (cell_get(upvalues[8])).colors.accent
-      ss_8 = ss_8 or (cell_get(upvalues[8])).colors.stroke
+      ss_8 = (slot_5 and (cell_get(upvalues[8])).colors.accent) or (cell_get(upvalues[8])).colors.stroke
       ss_6[ss_7] = ss_8
       ss_7 = "Transparency"
-      ss_8 = slot_5 and (0.15)
-      ss_8 = ss_8 or (0.6)
+      ss_8 = (slot_5 and (0.15)) or (0.6)
       ss_6[ss_7] = ss_8
       ss_7 = "Thickness"
-      ss_8 = slot_5 and (1.5)
-      ss_8 = ss_8 or (1)
+      ss_8 = (slot_5 and (1.5)) or (1)
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v1749_1 = ss_1
+      v1749_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v1749_1.Play
       ss_2 = v1749_1
       ss_1(ss_2)
@@ -140365,11 +136314,9 @@ protos[2566] = function(upvalues, argument_1)
       ss_5 = v1799_1
       ss_6 = v1804_1
       ss_7 = "TextColor3"
-      ss_8 = slot_5 and ((env.Color3.fromRGB(255, 255, 255)))
-      ss_8 = ss_8 or (cell_get(upvalues[8])).colors.muted
+      ss_8 = (slot_5 and ((env.Color3.fromRGB(255, 255, 255)))) or (cell_get(upvalues[8])).colors.muted
       ss_6[ss_7] = ss_8
-      ss_1 = ss_2(ss_3, ss_4, ss_5, ss_6)
-      v1912_1 = ss_1
+      v1912_1 = (ss_2(ss_3, ss_4, ss_5, ss_6))
       ss_1 = v1912_1.Play
       ss_2 = v1912_1
       ss_1(ss_2)
@@ -140530,20 +136477,13 @@ protos[2573] = function(upvalues)
     ss_2 = v395_1
     ss_3 = v396_1
     ss_3 = set_list_values(ss_3, 3, v497_1((1), v519_1))
-    ss_0 = ss_2(ss_3)
-    temp_7 = ss_0
+    temp_7 = (ss_2(ss_3))
     temp_5.Color = temp_7
     temp_5 = slot_1.stroke
-    ss_1 = slot_2 and (cell_get(upvalues[3])).colors.accent
-    ss_1 = ss_1 or (cell_get(upvalues[3])).colors.stroke
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((slot_2 and (cell_get(upvalues[3])).colors.accent) or (cell_get(upvalues[3])).colors.stroke))
     temp_5.Color = temp_7
     temp_5 = slot_1.text
-    ss_1 = slot_2 and ((env.Color3.fromRGB(255, 255, 255)))
-    ss_1 = ss_1 or (cell_get(upvalues[3])).colors.muted
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = (((slot_2 and ((env.Color3.fromRGB(255, 255, 255)))) or (cell_get(upvalues[3])).colors.muted))
     temp_5.TextColor3 = temp_7
   end
   return
@@ -141079,12 +137019,8 @@ end
 protos[2576] = function(upvalues)
   local slot_0, slot_1, ss_0
   local vm_frame_random = math.random(0, 2147483646)
-  ss_0 = (cell_get(upvalues[1])).flingState and (cell_get(upvalues[1])).flingState.active
-  ss_0 = ss_0 or (false)
-  slot_0 = ss_0
-  ss_0 = (cell_get(upvalues[1])).movementBackend and (cell_get(upvalues[1])).movementBackend.isFlyActive
-  ss_0 = ss_0 and (((cell_get(upvalues[1])).movementBackend.isFlyActive()))
-  ss_0 = ss_0 or (false)
+  slot_0 = (((cell_get(upvalues[1])).flingState and (cell_get(upvalues[1])).flingState.active) or (false))
+  ss_0 = (((cell_get(upvalues[1])).movementBackend and (cell_get(upvalues[1])).movementBackend.isFlyActive) and (((cell_get(upvalues[1])).movementBackend.isFlyActive()))) or (false)
   return (slot_0 or ss_0)
 end
 
@@ -141170,8 +137106,7 @@ protos[2580] = function(upvalues)
     slot_0 = __loopKey_2580_1
     slot_1 = __loopValue_2580_1
     v198_1 = cell_get(upvalues[3])
-    ss_0 = ((slot_1 ~= v198_1)) and slot_1.Character
-    if ss_0 then
+    if (((slot_1 ~= v198_1)) and slot_1.Character) then
       v379_1 = cell_get(upvalues[4])
       v394_1 = slot_1.Character
       v379_1(v394_1)
@@ -141314,8 +137249,7 @@ protos[2584] = function(upvalues)
     for __numericIndex_2584_0 = temp_3, temp_1, 1 do
       temp_3 = __numericIndex_2584_0
       slot_6 = (cell_get(upvalues[3]))[temp_3]
-      ss_0 = slot_6.Parent and slot_6.CanCollide
-      if ss_0 then
+      if (slot_6.Parent and slot_6.CanCollide) then
         temp_4 = slot_6
         temp_5 = "CanCollide"
         temp_6 = false
@@ -141468,8 +137402,7 @@ protos[2591] = function(upvalues)
         v275_1 = slot_1.char
         slot_3 = slot_1.primaryPart
         slot_2 = v275_1
-        ss_0 = slot_2 and slot_2.Parent
-        v364_1 = ss_0
+        v364_1 = (slot_2 and slot_2.Parent)
         ss_0 = v364_1
         if v364_1 then
           v376_1 = slot_2
@@ -141526,8 +137459,7 @@ protos[2591] = function(upvalues)
             ss_3 = 0
             ss_4 = 0
             ss_5 = 0
-            ss_0 = ss_2(ss_3, ss_4, ss_5)
-            temp_7 = ss_0
+            temp_7 = (ss_2(ss_3, ss_4, ss_5))
             temp_5.CustomPhysicalProperties = temp_7
           end
         end
@@ -141593,19 +137525,17 @@ protos[2593] = function(upvalues)
 end
 
 protos[2594] = function(upvalues)
-  local slot_0, slot_1, slot_2, slot_3, ss_0, temp_0, temp_2, v145_1
+  local slot_0, slot_1, slot_2, slot_3, temp_0, temp_2, v145_1
   local v541_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = (cell_get(upvalues[1])).Character
   if not ((not slot_0)) then
-    ss_0 = slot_0.PrimaryPart or ((slot_0:FindFirstChild("HumanoidRootPart")))
-    slot_1 = ss_0
+    slot_1 = (slot_0.PrimaryPart or ((slot_0:FindFirstChild("HumanoidRootPart"))))
     v145_1 = not slot_1
     if not v145_1 then
       slot_2 = slot_1.AssemblyLinearVelocity.Magnitude
       slot_3 = slot_1.AssemblyAngularVelocity.Magnitude
-      ss_0 = ((slot_2 > 250)) or (((slot_3 > 250)))
-      if ss_0 then
+      if (((slot_2 > 250)) or (((slot_3 > 250)))) then
         slot_1.AssemblyAngularVelocity = env.Vector3.zero
         temp_0 = slot_1
         temp_2 = env.Vector3.zero
@@ -141616,8 +137546,7 @@ protos[2594] = function(upvalues)
           temp_0.CFrame = temp_2
         end
       else
-        ss_0 = ((slot_2 < 50)) and (((slot_3 < 50)))
-        if ss_0 then
+        if (((slot_2 < 50)) and (((slot_3 < 50)))) then
           v541_1 = slot_1.CFrame
           upvalues[2] = cell_set_or_create(upvalues[2], v541_1)
         end
@@ -141674,13 +137603,11 @@ protos[2597] = function(upvalues, argument_1)
 end
 
 protos[2598] = function(upvalues, argument_1)
-  local slot_0, ss_0, temp_0, temp_2, v17_1, v283_1
+  local slot_0, temp_0, temp_2, v17_1, v283_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   v17_1 = (cell_get(upvalues[1]))("af_with_collision")
-  ss_0 = ((slot_0 == v17_1)) or (((slot_0 == "With collision")))
-  ss_0 = ss_0 or (((slot_0 == "С коллизиями")))
-  if ss_0 then
+  if ((((slot_0 == v17_1)) or (((slot_0 == "With collision")))) or (((slot_0 == "С коллизиями")))) then
     temp_0 = (cell_get(upvalues[2]))
     temp_2 = "With collision"
     temp_0.Mode = temp_2
@@ -141852,12 +137779,10 @@ protos[2606] = function(upvalues)
 end
 
 protos[2607] = function(upvalues)
-  local slot_0, ss_1
+  local slot_0
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = env.workspace.CurrentCamera
-  ss_1 = slot_0 and slot_0.ViewportSize
-  ss_1 = ss_1 or ((env.Vector2.new(1280, 720)))
-  return ss_1
+  return ((slot_0 and slot_0.ViewportSize) or ((env.Vector2.new(1280, 720))))
 end
 
 protos[2608] = function(upvalues)
@@ -141873,8 +137798,7 @@ protos[2608] = function(upvalues)
     ss_1 = v54_1
     ss_2 = 80
     ss_3 = v70_1 or (220)
-    ss_0 = ss_1(ss_2, ss_3)
-    slot_1 = ss_0
+    slot_1 = (ss_1(ss_2, ss_3))
     v163_1 = env.math.max
     v179_1 = (cell_get(upvalues[3])).Height
     ss_1 = v163_1
@@ -141896,8 +137820,7 @@ protos[2608] = function(upvalues)
     ss_3 = v410_1 or (0)
     ss_4 = (-slot_3)
     ss_5 = slot_3
-    ss_0 = ss_2(ss_3, ss_4, ss_5)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5))
     temp_0.PX = temp_2
     temp_0 = (cell_get(upvalues[3]))
     v511_1 = env.math.clamp
@@ -141919,8 +137842,7 @@ protos[2608] = function(upvalues)
     ss_3 = 0.5
     ss_4 = v657_1
     ss_5 = 0
-    ss_0 = ss_2(ss_3, ss_4, ss_5, v678_1(v689_1))
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, v678_1(v689_1)))
     temp_0.Position = temp_2
   end
   return
@@ -142475,8 +138397,7 @@ protos[2612] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_6 = 1
   ss_7 = v993_1
   ss_2 = set_list_values(ss_2, 3, ss_5(ss_6, ss_7))
-  ss_0 = ss_1(ss_2)
-  slot_5 = ss_0
+  slot_5 = (ss_1(ss_2))
   cell_get(upvalues[9]).Color = slot_5
   cell_get(upvalues[10]).Color = slot_5
   cell_get(upvalues[11]).Color = slot_3.accent
@@ -142542,10 +138463,7 @@ protos[2613] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     slot_8 = nil
     slot_8 = v534_1
     temp_0 = (cell_get(upvalues[5]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 92, 92)))
-    ss_1 = ss_1 or slot_8.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 92, 92)))) or slot_8.accent))
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[6]))
     v703_1 = slot_3
@@ -142610,20 +138528,13 @@ protos[2613] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
       ss_1 = ss_2(ss_3)
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[7]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 92, 92)))
-    ss_1 = ss_1 or slot_8.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 92, 92)))) or slot_8.accent))
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[8]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 92, 92)))
-    ss_1 = ss_1 or slot_8.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 92, 92)))) or slot_8.accent))
     temp_0.BackgroundColor3 = temp_2
     temp_0 = (cell_get(upvalues[9]))
     v1400_1 = slot_3
@@ -142688,20 +138599,14 @@ protos[2613] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
       ss_1 = ss_2(ss_3)
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[10]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 240, 240)))
-    ss_1 = ss_1 or slot_8.text
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 240, 240)))) or slot_8.text))
     temp_0.TextColor3 = temp_2
   end
   temp_0 = (cell_get(upvalues[5]))
-  ss_1 = (cell_get(upvalues[2])).Glow and (1.8)
-  ss_1 = ss_1 or (1.1)
-  ss_0 = ss_1
+  ss_0 = (((cell_get(upvalues[2])).Glow and (1.8)) or (1.1))
   temp_0.Thickness = ss_0
   temp_0 = (cell_get(upvalues[5]))
   v2053_1 = (1 - slot_6)
@@ -142716,8 +138621,7 @@ protos[2613] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_2 = ((1 - v2212_1))
   temp_0.BackgroundTransparency = temp_2
   temp_0 = (cell_get(upvalues[8]))
-  ss_1 = ((slot_0 > 0.01)) and (((slot_2 > 0.001)))
-  ss_0 = ss_1
+  ss_0 = (((slot_0 > 0.01)) and (((slot_2 > 0.001))))
   temp_0.Visible = ss_0
   temp_0 = (cell_get(upvalues[8]))
   v2378_1 = env.UDim2.new
@@ -142733,22 +138637,17 @@ protos[2613] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = v2442_1
   ss_5 = 1
   ss_6 = v2463_1
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Size = temp_2
   temp_0 = (cell_get(upvalues[12]))
-  ss_1 = (((cell_get(upvalues[2])).Water == true)) and (((slot_0 > 0.02)))
-  ss_0 = ss_1
+  ss_0 = ((((cell_get(upvalues[2])).Water == true)) and (((slot_0 > 0.02))))
   temp_0.Visible = ss_0
   temp_0 = (cell_get(upvalues[12]))
   v2639_1 = (slot_0 * 0.28)
   temp_2 = ((1 - v2639_1))
   temp_0.BackgroundTransparency = temp_2
   temp_0 = (cell_get(upvalues[13]))
-  ss_1 = (((cell_get(upvalues[2])).Water == true)) and (((slot_0 > 0.02)))
-  ss_1 = ss_1 and (((slot_2 > 0.001)))
-  ss_1 = ss_1 and (((slot_2 < 0.995)))
-  ss_0 = ss_1
+  ss_0 = ((((((cell_get(upvalues[2])).Water == true)) and (((slot_0 > 0.02)))) and (((slot_2 > 0.001)))) and (((slot_2 < 0.995))))
   temp_0.Visible = ss_0
   temp_0 = (cell_get(upvalues[13]))
   v2887_1 = (slot_0 * 0.45)
@@ -142769,8 +138668,7 @@ protos[2613] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = slot_5
   ss_3 = v3218_1 or ((-(1)))
   ss_2 = ((ss_2 - ss_3))
-  ss_0 = ss_1(ss_2)
-  if ((ss_0 > 0.002)) then
+  if (((ss_1(ss_2)) > 0.002)) then
     cell_get(upvalues[3]).bgA = slot_5
     v3352_1 = (1 - 0.25)
     v3357_1 = (slot_5 * v3352_1)
@@ -142801,8 +138699,7 @@ protos[2613] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     ss_7 = 1
     ss_8 = slot_11
     ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.Transparency = temp_2
   end
   return
@@ -142850,8 +138747,7 @@ protos[2614] = function(upvalues, argument_1)
     ss_2 = v401_1
     ss_3 = v432_1
     ss_4 = 0
-    ss_0 = ss_2(ss_3, ss_4, (0), (0))
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, (0), (0)))
     temp_0.Position = temp_2
   else
     temp_0 = (cell_get(upvalues[2]))
@@ -142870,8 +138766,7 @@ protos[2614] = function(upvalues, argument_1)
     ss_2 = env.Vector2.new
     ss_3 = 0
     ss_4 = 0
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.Offset = temp_2
   end
   return
@@ -143241,8 +139136,7 @@ protos[2618] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_0 = (cell_get(upvalues[1]))
   temp_2 = ((1 - slot_5))
   temp_0.BackgroundTransparency = temp_2
-  ss_0 = (cell_get(upvalues[2])).Drag and (0.05)
-  v197_1 = ss_0
+  v197_1 = ((cell_get(upvalues[2])).Drag and (0.05))
   ss_0 = v197_1
   if not v197_1 then
     v218_1 = (cell_get(upvalues[2])).Glow
@@ -143289,8 +139183,7 @@ protos[2618] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3 = ss_3 or (0.6)
   v845_3 = (ss_2 * ss_3)
-  ss_1 = ((ss_1 - v845_3))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 - v845_3)))
   temp_0.Transparency = ss_0
   temp_0 = (cell_get(upvalues[9]))
   v917_1 = (slot_0 * 0.5)
@@ -143307,16 +139200,10 @@ protos[2618] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     slot_7 = nil
     slot_7 = v1112_1
     temp_0 = (cell_get(upvalues[3]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 92, 92)))
-    ss_1 = ss_1 or slot_7.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 92, 92)))) or slot_7.accent))
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[6]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 80, 80)))
-    ss_1 = ss_1 or slot_7.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 80, 80)))) or slot_7.accent))
     temp_0.BackgroundColor3 = temp_2
     temp_0 = (cell_get(upvalues[11]))
     v1418_1 = slot_3
@@ -143380,33 +139267,23 @@ protos[2618] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
       ss_1 = ss_2(ss_3)
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[8]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 92, 92)))
-    ss_1 = ss_1 or slot_7.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 92, 92)))) or slot_7.accent))
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[9]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 240, 240)))
-    ss_1 = ss_1 or slot_7.text
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 240, 240)))) or slot_7.text))
     temp_0.TextColor3 = temp_2
     temp_0 = (cell_get(upvalues[9]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 120, 120)))
-    ss_1 = ss_1 or slot_7.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 120, 120)))) or slot_7.accent))
     temp_0.TextStrokeColor3 = temp_2
   end
   return
 end
 
 protos[2619] = function(upvalues, argument_1)
-  local slot_0, ss_0, ss_2, ss_3, ss_4, temp_0, temp_2, v58_1, v70_1, v81_1, v96_1
+  local slot_0, ss_2, ss_3, ss_4, temp_0, temp_2, v58_1, v70_1, v81_1, v96_1
   math.random(0, 2147483646)
   slot_0 = argument_1
   if (cell_get(upvalues[1])).Water then
@@ -143418,16 +139295,14 @@ protos[2619] = function(upvalues, argument_1)
     ss_2 = v58_1
     ss_3 = v96_1
     ss_4 = 0
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.Offset = temp_2
   else
     temp_0 = (cell_get(upvalues[2]))
     ss_2 = env.Vector2.new
     ss_3 = 0
     ss_4 = 0
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.Offset = temp_2
   end
   return
@@ -143740,8 +139615,7 @@ protos[2622] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = env.UDim.new
   ss_3 = 0
   ss_4 = slot_2
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.CornerRadius = temp_2
   temp_0 = (cell_get(upvalues[3]))
   v301_1 = env.UDim.new
@@ -143752,8 +139626,7 @@ protos[2622] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_3 = 0
   ss_5 = v318_1
   ss_6 = v329_1
-  ss_0 = ss_2(ss_3, ss_5(ss_6, (0), v349_1))
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_5(ss_6, (0), v349_1)))
   temp_0.CornerRadius = temp_2
   slot_4 = ((slot_0 >= 150))
   temp_0 = (cell_get(upvalues[4]))
@@ -143762,12 +139635,10 @@ protos[2622] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_0 = (cell_get(upvalues[5]))
   ss_2 = env.UDim2.new
   ss_3 = 1
-  ss_4 = slot_4 and ((-(86)))
-  ss_4 = ss_4 or ((-(24)))
+  ss_4 = (slot_4 and ((-(86)))) or ((-(24)))
   ss_5 = 1
   ss_6 = 0
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Size = temp_2
   temp_0 = (cell_get(upvalues[5]))
   v672_1 = env.math.clamp
@@ -143778,8 +139649,7 @@ protos[2622] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_3 = v700_1
   ss_4 = 11
   ss_5 = 34
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.TextSize = temp_2
   v757_1 = env.math.clamp
   v769_1 = env.math.floor
@@ -143792,8 +139662,7 @@ protos[2622] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = 51
   ss_5 = 0
   ss_6 = slot_5
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Size = temp_2
   temp_0 = (cell_get(upvalues[4]))
   temp_1 = "Position"
@@ -143805,8 +139674,7 @@ protos[2622] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = v942_1
   ss_5 = 0.5
   ss_6 = v959_1
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Position = temp_2
   v997_1 = env.ipairs
   v1002_1 = cell_get(upvalues[6])
@@ -143836,7 +139704,7 @@ protos[2622] = function(upvalues, argument_1, argument_2, argument_3, argument_4
 end
 
 protos[2623] = function(upvalues, argument_1, argument_2, argument_3, argument_4, argument_5)
-  local v1000_1, v12_1, v1391_1, v1451_1, v1487_1, v166_1, v1694_1, v1714_1, v1740_1, v228_1, v249_1
+  local v1000_1, v12_1, v1391_1, v1451_1, v166_1, v1694_1, v1714_1, v1740_1, v228_1, v249_1
   local v265_3, v28_1, v337_1, v33_1, v471_1, v48_1, v543_1, v652_1, v658_1, v663_1, v674_1, v679_1, v709_1, v710_1, v741_1, v808_1
   local v850_1, v855_1
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8, slot_10, slot_11, ss_0, ss_1, ss_2, ss_3, temp_0, temp_1, temp_2, temp_5, temp_7
@@ -143859,8 +139727,7 @@ protos[2623] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   v166_1 = (cell_get(upvalues[3])).Drag
   ss_1 = 1
   ss_2 = slot_0
-  ss_3 = v166_1 and (0.05)
-  v228_1 = ss_3
+  v228_1 = (v166_1 and (0.05))
   ss_3 = v228_1
   if not v228_1 then
     v249_1 = (cell_get(upvalues[3])).Glow
@@ -143872,9 +139739,7 @@ protos[2623] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     ss_3 = ss_3 or (0.62)
   end
   v265_3 = (ss_2 * ss_3)
-  ss_1 = ((ss_1 - v265_3))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 - v265_3))))
   temp_0.Transparency = temp_2
   temp_0 = (cell_get(upvalues[4]))
   v337_1 = (slot_0 * 0.5)
@@ -143918,17 +139783,11 @@ protos[2623] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     slot_8 = nil
     slot_8 = v1000_1
     temp_0 = (cell_get(upvalues[2]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 92, 92)))
-    ss_1 = ss_1 or slot_8.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 92, 92)))) or slot_8.accent))
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[6]))
     temp_1 = "TextColor3"
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 240, 240)))
-    ss_1 = ss_1 or slot_8.text
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 240, 240)))) or slot_8.text))
     temp_0.TextColor3 = temp_2
   end
   v850_1 = env.ipairs
@@ -143944,15 +139803,7 @@ protos[2623] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     slot_11 = v1391_1
     if slot_7 then
       temp_5 = slot_10
-      v1487_1 = slot_11
-      ss_1 = v1487_1
-      if v1487_1 then
-        ss_1 = slot_3 and ((env.Color3.fromRGB(255, 80, 80)))
-        ss_1 = ss_1 or (cell_get(upvalues[9])).colors.accent
-      end
-      ss_1 = ss_1 or (cell_get(upvalues[9])).colors.muted
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = (((slot_11 and ((slot_3 and ((env.Color3.fromRGB(255, 80, 80)))) or (cell_get(upvalues[9])).colors.accent)) or (cell_get(upvalues[9])).colors.muted))
       temp_5.BackgroundColor3 = temp_7
     end
     temp_5 = slot_10
@@ -143968,8 +139819,7 @@ protos[2623] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       v1740_1 = (slot_0 * 0.28)
       ss_1 = ((1 - v1740_1))
     end
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = ss_1
     temp_5.BackgroundTransparency = temp_7
   end
   return
@@ -144239,16 +140089,10 @@ protos[2628] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     temp_0.low = temp_2
     slot_5 = (cell_get(upvalues[5])).colors
     temp_0 = (cell_get(upvalues[1]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 240, 240)))
-    ss_1 = ss_1 or slot_5.text
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 240, 240)))) or slot_5.text))
     temp_0.TextColor3 = temp_2
     temp_0 = (cell_get(upvalues[3]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 80, 80)))
-    ss_1 = ss_1 or slot_5.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 80, 80)))) or slot_5.accent))
     temp_0.BackgroundColor3 = temp_2
     temp_0 = (cell_get(upvalues[6]))
     v839_1 = slot_3
@@ -144298,15 +140142,14 @@ protos[2628] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       ss_3 = set_list_values(ss_3, 2, ss_6(ss_7, ss_8))
       ss_1 = ss_2(ss_3)
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Color = temp_2
   end
   return
 end
 
 protos[2629] = function(upvalues, argument_1)
-  local slot_0, ss_0, ss_2, ss_3, ss_4, temp_0, temp_2, v58_1, v70_1, v81_1, v96_1
+  local slot_0, ss_2, ss_3, ss_4, temp_0, temp_2, v58_1, v70_1, v81_1, v96_1
   math.random(0, 2147483646)
   slot_0 = argument_1
   if (cell_get(upvalues[1])).Water then
@@ -144318,16 +140161,14 @@ protos[2629] = function(upvalues, argument_1)
     ss_2 = v58_1
     ss_3 = v96_1
     ss_4 = 0
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.Offset = temp_2
   else
     temp_0 = (cell_get(upvalues[2]))
     ss_2 = env.Vector2.new
     ss_3 = 0
     ss_4 = 0
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.Offset = temp_2
   end
   return
@@ -144504,8 +140345,7 @@ protos[2632] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = env.UDim.new
   ss_3 = 1
   ss_4 = 0
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.CornerRadius = temp_2
   temp_0 = (cell_get(upvalues[3]))
   temp_1 = "TextSize"
@@ -144517,8 +140357,7 @@ protos[2632] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_3 = v329_1
   ss_4 = 12
   ss_5 = 28
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.TextSize = temp_2
   v386_1 = env.math.max
   v412_1 = (((slot_0 / 2)) - 6)
@@ -144592,7 +140431,7 @@ protos[2633] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   local slot_0, slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_9, slot_10, slot_11, ss_0, ss_1, ss_2, temp_0, temp_1, temp_2, temp_5, temp_7, v1004_1, v1009_1, v1014_1, v1034_1, v1060_1
   local v12_1, v161_1, v270_1, v276_1, v28_1, v281_1
   local v292_1, v327_1, v328_1, v33_1, v359_1, v436_1, v441_1
-  local v751_1, v787_1
+  local v751_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   slot_1 = argument_2
@@ -144644,15 +140483,7 @@ protos[2633] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     slot_10 = ((__loopKey_2633_0 <= slot_6))
     if slot_7 then
       temp_5 = slot_9
-      v787_1 = slot_10
-      ss_1 = v787_1
-      if v787_1 then
-        ss_1 = slot_3 and ((env.Color3.fromRGB(255, 80, 80)))
-        ss_1 = ss_1 or (cell_get(upvalues[5])).colors.accent
-      end
-      ss_1 = ss_1 or (cell_get(upvalues[5])).colors.muted
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = (((slot_10 and ((slot_3 and ((env.Color3.fromRGB(255, 80, 80)))) or (cell_get(upvalues[5])).colors.accent)) or (cell_get(upvalues[5])).colors.muted))
       temp_5.BackgroundColor3 = temp_7
     end
     temp_5 = slot_9
@@ -144670,24 +140501,17 @@ protos[2633] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       v1060_1 = (slot_0 * 0.25)
       ss_1 = ((1 - v1060_1))
     end
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = ss_1
     temp_5.BackgroundTransparency = temp_7
   end
   if slot_7 then
     slot_11 = (cell_get(upvalues[5])).colors
     temp_0 = (cell_get(upvalues[2]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 240, 240)))
-    ss_1 = ss_1 or slot_11.text
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 240, 240)))) or slot_11.text))
     temp_0.TextColor3 = temp_2
     temp_0 = (cell_get(upvalues[2]))
     temp_1 = "TextStrokeColor3"
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 120, 120)))
-    ss_1 = ss_1 or slot_11.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 120, 120)))) or slot_11.accent))
     temp_0.TextStrokeColor3 = temp_2
   end
   return
@@ -145036,8 +140860,7 @@ protos[2638] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_1 = "BackgroundTransparency"
   temp_2 = ((1 - slot_5))
   temp_0.BackgroundTransparency = temp_2
-  ss_0 = (cell_get(upvalues[2])).Drag and (0.05)
-  v197_1 = ss_0
+  v197_1 = ((cell_get(upvalues[2])).Drag and (0.05))
   ss_0 = v197_1
   if not v197_1 then
     v218_1 = (cell_get(upvalues[2])).Glow
@@ -145064,9 +140887,7 @@ protos[2638] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3 = ss_3 or (0.9)
   v507_3 = (ss_2 * ss_3)
-  ss_1 = ((ss_1 - v507_3))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 - v507_3))))
   temp_0.Transparency = temp_2
   temp_0 = (cell_get(upvalues[5]))
   v579_1 = (slot_0 * 0.7)
@@ -145082,12 +140903,8 @@ protos[2638] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     temp_1 = "low"
     temp_2 = slot_3
     temp_0.low = temp_2
-    ss_0 = slot_3 and ((env.Color3.fromRGB(255, 92, 92)))
-    ss_0 = ss_0 or (cell_get(upvalues[7])).colors.accent
-    slot_7 = ss_0
-    ss_0 = slot_3 and ((env.Color3.fromRGB(255, 210, 200)))
-    ss_0 = ss_0 or ((env.Color3.fromRGB(255, 255, 255)))
-    slot_8 = ss_0
+    slot_7 = ((slot_3 and ((env.Color3.fromRGB(255, 92, 92)))) or (cell_get(upvalues[7])).colors.accent)
+    slot_8 = ((slot_3 and ((env.Color3.fromRGB(255, 210, 200)))) or ((env.Color3.fromRGB(255, 255, 255))))
     cell_get(upvalues[3]).Color = slot_7
     cell_get(upvalues[4]).Color = slot_7
     v1142_1 = env.ipairs
@@ -145106,17 +140923,11 @@ protos[2638] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       temp_5.Color = temp_7
     end
     temp_0 = (cell_get(upvalues[5]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 240, 240)))
-    ss_1 = ss_1 or (cell_get(upvalues[7])).colors.text
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 240, 240)))) or (cell_get(upvalues[7])).colors.text))
     temp_0.TextColor3 = temp_2
     temp_0 = (cell_get(upvalues[5]))
     temp_1 = "TextStrokeColor3"
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 120, 120)))
-    ss_1 = ss_1 or (cell_get(upvalues[7])).colors.fill
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 120, 120)))) or (cell_get(upvalues[7])).colors.fill))
     temp_0.TextStrokeColor3 = temp_2
   end
   v709_1 = env.ipairs
@@ -145150,9 +140961,7 @@ protos[2638] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     end
     ss_3 = ss_3 or (0.7)
     v2079_3 = (ss_2 * ss_3)
-    ss_1 = ((ss_1 - v2079_3))
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = ((((ss_1 - v2079_3))))
     temp_5.Transparency = temp_7
   end
   return
@@ -145181,18 +140990,14 @@ protos[2639] = function(upvalues, argument_1)
   v215_1 = (cell_get(upvalues[2])).w
   ss_1 = v199_1
   ss_2 = 10
-  ss_3 = v215_1 or (220)
-  ss_3 = ((((ss_3 / 2)) - 10))
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_3 = ss_0
+  ss_3 = (((((v215_1 or (220)) / 2)) - 10))
+  slot_3 = (ss_1(ss_2, ss_3))
   v288_1 = env.math.max
   v304_1 = (cell_get(upvalues[2])).h
   ss_1 = v288_1
   ss_2 = 7
-  ss_3 = v304_1 or (42)
-  ss_3 = ((((ss_3 / 2)) - 7))
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_4 = ss_0
+  ss_3 = (((((v304_1 or (42)) / 2)) - 7))
+  slot_4 = (ss_1(ss_2, ss_3))
   v368_1 = env.ipairs
   v383_1 = (cell_get(upvalues[2])).orbs
   ss_2 = v368_1
@@ -145214,8 +141019,7 @@ protos[2639] = function(upvalues, argument_1)
     ss_4 = v623_1
     ss_5 = 0.5
     ss_6 = v660_1
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_7 = ss_0
+    temp_7 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_5.Position = temp_7
     v707_1 = env.math.max
     v724_1 = env.math.floor
@@ -145224,17 +141028,14 @@ protos[2639] = function(upvalues, argument_1)
     ss_2 = 4
     ss_4 = v724_1
     ss_5 = v735_1 or (42)
-    ss_6 = ((slot_5 == 1)) and (0.24)
-    ss_6 = ss_6 or (0.16)
+    ss_6 = (((slot_5 == 1)) and (0.24)) or (0.16)
     ss_5 = ((ss_5 * ss_6))
-    ss_0 = ss_1(ss_2, ss_4(ss_5))
-    slot_8 = ss_0
+    slot_8 = (ss_1(ss_2, ss_4(ss_5)))
     temp_5 = slot_6.dot
     ss_2 = env.UDim2.fromOffset
     ss_3 = slot_8
     ss_4 = slot_8
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_7 = ss_0
+    temp_7 = (ss_2(ss_3, ss_4))
     temp_5.Size = temp_7
     temp_5 = slot_6.dot
     v1018_1 = (cell_get(upvalues[1])).Water
@@ -145244,17 +141045,12 @@ protos[2639] = function(upvalues, argument_1)
       v1062_1 = (((slot_0 * 2)) + slot_5)
       ss_1 = (((v1041_1(v1062_1)) * 18))
     end
-    ss_1 = ss_1 or (0)
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = ((ss_1 or (0)))
     temp_5.Rotation = temp_7
   end
   temp_0 = (cell_get(upvalues[3]))
   temp_1 = "Rotation"
-  ss_1 = (cell_get(upvalues[1])).Water and (((((slot_0 * 24)) % 360)))
-  ss_1 = ss_1 or (0)
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((cell_get(upvalues[1])).Water and (((((slot_0 * 24)) % 360)))) or (0)))
   temp_0.Rotation = temp_2
   return
 end
@@ -145690,8 +141486,7 @@ protos[2643] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_0 = (cell_get(upvalues[1]))
   temp_2 = ((1 - slot_5))
   temp_0.BackgroundTransparency = temp_2
-  ss_0 = (cell_get(upvalues[2])).Drag and (0.05)
-  v197_1 = ss_0
+  v197_1 = ((cell_get(upvalues[2])).Drag and (0.05))
   ss_0 = v197_1
   if not v197_1 then
     v218_1 = (cell_get(upvalues[2])).Glow
@@ -145718,14 +141513,10 @@ protos[2643] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = 0
   ss_5 = 1
   ss_6 = 0
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Size = temp_2
   temp_0 = (cell_get(upvalues[6]))
-  ss_1 = ((slot_0 > 0.02)) and (((slot_2 > 0.005)))
-  ss_1 = ss_1 and (((slot_2 < 0.995)))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((((slot_0 > 0.02)) and (((slot_2 > 0.005)))) and (((slot_2 < 0.995)))))
   temp_0.Visible = temp_2
   temp_0 = (cell_get(upvalues[6]))
   v796_1 = (cell_get(upvalues[2])).Glow
@@ -145738,14 +141529,10 @@ protos[2643] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3 = ss_3 or (0.8)
   v869_3 = (ss_2 * ss_3)
-  ss_1 = ((ss_1 - v869_3))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 - v869_3))))
   temp_0.BackgroundTransparency = temp_2
   temp_0 = (cell_get(upvalues[7]))
-  ss_1 = ((slot_0 > 0.02)) and (((slot_2 > 0.005)))
-  ss_1 = ss_1 and (((slot_2 < 0.995)))
-  ss_0 = ss_1
+  ss_0 = ((((slot_0 > 0.02)) and (((slot_2 > 0.005)))) and (((slot_2 < 0.995))))
   temp_0.Visible = ss_0
   temp_0 = (cell_get(upvalues[7]))
   ss_2 = env.UDim2.new
@@ -145753,8 +141540,7 @@ protos[2643] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = 0
   ss_5 = 0.5
   ss_6 = 0
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Position = temp_2
   temp_0 = (cell_get(upvalues[7]))
   v1164_1 = (cell_get(upvalues[2])).Glow
@@ -145767,8 +141553,7 @@ protos[2643] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3 = ss_3 or (0.7)
   v1237_3 = (ss_2 * ss_3)
-  ss_1 = ((ss_1 - v1237_3))
-  ss_0 = ss_1
+  ss_0 = (((ss_1 - v1237_3)))
   temp_0.BackgroundTransparency = ss_0
   temp_0 = (cell_get(upvalues[8]))
   v1309_1 = (slot_0 * 0.7)
@@ -145784,12 +141569,8 @@ protos[2643] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     v1504_1 = (cell_get(upvalues[10])).colors
     slot_7 = nil
     slot_7 = v1504_1
-    ss_0 = slot_3 and ((env.Color3.fromRGB(255, 86, 86)))
-    ss_0 = ss_0 or slot_7.accent
-    slot_8 = ss_0
-    ss_0 = slot_3 and ((env.Color3.fromRGB(255, 160, 100)))
-    ss_0 = ss_0 or slot_7.fill
-    slot_9 = ss_0
+    slot_8 = ((slot_3 and ((env.Color3.fromRGB(255, 86, 86)))) or slot_7.accent)
+    slot_9 = ((slot_3 and ((env.Color3.fromRGB(255, 160, 100)))) or slot_7.fill)
     cell_get(upvalues[3]).Color = slot_8
     temp_0 = (cell_get(upvalues[5]))
     temp_2 = slot_8
@@ -145856,26 +141637,16 @@ protos[2643] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       ss_3 = set_list_values(ss_3, 3, ss_6(ss_7, ss_8))
       ss_1 = ss_2(ss_3)
     end
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ss_1
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[6]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 220, 200)))
-    ss_1 = ss_1 or slot_9
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 220, 200)))) or slot_9))
     temp_0.BackgroundColor3 = temp_2
     temp_0 = (cell_get(upvalues[12]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 120, 120)))
-    ss_1 = ss_1 or slot_9
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 120, 120)))) or slot_9))
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[8]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 240, 240)))
-    ss_1 = ss_1 or slot_7.text
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 240, 240)))) or slot_7.text))
     temp_0.TextColor3 = temp_2
   end
   return
@@ -145892,8 +141663,7 @@ protos[2644] = function(upvalues, argument_1)
     v45_1 = (slot_0 * 1.4)
     ss_0 = (((v34_1(v45_1)) * 10))
   end
-  ss_0 = ss_0 or (0)
-  slot_1 = ss_0
+  slot_1 = (ss_0 or (0))
   cell_get(upvalues[2]).Rotation = ((22 + slot_1))
   temp_0 = (cell_get(upvalues[3]))
   v244_1 = (slot_1 * 0.5)
@@ -146265,8 +142035,7 @@ protos[2647] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = env.UDim.new
   ss_3 = 0
   ss_4 = slot_2
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.CornerRadius = temp_2
   temp_0 = (cell_get(upvalues[3]))
   v253_1 = env.math.clamp
@@ -146276,8 +142045,7 @@ protos[2647] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = v253_1
   ss_3 = v281_1
   ss_4 = 11
-  ss_0 = ss_2(ss_3, ss_4, (38))
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, (38)))
   temp_0.TextSize = temp_2
   cell_get(upvalues[4]).BackgroundColor3 = slot_3.panel
   cell_get(upvalues[5]).Color = slot_3.accent
@@ -146295,8 +142063,7 @@ protos[2647] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = v533_1
   ss_3 = v534_1
   ss_3 = set_list_values(ss_3, 2, v585_1((1), v601_1))
-  ss_0 = ss_2(ss_3)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3))
   temp_0.Color = temp_2
   cell_get(upvalues[8]).BackgroundColor3 = slot_3.accent
   cell_get(upvalues[9]).Color = slot_3.accent
@@ -146341,8 +142108,7 @@ protos[2648] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_1 = "BackgroundTransparency"
   temp_2 = ((1 - slot_5))
   temp_0.BackgroundTransparency = temp_2
-  ss_0 = (cell_get(upvalues[2])).Drag and (0.05)
-  v197_1 = ss_0
+  v197_1 = ((cell_get(upvalues[2])).Drag and (0.05))
   ss_0 = v197_1
   if not v197_1 then
     v218_1 = (cell_get(upvalues[2])).Glow
@@ -146364,8 +142130,7 @@ protos[2648] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = 0
   ss_5 = 1
   ss_6 = 0
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Size = temp_2
   temp_0 = (cell_get(upvalues[4]))
   v446_1 = (slot_0 * 0.75)
@@ -146377,14 +142142,10 @@ protos[2648] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_4 = 0
   ss_5 = 0
   ss_6 = 0
-  ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
   temp_0.Position = temp_2
   temp_0 = (cell_get(upvalues[5]))
-  ss_1 = ((slot_0 > 0.02)) and (((slot_2 > 0.005)))
-  ss_1 = ss_1 and (((slot_2 < 0.995)))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = (((((slot_0 > 0.02)) and (((slot_2 > 0.005)))) and (((slot_2 < 0.995)))))
   temp_0.Visible = temp_2
   temp_0 = (cell_get(upvalues[5]))
   v808_1 = (cell_get(upvalues[2])).Glow
@@ -146397,9 +142158,7 @@ protos[2648] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3 = ss_3 or (0.75)
   v881_3 = (ss_2 * ss_3)
-  ss_1 = ((ss_1 - v881_3))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 - v881_3))))
   temp_0.BackgroundTransparency = temp_2
   temp_0 = (cell_get(upvalues[6]))
   v958_1 = (cell_get(upvalues[2])).Glow
@@ -146412,9 +142171,7 @@ protos[2648] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3 = ss_3 or (0.75)
   v1031_3 = (ss_2 * ss_3)
-  ss_1 = ((ss_1 - v1031_3))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 - v1031_3))))
   temp_0.Transparency = temp_2
   temp_0 = (cell_get(upvalues[7]))
   temp_1 = "BackgroundTransparency"
@@ -146428,9 +142185,7 @@ protos[2648] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3 = ss_3 or (0.85)
   v1181_3 = (ss_2 * ss_3)
-  ss_1 = ((ss_1 - v1181_3))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 - v1181_3))))
   temp_0.BackgroundTransparency = temp_2
   v1219_1 = env.ipairs
   v1234_1 = (cell_get(upvalues[8])).grid
@@ -146465,11 +142220,8 @@ protos[2648] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     temp_1 = "low"
     temp_2 = slot_3
     temp_0.low = temp_2
-    ss_0 = slot_3 and ((env.Color3.fromRGB(255, 86, 86)))
-    ss_0 = ss_0 or (cell_get(upvalues[11])).colors.accent
-    slot_9 = ss_0
-    ss_0 = slot_3 and ((env.Color3.fromRGB(255, 150, 90)))
-    ss_0 = ss_0 or (cell_get(upvalues[11])).colors.fill
+    slot_9 = ((slot_3 and ((env.Color3.fromRGB(255, 86, 86)))) or (cell_get(upvalues[11])).colors.accent)
+    ss_0 = (slot_3 and ((env.Color3.fromRGB(255, 150, 90)))) or (cell_get(upvalues[11])).colors.fill
     cell_get(upvalues[3]).Color = slot_9
     cell_get(upvalues[4]).BackgroundColor3 = slot_9
     temp_0 = (cell_get(upvalues[12]))
@@ -146482,38 +142234,28 @@ protos[2648] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     ss_3 = v2102_1
     ss_6 = v2147_1
     ss_3 = set_list_values(ss_3, 2, ss_6((1), ss_0))
-    ss_0 = ss_2(ss_3)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3))
     temp_0.Color = temp_2
     cell_get(upvalues[7]).BackgroundColor3 = slot_9
     temp_0 = (cell_get(upvalues[6]))
     temp_2 = slot_9
     temp_0.Color = temp_2
     temp_0 = (cell_get(upvalues[9]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 180, 160)))
-    ss_1 = ss_1 or ((env.Color3.fromRGB(255, 255, 255)))
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 180, 160)))) or ((env.Color3.fromRGB(255, 255, 255)))))
     temp_0.BackgroundColor3 = temp_2
     temp_0 = (cell_get(upvalues[10]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 240, 240)))
-    ss_1 = ss_1 or (cell_get(upvalues[11])).colors.text
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 240, 240)))) or (cell_get(upvalues[11])).colors.text))
     temp_0.TextColor3 = temp_2
     temp_0 = (cell_get(upvalues[10]))
     temp_1 = "TextStrokeColor3"
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 120, 120)))
-    ss_1 = ss_1 or (cell_get(upvalues[11])).colors.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 120, 120)))) or (cell_get(upvalues[11])).colors.accent))
     temp_0.TextStrokeColor3 = temp_2
   end
   return
 end
 
 protos[2649] = function(upvalues, argument_1)
-  local slot_0, slot_1, ss_0, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, temp_0, temp_2, v333_1, v344_1
+  local slot_0, slot_1, ss_1, ss_2, ss_3, ss_4, ss_5, ss_6, temp_0, temp_2, v333_1, v344_1
   local v52_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -146525,8 +142267,7 @@ protos[2649] = function(upvalues, argument_1)
     ss_4 = 0
     ss_5 = 0
     ss_6 = 0
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.Position = temp_2
   else
     temp_0 = (cell_get(upvalues[2]))
@@ -146535,8 +142276,7 @@ protos[2649] = function(upvalues, argument_1)
     ss_4 = 0
     ss_5 = 0
     ss_6 = 0
-    ss_0 = ss_2(ss_3, ss_4, ss_5, ss_6)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4, ss_5, ss_6))
     temp_0.Position = temp_2
   end
   temp_0 = (cell_get(upvalues[3]))
@@ -146547,9 +142287,7 @@ protos[2649] = function(upvalues, argument_1)
     v344_1 = (slot_0 * 0.8)
     ss_1 = (((v333_1(v344_1)) * 6))
   end
-  ss_1 = ss_1 or (0)
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((ss_1 or (0)))
   temp_0.Rotation = temp_2
   return
 end
@@ -146803,15 +142541,13 @@ protos[2652] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = v179_1
   ss_3 = 9
   ss_4 = v205_1
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.spacing = temp_2
   temp_0 = (cell_get(upvalues[2]))
   ss_2 = env.UDim.new
   ss_3 = 0
   ss_4 = slot_2
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.CornerRadius = temp_2
   temp_0 = (cell_get(upvalues[3]))
   temp_1 = "TextSize"
@@ -146823,8 +142559,7 @@ protos[2652] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_3 = v375_1
   ss_4 = 11
   ss_5 = 36
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.TextSize = temp_2
   cell_get(upvalues[4]).BackgroundColor3 = slot_3.panel
   cell_get(upvalues[5]).Color = slot_3.accent
@@ -146845,10 +142580,8 @@ protos[2652] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     v945_1 = (((slot_4 % 5)) == 0)
     ss_2 = v919_1
     ss_3 = 0
-    ss_4 = v945_1 and (2)
-    ss_4 = ss_4 or (1)
-    ss_5 = ((((slot_4 % 5)) == 0)) and (0.8)
-    ss_5 = ss_5 or (0.55)
+    ss_4 = (v945_1 and (2)) or (1)
+    ss_5 = (((((slot_4 % 5)) == 0)) and (0.8)) or (0.55)
     ss_0 = ss_2(ss_3, ss_4, ss_5, (0))
     temp_5.Size = ss_0
   end
@@ -146880,8 +142613,7 @@ protos[2653] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_1 = "BackgroundTransparency"
   temp_2 = ((1 - slot_5))
   temp_0.BackgroundTransparency = temp_2
-  ss_0 = (cell_get(upvalues[2])).Drag and (0.05)
-  v197_1 = ss_0
+  v197_1 = ((cell_get(upvalues[2])).Drag and (0.05))
   ss_0 = v197_1
   if not v197_1 then
     v218_1 = (cell_get(upvalues[2])).Glow
@@ -146912,9 +142644,7 @@ protos[2653] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3 = ss_3 or (0.75)
   v579_3 = (ss_2 * ss_3)
-  ss_1 = ((ss_1 - v579_3))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 - v579_3))))
   temp_0.BackgroundTransparency = temp_2
   temp_0 = (cell_get(upvalues[6]))
   v656_1 = (cell_get(upvalues[2])).Glow
@@ -146927,9 +142657,7 @@ protos[2653] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   end
   ss_3 = ss_3 or (0.8)
   v729_3 = (ss_2 * ss_3)
-  ss_1 = ((ss_1 - v729_3))
-  ss_0 = ss_1
-  temp_2 = ss_0
+  temp_2 = ((((ss_1 - v729_3))))
   temp_0.Transparency = temp_2
   temp_0 = (cell_get(upvalues[7]))
   v801_1 = (slot_0 * 0.7)
@@ -146945,9 +142673,7 @@ protos[2653] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     temp_1 = "low"
     temp_2 = slot_3
     temp_0.low = temp_2
-    ss_0 = slot_3 and ((env.Color3.fromRGB(255, 92, 92)))
-    ss_0 = ss_0 or (cell_get(upvalues[9])).colors.accent
-    slot_7 = ss_0
+    slot_7 = ((slot_3 and ((env.Color3.fromRGB(255, 92, 92)))) or (cell_get(upvalues[9])).colors.accent)
     cell_get(upvalues[3]).Color = slot_7
     cell_get(upvalues[5]).BackgroundColor3 = slot_7
     cell_get(upvalues[6]).Color = slot_7
@@ -146961,18 +142687,12 @@ protos[2653] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       temp_2 = __loopKey_2653_1
       slot_8 = __loopKey_2653_1
       temp_5 = __loopValue_2653_1
-      ss_1 = slot_3 and ((env.Color3.fromRGB(255, 120, 100)))
-      ss_1 = ss_1 or (cell_get(upvalues[9])).colors.muted
-      ss_0 = ss_1
-      temp_7 = ss_0
+      temp_7 = (((slot_3 and ((env.Color3.fromRGB(255, 120, 100)))) or (cell_get(upvalues[9])).colors.muted))
       temp_5.BackgroundColor3 = temp_7
     end
     temp_0 = (cell_get(upvalues[7]))
     temp_1 = "TextColor3"
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 240, 240)))
-    ss_1 = ss_1 or (cell_get(upvalues[9])).colors.text
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 240, 240)))) or (cell_get(upvalues[9])).colors.text))
     temp_0.TextColor3 = temp_2
   end
   v931_1 = env.ipairs
@@ -146994,9 +142714,7 @@ protos[2653] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     end
     ss_3 = ss_3 or (0.55)
     v1950_3 = (ss_2 * ss_3)
-    ss_1 = ((ss_1 - v1950_3))
-    ss_0 = ss_1
-    temp_7 = ss_0
+    temp_7 = ((((ss_1 - v1950_3))))
     temp_5.BackgroundTransparency = temp_7
   end
   return
@@ -147013,18 +142731,15 @@ protos[2654] = function(upvalues, argument_1)
   ss_2 = v23_1 or (0)
   ss_3 = 0
   ss_4 = 1
-  ss_0 = ss_1(ss_2, ss_3, ss_4)
-  slot_1 = ss_0
-  ss_0 = (cell_get(upvalues[2])).spacing or (12)
-  slot_2 = ss_0
+  slot_1 = (ss_1(ss_2, ss_3, ss_4))
+  slot_2 = ((cell_get(upvalues[2])).spacing or (12))
   v172_1 = (cell_get(upvalues[2])).ticks
   v173_1 = #v172_1
   slot_3 = ((slot_2 * v173_1))
   v209_1 = (((1 - slot_1)) * slot_3)
   v224_1 = (cell_get(upvalues[1])).Water
   ss_0 = v209_1
-  ss_1 = v224_1 and (((((slot_0 * 5)) % slot_2)))
-  ss_1 = ss_1 or (0)
+  ss_1 = (v224_1 and (((((slot_0 * 5)) % slot_2)))) or (0)
   slot_4 = ((ss_0 + ss_1))
   v314_1 = env.ipairs
   v329_1 = (cell_get(upvalues[2])).ticks
@@ -147207,8 +142922,7 @@ protos[2657] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_2 = env.UDim.new
   ss_3 = 0
   ss_4 = slot_2
-  ss_0 = ss_2(ss_3, ss_4)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4))
   temp_0.CornerRadius = temp_2
   temp_0 = (cell_get(upvalues[3]))
   temp_1 = "TextSize"
@@ -147220,8 +142934,7 @@ protos[2657] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   ss_3 = v281_1
   ss_4 = 11
   ss_5 = 32
-  ss_0 = ss_2(ss_3, ss_4, ss_5)
-  temp_2 = ss_0
+  temp_2 = (ss_2(ss_3, ss_4, ss_5))
   temp_0.TextSize = temp_2
   cell_get(upvalues[4]).BackgroundColor3 = slot_3.panel
   cell_get(upvalues[5]).Color = slot_3.accent
@@ -147298,8 +143011,7 @@ protos[2658] = function(upvalues, argument_1, argument_2, argument_3, argument_4
   temp_1 = "BackgroundTransparency"
   temp_2 = ((1 - slot_5))
   temp_0.BackgroundTransparency = temp_2
-  ss_0 = (cell_get(upvalues[2])).Drag and (0.05)
-  v197_1 = ss_0
+  v197_1 = ((cell_get(upvalues[2])).Drag and (0.05))
   ss_0 = v197_1
   if not v197_1 then
     v218_1 = (cell_get(upvalues[2])).Glow
@@ -147329,9 +143041,7 @@ protos[2658] = function(upvalues, argument_1, argument_2, argument_3, argument_4
     temp_1 = "low"
     temp_2 = slot_3
     temp_0.low = temp_2
-    ss_0 = slot_3 and ((env.Color3.fromRGB(255, 86, 86)))
-    ss_0 = ss_0 or (cell_get(upvalues[6])).colors.accent
-    slot_7 = ss_0
+    slot_7 = ((slot_3 and ((env.Color3.fromRGB(255, 86, 86)))) or (cell_get(upvalues[6])).colors.accent)
     cell_get(upvalues[3]).Color = slot_7
     v819_1 = env.ipairs
     v834_1 = (cell_get(upvalues[5])).bars
@@ -147347,17 +143057,11 @@ protos[2658] = function(upvalues, argument_1, argument_2, argument_3, argument_4
       temp_5.BackgroundColor3 = temp_7
     end
     temp_0 = (cell_get(upvalues[4]))
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 240, 240)))
-    ss_1 = ss_1 or (cell_get(upvalues[6])).colors.text
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 240, 240)))) or (cell_get(upvalues[6])).colors.text))
     temp_0.TextColor3 = temp_2
     temp_0 = (cell_get(upvalues[4]))
     temp_1 = "TextStrokeColor3"
-    ss_1 = slot_3 and ((env.Color3.fromRGB(255, 120, 120)))
-    ss_1 = ss_1 or (cell_get(upvalues[6])).colors.accent
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((slot_3 and ((env.Color3.fromRGB(255, 120, 120)))) or (cell_get(upvalues[6])).colors.accent))
     temp_0.TextStrokeColor3 = temp_2
   end
   v559_1 = env.ipairs
@@ -147403,16 +143107,13 @@ protos[2659] = function(upvalues, argument_1)
   ss_2 = v23_1 or (0)
   ss_3 = 0
   ss_4 = 1
-  ss_0 = ss_1(ss_2, ss_3, ss_4)
-  slot_1 = ss_0
+  slot_1 = (ss_1(ss_2, ss_3, ss_4))
   v121_1 = env.math.max
   v137_1 = (cell_get(upvalues[2])).h
   ss_1 = v121_1
   ss_2 = 6
-  ss_3 = v137_1 or (42)
-  ss_3 = ((ss_3 - 12))
-  ss_0 = ss_1(ss_2, ss_3)
-  slot_2 = ss_0
+  ss_3 = (((v137_1 or (42)) - 12))
+  slot_2 = (ss_1(ss_2, ss_3))
   v191_1 = env.ipairs
   v206_1 = (cell_get(upvalues[2])).bars
   ss_2 = v191_1
@@ -147428,8 +143129,7 @@ protos[2659] = function(upvalues, argument_1)
     ss_1 = 0.5
     ss_3 = v351_1
     ss_4 = slot_0
-    ss_5 = v367_1 and (3.2)
-    ss_5 = ss_5 or (1.4)
+    ss_5 = (v367_1 and (3.2)) or (1.4)
     v430_3 = (ss_4 * ss_5)
     v445_1 = (slot_3 * 0.8)
     ss_4 = ((v430_3 + v445_1))
@@ -147479,27 +143179,20 @@ protos[2661] = function(upvalues)
     ss_2 = v44_1 or (0)
     ss_3 = 0
     ss_4 = 1
-    ss_0 = ss_1(ss_2, ss_3, ss_4)
-    slot_0 = ss_0
+    slot_0 = (ss_1(ss_2, ss_3, ss_4))
     v147_1 = env.math.clamp
     v158_1 = (cell_get(upvalues[2])).Bg
     ss_1 = v147_1
-    ss_2 = v158_1 or (0)
-    ss_2 = ((ss_2 / 100))
+    ss_2 = (((v158_1 or (0)) / 100))
     ss_3 = 0
     ss_4 = 1
-    ss_0 = ss_1(ss_2, ss_3, ss_4)
-    slot_1 = ss_0
-    ss_0 = (cell_get(upvalues[2])).Ratio or (0)
-    slot_2 = ss_0
+    slot_1 = (ss_1(ss_2, ss_3, ss_4))
+    slot_2 = ((cell_get(upvalues[2])).Ratio or (0))
     slot_3 = (((cell_get(upvalues[2])).Low == true))
-    ss_0 = (cell_get(upvalues[2])).Pulse or (0)
-    slot_4 = ss_0
+    slot_4 = ((cell_get(upvalues[2])).Pulse or (0))
     temp_0 = (cell_get(upvalues[1])).frame
     temp_1 = "Active"
-    ss_1 = (((cell_get(upvalues[2])).Drag == true)) and (((slot_0 > 0.05)))
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = (((((cell_get(upvalues[2])).Drag == true)) and (((slot_0 > 0.05)))))
     temp_0.Active = temp_2
     if (cell_get(upvalues[1])).hit then
       temp_0 = (cell_get(upvalues[1])).hit
@@ -147509,15 +143202,11 @@ protos[2661] = function(upvalues)
     end
     temp_0 = (cell_get(upvalues[1])).frame
     temp_1 = "ZIndex"
-    ss_1 = (cell_get(upvalues[2])).Drag and (6000)
-    ss_1 = ss_1 or (4400)
-    ss_0 = ss_1
-    temp_2 = ss_0
+    temp_2 = ((((cell_get(upvalues[2])).Drag and (6000)) or (4400)))
     temp_0.ZIndex = temp_2
     v676_1 = (cell_get(upvalues[1])).skins
     v687_1 = (cell_get(upvalues[2])).Style
-    ss_0 = v676_1[v687_1] or (cell_get(upvalues[1])).skins.Aqua
-    slot_5 = ss_0
+    slot_5 = (v676_1[v687_1] or (cell_get(upvalues[1])).skins.Aqua)
     v739_1 = env.pairs
     v754_1 = (cell_get(upvalues[1])).skins
     ss_2 = v739_1
@@ -147530,8 +143219,7 @@ protos[2661] = function(upvalues)
       temp_5 = slot_7.root
       temp_5.Visible = (((slot_7 == slot_5)))
     end
-    ss_0 = slot_5 and slot_5.visual
-    if ss_0 then
+    if (slot_5 and slot_5.visual) then
       v1018_1 = slot_5.visual
       v1018_1(slot_0, slot_1, slot_2, slot_3, slot_4)
     end
@@ -147552,19 +143240,13 @@ protos[2662] = function(upvalues)
       temp_0 = (cell_get(upvalues[3]))
       v129_1 = env.tonumber
       v144_1 = (cell_get(upvalues[2])).roundTimerX
-      ss_1 = (v129_1(v144_1)) or (cell_get(upvalues[3])).PX
-      ss_1 = ss_1 or (0)
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((v129_1(v144_1)) or (cell_get(upvalues[3])).PX) or (0)))
       temp_0.PX = temp_2
       temp_0 = (cell_get(upvalues[3]))
       temp_1 = "PY"
       v291_1 = env.tonumber
       v306_1 = (cell_get(upvalues[2])).roundTimerY
-      ss_1 = (v291_1(v306_1)) or (cell_get(upvalues[3])).PY
-      ss_1 = ss_1 or (8)
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((v291_1(v306_1)) or (cell_get(upvalues[3])).PY) or (8)))
       temp_0.PY = temp_2
     end
     v80_1 = env.math.max
@@ -147572,15 +143254,13 @@ protos[2662] = function(upvalues)
     ss_1 = v80_1
     ss_2 = 80
     ss_3 = v96_1 or (220)
-    ss_0 = ss_1(ss_2, ss_3)
-    slot_1 = ss_0
+    slot_1 = (ss_1(ss_2, ss_3))
     v443_1 = env.math.max
     v459_1 = (cell_get(upvalues[3])).Height
     ss_1 = v443_1
     ss_2 = 24
     ss_3 = v459_1 or (42)
-    ss_0 = ss_1(ss_2, ss_3)
-    slot_2 = ss_0
+    slot_2 = (ss_1(ss_2, ss_3))
     v512_1 = env.math.clamp
     v523_1 = (cell_get(upvalues[3])).Radius
     ss_1 = v512_1
@@ -147588,14 +143268,12 @@ protos[2662] = function(upvalues)
     v565_1 = (slot_2 / 2)
     ss_3 = 0
     ss_4 = v565_1
-    ss_0 = ss_1(ss_2, ss_3, ss_4)
-    slot_3 = ss_0
+    slot_3 = (ss_1(ss_2, ss_3, ss_4))
     temp_0 = (cell_get(upvalues[1])).frame
     ss_2 = env.UDim2.fromOffset
     ss_3 = slot_1
     ss_4 = slot_2
-    ss_0 = ss_2(ss_3, ss_4)
-    temp_2 = ss_0
+    temp_2 = (ss_2(ss_3, ss_4))
     temp_0.Size = temp_2
     temp_0 = (cell_get(upvalues[1])).frame
     temp_1 = "BackgroundTransparency"
@@ -147672,8 +143350,7 @@ protos[2663] = function(upvalues)
     ss_3.Active = v451_1
     ss_3.ZIndex = 4400
     ss_3.Visible = false
-    ss_0 = v44_1(ss_2, ss_3)
-    slot_1 = ss_0
+    slot_1 = (v44_1(ss_2, ss_3))
     cell_get(upvalues[1]).frame = slot_1
     cell_get(upvalues[1]).skins = (new_table(0))
     temp_0 = (cell_get(upvalues[1])).skins
@@ -147769,7 +143446,7 @@ protos[2663] = function(upvalues)
 end
 
 protos[2664] = function(upvalues, argument_1)
-  local slot_0, ss_0, ss_1, temp_0, temp_2, v11_1, v233_1, v250_1, v32_1
+  local slot_0, ss_0, temp_0, temp_2, v11_1, v233_1, v250_1, v32_1
   local v49_1, v50_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
@@ -147790,14 +143467,10 @@ protos[2664] = function(upvalues, argument_1)
       temp_2 = slot_0.Position
       temp_0.dragStart = temp_2
       temp_0 = (cell_get(upvalues[1]))
-      ss_1 = (cell_get(upvalues[1])).PX or (0)
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = (((cell_get(upvalues[1])).PX or (0)))
       temp_0.dragBaseX = temp_2
       temp_0 = (cell_get(upvalues[1]))
-      ss_1 = (cell_get(upvalues[1])).PY or (8)
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = (((cell_get(upvalues[1])).PY or (8)))
       temp_0.dragBaseY = temp_2
     end
   end
@@ -147826,17 +143499,14 @@ protos[2665] = function(upvalues, argument_1)
       v237_1 = slot_0.Position.X
       v254_1 = (cell_get(upvalues[1])).dragStart.X
       v255_1 = (v237_1 - v254_1)
-      ss_1 = ((ss_1 + v255_1))
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((ss_1 + v255_1))))
       temp_0.PX = temp_2
       temp_0 = (cell_get(upvalues[1]))
       ss_1 = (cell_get(upvalues[1])).dragBaseY or (8)
       v365_1 = slot_0.Position.Y
       v382_1 = (cell_get(upvalues[1])).dragStart.Y
       v383_1 = (v365_1 - v382_1)
-      ss_1 = ((ss_1 + v383_1))
-      ss_0 = ss_1
+      ss_0 = (((ss_1 + v383_1)))
       temp_0.PY = ss_0
       v420_1 = cell_get(upvalues[2])
       v420_1()
@@ -147881,14 +143551,12 @@ protos[2666] = function(upvalues, argument_1)
 end
 
 protos[2667] = function(upvalues, argument_1)
-  local slot_0, ss_1, temp_0, temp_2
+  local slot_0, temp_0, temp_2
   local v466_1, v517_1
   local vm_frame_random = math.random(0, 2147483646)
   slot_0 = argument_1
   temp_0 = (cell_get(upvalues[1]))
-  ss_1 = slot_0 and (true)
-  ss_1 = ss_1 or (false)
-  temp_2 = ss_1
+  temp_2 = ((slot_0 and (true)) or (false))
   temp_0.Enabled = temp_2
   if (cell_get(upvalues[1])).Enabled then
     cell_get(upvalues[1]).RawT = nil
@@ -148094,25 +143762,18 @@ protos[2681] = function(upvalues, argument_1)
       slot_2 = v200_1
       ss_1 = env.tonumber
       ss_2 = slot_2 and ((slot_2:GetAttribute("Time")))
-      ss_0 = ss_1(ss_2)
-      slot_3 = ss_0
+      slot_3 = (ss_1(ss_2))
       v321_1 = env.tonumber
       v326_1 = slot_2
       ss_1 = v321_1
-      ss_2 = v326_1
-      if v326_1 then
-        ss_2 = (slot_2:GetAttribute("Max")) or ((slot_2:GetAttribute("MaxTime")))
-        ss_2 = ss_2 or ((slot_2:GetAttribute("Duration")))
-      end
-      ss_0 = ss_1(ss_2)
-      slot_4 = ss_0
+      ss_2 = v326_1 and (((slot_2:GetAttribute("Max")) or ((slot_2:GetAttribute("MaxTime")))) or ((slot_2:GetAttribute("Duration"))))
+      slot_4 = (ss_1(ss_2))
       v408_1 = (cell_get(upvalues[3])).RawT
       if ((slot_3 ~= v408_1)) then
         if slot_3 then
           v670_1 = (cell_get(upvalues[3])).RawT
           ss_0 = slot_3
-          ss_1 = v670_1 or (0)
-          v707_2 = (ss_1 + 3)
+          v707_2 = ((v670_1 or (0)) + 3)
           if ((ss_0 > v707_2)) then
             cell_get(upvalues[3]).MaxSeen = 0
             temp_0 = (cell_get(upvalues[3]))
@@ -148130,8 +143791,7 @@ protos[2681] = function(upvalues, argument_1)
                 v967_1 = ((((cell_get(upvalues[3])).RawT - slot_3)) / slot_5)
                 slot_6 = nil
                 slot_6 = v967_1
-                ss_0 = ((slot_6 >= 0.1)) and (((slot_6 <= 6)))
-                if ss_0 then
+                if (((slot_6 >= 0.1)) and (((slot_6 <= 6)))) then
                   temp_0 = (cell_get(upvalues[3]))
                   temp_2 = slot_6
                   temp_0.Rate = temp_2
@@ -148147,8 +143807,7 @@ protos[2681] = function(upvalues, argument_1)
       end
       slot_7 = nil
       slot_7 = slot_3
-      ss_0 = slot_3 and (cell_get(upvalues[3])).RawAt
-      if ss_0 then
+      if (slot_3 and (cell_get(upvalues[3])).RawAt) then
         v1160_1 = env.math.max
         v1186_1 = (cell_get(upvalues[3])).RawAt
         v1187_1 = (slot_1 - v1186_1)
@@ -148160,8 +143819,7 @@ protos[2681] = function(upvalues, argument_1)
         ss_5 = v1202_1 or (1)
         v1229_3 = (ss_4 * ss_5)
         ss_3 = ((ss_3 - v1229_3))
-        ss_0 = ss_1(ss_2, ss_3)
-        slot_7 = ss_0
+        slot_7 = (ss_1(ss_2, ss_3))
       end
       if slot_3 then
         temp_0 = (cell_get(upvalues[3]))
@@ -148188,8 +143846,7 @@ protos[2681] = function(upvalues, argument_1)
         ss_3 = v1572_1 or (0)
         ss_4 = slot_4 or (0)
         ss_5 = slot_3 or slot_7
-        ss_0 = ss_2(ss_3, ss_4, ss_5)
-        temp_2 = ss_0
+        temp_2 = (ss_2(ss_3, ss_4, ss_5))
         temp_0.MaxSeen = temp_2
         v1708_1 = ((cell_get(upvalues[3])).MaxSeen > 0)
         ss_0 = v1708_1
@@ -148199,8 +143856,7 @@ protos[2681] = function(upvalues, argument_1)
           v1752_1 = (slot_7 / v1751_1)
           ss_0 = (v1735_1(v1752_1, 0, 1))
         end
-        ss_0 = ss_0 or (0)
-        slot_8 = ss_0
+        slot_8 = (ss_0 or (0))
         v1828_1 = (cell_get(upvalues[3])).LowSec
         ss_0 = slot_7
         ss_1 = v1828_1 or (10)
@@ -148219,8 +143875,7 @@ protos[2681] = function(upvalues, argument_1)
       temp_0.Ratio = temp_2
       v1932_1 = (cell_get(upvalues[4])).skins
       v1943_1 = (cell_get(upvalues[3])).Style
-      ss_0 = v1932_1[v1943_1] or (cell_get(upvalues[4])).skins.Aqua
-      slot_10 = ss_0
+      slot_10 = (v1932_1[v1943_1] or (cell_get(upvalues[4])).skins.Aqua)
       if slot_10 then
         if slot_10.tick then
           v2149_1 = slot_10.tick
@@ -148233,8 +143888,7 @@ protos[2681] = function(upvalues, argument_1)
           ss_2 = 0
           ss_4 = v2198_1
           ss_5 = slot_7
-          ss_0 = ss_1(ss_2, ss_4(ss_5))
-          slot_11 = ss_0
+          slot_11 = (ss_1(ss_2, ss_4(ss_5)))
           v2235_1 = env.string.format
           v2252_1 = env.math.floor
           v2263_1 = (slot_11 / 60)
@@ -148281,8 +143935,7 @@ protos[2681] = function(upvalues, argument_1)
       end
       if (((cell_get(upvalues[3])).Fade ~= false)) then
         v2795_1 = (cell_get(upvalues[3])).Alpha
-        ss_0 = ((slot_13 > v2795_1)) and (7)
-        ss_0 = ss_0 or (14)
+        ss_0 = (((slot_13 > v2795_1)) and (7)) or (14)
         temp_0 = (cell_get(upvalues[3]))
         v2951_1 = (cell_get(upvalues[3])).Alpha
         v2967_1 = (cell_get(upvalues[3])).Alpha
@@ -148292,13 +143945,10 @@ protos[2681] = function(upvalues, argument_1)
         ss_2 = v2968_1
         ss_4 = v2984_1
         ss_5 = 1
-        ss_6 = slot_0 or (0.016)
-        ss_6 = ((ss_6 * ss_0))
+        ss_6 = (((slot_0 or (0.016)) * ss_0))
         ss_3 = ss_4(ss_5, ss_6)
         v3036_3 = (ss_2 * ss_3)
-        ss_1 = ((ss_1 + v3036_3))
-        ss_0 = ss_1
-        temp_2 = ss_0
+        temp_2 = ((((ss_1 + v3036_3))))
         temp_0.Alpha = temp_2
         v3083_1 = env.math.abs
         v3099_1 = (cell_get(upvalues[3])).Alpha
@@ -148319,14 +143969,11 @@ protos[2681] = function(upvalues, argument_1)
       ss_2 = 0.5
       ss_4 = v2759_1
       ss_5 = slot_1
-      ss_6 = slot_9 and (9)
-      ss_6 = ss_6 or (4)
+      ss_6 = (slot_9 and (9)) or (4)
       ss_5 = ((ss_5 * ss_6))
       ss_3 = ss_4(ss_5)
       v3243_3 = (ss_2 * ss_3)
-      ss_1 = ((ss_1 + v3243_3))
-      ss_0 = ss_1
-      temp_2 = ss_0
+      temp_2 = ((((ss_1 + v3243_3))))
       temp_0.Pulse = temp_2
       v3280_1 = cell_get(upvalues[6])
       v3280_1()
