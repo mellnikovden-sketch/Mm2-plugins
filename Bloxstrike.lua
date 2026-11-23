@@ -18,7 +18,7 @@ end
 
 local config = {
     enabled = false,
-    radius = 220,          -- FOV в пикселях
+    fullCircle = true,     -- 360 градусов: включая цели за камерой
     maxDistance = 2000,    -- максимальное расстояние до цели
     visibilityCheck = true,
     teamCheck = true,
@@ -34,7 +34,7 @@ local state = {
     message = "Поиск функций...",
     wallReady = false,
     wallMessage = "Поиск модулей...",
-    extras = { autoShoot = false, autoWall = false, box = false, names = false, outline = false },
+    extras = { autoShoot = false, autoWall = false, box = false, names = false, outline = false, forceOrigin = false, autoReload = false, instaReload = false },
 }
 
 local gui = Instance.new("ScreenGui")
@@ -158,12 +158,38 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+local selectedTab = "COMBAT"
+local tabs, entries = {}, {}
+local groups = {
+    ["SILENT"] = {"COMBAT", 0}, ["AUTO SHOOT"] = {"COMBAT", 1},
+    ["AUTOWALL"] = {"COMBAT", 2}, ["FORCE ORIGIN"] = {"COMBAT", 3},
+    ["TEAM CHECK"] = {"COMBAT", 4},
+    ["RAPID"] = {"WEAPON", 0}, ["AUTO RELOAD"] = {"WEAPON", 1}, ["INSTA RELOAD"] = {"WEAPON", 2},
+    ["ESP BOX"] = {"VISUALS", 0}, ["NAMES / HP"] = {"VISUALS", 1}, ["OUTLINE"] = {"VISUALS", 2},
+}
+local function setTab(name)
+    selectedTab = name
+    for group, button in pairs(tabs) do
+        button.BackgroundColor3 = group == name and Color3.fromRGB(65, 86, 138) or Color3.fromRGB(31, 37, 54)
+    end
+    for _, entry in ipairs(entries) do entry.button.Visible = entry.group == name end
+end
+for index, name in ipairs({"COMBAT", "WEAPON", "VISUALS"}) do
+    local tab = smallButton(menu, name, UDim2.fromOffset(90, 28), UDim2.fromOffset(14 + (index - 1) * 96, 51))
+    tab.TextSize = 10
+    tab.ZIndex = 12
+    tabs[name] = tab
+    tab.MouseButton1Click:Connect(function() setTab(name) end)
+end
+setTab(selectedTab)
 local function makeToggle(name, index)
-    local col = index % 2
-    local row = math.floor(index / 2)
-    local item = smallButton(menu, name .. "  OFF", UDim2.fromOffset(137, 38), UDim2.fromOffset(14 + col * 145, 53 + row * 44))
-    item.Name = name .. "Toggle"
-    item.ZIndex = 12
+    local layout = assert(groups[name], "unknown toggle: " .. name)
+    local col, row = layout[2] % 2, math.floor(layout[2] / 2)
+    local item = smallButton(menu, name .. "  OFF", UDim2.fromOffset(137, 37), UDim2.fromOffset(14 + col * 145, 87 + row * 42))
+    item.Name, item.ZIndex = name .. "Toggle", 12
+    item.TextSize = 11
+    item.Visible = layout[1] == selectedTab
+    table.insert(entries, {group = layout[1], button = item})
     return item
 end
 local function showToggle(item, name, enabled, waiting)
@@ -171,7 +197,7 @@ local function showToggle(item, name, enabled, waiting)
     item.BackgroundColor3 = waiting and Color3.fromRGB(93, 75, 44)
         or (enabled and Color3.fromRGB(37, 122, 100) or Color3.fromRGB(38, 45, 67))
 end
-local footer = label(menu, "FOV 220  ·  CLIENT TOOLS", UDim2.new(1, -28, 0, 16), UDim2.fromOffset(14, 224), 9)
+local footer = label(menu, "360° AIM  ·  CLIENT TOOLS", UDim2.new(1, -28, 0, 16), UDim2.fromOffset(14, 224), 9)
 footer.TextColor3 = Color3.fromRGB(130, 147, 181)
 footer.ZIndex = 12
 local button = makeToggle("SILENT", 0)
@@ -400,47 +426,71 @@ local function tracePenetration(origin, target)
     return false
 end
 
+-- FOV 360°: враги сзади и вне экрана тоже рассматриваются; приоритет ближе к прицелу.
+local history = setmetatable({}, {__mode = "k"})
+local function updateMotion(part, now)
+    local previous = history[part]
+    local position = part.Position
+    if previous then
+        local dt = now - previous.time
+        if dt > 0.005 and dt < 0.3 then
+            local velocity = (position - previous.position) / dt
+            if velocity.Magnitude <= 90 then
+                previous.velocity = previous.velocity and (previous.velocity * 0.6 + velocity * 0.4) or velocity
+            else
+                previous.velocity = nil -- телепорт/резкое перемещение не предсказываем
+            end
+        else
+            previous.velocity = nil
+        end
+        previous.position, previous.time = position, now
+    else
+        history[part] = {position = position, time = now}
+    end
+end
+local function predictedPoint(part)
+    local position = part.Position
+    local sample = history[part]
+    if not sample or not sample.velocity or os.clock() - sample.time > 0.3 then return position end
+    local ok, ping = pcall(localPlayer.GetNetworkPing, localPlayer)
+    local delay = math.clamp((ok and tonumber(ping) or 0.04) + 0.015, 0, 0.15)
+    return position + sample.velocity * delay
+end
 local function selectTarget()
     local camera = Workspace.CurrentCamera
     local characters = Workspace:FindFirstChild("Characters")
-    if not camera or not characters then return nil end
-    if tostring(localPlayer:GetAttribute("Dead")) == "true" then return nil end
+    if not camera or not characters or tostring(localPlayer:GetAttribute("Dead")) == "true" then return nil end
     local ownCharacter = characters:FindFirstChild(localPlayer.Name) or localPlayer.Character
     if not ownCharacter or not ownCharacter.Parent then return nil end
-
-    local origin = camera.CFrame.Position
-    local center = camera.ViewportSize * 0.5
+    local origin, look = camera.CFrame.Position, camera.CFrame.LookVector
     local myTeam = localPlayer:GetAttribute("Team") or teamOf(ownCharacter)
-    local gameMode = tostring(Workspace:GetAttribute("Gamemode"))
-    local freeForAll = string.find(gameMode, "Deathmatch", 1, true) ~= nil
-    local best, bestDistance = nil, config.radius
-
+    local freeForAll = string.find(tostring(Workspace:GetAttribute("Gamemode")), "Deathmatch", 1, true) ~= nil
+    local best, bestDot = nil, -math.huge
+    local now = os.clock()
     if config.visibilityCheck then
-        local exclusions = { camera, characters }
+        local exclusions = {camera, characters}
         local debris = Workspace:FindFirstChild("Debris")
         local stash = Workspace:FindFirstChild("ThirdPersonWeaponStash")
         if debris then table.insert(exclusions, debris) end
         if stash then table.insert(exclusions, stash) end
         losParams.FilterDescendantsInstances = exclusions
     end
-
     for _, character in ipairs(characters:GetChildren()) do
         if isEnemy(character, ownCharacter, freeForAll, myTeam) then
-            local head = character:FindFirstChild("Head")
-            if head and head:IsA("BasePart") then
-                local delta = head.Position - origin
-                if delta.Magnitude <= config.maxDistance then
-                    local screen, visible = camera:WorldToViewportPoint(head.Position)
-                    if visible and screen.Z > 0 then
-                        local distance = (Vector2.new(screen.X, screen.Y) - center).Magnitude
-                        if distance < bestDistance then
-                            local blocked = config.visibilityCheck and Workspace:Raycast(origin, delta, losParams)
-                            local reachable = not blocked
-                            if blocked and state.extras.autoWall and state.wallReady then
-                                reachable = tracePenetration(origin, head)
-                            end
-                            if reachable then best, bestDistance = head, distance end
-                        end
+            local part = character:FindFirstChild("Head") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+            local hp = tonumber(character:GetAttribute("Health"))
+            if part and part:IsA("BasePart") and (not hp or hp > 0) then
+                updateMotion(part, now)
+                local delta = part.Position - origin
+                local distance = delta.Magnitude
+                if distance > 0.01 and distance <= config.maxDistance then
+                    local score = look:Dot(delta.Unit)
+                    if score > bestDot then
+                        local blocked = config.visibilityCheck and Workspace:Raycast(origin, delta, losParams)
+                        local reachable = not blocked
+                        if blocked and state.extras.autoWall and state.wallReady then reachable = tracePenetration(origin, part) end
+                        if blocked and state.extras.forceOrigin and state.forceReady then reachable = true end
+                        if reachable then best, bestDot = part, score end
                     end
                 end
             end
@@ -466,6 +516,10 @@ local namesButton = makeToggle("NAMES / HP", 5)
 local outlineButton = makeToggle("OUTLINE", 6)
 local teamButton = makeToggle("TEAM CHECK", 7)
 local extras = state.extras
+local originButton = makeToggle("FORCE ORIGIN", 8)
+local autoReloadButton = makeToggle("AUTO RELOAD", 9)
+local instaReloadButton = makeToggle("INSTA RELOAD", 10)
+
 
 local function refreshExtras()
     showToggle(autoButton, "AUTO SHOOT", extras.autoShoot, false)
@@ -478,7 +532,27 @@ local function refreshExtras()
     showToggle(namesButton, "NAMES / HP", extras.names, false)
     showToggle(outlineButton, "OUTLINE", extras.outline, false)
     showToggle(teamButton, "TEAM CHECK", config.teamCheck, false)
+    showToggle(originButton, "FORCE ORIGIN", extras.forceOrigin, not state.forceReady)
+    showToggle(autoReloadButton, "AUTO RELOAD", extras.autoReload, false)
+    showToggle(instaReloadButton, "INSTA RELOAD", extras.instaReload, not state.reloadReady)
+    if state.forceFailed then originButton.Text = "FORCE ORIGIN  N/A" end
+    if state.reloadFailed then instaReloadButton.Text = "INSTA RELOAD  N/A" end
 end
+
+originButton.MouseButton1Click:Connect(function()
+    if not state.forceReady then warn("[Force Origin] Внутренний метод пули недоступен") return end
+    extras.forceOrigin = not extras.forceOrigin
+    refreshExtras()
+end)
+autoReloadButton.MouseButton1Click:Connect(function()
+    extras.autoReload = not extras.autoReload
+    refreshExtras()
+end)
+instaReloadButton.MouseButton1Click:Connect(function()
+    if not state.reloadReady then warn("[Insta Reload] Оружие или модуль перезарядки не готовы") return end
+    extras.instaReload = not extras.instaReload
+    refreshExtras()
+end)
 
 autoButton.MouseButton1Click:Connect(function()
     extras.autoShoot = not extras.autoShoot
@@ -555,72 +629,156 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Локальное ESP: 2D рамка, имя/здоровье/дистанция и подсветка контура.
+-- Auto Reload: обычная перезарядка при пустом магазине, не чаще раза в секунду.
+local nextReload = 0
+RunService.Heartbeat:Connect(function()
+    if not extras.autoReload or os.clock() < nextReload then return end
+    local controller = state.rapid and state.rapid.controller
+    if not controller or type(controller.peekCurrentEquippedForMovement) ~= "function" then return end
+    local ok, weapon = pcall(controller.peekCurrentEquippedForMovement)
+    if not ok or type(weapon) ~= "table" or weapon.Player ~= localPlayer or weapon.IsDestroyed
+        or weapon.IsReloading or tonumber(weapon.Rounds) ~= 0 or type(weapon.reload) ~= "function" then return end
+    if (tonumber(weapon.Capacity) or 0) <= 0 and Workspace:GetAttribute("Gamemode") ~= "Deathmatch" then return end
+    nextReload = os.clock() + 1
+    local worked, err = pcall(weapon.reload, weapon)
+    if not worked then warn("[Auto Reload] " .. tostring(err)) end
+end)
+
+-- Insta Reload: перехватываем только обычную магазинную перезарядку игрока.
+-- При неподдерживаемом оружии вызывается штатная функция, результат сервера неизвестен.
+task.spawn(function()
+    local hookReload = hookfunction or replaceclosure
+    if type(hookReload) ~= "function" then state.reloadFailed = true; refreshExtras(); return end
+    for _ = 1, 60 do
+        local controller = state.rapid and state.rapid.controller
+        local reloadPacket = state.net and state.net.Inventory and state.net.Inventory.ReloadWeapon
+        local sendReload = reloadPacket and reloadPacket.Send
+        local ok, weapon = false, nil
+        if controller and type(controller.peekCurrentEquippedForMovement) == "function" then
+            ok, weapon = pcall(controller.peekCurrentEquippedForMovement)
+        end
+        if ok and type(weapon) == "table" and type(weapon.reload) == "function" and type(sendReload) == "function" then
+            local original
+            local success, old = pcall(function()
+                return hookReload(weapon.reload, function(w, ...)
+                    local props = type(w) == "table" and w.Properties
+                    if not extras.instaReload or type(w) ~= "table" or w.Player ~= localPlayer
+                        or type(props) ~= "table" or w.IsDestroyed or w.IsReloading or w.IsAdjustingSuppressor
+                        or tonumber(props.ReloadAnimationCount) ~= 1 or props.RechargeTime then
+                        return original(w, ...)
+                    end
+                    if type(w.WeaponEquippedTick) == "number" and tick()-w.WeaponEquippedTick <= 1 then return original(w, ...) end
+                    local mag, rounds, reserve = tonumber(props.Rounds), tonumber(w.Rounds), tonumber(w.Capacity) or 0
+                    local deathmatch = Workspace:GetAttribute("Gamemode") == "Deathmatch"
+                    if not mag or not rounds or mag <= rounds or (reserve <= 0 and not deathmatch) then return original(w, ...) end
+                    local loaded = deathmatch and mag-rounds or math.min(mag-rounds,reserve)
+                    local sent, result = pcall(sendReload, {Identifier=w.Identifier, Rounds=rounds, Capacity=reserve})
+                    if not sent or result == false then return original(w, ...) end
+                    w.Rounds = rounds + loaded
+                    w.Capacity = deathmatch and (tonumber(props.Capacity) or reserve) or reserve-loaded
+                    w.IsReloading, w.CurrentReloadIdentity = false, nil
+                    return true
+                end)
+            end)
+            if success and type(old) == "function" then
+                original = old
+                state.reloadReady = true
+                refreshExtras()
+                return
+            end
+            break
+        end
+        task.wait(0.5)
+    end
+    state.reloadFailed = true
+    refreshExtras()
+    warn("[Insta Reload] Не удалось найти функцию или пакет перезарядки")
+end)
+
+-- ESP по отдельным частям тела, без оружия и аксессуаров в размер рамки.
 local esp = {}
+local bodyNames = {"Head", "UpperTorso", "LowerTorso", "Torso", "HumanoidRootPart", "Left Arm", "Right Arm", "Left Leg", "Right Leg", "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand", "LeftUpperLeg", "LeftLowerLeg", "LeftFoot", "RightUpperLeg", "RightLowerLeg", "RightFoot"}
 local function removeEntry(model)
     local entry = esp[model]
     if not entry then return end
-    if entry.box then entry.box:Destroy() end
-    if entry.caption then entry.caption:Destroy() end
+    entry.box:Destroy(); entry.caption:Destroy(); entry.healthBack:Destroy()
     if entry.highlight then entry.highlight:Destroy() end
     esp[model] = nil
 end
 local function entryFor(model)
     if esp[model] then return esp[model] end
     local box = Instance.new("Frame")
-    box.Name = "EnemyBox"
-    box.BackgroundTransparency = 1
-    box.BorderSizePixel = 0
-    box.Visible = false
-    box.ZIndex = 2
+    box.Name, box.BackgroundTransparency, box.BorderSizePixel, box.Visible, box.ZIndex = "EnemyBox", 1, 0, false, 2
     box.Parent = overlay
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(95, 223, 206)
-    stroke.Thickness = 1.5
-    stroke.Parent = box
+    stroke.Color, stroke.Thickness, stroke.Parent = Color3.fromRGB(106, 233, 208), 1.3, box
     local caption = Instance.new("TextLabel")
     caption.Name = "EnemyInfo"
     caption.AnchorPoint = Vector2.new(0.5, 1)
-    caption.Size = UDim2.fromOffset(200, 20)
+    caption.Size = UDim2.fromOffset(220, 18)
     caption.BackgroundTransparency = 1
-    caption.TextColor3 = Color3.fromRGB(224, 255, 249)
-    caption.TextStrokeTransparency = 0.25
-    caption.Font = Enum.Font.GothamBold
-    caption.TextSize = 12
-    caption.Visible = false
-    caption.ZIndex = 2
+    caption.TextColor3 = Color3.fromRGB(239, 255, 252)
+    caption.TextStrokeTransparency = 0.12
+    caption.Font, caption.TextSize, caption.Visible, caption.ZIndex = Enum.Font.GothamBold, 11, false, 2
     caption.Parent = overlay
-    local entry = { box = box, caption = caption, highlight = nil }
+    local healthBack = Instance.new("Frame")
+    healthBack.Name = "HealthBack"
+    healthBack.BackgroundColor3 = Color3.fromRGB(12, 18, 24)
+    healthBack.BorderSizePixel, healthBack.Visible, healthBack.ZIndex = 0, false, 2
+    healthBack.Parent = overlay
+    local healthFill = Instance.new("Frame")
+    healthFill.AnchorPoint = Vector2.new(0, 1)
+    healthFill.Position = UDim2.fromScale(0, 1)
+    healthFill.BorderSizePixel, healthFill.ZIndex = 0, 3
+    healthFill.Parent = healthBack
+    local entry = {box = box, caption = caption, healthBack = healthBack, healthFill = healthFill}
     esp[model] = entry
     return entry
 end
 local function boundsOnScreen(camera, model)
-    local ok, frame, size = pcall(model.GetBoundingBox, model)
-    if not ok then return nil end
+    local anchor = model:FindFirstChild("Head") or model:FindFirstChild("HumanoidRootPart")
+    if not anchor or not anchor:IsA("BasePart") then return nil end
+    local anchorPos = anchor.Position
     local minX, minY, maxX, maxY
-    for _, x in ipairs({-1, 1}) do
-        for _, y in ipairs({-1, 1}) do
-            for _, z in ipairs({-1, 1}) do
-                local p = frame * Vector3.new(size.X * x / 2, size.Y * y / 2, size.Z * z / 2)
-                local v = camera:WorldToViewportPoint(p)
-                if v.Z <= 0.1 then return nil end
-                minX = math.min(minX or v.X, v.X); maxX = math.max(maxX or v.X, v.X)
-                minY = math.min(minY or v.Y, v.Y); maxY = math.max(maxY or v.Y, v.Y)
+    local headMin, headMax
+    for _, name in ipairs(bodyNames) do
+        local part = model:FindFirstChild(name)
+        if part and part:IsA("BasePart") and (part.Position - anchorPos).Magnitude < 12 and part.Size.Magnitude < 20 then
+            for _, x in ipairs({-1, 1}) do
+                for _, y in ipairs({-1, 1}) do
+                    for _, z in ipairs({-1, 1}) do
+                        local position = part.CFrame * Vector3.new(part.Size.X*x/2, part.Size.Y*y/2, part.Size.Z*z/2)
+                        local screen = camera:WorldToViewportPoint(position)
+                        if screen.Z > 0.1 then
+                            minX=math.min(minX or screen.X,screen.X); maxX=math.max(maxX or screen.X,screen.X)
+                            minY=math.min(minY or screen.Y,screen.Y); maxY=math.max(maxY or screen.Y,screen.Y)
+                            if part == anchor then
+                                headMin=math.min(headMin or screen.Y,screen.Y)
+                                headMax=math.max(headMax or screen.Y,screen.Y)
+                            end
+                        end
+                    end
+                end
             end
         end
     end
+    if not minX or not headMin then return nil end
+    -- Отсекаем аномально далёкие части даже при повреждённой модели.
+    local anchorScreen = camera:WorldToViewportPoint(anchorPos)
+    local headHeight = math.max(2, headMax - headMin)
+    local maxWidth, maxHeight = math.max(12,headHeight*5), math.max(20,headHeight*8)
+    minX, maxX = math.max(minX,anchorScreen.X-maxWidth/2), math.min(maxX,anchorScreen.X+maxWidth/2)
+    minY, maxY = math.max(minY,headMin-headHeight), math.min(maxY,headMin+maxHeight)
     local viewport = camera.ViewportSize
     if maxX < 0 or maxY < 0 or minX > viewport.X or minY > viewport.Y then return nil end
-    minX, maxX = math.clamp(minX, 0, viewport.X), math.clamp(maxX, 0, viewport.X)
-    minY, maxY = math.clamp(minY, 0, viewport.Y), math.clamp(maxY, 0, viewport.Y)
-    if maxX - minX < 2 or maxY - minY < 2 then return nil end
-    return minX, minY, maxX - minX, maxY - minY
+    minX, maxX = math.clamp(minX,0,viewport.X), math.clamp(maxX,0,viewport.X)
+    minY, maxY = math.clamp(minY,0,viewport.Y), math.clamp(maxY,0,viewport.Y)
+    if maxX-minX < 2 or maxY-minY < 2 then return nil end
+    return minX, minY, maxX-minX, maxY-minY
 end
 local function updateEsp()
-    local camera = Workspace.CurrentCamera
-    local characters = Workspace:FindFirstChild("Characters")
-    local enabled = extras.box or extras.names or extras.outline
-    if not enabled or not camera or not characters then
+    local camera, characters = Workspace.CurrentCamera, Workspace:FindFirstChild("Characters")
+    if not (extras.box or extras.names or extras.outline) or not camera or not characters then
         for model in pairs(esp) do removeEntry(model) end
         return
     end
@@ -630,50 +788,53 @@ local function updateEsp()
     local seen = {}
     for _, model in ipairs(characters:GetChildren()) do
         if isEnemy(model, own, ffa, myTeam) then
-            local health = tonumber(model:GetAttribute("Health"))
+            local hp = tonumber(model:GetAttribute("Health"))
             local humanoid = model:FindFirstChildOfClass("Humanoid")
-            if not health and humanoid then health = humanoid.Health end
-            if not health or health > 0 then
+            if not hp and humanoid then hp = humanoid.Health end
+            local maxHp = tonumber(model:GetAttribute("MaxHealth")) or (humanoid and humanoid.MaxHealth) or 100
+            if not hp or hp > 0 then
                 seen[model] = true
                 local entry = entryFor(model)
                 if extras.outline then
                     if not entry.highlight then
                         local h = Instance.new("Highlight")
-                        h.Name = "EnemyOutline"
-                        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                        h.FillTransparency = 1
-                        h.OutlineTransparency = 0
-                        h.OutlineColor = Color3.fromRGB(95, 223, 206)
-                        h.Adornee = model
-                        h.Parent = gui
+                        h.Name, h.DepthMode = "EnemyOutline", Enum.HighlightDepthMode.AlwaysOnTop
+                        h.FillColor, h.OutlineColor = Color3.fromRGB(58,170,158), Color3.fromRGB(120,245,223)
+                        h.FillTransparency, h.OutlineTransparency = 0.88, 0
+                        h.Adornee, h.Parent = model, gui
                         entry.highlight = h
                     end
                     entry.highlight.Enabled = true
                 elseif entry.highlight then entry.highlight.Enabled = false end
-                local x, y, width, height = boundsOnScreen(camera, model)
+                local x,y,w,h = boundsOnScreen(camera,model)
                 entry.box.Visible = extras.box and x ~= nil
                 entry.caption.Visible = extras.names and x ~= nil
+                entry.healthBack.Visible = extras.names and x ~= nil and hp ~= nil
                 if x then
-                    entry.box.Position = UDim2.fromOffset(x, y)
-                    entry.box.Size = UDim2.fromOffset(width, height)
-                    entry.caption.Position = UDim2.fromOffset(x + width / 2, y - 2)
+                    entry.box.Position,entry.box.Size = UDim2.fromOffset(x,y),UDim2.fromOffset(w,h)
+                    entry.caption.Position = UDim2.fromOffset(x+w/2,y-3)
+                    entry.healthBack.Position,entry.healthBack.Size = UDim2.fromOffset(x-5,y),UDim2.fromOffset(3,h)
+                    if hp then
+                        local ratio = math.clamp(hp / math.max(1, maxHp),0,1)
+                        entry.healthFill.Size = UDim2.fromScale(1,ratio)
+                        entry.healthFill.BackgroundColor3 = Color3.fromRGB(math.floor(230*(1-ratio)),math.floor(185*ratio+50),70)
+                    end
                     local head = model:FindFirstChild("Head")
-                    local distance = head and math.floor((head.Position - camera.CFrame.Position).Magnitude) or 0
-                    entry.caption.Text = model.Name .. "  |  " .. (health and tostring(math.floor(health)) .. " HP" or "HP ?") .. "  |  " .. tostring(distance) .. "m"
+                    local distance = head and math.floor((head.Position-camera.CFrame.Position).Magnitude) or 0
+                    entry.caption.Text = model.Name .. "  ·  " .. (hp and tostring(math.floor(hp)).." HP" or "HP ?") .. "  ·  " .. tostring(distance).." st"
                 end
             end
         end
     end
     for model in pairs(esp) do if not seen[model] then removeEntry(model) end end
 end
-local lastEsp = 0
-local espWarnAt = 0
+local lastEsp, espWarnAt = 0, 0
 RunService.Heartbeat:Connect(function()
     local now = os.clock()
-    if now - lastEsp < 0.10 then return end
+    if now-lastEsp < 0.05 then return end
     lastEsp = now
     local ok, err = pcall(updateEsp)
-    if not ok and now - espWarnAt > 5 then espWarnAt = now; warn("[ESP] " .. tostring(err)) end
+    if not ok and now-espWarnAt > 5 then espWarnAt=now; warn("[ESP] "..tostring(err)) end
 end)
 
 -- Последняя страховка, если отправка пакета не состоялась.
@@ -694,6 +855,7 @@ local function lookupNetworkSend()
     if not module or not module:IsA("ModuleScript") then return nil end
     local ok, net = pcall(require, module)
     if not ok or type(net) ~= "table" then return nil end
+    state.net = net
     local packet = net.Inventory and net.Inventory.ShootWeapon
     return packet and type(packet.Send) == "function" and packet.Send or nil
 end
@@ -716,7 +878,7 @@ end
 local function redirectCamera()
     local target, camera = state.target, Workspace.CurrentCamera
     if not config.enabled or not target or not target.Parent or not camera then return end
-    local ok, position = pcall(function() return target.Position end)
+    local ok, position = pcall(predictedPoint, target)
     if not ok then return end
     local origin = camera.CFrame.Position
     if (position - origin).Magnitude < 0.001 then return end
@@ -754,6 +916,34 @@ local function install(bullet, sendFunction)
     end)
     if not ok or type(result) ~= "function" then return false, "Не удалось перехватить create" end
     previousCreate = result
+
+    -- Force Origin: временно переносим камеру для внутреннего расчёта луча пули.
+    -- Камера восстанавливается сразу после расчёта. Сервер может отклонить выстрел.
+    if type(bullet._performRaycast) == "function" then
+        local previousRay
+        local good, old = pcall(function()
+            return hook(bullet._performRaycast, function(...)
+                local camera, target = Workspace.CurrentCamera, state.target
+                if not (extras.forceOrigin and config.enabled and state.redirected and camera and target and target.Parent) then
+                    return previousRay(...)
+                end
+                local oldView = camera.CFrame
+                local okPoint, aim = pcall(predictedPoint, target)
+                if not okPoint then return previousRay(...) end
+                local direction = aim - oldView.Position
+                if direction.Magnitude < 3 then return previousRay(...) end
+                local moved = pcall(function() camera.CFrame = CFrame.lookAt(aim - direction.Unit * 3, aim) end)
+                if not moved then return previousRay(...) end
+                local resultPack = table.pack(pcall(previousRay, ...))
+                pcall(function() camera.CFrame = oldView end)
+                if not resultPack[1] then error(resultPack[2],0) end
+                return table.unpack(resultPack,2,resultPack.n)
+            end)
+        end)
+        if good and type(old) == "function" then previousRay = old; state.forceReady = true end
+    end
+    state.forceFailed = not state.forceReady
+    refreshExtras()
 
     -- Убираем разброс только во время перенаправленного выстрела.
     local seen = {}
