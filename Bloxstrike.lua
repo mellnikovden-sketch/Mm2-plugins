@@ -101,10 +101,10 @@ overlay.Parent = gui
 
 local menu = Instance.new("Frame")
 menu.Name = "BloxMenu"
-menu.Size = UDim2.fromOffset(550, 395)
+menu.Size = UDim2.fromOffset(640, 440)
 menu.AnchorPoint = Vector2.new(0.5, 0.5)
 menu.Position = UDim2.new(0.5, 0, 0.5, 0)
-menu.BackgroundColor3 = Color3.fromRGB(8,9,14)
+menu.BackgroundColor3 = Color3.fromRGB(9,15,11)
 menu.BorderSizePixel = 0
 menu.ZIndex = 10
 menu.Parent = gui
@@ -112,7 +112,7 @@ menu.Visible = false -- до завершения заставки
 round(menu, 14)
 do
     local grad=Instance.new("UIGradient")
-    grad.Color=ColorSequence.new(Color3.fromRGB(255,255,255),Color3.fromRGB(176,182,214))
+    grad.Color=ColorSequence.new(Color3.fromRGB(255,255,255),Color3.fromRGB(176,198,181))
     grad.Rotation,grad.Parent=90,menu
 end
 local border = Instance.new("UIStroke")
@@ -120,7 +120,7 @@ border.Color = Color3.fromRGB(255,255,255)
 border.Thickness, border.Transparency = 1.6, 0.1
 border.Parent = menu
 local borderGrad=Instance.new("UIGradient")
-borderGrad.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(124,92,255)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(56,189,248)),ColorSequenceKeypoint.new(1,Color3.fromRGB(124,92,255))})
+borderGrad.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(106,210,145)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(174,226,191)),ColorSequenceKeypoint.new(1,Color3.fromRGB(106,210,145))})
 borderGrad.Parent=border
 RunService.Heartbeat:Connect(function()
     if menu.Visible then borderGrad.Rotation=(os.clock()*35)%360 end
@@ -133,7 +133,7 @@ accent.Parent = menu
 round(accent, 2)
 do
     local ag=Instance.new("UIGradient")
-    ag.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(124,92,255)),ColorSequenceKeypoint.new(0.6,Color3.fromRGB(56,189,248)),ColorSequenceKeypoint.new(1,Color3.fromRGB(24,28,48))})
+    ag.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(106,210,145)),ColorSequenceKeypoint.new(0.6,Color3.fromRGB(174,226,191)),ColorSequenceKeypoint.new(1,Color3.fromRGB(24,28,48))})
     ag.Parent=accent
 end
 
@@ -145,11 +145,11 @@ header.Active = true
 header.ZIndex = 11
 header.Parent = menu
 local badge = Instance.new("Frame")
-badge.Name, badge.BackgroundColor3, badge.BorderSizePixel = "BrandBadge", Color3.fromRGB(30,22,64), 0
+badge.Name, badge.BackgroundColor3, badge.BorderSizePixel = "BrandBadge", Color3.fromRGB(26,60,38), 0
 badge.Size, badge.Position, badge.ZIndex, badge.Parent = UDim2.fromOffset(30,30), UDim2.fromOffset(14,9), 12, header
 round(badge, 9)
 local badgeText = label(badge, "N", UDim2.fromScale(1,1), UDim2.fromOffset(0,0), 11)
-badgeText.TextXAlignment, badgeText.TextColor3, badgeText.ZIndex = Enum.TextXAlignment.Center, Color3.fromRGB(162,174,255), 13
+badgeText.TextXAlignment, badgeText.TextColor3, badgeText.ZIndex = Enum.TextXAlignment.Center, Color3.fromRGB(201,241,211), 13
 local title = label(header, "N O I R", UDim2.new(1, -60, 0, 22), UDim2.fromOffset(54, 6), 15)
 title.ZIndex = 12
 local subtitle = label(header, "CREATOR  /  BLOX STRIKE", UDim2.new(1, -60, 0, 17), UDim2.fromOffset(54, 26), 9)
@@ -157,7 +157,7 @@ subtitle.TextColor3 = Color3.fromRGB(156,159,182)
 subtitle.ZIndex = 12
 do
     local version=label(header,"CONTROL  /  01",UDim2.fromOffset(130,16),UDim2.new(1,-153,0.5,-8),9)
-    version.TextXAlignment,version.TextColor3,version.ZIndex=Enum.TextXAlignment.Right,Color3.fromRGB(113,118,153),12
+    version.TextXAlignment,version.TextColor3,version.ZIndex=Enum.TextXAlignment.Right,Color3.fromRGB(133,159,140),12
 end
 do
     local chip=Instance.new("Frame")
@@ -169,24 +169,24 @@ do
         if now-last<0.4 or not menu.Visible then return end
         last=now
         local ready=state.ready
-        chip.BackgroundColor3=ready and Color3.fromRGB(110,231,255) or Color3.fromRGB(239,187,101)
+        chip.BackgroundColor3=ready and Color3.fromRGB(151,235,175) or Color3.fromRGB(239,187,101)
     end)
 end
 local close = smallButton(menu, "×", UDim2.fromOffset(32, 32), UDim2.new(1, -42, 0, 8))
 close.Name = "NoirClose"
-close.BackgroundColor3 = Color3.fromRGB(24,26,38)
+close.BackgroundColor3 = Color3.fromRGB(27,39,30)
 close.TextColor3 = Color3.fromRGB(209,212,232)
 close.TextSize = 21
 close.ZIndex = 12
 
 local reopen = smallButton(gui, "", UDim2.fromOffset(110, 40), UDim2.new(0, 12, 0.36, 0))
-reopen.Name, reopen.BackgroundColor3, reopen.Visible, reopen.ZIndex = "NoirReopen", Color3.fromRGB(13,11,20), false, 10
+reopen.Name, reopen.BackgroundColor3, reopen.Visible, reopen.ZIndex = "NoirReopen", Color3.fromRGB(12,20,14), false, 10
 local reopenEdge=Instance.new("UIStroke")
 reopenEdge.Color,reopenEdge.Thickness,reopenEdge.Transparency,reopenEdge.Parent=Color3.fromRGB(180,184,208),1.4,0.1,reopen
 reopenEdge.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
 local reopenIcon=Instance.new("Frame")
 reopenIcon.Size,reopenIcon.Position=UDim2.fromOffset(29,29),UDim2.fromOffset(5,5)
-reopenIcon.BackgroundColor3,reopenIcon.BorderSizePixel,reopenIcon.ZIndex,reopenIcon.Parent=Color3.fromRGB(42,31,85),0,11,reopen
+reopenIcon.BackgroundColor3,reopenIcon.BorderSizePixel,reopenIcon.ZIndex,reopenIcon.Parent=Color3.fromRGB(28,76,43),0,11,reopen
 round(reopenIcon,9)
 local reopenN=label(reopenIcon,"N",UDim2.fromScale(1,1),UDim2.fromOffset(0,0),14)
 reopenN.TextXAlignment,reopenN.TextColor3,reopenN.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(208,213,245),12
@@ -243,7 +243,7 @@ local function updateMenuScale()
     local camera = Workspace.CurrentCamera
     if camera then
         local size = camera.ViewportSize
-        menuScale.Scale = math.clamp(math.min((size.X-16)/550, (size.Y-16)/395), 0.3, 1)
+        menuScale.Scale = math.clamp(math.min((size.X-16)/640, (size.Y-16)/440), 0.3, 1)
     end
 end
 local viewportConnection
@@ -296,16 +296,16 @@ local subNames = {COMBAT="AIM", WEAPON="WEAPON", VISUALS="PLAYER", OBJECTIVE="BO
 local subTabs, mainTabs = {}, {}
 do
     local panel=Instance.new("Frame")
-    panel.Name,panel.Position,panel.Size="ContentPanel",UDim2.fromOffset(10,118),UDim2.new(1,-20,0,240)
-    panel.BackgroundColor3,panel.BorderSizePixel,panel.ZIndex,panel.Parent=Color3.fromRGB(11,12,20),0,11,menu
+    panel.Name,panel.Position,panel.Size="ContentPanel",UDim2.fromOffset(10,118),UDim2.new(1,-20,0,280)
+    panel.BackgroundColor3,panel.BorderSizePixel,panel.ZIndex,panel.Parent=Color3.fromRGB(12,20,14),0,11,menu
     round(panel,11)
     local edge=Instance.new("UIStroke")
-    edge.Color,edge.Transparency,edge.Thickness,edge.Parent=Color3.fromRGB(81,86,120),0.72,1,panel
+    edge.Color,edge.Transparency,edge.Thickness,edge.Parent=Color3.fromRGB(82,112,89),0.72,1,panel
 end
 local pageHint = label(menu, "", UDim2.fromOffset(290,20), UDim2.fromOffset(16,123), 12)
 pageHint.TextColor3, pageHint.ZIndex = Color3.fromRGB(226,237,229), 12
 local pageSub = label(menu, "", UDim2.fromOffset(180,16), UDim2.new(1,-195,0,125), 9)
-pageSub.TextXAlignment, pageSub.TextColor3, pageSub.ZIndex = Enum.TextXAlignment.Right, Color3.fromRGB(126,131,163), 12
+pageSub.TextXAlignment, pageSub.TextColor3, pageSub.ZIndex = Enum.TextXAlignment.Right, Color3.fromRGB(133,157,138), 12
 local hideSettings = function() end
 local function setTab(name)
     hideSettings()
@@ -316,10 +316,10 @@ local function setTab(name)
     pageHint.Text, pageSub.Text = headings[name], hints[name]
     for group, button in pairs(mainTabs) do
         local active = group == main
-        button.BackgroundColor3 = active and Color3.fromRGB(40,34,92) or Color3.fromRGB(20,24,40)
-        button.TextColor3 = active and Color3.fromRGB(214,222,255) or Color3.fromRGB(140,150,190)
+        button.BackgroundColor3 = active and Color3.fromRGB(28,67,42) or Color3.fromRGB(18,28,21)
+        button.TextColor3 = active and Color3.fromRGB(214,222,255) or Color3.fromRGB(143,169,149)
         local st=button:FindFirstChildOfClass("UIStroke")
-        if st then st.Color=active and Color3.fromRGB(124,92,255) or Color3.fromRGB(100,108,150); st.Transparency=active and 0.1 or 0.55 end
+        if st then st.Color=active and Color3.fromRGB(106,210,145) or Color3.fromRGB(104,132,111); st.Transparency=active and 0.1 or 0.55 end
     end
     local slot=0
     for _, sub in ipairs({"COMBAT","WEAPON","VISUALS","OBJECTIVE","EFFECTS","MOVEMENT"}) do
@@ -327,17 +327,17 @@ local function setTab(name)
         item.Visible = mainFor[sub] == main
         if item.Visible then
             item.Position = UDim2.fromOffset(15+slot*100, 91); slot+=1
-            item.BackgroundColor3 = sub == name and Color3.fromRGB(35,38,61) or Color3.fromRGB(12,13,20)
-            item.TextColor3 = sub == name and Color3.fromRGB(215,219,246) or Color3.fromRGB(125,128,154)
+            item.BackgroundColor3 = sub == name and Color3.fromRGB(32,50,37) or Color3.fromRGB(12,13,20)
+            item.TextColor3 = sub == name and Color3.fromRGB(222,239,225) or Color3.fromRGB(125,128,154)
         end
     end
     for _, entry in ipairs(entries) do entry.button.Visible = entry.group == name end
 end
 for index, name in ipairs({"COMBAT", "VISUALS", "TOOLS"}) do
-    local tab = smallButton(menu, name, UDim2.fromOffset(168, 30), UDim2.fromOffset(15+(index-1)*176, 54))
+    local tab = smallButton(menu, name, UDim2.fromOffset(198, 30), UDim2.fromOffset(15+(index-1)*206, 54))
     tab.Name, tab.TextSize, tab.ZIndex = name.."MainTab", 10, 12
     local edge = Instance.new("UIStroke")
-    edge.Color, edge.Transparency, edge.Thickness, edge.Parent = Color3.fromRGB(83,89,131), 0.52, 1, tab
+    edge.Color, edge.Transparency, edge.Thickness, edge.Parent = Color3.fromRGB(93,126,101), 0.52, 1, tab
     edge.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
     mainTabs[name] = tab
     local target = name == "TOOLS" and "OBJECTIVE" or name
@@ -361,11 +361,11 @@ local descriptions={
 local function makeToggle(name, index)
     local layout = assert(groups[name], "unknown toggle: " .. name)
     local col,row=layout[2]%2,math.floor(layout[2]/2)
-    local item=smallButton(menu,"",UDim2.fromOffset(250,52),UDim2.fromOffset(15+col*270,149+row*64))
+    local item=smallButton(menu,"",UDim2.fromOffset(295,58),UDim2.fromOffset(15+col*315,151+row*74))
     item.Name,item.ZIndex,item.Visible=name.."Toggle",12,layout[1]==selectedTab
-    item.BackgroundColor3=Color3.fromRGB(16,17,28)
+    item.BackgroundColor3=Color3.fromRGB(17,27,20)
     local edge=Instance.new("UIStroke")
-    edge.Color,edge.Thickness,edge.Transparency,edge.Parent=Color3.fromRGB(93,98,132),1,0.7,item
+    edge.Color,edge.Thickness,edge.Transparency,edge.Parent=Color3.fromRGB(100,128,106),1,0.7,item
     edge.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
     local nameText=label(item,name,UDim2.fromOffset(142,16),UDim2.fromOffset(12,6),10)
     nameText.TextColor3,nameText.ZIndex=Color3.fromRGB(222,235,225),14
@@ -375,7 +375,7 @@ local function makeToggle(name, index)
     status.TextXAlignment,status.ZIndex=Enum.TextXAlignment.Center,14
     local switch=Instance.new("Frame")
     switch.Name,switch.Size,switch.Position="Switch",UDim2.fromOffset(30,16),UDim2.new(1,-41,0.5,-8)
-    switch.BackgroundColor3,switch.BorderSizePixel,switch.ZIndex,switch.Parent=Color3.fromRGB(48,52,73),0,14,item
+    switch.BackgroundColor3,switch.BorderSizePixel,switch.ZIndex,switch.Parent=Color3.fromRGB(53,73,58),0,14,item
     round(switch,8)
     local knob=Instance.new("Frame")
     knob.Size,knob.Position=UDim2.fromOffset(12,12),UDim2.fromOffset(2,2)
@@ -383,16 +383,16 @@ local function makeToggle(name, index)
     round(knob,7)
     local accent=Instance.new("Frame")
     accent.Name,accent.Size,accent.Position="StateDot",UDim2.fromOffset(2,22),UDim2.new(0,3,0.5,-11)
-    accent.BackgroundColor3,accent.BorderSizePixel,accent.ZIndex,accent.Parent=Color3.fromRGB(58,63,91),0,13,item
+    accent.BackgroundColor3,accent.BorderSizePixel,accent.ZIndex,accent.Parent=Color3.fromRGB(61,87,67),0,13,item
     round(accent,2)
     indicators[item]={status=status,edge=edge,dot=accent,switch=switch,knob=knob,name=nameText,detail=detail}
     table.insert(entries,{group=layout[1],button=item})
     item.MouseEnter:Connect(function()
         local data=indicators[item]
-        if data and not data.lastEnabled then pcall(function() game:GetService("TweenService"):Create(item,TweenInfo.new(0.12),{BackgroundColor3=Color3.fromRGB(28,33,52)}):Play() end) end
+        if data and not data.lastEnabled then pcall(function() game:GetService("TweenService"):Create(item,TweenInfo.new(0.12),{BackgroundColor3=Color3.fromRGB(28,44,32)}):Play() end) end
     end)
     item.MouseLeave:Connect(function()
-        pcall(function() game:GetService("TweenService"):Create(item,TweenInfo.new(0.12),{BackgroundColor3=Color3.fromRGB(20,24,40)}):Play() end)
+        pcall(function() game:GetService("TweenService"):Create(item,TweenInfo.new(0.12),{BackgroundColor3=Color3.fromRGB(18,28,21)}):Play() end)
     end)
     return item
 end
@@ -401,7 +401,7 @@ local function showToggle(item,name,enabled,waiting)
     data.name.Text=name
     data.status.Text=waiting and "WAIT" or ""
     data.status.TextColor3=Color3.fromRGB(235,185,100)
-    local trackColor=enabled and Color3.fromRGB(93,68,192) or Color3.fromRGB(48,52,73)
+    local trackColor=enabled and Color3.fromRGB(53,158,92) or Color3.fromRGB(53,73,58)
     local knobPosition=UDim2.fromOffset(enabled and 16 or 2,2)
     local knobColor=enabled and Color3.fromRGB(224,228,255) or Color3.fromRGB(182,185,204)
     if data.lastEnabled~=nil and data.lastEnabled~=enabled then
@@ -416,15 +416,15 @@ local function showToggle(item,name,enabled,waiting)
         data.switch.BackgroundColor3=trackColor;data.knob.Position=knobPosition;data.knob.BackgroundColor3=knobColor
     end
     data.lastEnabled=enabled
-    data.edge.Color=enabled and Color3.fromRGB(122,107,184) or Color3.fromRGB(93,98,132)
+    data.edge.Color=enabled and Color3.fromRGB(111,173,125) or Color3.fromRGB(100,128,106)
     data.edge.Transparency=enabled and 0.42 or 0.7
-    data.dot.BackgroundColor3=waiting and Color3.fromRGB(239,187,101) or (enabled and Color3.fromRGB(108,163,235) or Color3.fromRGB(58,63,91))
+    data.dot.BackgroundColor3=waiting and Color3.fromRGB(239,187,101) or (enabled and Color3.fromRGB(116,223,151) or Color3.fromRGB(61,87,67))
 end
-local footer = label(menu, "NOIR CREATOR   /   PRIVATE CONTROL", UDim2.fromOffset(280,16), UDim2.fromOffset(15,372), 9)
-footer.TextColor3, footer.ZIndex = Color3.fromRGB(107,112,143), 12
+local footer = label(menu, "NOIR CREATOR   /   PRIVATE CONTROL", UDim2.fromOffset(280,16), UDim2.fromOffset(15,416), 9)
+footer.TextColor3, footer.ZIndex = Color3.fromRGB(117,144,123), 12
 do
-    local right=label(menu,"SILVER  /  MOBILE",UDim2.fromOffset(160,16),UDim2.new(1,-175,0,372),9)
-    right.TextXAlignment,right.TextColor3,right.ZIndex=Enum.TextXAlignment.Right,Color3.fromRGB(131,135,162),12
+    local right=label(menu,"SILVER  /  MOBILE",UDim2.fromOffset(160,16),UDim2.new(1,-175,0,416),9)
+    right.TextXAlignment,right.TextColor3,right.ZIndex=Enum.TextXAlignment.Right,Color3.fromRGB(139,160,144),12
 end
 local button = makeToggle("SILENT", 0)
 
@@ -836,7 +836,7 @@ knob.BackgroundColor3, knob.BorderSizePixel, knob.ZIndex, knob.Parent = Color3.f
 round(knob, 8)
 do
     local fg=Instance.new("UIGradient")
-    fg.Color=ColorSequence.new(Color3.fromRGB(124,92,255),Color3.fromRGB(56,189,248))
+    fg.Color=ColorSequence.new(Color3.fromRGB(106,210,145),Color3.fromRGB(174,226,191))
     fg.Parent=fill
     local ks=Instance.new("UIStroke")
     ks.Color,ks.Thickness,ks.Transparency,ks.Parent=Color3.fromRGB(110,160,255),2,0.45,knob
@@ -1033,46 +1033,58 @@ end
 do
     local radarButton=makeToggle("RADAR",40)
     local hitsButton=makeToggle("HIT LOG",41)
-    local hudState={radar=false,hits=false,range=250}
+    local hudState={radar=false,hits=false,range=500}
     state.hud=hudState
     local function refreshHud()
         showToggle(radarButton,"RADAR",hudState.radar,false)
         showToggle(hitsButton,"HIT LOG",hudState.hits,hudState.hits and not state.hitReady)
     end
 
+    -- Круглый радар: игрок в центре, север экрана совпадает с направлением камеры.
     local radar=Instance.new("Frame")
-    radar.Name,radar.Size,radar.Position="NoirRadar",UDim2.fromOffset(146,166),UDim2.new(0,16,0.52,0)
-    radar.BackgroundColor3,radar.BackgroundTransparency,radar.BorderSizePixel,radar.ZIndex,radar.Parent=Color3.fromRGB(12,10,20),0.12,0,5,gui
+    radar.Name,radar.Size,radar.Position="NoirRadar",UDim2.fromOffset(170,170),UDim2.new(0,16,0.47,0)
+    radar.BackgroundColor3,radar.BackgroundTransparency,radar.BorderSizePixel,radar.ZIndex,radar.Parent=Color3.fromRGB(9,18,13),0.08,0,5,gui
     radar.Visible=false
-    round(radar,11)
+    round(radar,85)
     local radarBorder=Instance.new("UIStroke")
-    radarBorder.Color,radarBorder.Transparency,radarBorder.Parent=Color3.fromRGB(111,118,162),0.25,radar
-    local bar=Instance.new("Frame")
-    bar.Name,bar.BackgroundTransparency,bar.Active,bar.ZIndex,bar.Parent="RadarDrag",1,true,6,radar
-    bar.Size=UDim2.new(1,0,0,27)
-    local title=label(bar,"NOIR  /  RADAR",UDim2.fromOffset(125,22),UDim2.fromOffset(10,2),9)
-    title.TextColor3,title.ZIndex=Color3.fromRGB(171,179,230),7
-    local screen=Instance.new("Frame")
-    screen.Name,screen.Size,screen.Position="RadarScreen",UDim2.fromOffset(126,126),UDim2.fromOffset(10,29)
-    screen.BackgroundColor3,screen.BorderSizePixel,screen.ZIndex,screen.Parent=Color3.fromRGB(20,17,32),0,6,radar
-    screen.ClipsDescendants=true
-    round(screen,8)
-    local screenEdge=Instance.new("UIStroke")
-    screenEdge.Color,screenEdge.Transparency,screenEdge.Parent=Color3.fromRGB(52,59,109),0.55,screen
+    radarBorder.Color,radarBorder.Thickness,radarBorder.Transparency,radarBorder.Parent=Color3.fromRGB(143,192,158),1.5,0.22,radar
+    local inner=Instance.new("Frame")
+    inner.AnchorPoint,inner.Position,inner.Size=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),UDim2.fromOffset(150,150)
+    inner.BackgroundColor3,inner.BackgroundTransparency,inner.BorderSizePixel,inner.ZIndex,inner.Parent=Color3.fromRGB(16,32,22),0.12,0,6,radar
+    round(inner,75)
+    local ring=Instance.new("UIStroke")
+    ring.Color,ring.Transparency,ring.Parent=Color3.fromRGB(101,146,111),0.55,inner
+    local middle=Instance.new("Frame")
+    middle.AnchorPoint,middle.Position,middle.Size=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),UDim2.fromOffset(76,76)
+    middle.BackgroundTransparency,middle.ZIndex,middle.Parent=1,7,inner
+    round(middle,38)
+    local middleEdge=Instance.new("UIStroke")
+    middleEdge.Color,middleEdge.Transparency,middleEdge.Parent=Color3.fromRGB(94,137,102),0.68,middle
     for _,horizontal in ipairs({true,false}) do
         local line=Instance.new("Frame")
-        line.BorderSizePixel,line.BackgroundColor3,line.BackgroundTransparency,line.ZIndex,line.Parent=0,Color3.fromRGB(71,79,130),0.72,7,screen
-        line.Size=horizontal and UDim2.new(1,0,0,1) or UDim2.new(0,1,1,0)
-        line.Position=horizontal and UDim2.fromScale(0,0.5) or UDim2.fromScale(0.5,0)
+        line.AnchorPoint,line.Position=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5)
+        line.Size=horizontal and UDim2.fromOffset(144,1) or UDim2.fromOffset(1,144)
+        line.BorderSizePixel,line.BackgroundColor3,line.BackgroundTransparency,line.ZIndex,line.Parent=0,Color3.fromRGB(108,157,116),0.72,7,inner
     end
     local center=Instance.new("Frame")
-    center.AnchorPoint,center.Position,center.Size=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),UDim2.fromOffset(6,6)
-    center.BackgroundColor3,center.BorderSizePixel,center.ZIndex,center.Parent=Color3.fromRGB(191,200,255),0,9,screen
+    center.AnchorPoint,center.Position,center.Size=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),UDim2.fromOffset(7,7)
+    center.BackgroundColor3,center.BorderSizePixel,center.ZIndex,center.Parent=Color3.fromRGB(224,255,230),0,9,inner
     round(center,4)
+    local heading=label(radar,"N",UDim2.fromOffset(20,16),UDim2.new(0.5,-10,0,10),10)
+    heading.TextXAlignment,heading.TextColor3,heading.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(185,232,194),8
+    local status=label(radar,"WAITING",UDim2.fromOffset(116,14),UDim2.new(0.5,-58,1,-30),8)
+    status.TextXAlignment,status.TextColor3,status.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(164,193,169),8
+    -- Прозрачный захват над всей поверхностью: никаких отдельных полос для перетаскивания.
+    local dragSurface=Instance.new("TextButton")
+    dragSurface.Name,dragSurface.Text,dragSurface.BackgroundTransparency="RadarDrag","",1
+    dragSurface.AutoButtonColor,dragSurface.Active,dragSurface.Size,dragSurface.ZIndex,dragSurface.Parent=false,true,UDim2.fromScale(1,1),10,radar
+    round(dragSurface,85)
     local dots={}
     local radarInput,radarStart,radarPos
-    bar.InputBegan:Connect(function(input)
-        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then radarInput,radarStart,radarPos=input,input.Position,radar.Position end
+    dragSurface.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+            radarInput,radarStart,radarPos=input,input.Position,radar.Position
+        end
     end)
     UserInputService.InputChanged:Connect(function(input)
         if not radarInput then return end
@@ -1084,76 +1096,87 @@ do
     UserInputService.InputEnded:Connect(function(input)
         if radarInput and (input==radarInput or (radarInput.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then radarInput=nil end
     end)
+    local function clearRadar()
+        for model,rec in pairs(dots) do rec.frame:Destroy();dots[model]=nil end
+    end
     radarButton.MouseButton1Click:Connect(function()
         hudState.radar=not hudState.radar
         radar.Visible=hudState.radar
-        if not hudState.radar then
-            for model,dot in pairs(dots) do dot:Destroy(); dots[model]=nil end
-        end
+        if not hudState.radar then radarInput=nil;clearRadar() end
         refreshHud()
     end)
+    local function radarTeam(character,player)
+        local t=player and player:GetAttribute("Team") or teamOf(character)
+        if t~=nil then return tostring(t) end
+        if player and player.Team then return tostring(player.Team.Name) end
+        return nil
+    end
     local function updateRadar()
         if not hudState.radar then return end
         local camera=Workspace.CurrentCamera
         local characters=Workspace:FindFirstChild("Characters")
         local own=(characters and characters:FindFirstChild(localPlayer.Name)) or localPlayer.Character
-        local root=own and (own:FindFirstChild("HumanoidRootPart") or own.PrimaryPart or own:FindFirstChild("Head"))
-        if not camera or not characters or not root or tostring(own:GetAttribute("Dead"))=="true" then
-            for _,dot in pairs(dots) do dot.Visible=false end
+        local root=own and (own:FindFirstChild("HumanoidRootPart") or own:FindFirstChild("Head") or own.PrimaryPart)
+        if not camera or not root or not root:IsA("BasePart") or tostring(own:GetAttribute("Dead"))=="true" then
+            for _,rec in pairs(dots) do rec.frame.Visible=false end
+            status.Text="WAITING FOR PLAYER"
             return
         end
         local look=camera.CFrame.LookVector
         local length=math.sqrt(look.X*look.X+look.Z*look.Z)
+        if length<0.001 then look=camera.CFrame.UpVector;length=math.sqrt(look.X*look.X+look.Z*look.Z) end
         if length<0.001 then return end
         local fx,fz=look.X/length,look.Z/length
-        local myTeam=localPlayer:GetAttribute("Team") or teamOf(own)
+        local myTeam=radarTeam(own,localPlayer)
         local ffa=string.find(tostring(Workspace:GetAttribute("Gamemode")),"Deathmatch",1,true)~=nil
-        local seen={}
-        local closestDist,closestModel=math.huge,nil
-        for _,model in ipairs(characters:GetChildren()) do
-            if isEnemy(model,own,ffa,myTeam) then
+        local candidates,added={},{}
+        local function add(model,player)
+            local key=player or model
+            if model and model:IsA("Model") and not added[model] and not added[key] then
+                added[model]=true;added[key]=true
+                table.insert(candidates,{model=model,player=player})
+            end
+        end
+        if characters then
+            for _,model in ipairs(characters:GetChildren()) do add(model,Players:FindFirstChild(model.Name)) end
+        end
+        for _,player in ipairs(Players:GetPlayers()) do add(player.Character,player) end
+        local seen,count={},0
+        for _,entry in ipairs(candidates) do
+            local model,player=entry.model,entry.player
+            local hp=tonumber(model:GetAttribute("Health"))
+            local hum=model:FindFirstChildOfClass("Humanoid")
+            if not hp and hum then hp=hum.Health end
+            local otherTeam=radarTeam(model,player)
+            local sameTeam=config.teamCheck and not ffa and myTeam~=nil and otherTeam~=nil and myTeam==otherTeam
+            local valid=model~=own and model.Name~=localPlayer.Name and tostring(model:GetAttribute("Dead"))~="true"
+                and (not hp or hp>0) and not sameTeam and (player~=nil or hp~=nil)
+            if valid then
                 local part=model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Head") or model.PrimaryPart
                 if part and part:IsA("BasePart") then
                     local delta=part.Position-root.Position
-                    local right=delta.X*(-fz)+delta.Z*fx
-                    local forward=delta.X*fx+delta.Z*fz
+                    local right,forward=delta.X*(-fz)+delta.Z*fx,delta.X*fx+delta.Z*fz
                     local dist=math.sqrt(right*right+forward*forward)
-                    local dot=dots[model]
-                    if not dot then
-                        dot=Instance.new("Frame"); dot.Name="RadarEnemy"
-                        dot.AnchorPoint,dot.Size=Vector2.new(0.5,0.5),UDim2.fromOffset(7,7)
-                        dot.BackgroundColor3,dot.BorderSizePixel,dot.ZIndex,dot.Parent=Color3.fromRGB(255,123,119),0,8,screen
-                        round(dot,4)
-                        local glow=Instance.new("UIStroke")
-                        glow.Name,glow.Thickness,glow.Transparency,glow.Parent="ClosestGlow",2,1,dot
-                        dots[model]={frame=dot,glow=glow}
-                    end
-                    seen[model]=true
+                    local limit=math.max(1,dist/hudState.range)
                     local rec=dots[model]
-                    rec.frame.Visible=dist<=hudState.range
-                    if rec.frame.Visible then
-                        rec.frame.Position=UDim2.fromOffset(63+right/hudState.range*58,63-forward/hudState.range*58)
-                        -- colour by health (green/yellow/red) and fade+shrink with distance so far blips read as background noise
-                        local hpv = tonumber(model:GetAttribute("Health"))
-                        if not hpv then
-                            local hum = model:FindFirstChildOfClass("Humanoid")
-                            hpv = hum and hum.Health
-                        end
-                        local ratio=math.clamp((hpv or 100)/100,0,1)
-                        rec.frame.BackgroundColor3 = ratio>0.66 and Color3.fromRGB(120,235,150)
-                            or ratio>0.33 and Color3.fromRGB(255,210,100) or Color3.fromRGB(255,95,95)
-                        local fade=1-math.clamp(dist/hudState.range,0,1)*0.55
-                        rec.frame.BackgroundTransparency=1-fade
-                        rec.frame.Size=UDim2.fromOffset(5+fade*3,5+fade*3)
-                        if dist<closestDist then closestDist=dist; closestModel=model end
+                    if not rec then
+                        local dot=Instance.new("Frame")
+                        dot.Name,dot.AnchorPoint,dot.Size="RadarEnemy",Vector2.new(0.5,0.5),UDim2.fromOffset(7,7)
+                        dot.BorderSizePixel,dot.ZIndex,dot.Parent=0,8,inner
+                        round(dot,4);rec={frame=dot};dots[model]=rec
                     end
+                    seen[model]=true;count+=1
+                    rec.frame.Visible=true
+                    rec.frame.Position=UDim2.fromOffset(75+(right/hudState.range/limit)*67,75-(forward/hudState.range/limit)*67)
+                    -- Серый маркер означает неизвестную команду, а не гарантированного врага.
+                    local unknown=config.teamCheck and not ffa and (not myTeam or not otherTeam)
+                    rec.frame.BackgroundColor3=unknown and Color3.fromRGB(190,196,191) or Color3.fromRGB(255,122,110)
+                    rec.frame.BackgroundTransparency=dist>hudState.range and 0.35 or 0
                 end
             end
         end
-        for model,rec in pairs(dots) do
-            if not seen[model] then rec.frame:Destroy(); dots[model]=nil
-            else rec.glow.Transparency = (model==closestModel) and (0.35-0.25*math.sin(os.clock()*5)) or 1 end
-        end
+        for model,rec in pairs(dots) do if not seen[model] then rec.frame:Destroy();dots[model]=nil end end
+        status.Text=count>0 and (tostring(count).." DETECTED") or "NO CONTACTS"
     end
 
     local pending, notes = {}, {}
@@ -1221,7 +1244,14 @@ do
         if now-lastHud>1 then lastHud=now; refreshHud() end
         if now-lastRadar>0.12 then
             lastRadar=now
-            pcall(updateRadar)
+            local radarOk,radarError=pcall(updateRadar)
+            if not radarOk and hudState.radar then
+                status.Text="RADAR ERROR"
+                if now-(state.lastRadarWarning or 0)>5 then
+                    state.lastRadarWarning=now
+                    warn("[Noir Radar] "..tostring(radarError))
+                end
+            end
             if hudState.hits then
                 for model,shot in pairs(pending) do
                     local hp=model.Parent and healthOf(model)
@@ -1447,7 +1477,7 @@ do
         if ok and t then t:Play() else for k,v in pairs(props) do pcall(function() obj[k]=v end) end end
     end
     local popup=Instance.new("Frame")
-    popup.Name,popup.BackgroundColor3,popup.BorderSizePixel="NoirSettings",Color3.fromRGB(15,18,30),0
+    popup.Name,popup.BackgroundColor3,popup.BorderSizePixel="NoirSettings",Color3.fromRGB(16,26,19),0
     popup.AnchorPoint=Vector2.new(0.5,0)
     popup.Size,popup.Position,popup.ZIndex,popup.Visible,popup.Parent=UDim2.fromOffset(216,76),UDim2.fromOffset(123,198),20,false,menu
     round(popup,12)
@@ -1456,22 +1486,22 @@ do
     local outline=Instance.new("UIStroke")
     outline.Color,outline.Thickness,outline.Transparency,outline.Parent=Color3.fromRGB(255,255,255),1.4,0.15,popup
     local outlineGrad=Instance.new("UIGradient")
-    outlineGrad.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(124,92,255)),ColorSequenceKeypoint.new(1,Color3.fromRGB(56,189,248))})
+    outlineGrad.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(106,210,145)),ColorSequenceKeypoint.new(1,Color3.fromRGB(174,226,191))})
     outlineGrad.Rotation,outlineGrad.Parent=35,outline
     local arrow=Instance.new("Frame")
     arrow.AnchorPoint,arrow.Size,arrow.Position=Vector2.new(0.5,0.5),UDim2.fromOffset(9,9),UDim2.fromOffset(108,0)
-    arrow.Rotation,arrow.BackgroundColor3,arrow.BorderSizePixel,arrow.ZIndex,arrow.Parent=45,Color3.fromRGB(124,92,255),0,23,popup
+    arrow.Rotation,arrow.BackgroundColor3,arrow.BorderSizePixel,arrow.ZIndex,arrow.Parent=45,Color3.fromRGB(106,210,145),0,23,popup
     round(arrow,2)
     local headDot=Instance.new("Frame")
-    headDot.Size,headDot.Position,headDot.BackgroundColor3,headDot.BorderSizePixel,headDot.ZIndex,headDot.Parent=UDim2.fromOffset(5,5),UDim2.fromOffset(10,12),Color3.fromRGB(110,231,255),0,22,popup
+    headDot.Size,headDot.Position,headDot.BackgroundColor3,headDot.BorderSizePixel,headDot.ZIndex,headDot.Parent=UDim2.fromOffset(5,5),UDim2.fromOffset(10,12),Color3.fromRGB(151,235,175),0,22,popup
     round(headDot,3)
     local heading=label(popup,"SETTINGS",UDim2.fromOffset(168,16),UDim2.fromOffset(20,6),9)
     heading.TextColor3,heading.ZIndex=Color3.fromRGB(226,232,255),22
     local divider=Instance.new("Frame")
-    divider.Size,divider.Position,divider.BackgroundColor3,divider.BackgroundTransparency,divider.BorderSizePixel,divider.ZIndex,divider.Parent=UDim2.new(1,-20,0,1),UDim2.fromOffset(10,25),Color3.fromRGB(110,120,170),0.7,0,22,popup
+    divider.Size,divider.Position,divider.BackgroundColor3,divider.BackgroundTransparency,divider.BorderSizePixel,divider.ZIndex,divider.Parent=UDim2.new(1,-20,0,1),UDim2.fromOffset(10,25),Color3.fromRGB(104,145,112),0.7,0,22,popup
     local dismiss=smallButton(popup,"×",UDim2.fromOffset(22,22),UDim2.new(1,-28,0,2))
     dismiss.Name,dismiss.ZIndex,dismiss.TextSize="SettingsClose",23,16
-    dismiss.BackgroundColor3=Color3.fromRGB(32,37,58)
+    dismiss.BackgroundColor3=Color3.fromRGB(30,47,34)
     local all={slider,state.thirdSlider,boxStyleButton,outlineStyleButton,chamsStyleButton,colorButton}
     for _,object in ipairs(all) do
         object.Parent=popup; object.Visible=false; object.ZIndex=21
@@ -1492,8 +1522,8 @@ do
         active=nil;popup.Visible=false
         for _,object in ipairs(all) do object.Visible=false end
         for _,entry in pairs(gears) do
-            tintGear(entry,Color3.fromRGB(170,180,225))
-            entry.button.BackgroundColor3=Color3.fromRGB(26,30,48)
+            tintGear(entry,Color3.fromRGB(193,217,198))
+            entry.button.BackgroundColor3=Color3.fromRGB(25,39,29)
         end
     end
     dismiss.MouseButton1Click:Connect(hideSettings)
@@ -1504,7 +1534,7 @@ do
         local height=#objects==1 and 76 or 92
         popup.Size=UDim2.fromOffset(216,height)
         local x=math.clamp(item.Position.X.Offset,10,menu.Size.X.Offset-226)
-        local y=math.min(item.Position.Y.Offset+46,menu.Size.Y.Offset-height-12)
+        local y=math.min(item.Position.Y.Offset+52,menu.Size.Y.Offset-height-12)
         popup.Position=UDim2.fromOffset(x+108,y)
         local gearCenter=item.Position.X.Offset+item.Size.X.Offset-66
         arrow.Position=UDim2.fromOffset(math.clamp(gearCenter-x,18,198),0)
@@ -1518,8 +1548,8 @@ do
         end
         local entry=gears[title]
         if entry then
-            tintGear(entry,Color3.fromRGB(110,231,255))
-            entry.button.BackgroundColor3=Color3.fromRGB(44,40,92)
+            tintGear(entry,Color3.fromRGB(151,235,175))
+            entry.button.BackgroundColor3=Color3.fromRGB(33,79,47)
         end
         popScale.Scale=0.88
         popup.Visible=true
@@ -1534,41 +1564,43 @@ do
         local item,title,objects=binding[1],binding[2],binding[3]
         local more=smallButton(item,"",UDim2.fromOffset(28,28),UDim2.new(1,-80,0.5,-14))
         more.Name,more.ZIndex=title.."Settings",18
-        more.BackgroundColor3=Color3.fromRGB(26,30,48)
+        more.BackgroundColor3=Color3.fromRGB(25,39,29)
+        more.BackgroundTransparency=0.48
         local moreEdge=Instance.new("UIStroke")
-        moreEdge.Color,moreEdge.Thickness,moreEdge.Transparency,moreEdge.Parent=Color3.fromRGB(110,120,185),1,0.6,more
+        moreEdge.Color,moreEdge.Thickness,moreEdge.Transparency,moreEdge.Parent=Color3.fromRGB(118,157,126),1,0.6,more
         moreEdge.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
+        moreEdge.Transparency=0.86
         local gear=Instance.new("Frame")
-        gear.Name,gear.AnchorPoint,gear.Position,gear.Size="GearIcon",Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),UDim2.fromOffset(20,20)
+        gear.Name,gear.AnchorPoint,gear.Position,gear.Size="GearIcon",Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),UDim2.fromOffset(16,16)
         gear.BackgroundTransparency,gear.ZIndex,gear.Parent=1,19,more
         gear.Rotation=0
-        local gearColor=Color3.fromRGB(170,180,225)
+        local gearColor=Color3.fromRGB(193,217,198)
         local ring=Instance.new("Frame")
-        ring.AnchorPoint,ring.Position,ring.Size=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),UDim2.fromOffset(12,12)
+        ring.AnchorPoint,ring.Position,ring.Size=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),UDim2.fromOffset(9,9)
         ring.BackgroundTransparency,ring.ZIndex,ring.Parent=1,20,gear
         round(ring,6)
         local ringStroke=Instance.new("UIStroke")
-        ringStroke.Color,ringStroke.Thickness,ringStroke.Parent=gearColor,2.2,ring
+        ringStroke.Color,ringStroke.Thickness,ringStroke.Parent=gearColor,1.3,ring
         local hub=Instance.new("Frame")
-        hub.AnchorPoint,hub.Position,hub.Size=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),UDim2.fromOffset(3,3)
+        hub.AnchorPoint,hub.Position,hub.Size=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),UDim2.fromOffset(2,2)
         hub.BackgroundColor3,hub.BorderSizePixel,hub.ZIndex,hub.Parent=gearColor,0,20,gear
         round(hub,2)
         local teeth={}
         for i=0,7 do
             local angle=i*math.pi/4
             local tooth=Instance.new("Frame")
-            tooth.AnchorPoint,tooth.Size=Vector2.new(0.5,0.5),UDim2.fromOffset(4,5)
-            tooth.Position=UDim2.fromOffset(10+math.sin(angle)*8.2,10-math.cos(angle)*8.2)
+            tooth.AnchorPoint,tooth.Size=Vector2.new(0.5,0.5),UDim2.fromOffset(2,3)
+            tooth.Position=UDim2.fromOffset(8+math.sin(angle)*6.2,8-math.cos(angle)*6.2)
             tooth.Rotation,tooth.BackgroundColor3,tooth.BorderSizePixel,tooth.ZIndex,tooth.Parent=i*45,gearColor,0,20,gear
             round(tooth,1)
             teeth[#teeth+1]=tooth
         end
         gears[title]={button=more,ringStroke=ringStroke,teeth=teeth,hub=hub}
         more.MouseEnter:Connect(function()
-            if active~=title then tw(more,0.12,{BackgroundColor3=Color3.fromRGB(38,44,72)}) end
+            if active~=title then tw(more,0.12,{BackgroundColor3=Color3.fromRGB(35,55,39)}) end
         end)
         more.MouseLeave:Connect(function()
-            if active~=title then tw(more,0.12,{BackgroundColor3=Color3.fromRGB(26,30,48)}) end
+            if active~=title then tw(more,0.12,{BackgroundColor3=Color3.fromRGB(25,39,29)}) end
         end)
         more.MouseButton1Click:Connect(function()
             local rotation=gear.Rotation+90
