@@ -1,4 +1,4 @@
--- NOIR / Blox Strike — Silver Edition: меню Silent Aim, Rapid Fire, Auto Shoot, Autowall и ESP.
+-- NOIR / Blox Strike — Modern Edition: меню Silent Aim, Rapid Fire, Auto Shoot, Autowall и ESP.
 -- Написан по принципу из приложенного stage_7; весь исходный скрипт не копируется.
 -- Перед запуском перезайди в игру, чтобы убрать старые перехватчики.
 -- Закрытие окна не отключает функции; открыть меню можно кнопкой MENU.
@@ -101,10 +101,10 @@ overlay.Parent = gui
 
 local menu = Instance.new("Frame")
 menu.Name = "BloxMenu"
-menu.Size = UDim2.fromOffset(480, 346)
+menu.Size = UDim2.fromOffset(510, 368)
 menu.AnchorPoint = Vector2.new(0.5, 0.5)
 menu.Position = UDim2.new(0.5, 0, 0.5, 0)
-menu.BackgroundColor3 = Color3.fromRGB(9, 13, 11)
+menu.BackgroundColor3 = Color3.fromRGB(10, 14, 12)
 menu.BorderSizePixel = 0
 menu.ZIndex = 10
 menu.Parent = gui
@@ -139,6 +139,10 @@ title.ZIndex = 12
 local subtitle = label(header, "CREATOR  /  BLOX STRIKE", UDim2.new(1, -60, 0, 17), UDim2.fromOffset(54, 26), 9)
 subtitle.TextColor3 = Color3.fromRGB(165, 182, 170)
 subtitle.ZIndex = 12
+do
+    local version=label(header,"CONTROL  /  01",UDim2.fromOffset(130,16),UDim2.new(1,-153,0.5,-8),9)
+    version.TextXAlignment,version.TextColor3,version.ZIndex=Enum.TextXAlignment.Right,Color3.fromRGB(127,153,135),12
+end
 local close = smallButton(menu, "×", UDim2.fromOffset(32, 32), UDim2.new(1, -42, 0, 8))
 close.Name = "NoirClose"
 close.BackgroundColor3 = Color3.fromRGB(29,38,32)
@@ -150,6 +154,7 @@ local reopen = smallButton(gui, "", UDim2.fromOffset(110, 40), UDim2.new(0, 12, 
 reopen.Name, reopen.BackgroundColor3, reopen.Visible, reopen.ZIndex = "NoirReopen", Color3.fromRGB(11,20,14), false, 10
 local reopenEdge=Instance.new("UIStroke")
 reopenEdge.Color,reopenEdge.Thickness,reopenEdge.Transparency,reopenEdge.Parent=Color3.fromRGB(190,208,193),1.4,0.1,reopen
+reopenEdge.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
 local reopenIcon=Instance.new("Frame")
 reopenIcon.Size,reopenIcon.Position=UDim2.fromOffset(29,29),UDim2.fromOffset(5,5)
 reopenIcon.BackgroundColor3,reopenIcon.BorderSizePixel,reopenIcon.ZIndex,reopenIcon.Parent=Color3.fromRGB(31,85,51),0,11,reopen
@@ -193,7 +198,7 @@ local function updateMenuScale()
     local camera = Workspace.CurrentCamera
     if camera then
         local size = camera.ViewportSize
-        menuScale.Scale = math.clamp(math.min((size.X-16)/480, (size.Y-16)/346), 0.3, 1)
+        menuScale.Scale = math.clamp(math.min((size.X-16)/510, (size.Y-16)/368), 0.3, 1)
     end
 end
 local viewportConnection
@@ -244,6 +249,14 @@ local groups = {
 local mainFor = {COMBAT="COMBAT", WEAPON="COMBAT", VISUALS="VISUALS", OBJECTIVE="TOOLS", EFFECTS="TOOLS", MOVEMENT="TOOLS"}
 local subNames = {COMBAT="AIM", WEAPON="WEAPON", VISUALS="PLAYER", OBJECTIVE="BOMB", EFFECTS="EFFECTS", MOVEMENT="MOVEMENT"}
 local subTabs, mainTabs = {}, {}
+do
+    local panel=Instance.new("Frame")
+    panel.Name,panel.Position,panel.Size="ContentPanel",UDim2.fromOffset(10,118),UDim2.new(1,-20,0,214)
+    panel.BackgroundColor3,panel.BorderSizePixel,panel.ZIndex,panel.Parent=Color3.fromRGB(14,20,16),0,11,menu
+    round(panel,11)
+    local edge=Instance.new("UIStroke")
+    edge.Color,edge.Transparency,edge.Thickness,edge.Parent=Color3.fromRGB(95,120,102),0.72,1,panel
+end
 local pageHint = label(menu, "", UDim2.fromOffset(290,20), UDim2.fromOffset(16,123), 12)
 pageHint.TextColor3, pageHint.ZIndex = Color3.fromRGB(226,237,229), 12
 local pageSub = label(menu, "", UDim2.fromOffset(180,16), UDim2.new(1,-195,0,125), 9)
@@ -274,10 +287,11 @@ local function setTab(name)
     for _, entry in ipairs(entries) do entry.button.Visible = entry.group == name end
 end
 for index, name in ipairs({"COMBAT", "VISUALS", "TOOLS"}) do
-    local tab = smallButton(menu, name, UDim2.fromOffset(145, 30), UDim2.fromOffset(15+(index-1)*152, 54))
+    local tab = smallButton(menu, name, UDim2.fromOffset(155, 30), UDim2.fromOffset(15+(index-1)*162, 54))
     tab.Name, tab.TextSize, tab.ZIndex = name.."MainTab", 10, 12
     local edge = Instance.new("UIStroke")
     edge.Color, edge.Transparency, edge.Thickness, edge.Parent = Color3.fromRGB(100,131,109), 0.52, 1, tab
+    edge.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
     mainTabs[name] = tab
     local target = name == "TOOLS" and "OBJECTIVE" or name
     tab.MouseButton1Click:Connect(function() setTab(target) end)
@@ -289,40 +303,72 @@ for _, name in ipairs({"COMBAT","WEAPON","VISUALS","OBJECTIVE","EFFECTS","MOVEME
     tab.MouseButton1Click:Connect(function() setTab(name) end)
 end
 setTab(selectedTab)
+local descriptions={
+    SILENT="Target redirection", ["AUTO SHOOT"]="Fire on target", AUTOWALL="Penetration check", ["FORCE ORIGIN"]="Local origin scan", ["TEAM CHECK"]="Exclude teammates",
+    RAPID="Fire rate control", ["AUTO RELOAD"]="Reload when empty", ["INSTA RELOAD"]="Fast magazine reload",
+    ["ESP BOX"]="Enemy frame", ["NAMES / HP"]="Name, distance & health", OUTLINE="Silhouette edge", CHAMS="Silhouette fill",
+    ["BOMB ESP"]="Planted or dropped C4", ["BOMB TIMER"]="Explosion countdown", ["AUTO DEFUSE"]="Defuse in range", ["AUTO PLANT"]="Plant on site",
+    ["ANTI SMOKE"]="Hide local smoke", ["ANTI FLASH"]="Block flash effect", BHOP="Hold jump to repeat", ["THIRD PERSON"]="Offset camera",
+}
 local function makeToggle(name, index)
     local layout = assert(groups[name], "unknown toggle: " .. name)
-    local col, row = layout[2] % 2, math.floor(layout[2] / 2)
-    local item = smallButton(menu, "   "..name, UDim2.fromOffset(218, 34), UDim2.fromOffset(15+col*232, 150+row*38))
-    item.Name, item.ZIndex, item.TextSize = name.."Toggle", 12, 10
-    item.TextXAlignment = Enum.TextXAlignment.Left
-    item.BackgroundColor3 = Color3.fromRGB(20,27,23)
-    item.Visible = layout[1] == selectedTab
-    local edge = Instance.new("UIStroke")
-    edge.Color, edge.Thickness, edge.Transparency, edge.Parent = Color3.fromRGB(117,138,123), 1, 0.52, item
-    local status = label(item, "", UDim2.fromOffset(42,18), UDim2.new(1,-48,0.5,-9), 9)
-    status.TextXAlignment, status.ZIndex = Enum.TextXAlignment.Right, 14
-    local dot=Instance.new("Frame")
-    dot.Name,dot.Size,dot.Position= "StateDot",UDim2.fromOffset(3,16),UDim2.new(0,3,0.5,-8)
-    dot.BackgroundColor3,dot.BorderSizePixel,dot.ZIndex,dot.Parent=Color3.fromRGB(69,88,75),0,13,item
-    round(dot,2)
-    indicators[item] = {status=status, edge=edge, dot=dot}
-    table.insert(entries, {group=layout[1], button=item})
+    local col,row=layout[2]%2,math.floor(layout[2]/2)
+    local item=smallButton(menu,"",UDim2.fromOffset(232,48),UDim2.fromOffset(15+col*248,149+row*57))
+    item.Name,item.ZIndex,item.Visible=name.."Toggle",12,layout[1]==selectedTab
+    item.BackgroundColor3=Color3.fromRGB(20,28,23)
+    local edge=Instance.new("UIStroke")
+    edge.Color,edge.Thickness,edge.Transparency,edge.Parent=Color3.fromRGB(107,132,114),1,0.7,item
+    edge.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
+    local nameText=label(item,name,UDim2.fromOffset(142,16),UDim2.fromOffset(12,6),10)
+    nameText.TextColor3,nameText.ZIndex=Color3.fromRGB(222,235,225),14
+    local detail=label(item,descriptions[name] or "",UDim2.fromOffset(144,15),UDim2.fromOffset(12,24),8)
+    detail.TextColor3,detail.ZIndex=Color3.fromRGB(135,158,141),14
+    local status=label(item,"",UDim2.fromOffset(40,11),UDim2.new(1,-47,0,0),8)
+    status.TextXAlignment,status.ZIndex=Enum.TextXAlignment.Center,14
+    local switch=Instance.new("Frame")
+    switch.Name,switch.Size,switch.Position="Switch",UDim2.fromOffset(30,16),UDim2.new(1,-41,0.5,-8)
+    switch.BackgroundColor3,switch.BorderSizePixel,switch.ZIndex,switch.Parent=Color3.fromRGB(57,73,62),0,14,item
+    round(switch,8)
+    local knob=Instance.new("Frame")
+    knob.Size,knob.Position=UDim2.fromOffset(12,12),UDim2.fromOffset(2,2)
+    knob.BackgroundColor3,knob.BorderSizePixel,knob.ZIndex,knob.Parent=Color3.fromRGB(190,204,193),0,15,switch
+    round(knob,7)
+    local accent=Instance.new("Frame")
+    accent.Name,accent.Size,accent.Position="StateDot",UDim2.fromOffset(2,22),UDim2.new(0,3,0.5,-11)
+    accent.BackgroundColor3,accent.BorderSizePixel,accent.ZIndex,accent.Parent=Color3.fromRGB(70,91,75),0,13,item
+    round(accent,2)
+    indicators[item]={status=status,edge=edge,dot=accent,switch=switch,knob=knob,name=nameText,detail=detail}
+    table.insert(entries,{group=layout[1],button=item})
     return item
 end
-local function showToggle(item, name, enabled, waiting)
-    item.Text = "   " .. name
-    item.BackgroundColor3 = enabled and Color3.fromRGB(22,53,35) or Color3.fromRGB(20,27,23)
-    local data = indicators[item]
-    data.status.Text = waiting and "WAIT" or (enabled and "ON" or "OFF")
-    data.status.TextColor3 = waiting and Color3.fromRGB(247,192,103) or (enabled and Color3.fromRGB(125,251,170) or Color3.fromRGB(132,150,137))
-    data.edge.Color = enabled and Color3.fromRGB(80,200,119) or Color3.fromRGB(117,138,123)
-    data.edge.Transparency = enabled and 0.08 or 0.52
-    data.dot.BackgroundColor3 = waiting and Color3.fromRGB(239,187,101) or (enabled and Color3.fromRGB(108,235,149) or Color3.fromRGB(69,88,75))
+local function showToggle(item,name,enabled,waiting)
+    local data=indicators[item]
+    data.name.Text=name
+    data.status.Text=waiting and "WAIT" or ""
+    data.status.TextColor3=Color3.fromRGB(235,185,100)
+    local trackColor=enabled and Color3.fromRGB(68,192,110) or Color3.fromRGB(57,73,62)
+    local knobPosition=UDim2.fromOffset(enabled and 16 or 2,2)
+    local knobColor=enabled and Color3.fromRGB(235,255,239) or Color3.fromRGB(190,204,193)
+    if data.lastEnabled~=nil and data.lastEnabled~=enabled then
+        local ok=pcall(function()
+            local tweenService=game:GetService("TweenService")
+            local info=TweenInfo.new(0.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+            tweenService:Create(data.switch,info,{BackgroundColor3=trackColor}):Play()
+            tweenService:Create(data.knob,info,{Position=knobPosition,BackgroundColor3=knobColor}):Play()
+        end)
+        if not ok then data.switch.BackgroundColor3=trackColor;data.knob.Position=knobPosition;data.knob.BackgroundColor3=knobColor end
+    elseif data.lastEnabled==nil then
+        data.switch.BackgroundColor3=trackColor;data.knob.Position=knobPosition;data.knob.BackgroundColor3=knobColor
+    end
+    data.lastEnabled=enabled
+    data.edge.Color=enabled and Color3.fromRGB(107,184,124) or Color3.fromRGB(107,132,114)
+    data.edge.Transparency=enabled and 0.42 or 0.7
+    data.dot.BackgroundColor3=waiting and Color3.fromRGB(239,187,101) or (enabled and Color3.fromRGB(108,235,149) or Color3.fromRGB(70,91,75))
 end
-local footer = label(menu, "NOIR CREATOR   /   PRIVATE CONTROL", UDim2.fromOffset(280,16), UDim2.fromOffset(15,323), 9)
+local footer = label(menu, "NOIR CREATOR   /   PRIVATE CONTROL", UDim2.fromOffset(280,16), UDim2.fromOffset(15,344), 9)
 footer.TextColor3, footer.ZIndex = Color3.fromRGB(120,143,127), 12
 do
-    local right=label(menu,"SILVER  /  MOBILE",UDim2.fromOffset(160,16),UDim2.new(1,-175,0,323),9)
+    local right=label(menu,"SILVER  /  MOBILE",UDim2.fromOffset(160,16),UDim2.new(1,-175,0,344),9)
     right.TextXAlignment,right.TextColor3,right.ZIndex=Enum.TextXAlignment.Right,Color3.fromRGB(142,162,147),12
 end
 local button = makeToggle("SILENT", 0)
@@ -685,12 +731,17 @@ local colors = {
     {bright=Color3.fromRGB(255,138,175), fill=Color3.fromRGB(229,67,121)},
     {bright=Color3.fromRGB(138,201,255), fill=Color3.fromRGB(69,138,236)},
 }
-local function styleCard(item, title, value)
-    item.Text = "   "..title
-    local status = indicators[item].status
-    status.Text, status.TextColor3 = value, Color3.fromRGB(167, 229, 183)
-    status.Size = UDim2.fromOffset(62,18)
-    status.Position = UDim2.new(1,-67,0.5,-9)
+local function styleCard(item,title,value)
+    local data=indicators[item]
+    data.name.Text=title
+    data.name.Position=UDim2.fromOffset(10,9)
+    data.detail.Visible=false
+    data.switch.Visible=false
+    data.dot.Visible=false
+    data.status.Text,data.status.TextColor3=value,Color3.fromRGB(179,232,193)
+    data.status.Size=UDim2.fromOffset(72,18)
+    data.status.Position=UDim2.new(1,-78,0.5,-9)
+    data.status.TextXAlignment=Enum.TextXAlignment.Right
 end
 local function refreshStyles()
     styleCard(boxStyleButton, "BOX", boxNames[boxStyle])
@@ -903,27 +954,14 @@ do
         showToggle(thirdButton, "THIRD PERSON", movement.third, movement.third and not movement.thirdReady)
     end
     state.thirdButton=thirdButton
-    local hopHeld, hopInput = false, nil
-    local hopControl=smallButton(gui,"HOLD / HOP",UDim2.fromOffset(76,37),UDim2.new(0.72,0,0.78,0))
-    hopControl.Name,hopControl.BackgroundColor3,hopControl.Visible,hopControl.ZIndex="NoirHopHold",Color3.fromRGB(20,54,32),false,9
-    local hopEdge=Instance.new("UIStroke")
-    hopEdge.Color,hopEdge.Transparency,hopEdge.Parent=Color3.fromRGB(177,210,183),0.2,hopControl
-    hopControl.InputBegan:Connect(function(input)
-        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then hopInput=input;hopHeld=true end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if hopInput and (input==hopInput or (hopInput.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then hopHeld=false;hopInput=nil end
-    end)
     bhopButton.MouseButton1Click:Connect(function()
         movement.bhop=not movement.bhop
-        hopControl.Visible=movement.bhop
-        if not movement.bhop then hopHeld=false;hopInput=nil end
         refreshMovement()
     end)
     thirdButton.MouseButton1Click:Connect(function() movement.third=not movement.third; refreshMovement() end)
     refreshMovement()
 
-    -- Bhop: повторяет прыжок только пока удерживается штатный прыжок или кнопка HOLD / HOP.
+    -- Bhop: повторяет прыжок только пока удерживается штатная кнопка прыжка.
     local lastGroundPulse = false
     local function editCommand(character, command)
         if not movement.bhop or type(character)~="table" or type(command)~="table" then
@@ -934,7 +972,7 @@ do
             lastGroundPulse=false; return
         end
         if character.Player and character.Player~=localPlayer then return end
-        if not (character.JumpInputDown == true or hopHeld) then lastGroundPulse=false; return end
+        if character.JumpInputDown ~= true then lastGroundPulse=false; return end
         if character.Character and localPlayer.Character and character.Character~=localPlayer.Character then return end
         if type(command.Buttons)~="number" or type(character.OnGround)~="boolean" then return end
         local pulse=character.OnGround and not lastGroundPulse
@@ -1092,23 +1130,22 @@ do
 end
 
 
--- Настройки открываются непосредственно под карточкой и не включают саму функцию.
+-- По принципу Shitaro: компактные точки в строке, отдельное всплывающее окно у элемента.
 do
     local popup=Instance.new("Frame")
-    popup.Name,popup.BackgroundColor3,popup.BorderSizePixel="NoirSettings",Color3.fromRGB(12,21,15),0
-    popup.Size,popup.Position,popup.ZIndex,popup.Visible,popup.Parent=UDim2.fromOffset(450,78),UDim2.fromOffset(15,190),20,false,menu
+    popup.Name,popup.BackgroundColor3,popup.BorderSizePixel="NoirSettings",Color3.fromRGB(17,24,19),0
+    popup.Size,popup.Position,popup.ZIndex,popup.Visible,popup.Parent=UDim2.fromOffset(232,82),UDim2.fromOffset(15,198),20,false,menu
     round(popup,9)
     local outline=Instance.new("UIStroke")
-    outline.Color,outline.Thickness,outline.Transparency,outline.Parent=Color3.fromRGB(154,191,162),1.2,0.1,popup
-    local heading=label(popup,"SETTINGS",UDim2.fromOffset(350,18),UDim2.fromOffset(10,5),10)
-    heading.TextColor3,heading.ZIndex=Color3.fromRGB(216,235,220),22
-    local dismiss=smallButton(popup,"×",UDim2.fromOffset(23,23),UDim2.new(1,-28,0,3))
+    outline.Color,outline.Thickness,outline.Transparency,outline.Parent=Color3.fromRGB(133,160,140),1,0.3,popup
+    local heading=label(popup,"SETTINGS",UDim2.fromOffset(183,18),UDim2.fromOffset(10,6),10)
+    heading.TextColor3,heading.ZIndex=Color3.fromRGB(222,237,225),22
+    local dismiss=smallButton(popup,"×",UDim2.fromOffset(24,24),UDim2.new(1,-28,0,3))
     dismiss.Name,dismiss.ZIndex,dismiss.TextSize="SettingsClose",23,16
-    dismiss.BackgroundColor3=Color3.fromRGB(29,46,34)
+    dismiss.BackgroundColor3=Color3.fromRGB(33,47,37)
     local all={slider,state.thirdSlider,boxStyleButton,outlineStyleButton,chamsStyleButton,colorButton}
     for _,object in ipairs(all) do
-        object.Parent=popup; object.Visible=false
-        object.ZIndex=21
+        object.Parent=popup; object.Visible=false; object.ZIndex=21
         pcall(function()
             for _,child in ipairs(object:GetDescendants()) do
                 if child:IsA("GuiObject") then child.ZIndex=math.max(child.ZIndex,22) end
@@ -1117,43 +1154,45 @@ do
     end
     local active
     hideSettings=function()
-        active=nil; popup.Visible=false
+        active=nil;popup.Visible=false
         for _,object in ipairs(all) do object.Visible=false end
     end
     dismiss.MouseButton1Click:Connect(hideSettings)
     local function open(item,title,objects)
         if active==title then hideSettings();return end
-        hideSettings(); active=title
+        hideSettings();active=title
         heading.Text=title.."  /  SETTINGS"
-        local y=math.min(item.Position.Y.Offset+38, menu.Size.Y.Offset-88)
-        popup.Position=UDim2.fromOffset(15,y)
+        local height=#objects==1 and 82 or 112
+        popup.Size=UDim2.fromOffset(232,height)
+        local x=math.clamp(item.Position.X.Offset,10,menu.Size.X.Offset-242)
+        local y=math.min(item.Position.Y.Offset+43,menu.Size.Y.Offset-height-12)
+        popup.Position=UDim2.fromOffset(x,y)
         for i,object in ipairs(objects) do
             object.Visible=true
             if object==slider or object==state.thirdSlider then
-                object.Position,object.Size=UDim2.fromOffset(6,29),UDim2.fromOffset(438,42)
+                object.Position,object.Size=UDim2.fromOffset(6,32),UDim2.fromOffset(220,42)
             else
-                object.Position,object.Size=UDim2.fromOffset(8+(i-1)*220,34),UDim2.fromOffset(214,34)
+                object.Position,object.Size=UDim2.fromOffset(7,31+(i-1)*37),UDim2.fromOffset(218,33)
             end
         end
         popup.Visible=true
     end
     local bindings={
-        {originButton,"FORCE ORIGIN",{slider}},
-        {state.thirdButton,"THIRD PERSON",{state.thirdSlider}},
-        {boxButton,"ESP BOX",{boxStyleButton,colorButton}},
-        {outlineButton,"OUTLINE",{outlineStyleButton,colorButton}},
+        {originButton,"FORCE ORIGIN",{slider}}, {state.thirdButton,"THIRD PERSON",{state.thirdSlider}},
+        {boxButton,"ESP BOX",{boxStyleButton,colorButton}}, {outlineButton,"OUTLINE",{outlineStyleButton,colorButton}},
         {chamsButton,"CHAMS",{chamsStyleButton,colorButton}},
     }
     for _,binding in ipairs(bindings) do
         local item,title,objects=binding[1],binding[2],binding[3]
-        local gear=smallButton(item,"⚙",UDim2.fromOffset(23,23),UDim2.new(1,-25,0,-8))
-        gear.Name,gear.TextSize,gear.ZIndex=title.."Settings",14,18
-        gear.BackgroundColor3,gear.TextColor3=Color3.fromRGB(37,52,41),Color3.fromRGB(217,231,218)
-        local stroke=Instance.new("UIStroke")
-        stroke.Color,stroke.Transparency,stroke.Thickness,stroke.Parent=Color3.fromRGB(165,185,168),0.25,1,gear
-        local status=indicators[item].status
-        status.Position=UDim2.new(1,-75,0.5,-9)
-        gear.MouseButton1Click:Connect(function() open(item,title,objects) end)
+        local more=smallButton(item,"",UDim2.fromOffset(30,30),UDim2.new(1,-80,0.5,-15))
+        more.Name,more.ZIndex,more.BackgroundTransparency=title.."Settings",18,1
+        for i=0,2 do
+            local dot=Instance.new("Frame")
+            dot.Size,dot.Position=UDim2.fromOffset(3,3),UDim2.fromOffset(8+i*6,14)
+            dot.BackgroundColor3,dot.BorderSizePixel,dot.ZIndex,dot.Parent=Color3.fromRGB(186,209,192),0,19,more
+            round(dot,2)
+        end
+        more.MouseButton1Click:Connect(function() open(item,title,objects) end)
     end
 end
 
@@ -1773,6 +1812,9 @@ do
     introScale.Scale,introScale.Parent=menuScale.Scale,center
     local title=label(center,"N O I R",UDim2.new(1,0,0,62),UDim2.fromOffset(0,6),38)
     title.TextXAlignment,title.TextColor3,title.TextTransparency,title.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(223,229,225),1,32
+    local silver=Instance.new("UIGradient")
+    silver.Color=ColorSequence.new(Color3.fromRGB(138,155,144),Color3.fromRGB(250,255,251))
+    silver.Rotation,silver.Offset,silver.Parent=0,Vector2.new(-1,0),title
     local creator=label(center,"C R E A T O R",UDim2.new(1,0,0,18),UDim2.fromOffset(0,69),9)
     creator.TextXAlignment,creator.TextColor3,creator.TextTransparency,creator.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(141,154,145),1,32
     local rail=Instance.new("Frame")
@@ -1793,6 +1835,7 @@ do
         introScale.Scale=full*0.96
         tween(introScale,0.8,{Scale=full})
         tween(title,0.65,{TextTransparency=0})
+        tween(silver,1.5,{Offset=Vector2.new(0.8,0)})
         tween(creator,0.7,{TextTransparency=0})
         tween(amount,0.7,{TextTransparency=0})
         tween(rail,0.7,{BackgroundTransparency=0})
