@@ -35,7 +35,7 @@ local state = {
     message = "Поиск функций...",
     wallReady = false,
     wallMessage = "Поиск модулей...",
-    extras = { autoShoot = false, autoWall = false, box = false, names = false, outline = false, forceOrigin = false, autoReload = false, instaReload = false, chams = false, antiSmoke = false, antiFlash = false, autoScope = false },
+    extras = { autoShoot = false, autoWall = false, forceOrigin = false, autoReload = false, instaReload = false, antiSmoke = false, antiFlash = false, autoScope = false },
 }
 
 local gui = Instance.new("ScreenGui")
@@ -76,7 +76,7 @@ local function label(parent, text, size, position, fontSize)
     item.Parent = parent
     return item
 end
-local clickHandlers,frontWidgets={},{}
+local clickHandlers,frontWidgets,desiredBridge={},{},{}
 local function bindClick(button, callback)
     clickHandlers[button]=callback
     return button.MouseButton1Click:Connect(callback)
@@ -291,8 +291,7 @@ local groups = {
     ["SILENT"]={"COMBAT",0}, ["AUTO SHOOT"]={"COMBAT",1},
     ["AUTOWALL"]={"COMBAT",2}, ["FORCE ORIGIN"]={"COMBAT",3}, ["TEAM CHECK"]={"COMBAT",4}, ["AUTO SCOPE"]={"COMBAT",5},
     ["RAPID"]={"WEAPON",0}, ["AUTO RELOAD"]={"WEAPON",1}, ["INSTA RELOAD"]={"WEAPON",2},
-    ["ESP BOX"]={"VISUALS",0}, ["NAMES / HP"]={"VISUALS",1}, ["OUTLINE"]={"VISUALS",2}, ["CHAMS"]={"VISUALS",3}, ["RADAR"]={"VISUALS",4}, ["HIT LOG"]={"VISUALS",5},
-    ["BOX STYLE"]={"SETTINGS",0}, ["OUTLINE STYLE"]={"SETTINGS",1}, ["CHAMS STYLE"]={"SETTINGS",2}, ["ESP COLOR"]={"SETTINGS",3},
+    ["RADAR"]={"VISUALS",0}, ["HIT LOG"]={"VISUALS",1},
     ["ANTI SMOKE"]={"EFFECTS",0}, ["ANTI FLASH"]={"EFFECTS",1},
     ["BOMB ESP"]={"OBJECTIVE",0}, ["BOMB TIMER"]={"OBJECTIVE",1}, ["AUTO DEFUSE"]={"OBJECTIVE",2}, ["AUTO PLANT"]={"OBJECTIVE",3},
     ["BHOP"]={"MOVEMENT",0}, ["THIRD PERSON"]={"MOVEMENT",1},
@@ -373,7 +372,6 @@ local descriptions={
     AIMBOT="Camera aim assistance", ["AIM WALL CHECK"]="Visible targets only", ["FOV CIRCLE"]="Show targeting radius", ["AIM PART"]="Head or body",
     SILENT="Target redirection", ["AUTO SHOOT"]="Fire on target", AUTOWALL="Penetration check", ["FORCE ORIGIN"]="Local origin scan", ["TEAM CHECK"]="Exclude teammates",
     RAPID="Fire rate control", ["AUTO RELOAD"]="Reload when empty", ["INSTA RELOAD"]="Fast magazine reload",
-    ["ESP BOX"]="Enemy frame", ["NAMES / HP"]="Name, distance & health", OUTLINE="Silhouette edge", CHAMS="Silhouette fill",
     ["BOMB ESP"]="Planted or dropped C4", ["BOMB TIMER"]="Explosion countdown", ["AUTO DEFUSE"]="Defuse in range", ["AUTO PLANT"]="Plant on site",
     ["AUTO SCOPE"]="Scope on a target", RADAR="Nearby enemies", ["HIT LOG"]="Observed hit & HP",
     ["ANTI SMOKE"]="Hide local smoke", ["ANTI FLASH"]="Block flash effect", BHOP="Hold jump to repeat", ["THIRD PERSON"]="Offset camera",
@@ -437,7 +435,7 @@ local function showToggle(item,name,enabled,waiting)
     end
     data.lastEnabled=enabled
     local linked=frontWidgets[item]
-    if linked and type(linked.Set)=="function" then pcall(linked.Set,linked,enabled,true) end
+    if linked and desiredBridge[item]==nil and type(linked.Set)=="function" then pcall(linked.Set,linked,enabled,true) end
     data.edge.Color=enabled and Color3.fromRGB(111,173,125) or Color3.fromRGB(100,128,106)
     data.edge.Transparency=enabled and 0.42 or 0.7
     data.dot.BackgroundColor3=waiting and Color3.fromRGB(239,187,101) or (enabled and Color3.fromRGB(116,223,151) or Color3.fromRGB(61,87,67))
@@ -783,65 +781,14 @@ end)
 -- Дополнительные переключатели меню.
 local autoButton = makeToggle("AUTO SHOOT", 2)
 local wallButton = makeToggle("AUTOWALL", 3)
-local boxButton = makeToggle("ESP BOX", 4)
-local namesButton = makeToggle("NAMES / HP", 5)
-local outlineButton = makeToggle("OUTLINE", 6)
 local teamButton = makeToggle("TEAM CHECK", 7)
 local extras = state.extras
 local originButton = makeToggle("FORCE ORIGIN", 8)
 local scopeButton = makeToggle("AUTO SCOPE", 19)
 local autoReloadButton = makeToggle("AUTO RELOAD", 9)
 local instaReloadButton = makeToggle("INSTA RELOAD", 10)
-local boxStyleButton = makeToggle("BOX STYLE", 12)
-local outlineStyleButton = makeToggle("OUTLINE STYLE", 13)
-local chamsButton = makeToggle("CHAMS", 14)
-local chamsStyleButton = makeToggle("CHAMS STYLE", 15)
-local colorButton = makeToggle("ESP COLOR", 16)
 local smokeButton = makeToggle("ANTI SMOKE", 17)
 local flashButton = makeToggle("ANTI FLASH", 18)
-local boxStyle, outlineStyle, chamsStyle, colorStyle = 2, 1, 1, 1
-local boxNames = {"FULL", "CORNERS", "SOFT"}
-local outlineNames = {"GLOW", "EDGE", "SOFT"}
-local chamsNames = {"GLASS", "SOLID", "PULSE"}
-local colorNames = {"MINT", "ROSE", "ICE"}
-local colors = {
-    {bright=Color3.fromRGB(151,255,188), fill=Color3.fromRGB(35,201,105)},
-    {bright=Color3.fromRGB(255,138,175), fill=Color3.fromRGB(229,67,121)},
-    {bright=Color3.fromRGB(138,201,255), fill=Color3.fromRGB(69,138,236)},
-}
-local function styleCard(item,title,value)
-    local data=indicators[item]
-    data.name.Text=title
-    data.name.Position=UDim2.fromOffset(10,5)
-    data.detail.Visible=false
-    data.switch.Visible=false
-    data.dot.Visible=false
-    data.status.Text,data.status.TextColor3=value,Color3.fromRGB(161,213,173)
-    data.status.Size=UDim2.fromOffset(72,18)
-    data.status.Position=UDim2.new(1,-78,0.5,-9)
-    data.status.TextXAlignment=Enum.TextXAlignment.Right
-end
-local function refreshStyles()
-    styleCard(boxStyleButton, "BOX", boxNames[boxStyle])
-    styleCard(outlineStyleButton, "OUTLINE", outlineNames[outlineStyle])
-    styleCard(chamsStyleButton, "CHAMS", chamsNames[chamsStyle])
-    styleCard(colorButton, "COLOR", colorNames[colorStyle])
-end
-bindClick(boxStyleButton,function() boxStyle = boxStyle % #boxNames + 1; refreshStyles() end)
-bindClick(outlineStyleButton,function() outlineStyle = outlineStyle % #outlineNames + 1; refreshStyles() end)
-bindClick(chamsStyleButton,function() chamsStyle = chamsStyle % #chamsNames + 1; refreshStyles() end)
-bindClick(colorButton,function() colorStyle = colorStyle % #colorNames + 1; refreshStyles() end)
-refreshStyles()
-state.setVisualStyle=function(kind,value)
-    local lists={box=boxNames,outline=outlineNames,chams=chamsNames,color=colorNames}
-    local list=lists[kind]
-    local index=list and table.find(list,value)
-    if not index then return end
-    if kind=="box" then boxStyle=index elseif kind=="outline" then outlineStyle=index
-    elseif kind=="chams" then chamsStyle=index elseif kind=="color" then colorStyle=index end
-    refreshStyles()
-end
-
 -- Obsidian Aimbot из stage_7.lua.txt: виртуальный touch, область, щит и выбор цели.
 do
     local LocalPlayer=localPlayer
@@ -1318,14 +1265,10 @@ local function refreshExtras()
     showToggle(scopeButton, "AUTO SCOPE", extras.autoScope, false)
     showToggle(wallButton, "AUTOWALL", extras.autoWall, not state.wallReady)
 
-    showToggle(boxButton, "ESP BOX", extras.box, false)
-    showToggle(namesButton, "NAMES / HP", extras.names, false)
-    showToggle(outlineButton, "OUTLINE", extras.outline, false)
     showToggle(teamButton, "TEAM CHECK", config.teamCheck, false)
     showToggle(originButton, "FORCE ORIGIN", extras.forceOrigin, not state.forceReady)
     showToggle(autoReloadButton, "AUTO RELOAD", extras.autoReload, false)
     showToggle(instaReloadButton, "INSTA RELOAD", extras.instaReload, extras.instaReload and not state.reloadReady)
-    showToggle(chamsButton, "CHAMS", extras.chams, false)
     showToggle(smokeButton, "ANTI SMOKE", extras.antiSmoke, extras.antiSmoke and not state.smokeReady)
     showToggle(flashButton, "ANTI FLASH", extras.antiFlash, extras.antiFlash and not state.flashReady)
 end
@@ -1364,10 +1307,6 @@ bindClick(wallButton,function()
     extras.autoWall = not extras.autoWall
     refreshExtras()
 end)
-bindClick(boxButton,function() extras.box = not extras.box; refreshExtras() end)
-bindClick(namesButton,function() extras.names = not extras.names; refreshExtras() end)
-bindClick(outlineButton,function() extras.outline = not extras.outline; refreshExtras() end)
-bindClick(chamsButton,function() extras.chams = not extras.chams; refreshExtras() end)
 bindClick(teamButton,function() config.teamCheck = not config.teamCheck; refreshExtras() end)
 refreshExtras()
 
@@ -1962,7 +1901,7 @@ do
     local dismiss=smallButton(popup,"×",UDim2.fromOffset(22,22),UDim2.new(1,-28,0,2))
     dismiss.Name,dismiss.ZIndex,dismiss.TextSize="SettingsClose",23,16
     dismiss.BackgroundColor3=Color3.fromRGB(30,47,34)
-    local all={slider,state.thirdSlider,state.thirdCollisionButton,boxStyleButton,outlineStyleButton,chamsStyleButton,colorButton}
+    local all={slider,state.thirdSlider,state.thirdCollisionButton}
     for _,object in ipairs(all) do
         object.Parent=popup; object.Visible=false; object.ZIndex=21
         pcall(function()
@@ -2019,8 +1958,6 @@ do
     end
     local bindings={
         {originButton,"FORCE ORIGIN",{slider}}, {state.thirdButton,"THIRD PERSON",{state.thirdSlider,state.thirdCollisionButton}},
-        {boxButton,"ESP BOX",{boxStyleButton,colorButton}}, {outlineButton,"OUTLINE",{outlineStyleButton,colorButton}},
-        {chamsButton,"CHAMS",{chamsStyleButton,colorButton}},
     }
     for _,binding in ipairs(bindings) do
         local item,title,objects=binding[1],binding[2],binding[3]
@@ -2476,231 +2413,6 @@ task.spawn(function()
 end)
 
 -- ESP по отдельным частям тела, без оружия и аксессуаров в размер рамки.
-local esp = {}
-local bodyNames = {"Head", "UpperTorso", "LowerTorso", "Torso", "HumanoidRootPart", "Left Arm", "Right Arm", "Left Leg", "Right Leg", "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand", "LeftUpperLeg", "LeftLowerLeg", "LeftFoot", "RightUpperLeg", "RightLowerLeg", "RightFoot"}
-local function removeEntry(model)
-    local entry = esp[model]
-    if not entry then return end
-    entry.box:Destroy(); entry.shadow:Destroy(); entry.caption:Destroy(); entry.distance:Destroy(); entry.hpText:Destroy(); entry.healthBack:Destroy()
-    if entry.highlight then entry.highlight:Destroy() end
-    esp[model] = nil
-end
-local function entryFor(model)
-    if esp[model] then return esp[model] end
-    local box = Instance.new("Frame")
-    box.Name, box.BackgroundTransparency, box.BorderSizePixel, box.Visible, box.ZIndex = "EnemyBox", 1, 0, false, 2
-    box.Parent = overlay
-    local shadow = Instance.new("Frame")
-    shadow.Name, shadow.BackgroundTransparency, shadow.BorderSizePixel, shadow.ZIndex = "BoxShadow", 1, 0, 1
-    shadow.Parent = overlay
-    local shadowStroke = Instance.new("UIStroke")
-    shadowStroke.Color, shadowStroke.Thickness, shadowStroke.Transparency, shadowStroke.Parent = Color3.fromRGB(2,7,12), 3, 0.18, shadow
-    local stroke = Instance.new("UIStroke")
-    stroke.Color, stroke.Thickness, stroke.Parent = Color3.fromRGB(106, 233, 208), 1.5, box
-    local strokeGrad = Instance.new("UIGradient")
-    strokeGrad.Color = ColorSequence.new(Color3.fromRGB(255,255,255), Color3.fromRGB(106,233,208))
-    strokeGrad.Parent = stroke
-    local danger = Instance.new("UIStroke")
-    danger.Name, danger.Color, danger.Thickness = "DangerGlow", Color3.fromRGB(255,70,70), 3
-    danger.Transparency, danger.Parent = 1, box
-    local corners = {}
-    for i = 1, 8 do
-        local bar = Instance.new("Frame")
-        bar.Name, bar.BackgroundColor3, bar.BorderSizePixel, bar.ZIndex = "Corner"..i, Color3.fromRGB(106,233,208), 0, 3
-        bar.Parent = box
-        local blackEdge = Instance.new("UIStroke")
-        blackEdge.Color, blackEdge.Thickness, blackEdge.Transparency, blackEdge.Parent = Color3.fromRGB(1,8,12), 1, 0.2, bar
-        corners[i] = bar
-    end
-    local caption = Instance.new("TextLabel")
-    caption.Name = "EnemyInfo"
-    caption.AnchorPoint = Vector2.new(0.5, 1)
-    caption.Size = UDim2.fromOffset(220, 18)
-    caption.BackgroundTransparency = 1
-    caption.TextColor3 = Color3.fromRGB(239, 255, 252)
-    caption.TextStrokeTransparency = 0.05
-    caption.Font, caption.TextSize, caption.Visible, caption.ZIndex = Enum.Font.GothamBold, 11, false, 3
-    caption.Parent = overlay
-    local distance = Instance.new("TextLabel")
-    distance.Name, distance.AnchorPoint = "EnemyDistance", Vector2.new(0.5, 0)
-    distance.Size, distance.BackgroundTransparency = UDim2.fromOffset(110, 15), 1
-    distance.TextColor3, distance.TextStrokeTransparency = Color3.fromRGB(211, 228, 235), 0.15
-    distance.Font, distance.TextSize, distance.Visible, distance.ZIndex = Enum.Font.GothamBold, 10, false, 3
-    distance.Parent = overlay
-    local hpText = Instance.new("TextLabel")
-    hpText.Name, hpText.AnchorPoint = "EnemyHealth", Vector2.new(1, 0.5)
-    hpText.Size, hpText.BackgroundTransparency = UDim2.fromOffset(35, 14), 1
-    hpText.TextColor3, hpText.TextStrokeTransparency = Color3.fromRGB(225,255,235), 0.1
-    hpText.TextXAlignment, hpText.Font, hpText.TextSize, hpText.ZIndex = Enum.TextXAlignment.Right, Enum.Font.GothamBold, 9, 3
-    hpText.Visible, hpText.Parent = false, overlay
-    local healthBack = Instance.new("Frame")
-    healthBack.Name = "HealthBack"
-    healthBack.BackgroundColor3 = Color3.fromRGB(12, 18, 24)
-    healthBack.BorderSizePixel, healthBack.Visible, healthBack.ZIndex = 0, false, 2
-    healthBack.Parent = overlay
-    local healthFill = Instance.new("Frame")
-    healthFill.AnchorPoint = Vector2.new(0, 1)
-    healthFill.Position = UDim2.fromScale(0, 1)
-    healthFill.BorderSizePixel, healthFill.ZIndex = 0, 3
-    healthFill.Parent = healthBack
-    local entry = {box = box, shadow = shadow, stroke = stroke, strokeGrad = strokeGrad, danger = danger, corners = corners, caption = caption, distance = distance, hpText = hpText, healthBack = healthBack, healthFill = healthFill}
-    esp[model] = entry
-    return entry
-end
-local function boundsOnScreen(camera, model)
-    local anchor = model:FindFirstChild("Head") or model:FindFirstChild("HumanoidRootPart")
-    if not anchor or not anchor:IsA("BasePart") then return nil end
-    local anchorPos = anchor.Position
-    local anchorProjection = camera:WorldToViewportPoint(anchorPos)
-    if anchorProjection.Z <= 1 then return nil end
-    local minX, minY, maxX, maxY
-    local headMin, headMax
-    for _, name in ipairs(bodyNames) do
-        local part = model:FindFirstChild(name)
-        if part and part:IsA("BasePart") and (part.Name ~= "HumanoidRootPart" or part == anchor)
-            and (part.Position - anchorPos).Magnitude < 12 and part.Size.Magnitude < 20 then
-            for _, x in ipairs({-1, 1}) do
-                for _, y in ipairs({-1, 1}) do
-                    for _, z in ipairs({-1, 1}) do
-                        local position = part.CFrame * Vector3.new(part.Size.X*x/2, part.Size.Y*y/2, part.Size.Z*z/2)
-                        local screen = camera:WorldToViewportPoint(position)
-                        if screen.Z > 0.1 then
-                            minX=math.min(minX or screen.X,screen.X); maxX=math.max(maxX or screen.X,screen.X)
-                            minY=math.min(minY or screen.Y,screen.Y); maxY=math.max(maxY or screen.Y,screen.Y)
-                            if part == anchor then
-                                headMin=math.min(headMin or screen.Y,screen.Y)
-                                headMax=math.max(headMax or screen.Y,screen.Y)
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    if not minX or not headMin then return nil end
-    -- Отсекаем аномально далёкие части даже при повреждённой модели.
-    local anchorScreen = anchorProjection
-    local headHeight = math.max(2, headMax - headMin)
-    local maxWidth, maxHeight = math.max(12,headHeight*5), math.max(20,headHeight*8)
-    minX, maxX = math.max(minX,anchorScreen.X-maxWidth/2), math.min(maxX,anchorScreen.X+maxWidth/2)
-    minY, maxY = math.max(minY,headMin-headHeight), math.min(maxY,headMin+maxHeight)
-    local viewport = camera.ViewportSize
-    if maxX < 0 or maxY < 0 or minX > viewport.X or minY > viewport.Y then return nil end
-    minX, maxX = math.clamp(minX,0,viewport.X), math.clamp(maxX,0,viewport.X)
-    minY, maxY = math.clamp(minY,0,viewport.Y), math.clamp(maxY,0,viewport.Y)
-    if maxX-minX < 2 or maxY-minY < 2 then return nil end
-    return minX, minY, maxX-minX, maxY-minY
-end
-local function updateEsp()
-    local camera, characters = Workspace.CurrentCamera, Workspace:FindFirstChild("Characters")
-    if not (extras.box or extras.names or extras.outline or extras.chams) or not camera or not characters then
-        for model in pairs(esp) do removeEntry(model) end
-        return
-    end
-    local own = characters:FindFirstChild(localPlayer.Name) or localPlayer.Character
-    local myTeam = localPlayer:GetAttribute("Team") or teamOf(own)
-    local ffa = string.find(tostring(Workspace:GetAttribute("Gamemode")), "Deathmatch", 1, true) ~= nil
-    local seen = {}
-    for _, model in ipairs(characters:GetChildren()) do
-        if isEnemy(model, own, ffa, myTeam) then
-            local hp = tonumber(model:GetAttribute("Health"))
-            local humanoid = model:FindFirstChildOfClass("Humanoid")
-            if not hp and humanoid then hp = humanoid.Health end
-            local maxHp = tonumber(model:GetAttribute("MaxHealth")) or (humanoid and humanoid.MaxHealth) or 100
-            if not hp or hp > 0 then
-                seen[model] = true
-                local entry = entryFor(model)
-                if extras.outline or extras.chams then
-                    if not entry.highlight then
-                        local h = Instance.new("Highlight")
-                        h.Name, h.DepthMode = "EnemyOutline", Enum.HighlightDepthMode.AlwaysOnTop
-                        h.FillColor, h.OutlineColor = Color3.fromRGB(58,170,158), Color3.fromRGB(120,245,223)
-                        h.FillTransparency, h.OutlineTransparency = 0.88, 0
-                        h.Adornee, h.Parent = model, gui
-                        entry.highlight = h
-                    end
-                    local color = colors[colorStyle]
-                    entry.highlight.Enabled = true
-                    entry.highlight.FillColor, entry.highlight.OutlineColor = color.fill, color.bright
-                    if extras.chams then
-                        entry.highlight.FillTransparency = chamsStyle == 1 and 0.52 or (chamsStyle == 2 and 0.24 or 0.4 + math.sin(os.clock()*2.5)*0.10)
-                    else
-                        entry.highlight.FillTransparency = 1
-                    end
-                    entry.highlight.OutlineTransparency = not extras.outline and 1 or (outlineStyle == 1 and 0 or (outlineStyle == 2 and 0.18 or 0.48))
-                elseif entry.highlight then entry.highlight.Enabled = false end
-                local x,y,w,h = boundsOnScreen(camera,model)
-                entry.box.Visible = extras.box and x ~= nil
-                entry.shadow.Visible = extras.box and boxStyle ~= 2 and x ~= nil
-                entry.caption.Visible = extras.names and x ~= nil
-                entry.distance.Visible = extras.names and x ~= nil
-                entry.hpText.Visible = extras.names and x ~= nil and hp ~= nil
-                entry.healthBack.Visible = extras.names and x ~= nil and hp ~= nil
-                if x then
-                    entry.box.Position,entry.box.Size = UDim2.fromOffset(x,y),UDim2.fromOffset(w,h)
-                    entry.shadow.Position,entry.shadow.Size = entry.box.Position,entry.box.Size
-                    local color = colors[colorStyle]
-                    entry.stroke.Color = color.bright
-                    entry.stroke.Enabled = boxStyle ~= 2
-                    entry.stroke.Transparency = boxStyle == 3 and 0.42 or 0
-                    entry.box.BackgroundColor3 = color.fill
-                    entry.box.BackgroundTransparency = boxStyle == 3 and 0.91 or 1
-                    local cw, ch = math.max(4, math.floor(w*0.25)), math.max(4, math.floor(h*0.20))
-                    local positions = {{0,0,cw,2},{0,0,2,ch},{w-cw,0,cw,2},{w-2,0,2,ch},
-                        {0,h-2,cw,2},{0,h-ch,2,ch},{w-cw,h-2,cw,2},{w-2,h-ch,2,ch}}
-                    for i, bar in ipairs(entry.corners) do
-                        local q = positions[i]
-                        bar.Visible = boxStyle == 2
-                        bar.BackgroundColor3 = color.bright
-                        bar.Position, bar.Size = UDim2.fromOffset(q[1],q[2]), UDim2.fromOffset(q[3],q[4])
-                    end
-                    entry.caption.Position = UDim2.fromOffset(x+w/2,y-3)
-                    entry.caption.TextColor3 = color.bright
-                    entry.healthBack.Position,entry.healthBack.Size = UDim2.fromOffset(x-7,y-1),UDim2.fromOffset(4,h+2)
-                    if hp then
-                        local ratio = math.clamp(hp / math.max(1, maxHp),0,1)
-                        entry.healthFill.Size = UDim2.fromScale(1,ratio)
-                        entry.healthFill.BackgroundColor3 = Color3.fromRGB(math.floor(230*(1-ratio)),math.floor(185*ratio+50),70)
-                    end
-                    local head = model:FindFirstChild("Head")
-                    local distance = head and math.floor((head.Position-camera.CFrame.Position).Magnitude) or 0
-                    entry.caption.Text = model.Name
-                    entry.distance.Position = UDim2.fromOffset(x+w/2,y+h+3)
-                    entry.distance.Text = tostring(distance).." st"
-                    if hp then
-                        entry.hpText.Text = tostring(math.floor(hp))
-                        entry.hpText.Position = UDim2.fromOffset(x-9, y+h*(1-math.clamp(hp/math.max(1,maxHp),0,1)))
-                        entry.lowHealth = (hp / math.max(1, maxHp)) < 0.3
-                    else
-                        entry.lowHealth = false
-                    end
-                end
-            end
-        end
-    end
-    for model in pairs(esp) do if not seen[model] then removeEntry(model) end end
-end
-local lastEsp, espWarnAt = 0, 0
-RunService.Heartbeat:Connect(function()
-    local now = os.clock()
-    if now-lastEsp < 0.033 then return end
-    lastEsp = now
-    local ok, err = pcall(updateEsp)
-    if not ok and now-espWarnAt > 5 then espWarnAt=now; warn("[ESP] "..tostring(err)) end
-    -- low-health danger glow: a slow breathing red outline on boxes of enemies under 30% hp, plus a
-    -- slowly rotating gradient on the normal stroke so boxes read as "alive" rather than static rectangles
-    local pulse = 0.45 + 0.4 * math.sin(now * 4.2)
-    local rot = (now * 40) % 360
-    for _, entry in pairs(esp) do
-        if entry.box.Visible then
-            if entry.strokeGrad then entry.strokeGrad.Rotation = rot end
-            if entry.danger then
-                entry.danger.Transparency = entry.lowHealth and (1 - pulse) or 1
-            end
-        end
-    end
-end)
-
 -- Последняя страховка, если отправка пакета не состоялась.
 RunService:BindToRenderStep("IndependentSilentRestore", Enum.RenderPriority.First.Value, restoreCamera)
 
@@ -2849,12 +2561,12 @@ end
 
 
 
+state.gunMods={NoSpread=false,NoRecoil=false,SpreadReady=false,RecoilReady=false}
 local hook = hookfunction or replaceclosure
 if type(hook) ~= "function" or type(getgc) ~= "function" then
     state.message = "Нет hookfunction/getgc"
     refreshButton()
-    warn("[Silent Aim] Executor не поддерживает hookfunction или getgc")
-    return
+    warn("[Silent Aim] Executor не поддерживает hookfunction или getgc; остальные функции доступны")
 end
 
 local function lookupNetworkSend()
@@ -2899,6 +2611,31 @@ local function redirectCamera()
     end
     camera.CFrame = CFrame.lookAt(origin, position)
     state.redirected = true
+end
+
+-- No Spread stage 7 shares the same hooks as Silent Aim: no duplicate patching.
+local spreadHooks={}
+local function ensureSpread(bullet)
+    if type(hook)~="function" or type(bullet)~="table" then return false end
+    local count=0
+    for _,name in ipairs({"getTrueSpread","getSpreadForConfig","getMovementSpreadForConfig","getBaseSpreadForConfig","getBaseSpread"}) do
+        local fn=rawget(bullet,name)
+        if type(fn)=="function" then
+            if spreadHooks[fn] then count+=1 else
+                local previous
+                local ok,original=pcall(function()
+                    return hook(fn,function(...)
+                        local result=table.pack(previous(...))
+                        if (state.redirected or state.gunMods.NoSpread) and type(result[1])=="number" then result[1]=0 end
+                        return table.unpack(result,1,result.n)
+                    end)
+                end)
+                if ok and type(original)=="function" then previous=original;spreadHooks[fn]=true;count+=1 end
+            end
+        end
+    end
+    state.gunMods.SpreadReady=count>0
+    return count>0
 end
 
 local function install(bullet, sendFunction)
@@ -2968,23 +2705,7 @@ local function install(bullet, sendFunction)
     state.forceFailed = not state.forceReady
     refreshExtras()
 
-    -- Убираем разброс только во время перенаправленного выстрела.
-    local seen = {}
-    for _, name in ipairs({ "getTrueSpread", "getSpreadForConfig", "getMovementSpreadForConfig", "getBaseSpreadForConfig", "getBaseSpread" }) do
-        local fn = rawget(bullet, name)
-        if type(fn) == "function" and not seen[fn] then
-            seen[fn] = true
-            local previous
-            local hooked, original = pcall(function()
-                return hook(fn, function(...)
-                    local values = table.pack(previous(...))
-                    if state.redirected and type(values[1]) == "number" then values[1] = 0 end
-                    return table.unpack(values, 1, values.n)
-                end)
-            end)
-            if hooked and type(original) == "function" then previous = original end
-        end
-    end
+    ensureSpread(bullet)
     return true
 end
 
@@ -3009,6 +2730,1302 @@ task.spawn(function()
 end)
 
 
+
+-- Повторный поиск контроллера камеры и таблицы пули после входа в матч.
+do
+    local hooked={}
+    task.spawn(function()
+        local lastWarn=0
+        while gui.Parent do
+            local gm=state.gunMods
+            if gm.NoSpread and not gm.SpreadReady then
+                local ok,bullet=pcall(findBulletClass)
+                if ok and bullet then pcall(ensureSpread,bullet) end
+            end
+            if gm.NoRecoil and type(hook)=="function" then
+                local camera=getModule("Controllers","CameraController")
+                if type(camera)=="table" then
+                    for _,name in ipairs({"weaponKick","setWeaponRecoil","getWeaponKickRotation"}) do
+                        local fn=rawget(camera,name)
+                        if type(fn)=="function" and not hooked[fn] then
+                            local previous
+                            local good,old=pcall(function()
+                                return hook(fn,function(...)
+                                    if gm.NoRecoil then
+                                        if name=="getWeaponKickRotation" then return Vector3.zero end
+                                        return
+                                    end
+                                    return previous(...)
+                                end)
+                            end)
+                            if good and type(old)=="function" then previous=old;hooked[fn]=true end
+                        end
+                    end
+                    local count=0
+                    for _,name in ipairs({"weaponKick","setWeaponRecoil","getWeaponKickRotation"}) do
+                        local fn=rawget(camera,name);if type(fn)=="function" and hooked[fn] then count+=1 end
+                    end
+                    gm.RecoilReady=count>0
+                end
+            end
+            local now=os.clock()
+            if now-lastWarn>15 and ((gm.NoSpread and not gm.SpreadReady) or (gm.NoRecoil and not gm.RecoilReady)) then
+                lastWarn=now
+                warn("[NOIR] No Recoil / No Spread: ищем методы игры; требуется поддержка executor")
+            end
+            task.wait(1.5)
+        end
+    end)
+end
+
+-- Дополнительный ESP из stage 7. Он независим от исходного Noir ESP.
+do
+    local LocalPlayer=localPlayer
+    local osClock=os.clock
+    local vector2New=Vector2.new
+    local xDTaraZ={
+        State={Alive=true},Panic={Panicked=false},GameLib={},Caps={Upvalues=type(getupvalues)=="function"},
+        Config={SeeThrough={"Characters","Debris","ThirdPersonWeaponStash"},EspCacheMax=256,SoundSelfRange=6,
+            GhostSnap=45,SoundMaxMarks=24,SoundColor=Color3.fromRGB(255,196,64)},
+        Options={SoundEsp=false,SoundEspLife=3,EspMemory=0},
+        Target={},Player={},Util={},
+    }
+    function xDTaraZ.Util.Decode(raw)
+        local ok,data=pcall(game:GetService("HttpService").JSONDecode,game:GetService("HttpService"),raw)
+        return ok and data or nil
+    end
+    function xDTaraZ.Util.Try(name,fn,...)
+        local ok,result=pcall(fn,...)
+        if not ok then warn("[NOIR / "..name.."] "..tostring(result)) end
+        return ok,result
+    end
+    function xDTaraZ.Player.Character()
+        local chars=Workspace:FindFirstChild("Characters")
+        return (chars and chars:FindFirstChild(LocalPlayer.Name)) or LocalPlayer.Character
+    end
+    function xDTaraZ.Target.Candidates()
+        local folder=Workspace:FindFirstChild("Characters");local result={}
+        if folder then for _,m in ipairs(folder:GetChildren()) do
+            if m:IsA("Model") and m.Name~=LocalPlayer.Name then table.insert(result,m) end
+        end end
+        return result
+    end
+    function xDTaraZ.Target.Owner(model) return Players:FindFirstChild(model.Name) end
+    function xDTaraZ.Target.TeamOf(model) return teamOf(model) end
+    function xDTaraZ.Target.MyTeam() return LocalPlayer:GetAttribute("Team") or teamOf(xDTaraZ.Player.Character()) end
+    function xDTaraZ.Target.FreeForAll() return string.find(tostring(Workspace:GetAttribute("Gamemode")),"Deathmatch",1,true)~=nil end
+    function xDTaraZ.Target.IsEnemy(model)
+        if tostring(model:GetAttribute("Dead"))=="true" then return false end
+        if xDTaraZ.Target.FreeForAll() then return true end
+        local my,other=xDTaraZ.Target.MyTeam(),teamOf(model)
+        return my==nil or other==nil or my~=other
+    end
+    local sight=RaycastParams.new()
+    sight.FilterType=Enum.RaycastFilterType.Exclude
+    function xDTaraZ.Target.Visible(from,model,point)
+        local skip={Workspace.CurrentCamera}
+        if model then table.insert(skip,model) end
+        for _,name in ipairs(xDTaraZ.Config.SeeThrough) do
+            local folder=Workspace:FindFirstChild(name);if folder then table.insert(skip,folder) end
+        end
+        sight.FilterDescendantsInstances=skip
+        return Workspace:Raycast(from,point-from,sight)==nil
+    end
+xDTaraZ.Esp = { Count = 0, Decoded = {}, CacheSize = 0, Ghosts = {}, Folder = nil }
+
+---@return table?  JSON attribute decoded once per distinct raw string
+function xDTaraZ.Esp.Attr(owner, key)
+    local raw = owner:GetAttribute(key)
+    if type(raw) ~= "string" then return nil end
+    local esp = xDTaraZ.Esp
+    if esp.Decoded[raw] == nil then
+        esp.CacheSize += 1
+        if esp.CacheSize > xDTaraZ.Config.EspCacheMax then table.clear(esp.Decoded) esp.CacheSize = 1 end
+        esp.Decoded[raw] = xDTaraZ.Util.Decode(raw) or false
+    end
+    return esp.Decoded[raw] or nil
+end
+
+---@return string  " C4 Kit Helmet Scoped" style tags, "" when none
+function xDTaraZ.Esp.Flags(owner)
+    if not owner then return "" end
+    local flags = {}
+    local armor = xDTaraZ.Esp.Attr(owner, "Armor")
+    local bomb = xDTaraZ.Esp.Attr(owner, "Slot5")
+    if bomb and bomb.Weapon == "C4" then flags[#flags + 1] = "C4" end
+    if owner:GetAttribute("HasDefuseKit") == true then table.insert(flags, "Kit") end
+    if armor and type(armor.Type) == "string" and armor.Type:find("Helmet") then flags[#flags + 1] = "Helmet" end
+    if owner:GetAttribute("IsSniperScoped") == true then flags[#flags + 1] = "Scoped" end
+    return #flags > 0 and " " .. table.concat(flags, " ") or ""
+end
+
+---@return Model?  whatever aimbot, silent aim or ragebot is locked on
+function xDTaraZ.Esp.Focus()
+    return nil -- Не подменяем выбранную пользователем цветовую палитру.
+end
+
+---@return table  one lasting stand-in per player, so a body that blinks in and out of view never rebuilds its box
+function xDTaraZ.Esp.Ghost(name)
+    local esp = xDTaraZ.Esp
+    local ghost = esp.Ghosts[name]
+    if ghost and ghost.Model.Parent then return ghost end
+    if not (esp.Folder and esp.Folder.Parent) then
+        esp.Folder = Instance.new("Folder")
+        esp.Folder.Name = "xDTaraZGhosts"
+        esp.Folder.Parent = Workspace.CurrentCamera
+    end
+    local model = Instance.new("Model")
+    model.Name = name
+    local root = Instance.new("Part")
+    root.Name, root.Size, root.Transparency = "HumanoidRootPart", Vector3.new(2, 2, 1), 1
+    root.Anchored, root.CanCollide, root.CanQuery, root.CanTouch = true, false, false, false
+    root.Parent = model
+    model.PrimaryPart = root
+    model.Parent = esp.Folder
+    ghost = { Model = model, Root = root, Seen = 0, Heard = 0 }
+    esp.Ghosts[name] = ghost
+    return ghost
+end
+
+---@return table  xDTaraZ.Visuals row for one player, live body or last known spot
+function xDTaraZ.Esp.Row(ghost, model, owner, mine, focus)
+    local equipped = owner and xDTaraZ.Esp.Attr(owner, "CurrentEquipped")
+    local label = owner and owner.DisplayName or ghost.Model.Name
+    if equipped and equipped.Name then label = label .. " [" .. equipped.Name .. "]" end
+    local live = model and model:FindFirstChild("HumanoidRootPart")
+    if not live then label = label .. " ?" end
+    return {
+        Model = ghost.Model,
+        Root = live or ghost.Root,
+        Adornee = model or false,
+        Name = label .. xDTaraZ.Esp.Flags(owner),
+        Health = tonumber(owner and owner:GetAttribute("Health")) or tonumber(model and model:GetAttribute("Health")) or 100,
+        MaxHealth = tonumber(model and model:GetAttribute("MaxHealth")) or 100,
+        Friendly = ghost.Friendly,
+        Color = model ~= nil and model == focus and xDTaraZ.Config.EspFocusColor or nil,
+    }
+end
+
+---@return table[]  targets in the shape xDTaraZ.Visuals expects; bots count as enemies
+function xDTaraZ.Esp.Targets()
+    local esp, now = xDTaraZ.Esp, osClock()
+    local list = {}
+    if not Workspace.CurrentCamera then return list end
+    local mine = xDTaraZ.Target.MyTeam()
+    local ffa = xDTaraZ.Target.FreeForAll()
+    local focus = xDTaraZ.Esp.Focus()
+    if xDTaraZ.Options.SoundEsp or xDTaraZ.Options.EspMemory>0 then pcall(xDTaraZ.Sound.Install) end
+    local live = {}
+    for _, model in ipairs(xDTaraZ.Target.Candidates()) do
+        if xDTaraZ.Esp.IsDead(model, xDTaraZ.Target.Owner(model)) then
+            xDTaraZ.Esp.Forget(model.Name)
+            continue
+        end
+        local hrp = model:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+        local ghost = esp.Ghost(model.Name)
+        ghost.Root.CFrame, ghost.Seen = hrp.CFrame, now
+        ghost.Friendly = not ffa and mine ~= nil and xDTaraZ.Target.TeamOf(model) == mine
+        live[model.Name] = true
+        list[#list + 1] = esp.Row(ghost, model, xDTaraZ.Target.Owner(model), mine, focus)
+    end
+    local memory = xDTaraZ.Options.EspMemory
+    for name, ghost in pairs(esp.Ghosts) do
+        if live[name] then continue end
+        local owner = Players:FindFirstChild(name)
+        if owner and xDTaraZ.Esp.IsDead(nil, owner) then
+            xDTaraZ.Esp.Forget(name)
+            continue
+        end
+        local gone = not ghost.Model.Parent or (not owner and now - ghost.Seen > memory)
+        if gone or now - math.max(ghost.Seen, ghost.Heard) > memory then
+            if gone and not owner then
+                ghost.Model:Destroy()
+                esp.Ghosts[name] = nil
+            end
+            continue
+        end
+        list[#list + 1] = esp.Row(ghost, nil, owner, mine, focus)
+    end
+    esp.Count = #list
+    return list
+end
+
+---@return boolean  true once a player or bot is dead, by body flag or 0 health
+function xDTaraZ.Esp.IsDead(model, owner)
+    if model and (tostring(model:GetAttribute("Dead")) == "true" or (tonumber(model:GetAttribute("Health")) or 1) <= 0) then return true end
+    if owner and (owner:GetAttribute("Dead") == true or (tonumber(owner:GetAttribute("Health")) or 1) <= 0) then return true end
+    return false
+end
+
+---Drops the remembered spot of someone who died, so no box stays where they fell.
+function xDTaraZ.Esp.Forget(name)
+    local ghost = xDTaraZ.Esp.Ghosts[name]
+    if ghost then ghost.Seen, ghost.Heard = 0, 0 end
+end
+
+---Moves the stand-in of the hidden enemy closest to a footstep or shot, so hidden players keep a box.
+function xDTaraZ.Esp.Hear(pos, weapon)
+    local esp, now = xDTaraZ.Esp, osClock()
+    local best, bestDist = nil, xDTaraZ.Config.GhostSnap
+    for name, ghost in pairs(esp.Ghosts) do
+        if ghost.Friendly or now - ghost.Seen < 0.3 then continue end
+        local owner = Players:FindFirstChild(name)
+        local equipped = owner and xDTaraZ.Esp.Attr(owner, "CurrentEquipped")
+        if weapon and equipped and equipped.Name and equipped.Name ~= weapon then continue end
+        local dist = (ghost.Root.Position - pos).Magnitude
+        if dist < bestDist then best, bestDist = ghost, dist end
+    end
+    if not best then return end
+    best.Root.CFrame = CFrame.new(pos + Vector3.new(0, 2.5, 0))
+    best.Heard = now
+end
+
+xDTaraZ.Sound = { Marks = {}, Entry = nil, Original = nil, Folder = nil }
+
+---Hooks into the game's own sound listener: every footstep and shot of every player arrives with its position, even behind walls.
+function xDTaraZ.Sound.Install()
+    local sound = xDTaraZ.Sound
+    if sound.Entry then return true end
+    local net = xDTaraZ.GameLib.Net
+    local packet = net and net.Sound and net.Sound.ReplicateSound
+    if not (packet and xDTaraZ.Caps.Upvalues) then return false end
+    local ok, listeners = pcall(function() return getupvalues(packet.Listen)[1] end)
+    if not ok or type(listeners) ~= "table" then return false end
+    for _, entry in ipairs(listeners) do
+        if type(entry) == "table" and type(entry.callback) == "function" then
+            local previous=entry.callback
+            local wrapped=function(info, ...)
+                xDTaraZ.Util.Try("sound esp", xDTaraZ.Sound.Heard, info)
+                return previous(info, ...)
+            end
+            local changed=pcall(function() entry.callback=wrapped end)
+            if not changed or entry.callback~=wrapped then return false end
+            sound.Entry, sound.Original, sound.Wrapper = entry, previous, wrapped
+            return true
+        end
+    end
+    return false
+end
+
+function xDTaraZ.Sound.Uninstall()
+    local sound = xDTaraZ.Sound
+    if sound.Entry and sound.Entry.callback == sound.Wrapper then
+        pcall(function() sound.Entry.callback = sound.Original end)
+    end
+    sound.Entry, sound.Original, sound.Wrapper = nil, nil, nil
+    for _, mark in ipairs(sound.Marks) do mark.Gui:Destroy() end
+    table.clear(sound.Marks)
+end
+
+---@return boolean  true when the sound came from you or a teammate you can see
+function xDTaraZ.Sound.Friendly(pos)
+    local range = xDTaraZ.Config.SoundSelfRange
+    local me = xDTaraZ.Player.Character()
+    if me and (me:GetPivot().Position - pos).Magnitude < range then return true end
+    if xDTaraZ.Target.FreeForAll() then return false end
+    for _, model in ipairs(xDTaraZ.Target.Candidates()) do
+        if not xDTaraZ.Target.IsEnemy(model) and (model:GetPivot().Position - pos).Magnitude < range then return true end
+    end
+    return false
+end
+
+function xDTaraZ.Sound.Heard(info)
+    if type(info) ~= "table" or typeof(info.Position) ~= "Vector3" then return end
+    local floor = info.Class == "FloorSounds"
+    if not floor and info.Name ~= "Shoot" then return end
+    if xDTaraZ.Sound.Friendly(info.Position) then return end
+    xDTaraZ.Esp.Hear(info.Position, not floor and tostring(info.Class) or nil)
+    if xDTaraZ.Options.SoundEsp then xDTaraZ.Sound.Mark(info.Position, floor and "Steps" or tostring(info.Class)) end
+end
+
+function xDTaraZ.Sound.Mark(pos, label)
+    local sound = xDTaraZ.Sound
+    if not (sound.Folder and sound.Folder.Parent) then
+        sound.Folder = Instance.new("Folder")
+        sound.Folder.Name = "xDTaraZSounds"
+        sound.Folder.Parent = Workspace.Terrain
+    end
+    if #sound.Marks >= xDTaraZ.Config.SoundMaxMarks then
+        table.remove(sound.Marks, 1).Gui:Destroy()
+    end
+    local holder = Instance.new("Attachment")
+    holder.Parent = Workspace.Terrain
+    holder.WorldPosition = pos
+    local gui = Instance.new("BillboardGui")
+    gui.AlwaysOnTop, gui.Size, gui.LightInfluence = true, UDim2.fromOffset(120, 34), 0
+    local text = Instance.new("TextLabel")
+    text.BackgroundTransparency, text.Size, text.Font, text.TextSize = 1, UDim2.fromScale(1, 1), Enum.Font.GothamBold, 13
+    text.TextColor3, text.TextStrokeTransparency = xDTaraZ.Config.SoundColor, 0.3
+    text.Parent = gui
+    gui.Parent = holder
+    holder.Parent = Workspace.Terrain
+    gui.Adornee = holder
+    sound.Marks[#sound.Marks + 1] = { Gui = holder, Text = text, Label = label, Born = osClock() }
+end
+
+---Fades markers and keeps their distance fresh.
+function xDTaraZ.Sound.Step()
+    local sound, life = xDTaraZ.Sound, xDTaraZ.Options.SoundEspLife
+    local cam = Workspace.CurrentCamera
+    for index = #sound.Marks, 1, -1 do
+        local mark = sound.Marks[index]
+        local age = osClock() - mark.Born
+        if age > life or not xDTaraZ.Options.SoundEsp then
+            mark.Gui:Destroy()
+            table.remove(sound.Marks, index)
+        else
+            local dist = cam and math.floor((mark.Gui.WorldPosition - cam.CFrame.Position).Magnitude) or 0
+            mark.Text.Text = ("%s\n%dm"):format(mark.Label, dist)
+            mark.Text.TextTransparency = age / life * 0.8
+        end
+    end
+end
+
+xDTaraZ.Visuals = {
+    Settings = {
+        Enabled = false,
+        Box = false,
+        BoxStyle = "Full",
+        BoxFill = false,
+        Name = false,
+        Health = false,
+        HealthText = false,
+        Distance = false,
+        Tracer = false,
+        TracerOrigin = "Bottom",
+        HeadDot = false,
+        Chams = false,
+        Arrows = false,
+        Radar = false,
+        RadarRange = 250,
+        RadarSize = 180,
+        TeamCheck = true,
+        MaxDistance = 2000,
+        TextSize = 13,
+        EnemyColor = Color3.fromRGB(232, 88, 76),
+        FriendColor = Color3.fromRGB(96, 196, 120),
+    },
+    Entries = {},
+    Targets = {},
+    LastScan = 0,
+    ScanInterval = 0.2,
+    Radar = { Dots = {} },
+}
+
+function xDTaraZ.Visuals.New(class, props)
+    local object = Instance.new(class)
+    local parent = props.Parent
+    props.Parent = nil
+    for key, value in pairs(props) do object[key] = value end
+    if parent then object.Parent = parent end
+    return object
+end
+
+function xDTaraZ.Visuals.EnsureGui()
+    local visuals = xDTaraZ.Visuals
+    if visuals.Gui and visuals.Gui.Parent then return visuals.Gui end
+    local screen = visuals.New("ScreenGui", { Name = "CybrionVisuals", IgnoreGuiInset = true, ResetOnSpawn = false, DisplayOrder = 5, ZIndexBehavior = Enum.ZIndexBehavior.Sibling })
+    local function Mount(parent) screen.Parent = parent end
+    local okHui, hui = pcall(gethui)
+    local mounted = okHui and hui ~= nil and pcall(Mount, hui)
+    if not mounted then mounted = pcall(Mount, game:GetService("CoreGui")) end
+    if not mounted then Mount(LocalPlayer:FindFirstChildOfClass("PlayerGui")) end
+    visuals.Gui = screen
+    return screen
+end
+
+function xDTaraZ.Visuals.Label(parent, alignY)
+    return xDTaraZ.Visuals.New("TextLabel", {
+        BackgroundTransparency = 1,
+        AnchorPoint = Vector2.new(0.5, alignY),
+        Size = UDim2.fromOffset(200, 16),
+        Font = Enum.Font.GothamBold,
+        TextColor3 = Color3.new(1, 1, 1),
+        TextStrokeTransparency = 0.35,
+        Visible = false,
+        Parent = parent,
+    })
+end
+
+---@return table  reusable GUI pieces for one ESP target
+function xDTaraZ.Visuals.BuildEntry(parent)
+    local new = xDTaraZ.Visuals.New
+    local entry = {}
+    entry.Box = new("Frame", { BackgroundTransparency = 1, Visible = false, Parent = parent })
+    entry.BoxStroke = new("UIStroke", { Thickness = 1.5, Parent = entry.Box })
+    entry.BoxOutline = new("Frame", { BackgroundTransparency = 1, Position = UDim2.fromOffset(-1, -1), Size = UDim2.new(1, 2, 1, 2), Parent = entry.Box })
+    new("UIStroke", { Thickness = 1, Color = Color3.new(0, 0, 0), Transparency = 0.3, Parent = entry.BoxOutline })
+    entry.Corners = {}
+    for index = 1, 8 do
+        entry.Corners[index] = new("Frame", { BorderSizePixel = 0, Visible = false, Parent = parent })
+    end
+    entry.HealthBack = new("Frame", { BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, BorderSizePixel = 0, Visible = false, Parent = parent })
+    entry.HealthFill = new("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), BorderSizePixel = 0, Parent = entry.HealthBack })
+    entry.HealthText = xDTaraZ.Visuals.Label(parent, 0.5)
+    entry.Name = xDTaraZ.Visuals.Label(parent, 1)
+    entry.Distance = xDTaraZ.Visuals.Label(parent, 0)
+    entry.Tracer = new("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), BorderSizePixel = 0, BackgroundColor3 = Color3.new(1, 1, 1), Visible = false, Parent = parent })
+    entry.Dot = new("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(6, 6), BorderSizePixel = 0, Visible = false, Parent = parent })
+    new("UICorner", { CornerRadius = UDim.new(1, 0), Parent = entry.Dot })
+    entry.Arrow = xDTaraZ.Visuals.Label(parent, 0.5)
+    entry.Arrow.Text = "▲"
+    entry.Arrow.Size = UDim2.fromOffset(20, 20)
+    return entry
+end
+
+function xDTaraZ.Visuals.HideEntry(entry)
+    entry.Box.Visible = false
+    for _, corner in ipairs(entry.Corners) do corner.Visible = false end
+    entry.HealthBack.Visible, entry.HealthText.Visible = false, false
+    entry.Name.Visible, entry.Distance.Visible = false, false
+    entry.Tracer.Visible, entry.Dot.Visible, entry.Arrow.Visible = false, false, false
+    if entry.Highlight then entry.Highlight.Enabled = false end
+end
+
+function xDTaraZ.Visuals.DestroyEntry(entry)
+    for _, key in ipairs({ "Box", "HealthBack", "HealthText", "Name", "Distance", "Tracer", "Dot", "Arrow", "Arrow360", "Highlight" }) do
+        if entry[key] then pcall(entry[key].Destroy, entry[key]) end
+    end
+    for _, corner in ipairs(entry.Corners) do pcall(corner.Destroy, corner) end
+end
+
+function xDTaraZ.Visuals.SetLine(line, from, to, thickness)
+    local delta = to - from
+    line.Position = UDim2.fromOffset((from.X + to.X) / 2, (from.Y + to.Y) / 2)
+    line.Size = UDim2.fromOffset(delta.Magnitude, thickness)
+    line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+    line.Visible = true
+end
+
+---Places the 2D box, bars and labels from a screen rect.
+function xDTaraZ.Visuals.Layout(entry, x, y, w, h, info, color, origin)
+    local settings = xDTaraZ.Visuals.Settings
+    local full = settings.Box and settings.BoxStyle ~= "Corner"
+    entry.Box.Visible = settings.Box and (full or settings.BoxFill)
+    entry.BoxStroke.Enabled = full
+    entry.BoxOutline.Visible = full
+    if entry.Box.Visible then
+        entry.Box.Position, entry.Box.Size = UDim2.fromOffset(x, y), UDim2.fromOffset(w, h)
+        entry.BoxStroke.Color = color
+        entry.Box.BackgroundTransparency = settings.BoxFill and 0.82 or 1
+        entry.Box.BackgroundColor3 = color
+    end
+
+    local corner = settings.Box and settings.BoxStyle == "Corner"
+    local cw, ch = math.max(w / 4, 3), math.max(h / 5, 3)
+    local spots = {
+        { x, y, cw, 2 }, { x, y, 2, ch }, { x + w - cw, y, cw, 2 }, { x + w - 2, y, 2, ch },
+        { x, y + h - 2, cw, 2 }, { x, y + h - ch, 2, ch }, { x + w - cw, y + h - 2, cw, 2 }, { x + w - 2, y + h - ch, 2, ch },
+    }
+    for index, piece in ipairs(entry.Corners) do
+        piece.Visible = corner
+        if corner then
+            local spot = spots[index]
+            piece.Position, piece.Size, piece.BackgroundColor3 = UDim2.fromOffset(spot[1], spot[2]), UDim2.fromOffset(spot[3], spot[4]), color
+        end
+    end
+
+    local ratio = math.clamp((info.Health or 0) / math.max(info.MaxHealth or 100, 1), 0, 1)
+    entry.HealthBack.Visible = settings.Health
+    if settings.Health then
+        entry.HealthBack.Position, entry.HealthBack.Size = UDim2.fromOffset(x - 6, y), UDim2.fromOffset(3, h)
+        entry.HealthFill.Size = UDim2.fromScale(1, ratio)
+        entry.HealthFill.BackgroundColor3 = Color3.fromRGB(232, 88, 76):Lerp(Color3.fromRGB(96, 214, 110), ratio)
+    end
+    entry.HealthText.Visible = settings.HealthText
+    if settings.HealthText then
+        local hp = math.floor(info.Health or 0)
+        if entry.LastHp ~= hp then
+            entry.LastHp = hp
+            entry.HealthText.Text = tostring(hp)
+        end
+        entry.HealthText.TextSize = settings.TextSize - 2
+        entry.HealthText.Position = UDim2.fromOffset(x - 20, y + h * (1 - ratio))
+    end
+
+    entry.Name.Visible = settings.Name
+    if settings.Name then
+        local name = info.Name or ""
+        if entry.LastName ~= name then
+            entry.LastName = name
+            entry.Name.Text = name
+        end
+        entry.Name.TextSize, entry.Name.TextColor3 = settings.TextSize, color
+        entry.Name.Position = UDim2.fromOffset(x + w / 2, y - 2)
+    end
+    entry.Distance.Visible = settings.Distance and info.Distance ~= nil
+    if entry.Distance.Visible then
+        local distance = math.floor(info.Distance)
+        if entry.LastDist ~= distance then
+            entry.LastDist = distance
+            entry.Distance.Text = distance .. "m"
+        end
+        entry.Distance.TextSize = settings.TextSize - 1
+        entry.Distance.Position = UDim2.fromOffset(x + w / 2, y + h + 2)
+    end
+
+    entry.Dot.Visible = settings.HeadDot
+    if settings.HeadDot then
+        entry.Dot.Position, entry.Dot.BackgroundColor3 = UDim2.fromOffset(x + w / 2, y + h * 0.1), color
+    end
+
+    if settings.Tracer and origin then
+        entry.Tracer.BackgroundColor3 = color
+        xDTaraZ.Visuals.SetLine(entry.Tracer, origin, Vector2.new(x + w / 2, y + h), 1.5)
+    else
+        entry.Tracer.Visible = false
+    end
+end
+
+function xDTaraZ.Visuals.TracerOrigin(viewport)
+    local mode = xDTaraZ.Visuals.Settings.TracerOrigin
+    if mode == "Center" then return viewport / 2 end
+    if mode == "Mouse" then return UserInputService:GetMouseLocation() end
+    return Vector2.new(viewport.X / 2, viewport.Y)
+end
+
+function xDTaraZ.Visuals.Chams(entry, model, color, on)
+    if not on then
+        if entry.Highlight then entry.Highlight.Enabled = false end
+        return
+    end
+    if not entry.Highlight then
+        entry.Highlight = xDTaraZ.Visuals.New("Highlight", { DepthMode = Enum.HighlightDepthMode.AlwaysOnTop, FillTransparency = 0.55, OutlineTransparency = 0, Parent = xDTaraZ.Visuals.EnsureGui() })
+    end
+    entry.Highlight.Adornee = model
+    entry.Highlight.FillColor, entry.Highlight.OutlineColor = color, color
+    entry.Highlight.Enabled = true
+end
+
+function xDTaraZ.Visuals.Arrow(entry, screen, viewport, color)
+    if xDTaraZ.Panic and xDTaraZ.Panic.Panicked then entry.Arrow.Visible = false return end
+    local center = viewport / 2
+    local dir = Vector2.new(screen.X, screen.Y) - center
+    if screen.Z < 0 then dir = -dir end
+    if dir.Magnitude < 1 then return end
+    local unit = dir.Unit
+    local radius = math.min(viewport.X, viewport.Y) / 2 - 40
+    local pos = center + unit * radius
+    entry.Arrow.Position = UDim2.fromOffset(pos.X, pos.Y)
+    entry.Arrow.Rotation = math.deg(math.atan2(unit.Y, unit.X)) + 90
+    entry.Arrow.TextColor3 = color
+    entry.Arrow.TextSize = 18
+    entry.Arrow.Visible = true
+end
+
+function xDTaraZ.Visuals.Scan()
+    local visuals = xDTaraZ.Visuals
+    local now = osClock()
+    if now - visuals.LastScan < visuals.ScanInterval then return end
+    visuals.LastScan = now
+    local ok, list = pcall(xDTaraZ.Esp.Targets)
+    visuals.Targets = ok and type(list) == "table" and list or {}
+end
+
+function xDTaraZ.Visuals.Render()
+    local visuals = xDTaraZ.Visuals
+    local settings = visuals.Settings
+    if not settings.Enabled then return end
+    visuals.Scan()
+    local cam = Workspace.CurrentCamera
+    if not cam then return end
+    local gui = visuals.EnsureGui()
+    local viewport = cam.ViewportSize
+    local origin = visuals.TracerOrigin(viewport)
+    local camPos = cam.CFrame.Position
+    local seen = {}
+
+    for _, info in ipairs(visuals.Targets) do
+        local model = info.Model
+        if typeof(model) ~= "Instance" or not model.Parent then continue end
+        if settings.TeamCheck and info.Friendly then continue end
+        local root = info.Root or model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
+        if not root then continue end
+        local distance = (root.Position - camPos).Magnitude
+        if distance > settings.MaxDistance then continue end
+
+        seen[model] = true
+        local entry = visuals.Entries[model]
+        if not entry then
+            entry = visuals.BuildEntry(gui)
+            visuals.Entries[model] = entry
+        end
+        local color = info.Color or (info.Friendly and settings.FriendColor or settings.EnemyColor)
+        visuals.Chams(entry, info.Adornee or model, color, settings.Chams and (info.Adornee ~= false))
+
+        local top, onTop = cam:WorldToViewportPoint(root.Position + Vector3.new(0, 3, 0))
+        local bottom, onBottom = cam:WorldToViewportPoint(root.Position - Vector3.new(0, 3.5, 0))
+        if not (onTop and onBottom) then
+            visuals.HideEntry(entry)
+            if settings.Chams and entry.Highlight and info.Adornee ~= false then entry.Highlight.Enabled = true end
+            if settings.Arrows then visuals.Arrow(entry, cam:WorldToViewportPoint(root.Position), viewport, color) end
+            continue
+        end
+        entry.Arrow.Visible = false
+        local h = math.max(bottom.Y - top.Y, 4)
+        local w = h * 0.55
+        info.Distance = distance
+        visuals.Layout(entry, top.X - w / 2, top.Y, w, h, info, color, origin)
+    end
+
+    for model, entry in pairs(visuals.Entries) do
+        if not seen[model] then
+            if model.Parent then
+                visuals.HideEntry(entry)
+            else
+                visuals.DestroyEntry(entry)
+                visuals.Entries[model] = nil
+            end
+        end
+    end
+end
+
+function xDTaraZ.Visuals.ClearAll()
+    local visuals = xDTaraZ.Visuals
+    for model, entry in pairs(visuals.Entries) do
+        visuals.DestroyEntry(entry)
+        visuals.Entries[model] = nil
+    end
+end
+
+local VS=xDTaraZ.Visuals.Settings
+VS.HeadDotSize      = 8
+VS.HeadDotVisCheck  = true
+VS.HeadDot360       = false
+VS.Dot360Color      = Color3.fromRGB(255, 75, 85)
+VS.Dot360Size       = 22
+VS.Dot360Radius     = 150
+
+-- ─────────────────────────────────────────────────────────────────────────
+--  SECTION 2 — 360° arrow helper (creates one label per ESP entry lazily)
+-- ─────────────────────────────────────────────────────────────────────────
+
+function xDTaraZ.Visuals.Draw360Arrow(entry, worldPos, camCF, center)
+    if xDTaraZ.Panic and xDTaraZ.Panic.Panicked then
+        if entry.Arrow360 then entry.Arrow360.Visible = false end
+        return
+    end
+    local settings = xDTaraZ.Visuals.Settings
+    if not entry.Arrow360 then
+        local gui = xDTaraZ.Visuals.EnsureGui()
+        entry.Arrow360 = xDTaraZ.Visuals.New("TextLabel", {
+            BackgroundTransparency  = 1,
+            Text                    = "▲",
+            AnchorPoint             = Vector2.new(0.5, 0.5),
+            Size                    = UDim2.fromOffset(24, 24),
+            Font                    = Enum.Font.GothamBold,
+            TextStrokeTransparency  = 0.1,
+            Visible                 = false,
+            ZIndex                  = 16,
+            Parent                  = gui,
+        })
+    end
+    local lbl = entry.Arrow360
+    local dX  = worldPos.X - camCF.Position.X
+    local dZ  = worldPos.Z - camCF.Position.Z
+    if math.abs(dX) <= 0.01 and math.abs(dZ) <= 0.01 then
+        lbl.Visible = false
+        return
+    end
+    local flat  = Vector3.new(dX, 0, dZ).Unit
+    local angle = math.atan2(flat:Dot(camCF.RightVector), flat:Dot(camCF.LookVector))
+    local r     = settings.Dot360Radius or 150
+    lbl.Position             = UDim2.fromOffset(
+        center.X + math.sin(angle) * r,
+        center.Y - math.cos(angle) * r
+    )
+    lbl.Rotation             = math.deg(angle)
+    lbl.TextColor3           = settings.Dot360Color or Color3.fromRGB(255, 75, 85)
+    lbl.TextSize             = settings.Dot360Size  or 22
+    lbl.Visible              = true
+end
+
+-- ─────────────────────────────────────────────────────────────────────────
+--  SECTION 3 — Replace Visuals.Render
+--              • head dot uses real WorldToViewportPoint(head.Position)
+--              • HeadDotVisCheck wired to xDTaraZ.Target.Visible
+--              • HeadDotSize respected
+--              • 360° arrows drawn for every tracked enemy (on- or off-screen)
+-- ─────────────────────────────────────────────────────────────────────────
+
+xDTaraZ.Visuals.Render = function()
+    local visuals  = xDTaraZ.Visuals
+    local settings = visuals.Settings
+    if not settings.Enabled then return end
+    visuals.Scan()
+    local cam     = Workspace.CurrentCamera
+    if not cam then return end
+    local gui      = visuals.EnsureGui()
+    local viewport = cam.ViewportSize
+    local center   = viewport / 2
+    local origin   = visuals.TracerOrigin(viewport)
+    local camPos   = cam.CFrame.Position
+    local camCF    = cam.CFrame
+    local seen     = {}
+
+    for _, info in ipairs(visuals.Targets) do
+        local model = info.Model
+        if typeof(model) ~= "Instance" or not model.Parent then continue end
+        if settings.TeamCheck and info.Friendly then continue end
+        local root = info.Root or model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
+        if not root then continue end
+        local distance = (root.Position - camPos).Magnitude
+        if distance > settings.MaxDistance then continue end
+
+        seen[model] = true
+        local entry = visuals.Entries[model]
+        if not entry then
+            entry = visuals.BuildEntry(gui)
+            visuals.Entries[model] = entry
+        end
+        local color = info.Color or (info.Friendly and settings.FriendColor or settings.EnemyColor)
+        visuals.Chams(entry, info.Adornee or model, color, settings.Chams and (info.Adornee ~= false))
+
+        local top,    onTop    = cam:WorldToViewportPoint(root.Position + Vector3.new(0, 3,   0))
+        local bottom, onBottom = cam:WorldToViewportPoint(root.Position - Vector3.new(0, 3.5, 0))
+
+        -- ── off-screen ──────────────────────────────────────────────────
+        if not (onTop and onBottom) then
+            visuals.HideEntry(entry)
+            if settings.Chams and entry.Highlight and info.Adornee ~= false then
+                entry.Highlight.Enabled = true
+            end
+            if settings.Arrows then
+                visuals.Arrow(entry, cam:WorldToViewportPoint(root.Position), viewport, color)
+            end
+            if settings.HeadDot360 then
+                xDTaraZ.Visuals.Draw360Arrow(entry, root.Position, camCF, center)
+            elseif entry.Arrow360 then
+                entry.Arrow360.Visible = false
+            end
+            continue
+        end
+
+        -- ── on-screen ───────────────────────────────────────────────────
+        entry.Arrow.Visible = false
+        local h = math.max(bottom.Y - top.Y, 4)
+        local w = h * 0.55
+        info.Distance = distance
+        visuals.Layout(entry, top.X - w / 2, top.Y, w, h, info, color, origin)
+
+        -- head dot: same targeting pipeline as box / healthbar / name ESP.
+        -- info.Model is always the ghost stand-in (fake; no Head child).
+        -- info.Adornee = real character Model, or false for ghost-only entries.
+        -- info.Root    = live HumanoidRootPart or ghost root (what the box uses).
+        if settings.HeadDot then
+            local realModel = info.Adornee          -- real char Model, or false
+            local head      = realModel and realModel:FindFirstChild("Head")
+            -- ghost-only: estimate head ~1.5 studs above root (same root the box draws from)
+            local headPos   = head and head.Position or (root.Position + Vector3.new(0, 1.5, 0))
+            local hs, hOn   = cam:WorldToViewportPoint(headPos)
+            if hOn and hs.Z > 0 then
+                local show = true
+                if settings.HeadDotVisCheck then
+                    -- filter the real model, not the invisible ghost stand-in in CurrentCamera
+                    show = xDTaraZ.Target.Visible(camPos, realModel or model, headPos)
+                end
+                if show then
+                    local sz = math.max(settings.HeadDotSize or 8, 2)
+                    entry.Dot.Position         = UDim2.fromOffset(hs.X, hs.Y)
+                    entry.Dot.Size             = UDim2.fromOffset(sz, sz)
+                    entry.Dot.BackgroundColor3 = color
+                    entry.Dot.Visible          = true
+                else
+                    entry.Dot.Visible          = false
+                end
+            else
+                entry.Dot.Visible = false
+            end
+        end
+
+        -- 360° marker for on-screen enemies
+        if settings.HeadDot360 then
+            xDTaraZ.Visuals.Draw360Arrow(entry, root.Position, camCF, center)
+        elseif entry.Arrow360 then
+            entry.Arrow360.Visible = false
+        end
+    end
+
+    -- clean up entries whose models are gone
+    for model, entry in pairs(visuals.Entries) do
+        if not seen[model] then
+            if entry.Arrow360 then
+                if model.Parent then
+                    entry.Arrow360.Visible = false
+                else
+                    pcall(entry.Arrow360.Destroy, entry.Arrow360)
+                end
+            end
+            if model.Parent then
+                visuals.HideEntry(entry)
+            else
+                visuals.DestroyEntry(entry)
+                visuals.Entries[model] = nil
+            end
+        end
+    end
+end
+
+-- ─────────────────────────────────────────────────────────────────────────
+local FPSettings = {
+    Enabled          = false,
+    TeamCheck        = true,
+    Method           = "3D Box Adornment",
+    Color            = Color3.fromRGB(255, 50, 50),
+    Lifetime         = 5,
+    StepDistance     = 2.5,
+    Size             = 1.0,
+    MaxDistance      = 1500,
+    IndicatorEnabled = false,
+    IndicatorColor   = Color3.fromRGB(255, 50, 50),
+    IndicatorSize    = 22,
+    IndicatorRadius  = 150,
+}
+
+local FPGui_ref, FPOverlay_ref
+
+local function GetFPOverlay()
+    if FPGui_ref and FPGui_ref.Parent then return FPOverlay_ref end
+    local gui = Instance.new("ScreenGui")
+    gui.Name              = "CybrionFootprintESP"
+    gui.ResetOnSpawn      = false
+    gui.IgnoreGuiInset    = true
+    gui.DisplayOrder      = 6
+    gui.ZIndexBehavior    = Enum.ZIndexBehavior.Sibling
+    local ok, hui = pcall(gethui)
+    local mounted = ok and hui and pcall(function() gui.Parent = hui end)
+    if not mounted then mounted = pcall(function() gui.Parent = game:GetService("CoreGui") end) end
+    if not mounted then gui.Parent = LocalPlayer:FindFirstChildOfClass("PlayerGui") end
+    local overlay = Instance.new("Frame")
+    overlay.Name                 = "FPOverlay"
+    overlay.BackgroundTransparency = 1
+    overlay.Size                 = UDim2.fromScale(1, 1)
+    overlay.Parent               = gui
+    FPGui_ref, FPOverlay_ref = gui, overlay
+    return overlay
+end
+
+local function FPNew(cls, props, parent)
+    local obj = Instance.new(cls)
+    for k, v in pairs(props or {}) do obj[k] = v end
+    if parent then obj.Parent = parent end
+    return obj
+end
+
+-- resolve char from Workspace.Characters first (Z86 canonical), fall back to player.Character
+local function FPGetChar(player)
+    local chars = Workspace:FindFirstChild("Characters")
+    return (chars and chars:FindFirstChild(player.Name)) or player.Character
+end
+
+local function FPIsEnemy(player)
+    local char = FPGetChar(player)
+    if not char then return false end
+    -- dead check: skip dead players
+    if tostring(char:GetAttribute("Dead")) == "true" then return false end
+    -- team check with "uncertain = show" fallback, matching OG IsEnemyForVisuals.
+    -- xDTaraZ.Target.IsEnemy has "uncertain = not enemy" (aimbot safe-default) which
+    -- silently skips everyone when MyTeam() returns nil — wrong for footstep ESP.
+    if xDTaraZ.Target.FreeForAll() then return true end
+    local mine = xDTaraZ.Target.MyTeam()
+    if mine == nil then return true end          -- can't resolve teams → show footprint
+    local theirs = xDTaraZ.Target.TeamOf(char)
+    if theirs == nil then return true end        -- can't resolve their team → show footprint
+    return theirs ~= mine
+end
+
+local function FPGetRoot(char)
+    if not char then return nil end
+    return char:FindFirstChild("HumanoidRootPart")
+        or char:FindFirstChild("UpperTorso")
+        or char:FindFirstChild("Torso")
+        or char.PrimaryPart
+end
+
+local FP_Footprints2D = {}
+local FP_Footprints3D = {}
+local FP_LastPos      = {}
+local FP_LatestStep   = {}
+local FP_IndCache     = {}
+
+local function FP_GetIndicator(player)
+    if not FP_IndCache[player] then
+        FP_IndCache[player] = FPNew("TextLabel", {
+            BackgroundTransparency  = 1,
+            Text                    = "▲",
+            TextColor3              = FPSettings.IndicatorColor,
+            TextStrokeTransparency  = 0.1,
+            TextSize                = FPSettings.IndicatorSize,
+            Font                    = Enum.Font.GothamBold,
+            AnchorPoint             = Vector2.new(0.5, 0.5),
+            Visible                 = false,
+            ZIndex                  = 14,
+        }, GetFPOverlay())
+    end
+    return FP_IndCache[player]
+end
+
+-- panic: hard-clear every footstep 360° indicator arrow
+xDTaraZ.Panic.ClearFootstepArrows = function()
+    FPSettings.IndicatorEnabled = false
+    for player, ind in pairs(FP_IndCache) do
+        if ind then pcall(ind.Destroy, ind) end
+        FP_IndCache[player] = nil
+    end
+    table.clear(FP_LatestStep)
+end
+
+local function FP_ClearAll()
+    for _, fp in ipairs(FP_Footprints2D) do
+        if fp.Frame then fp.Frame:Destroy() end
+    end
+    table.clear(FP_Footprints2D)
+    for _,part in ipairs(FP_Footprints3D) do pcall(function() part:Destroy() end) end
+    table.clear(FP_Footprints3D)
+    table.clear(FP_LatestStep)
+    table.clear(FP_LastPos)      -- OG clears lastPositions on disable; stale coords from a
+                                 -- prior session land the first new step at the wrong place
+    for _, ind in pairs(FP_IndCache) do
+        if ind then ind.Visible = false end
+    end
+end
+
+-- ── 2D footprint ────────────────────────────────────────────
+local function FP_Spawn2D(pos)
+    local overlay = GetFPOverlay()
+    local frame = FPNew("Frame", {
+        AnchorPoint      = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = FPSettings.Color,
+        BorderSizePixel  = 0,
+        Visible          = false,
+        ZIndex           = 5,
+    }, overlay)
+    FPNew("UIStroke", { Color = FPSettings.Color, Transparency = 0.3, Thickness = 1.5, Parent = frame })
+    FPNew("UICorner", { CornerRadius = UDim.new(0, 3), Parent = frame })
+    if #FP_Footprints2D>=160 then
+        local old=table.remove(FP_Footprints2D,1)
+        if old and old.Frame then old.Frame:Destroy() end
+    end
+    table.insert(FP_Footprints2D, {
+        Position  = pos,
+        SpawnTime = tick(),
+        Lifetime  = FPSettings.Lifetime,
+        Size      = FPSettings.Size,
+        Color     = FPSettings.Color,
+        Frame     = frame,
+    })
+end
+
+local function FP_Update2D()
+    local now    = tick()
+    local Camera = Workspace.CurrentCamera
+    if not Camera then return end
+    for i = #FP_Footprints2D, 1, -1 do
+        local fp  = FP_Footprints2D[i]
+        local age = now - fp.SpawnTime
+        if age >= fp.Lifetime or not FPSettings.Enabled or FPSettings.Method ~= "2D ScreenGui Overlay" then
+            if fp.Frame then fp.Frame:Destroy() end
+            table.remove(FP_Footprints2D, i)
+        else
+            local sp, onS = Camera:WorldToViewportPoint(fp.Position)
+            if onS and sp.Z > 0 and sp.Z <= FPSettings.MaxDistance then
+                local alpha     = 1 - (age / fp.Lifetime)
+                local distScale = math.clamp(450 / sp.Z, 6, 35)
+                fp.Frame.Position               = UDim2.fromOffset(sp.X, sp.Y)
+                fp.Frame.Size                   = UDim2.fromOffset(distScale * 0.7 * fp.Size, distScale * 1.1 * fp.Size)
+                fp.Frame.BackgroundColor3       = fp.Color
+                fp.Frame.BackgroundTransparency = 1 - (0.65 * alpha)
+                fp.Frame.Visible                = true
+            else
+                fp.Frame.Visible = false
+            end
+        end
+    end
+end
+
+-- ── 3D box adornment ────────────────────────────────────────
+local TS_FP = game:GetService("TweenService")
+
+local function FP_Spawn3D(pos, normal, hrpCF)
+    local sz   = Vector3.new(0.8 * FPSettings.Size, 0.15, 1.2 * FPSettings.Size)
+    local step = Instance.new("Part")
+    step.Size, step.Transparency, step.Anchored = sz, 1, true
+    step.CanCollide, step.CanQuery = false, false
+    step.CFrame = CFrame.lookAt(
+        pos + Vector3.new(0, 0.08, 0),
+        pos + hrpCF.LookVector,
+        normal
+    )
+    step.Parent = Workspace.Terrain
+    for i=#FP_Footprints3D,1,-1 do if not FP_Footprints3D[i].Parent then table.remove(FP_Footprints3D,i) end end
+    if #FP_Footprints3D>=160 then local old=table.remove(FP_Footprints3D,1);old:Destroy() end
+    table.insert(FP_Footprints3D,step)
+
+    local function mkAdorn(extra, z, t)
+        local a = Instance.new("BoxHandleAdornment")
+        a.Size, a.Color3, a.AlwaysOnTop = sz + extra, FPSettings.Color, true
+        a.ZIndex, a.Adornee, a.Transparency, a.Parent = z, step, t, step
+        return a
+    end
+    local core  = mkAdorn(Vector3.zero, 6, 0)
+    local glow  = mkAdorn(Vector3.new(0.6, 0.2, 0.6), 4, 0.25)
+    local light = Instance.new("PointLight")
+    light.Color, light.Range, light.Brightness, light.Parent = FPSettings.Color, 6 * FPSettings.Size, 3.5, step
+
+    local ti = TweenInfo.new(FPSettings.Lifetime, Enum.EasingStyle.Linear)
+    local t1 = TS_FP:Create(core,  ti, { Transparency = 1 })
+    local t2 = TS_FP:Create(glow,  ti, { Transparency = 1 })
+    local t3 = TS_FP:Create(light, ti, { Brightness = 0, Range = 0 })
+    t1:Play() t2:Play() t3:Play()
+    t1.Completed:Connect(function() step:Destroy() end)
+end
+
+-- ── 360° footstep indicator ──────────────────────────────────
+local function FP_UpdateIndicators()
+    if xDTaraZ.Panic.Panicked then
+        for _, ind in pairs(FP_IndCache) do if ind then ind.Visible = false end end
+        return
+    end
+    if not FPSettings.IndicatorEnabled or not FPSettings.Enabled then
+        for _, ind in pairs(FP_IndCache) do if ind then ind.Visible = false end end
+        return
+    end
+    local Camera = Workspace.CurrentCamera
+    if not Camera then return end
+    local now    = tick()
+    local camCF  = Camera.CFrame
+    local center = Camera.ViewportSize / 2
+    local rp     = RaycastParams.new()
+    rp.FilterType = Enum.RaycastFilterType.Exclude
+
+    for player, data in pairs(FP_LatestStep) do
+        local indicator = FP_GetIndicator(player)
+        if now - data.SpawnTime >= FPSettings.Lifetime then
+            indicator.Visible     = false
+            FP_LatestStep[player] = nil
+            continue
+        end
+        local sp, onS = Camera:WorldToViewportPoint(data.Position)
+        local obscured = false
+        if onS and sp.Z > 0 then
+            rp.FilterDescendantsInstances = { LocalPlayer.Character }
+            obscured = Workspace:Raycast(
+                camCF.Position,
+                data.Position + Vector3.new(0, 1, 0) - camCF.Position,
+                rp
+            ) ~= nil
+        end
+        if not onS or obscured or sp.Z <= 0 then
+            local dX = data.Position.X - camCF.Position.X
+            local dZ = data.Position.Z - camCF.Position.Z
+            if math.abs(dX) > 0.01 or math.abs(dZ) > 0.01 then
+                local flat  = Vector3.new(dX, 0, dZ).Unit
+                local angle = math.atan2(flat:Dot(camCF.RightVector), flat:Dot(camCF.LookVector))
+                local alpha = 1 - ((now - data.SpawnTime) / FPSettings.Lifetime)
+                local r     = FPSettings.IndicatorRadius
+                indicator.Position               = UDim2.fromOffset(
+                    center.X + math.sin(angle) * r,
+                    center.Y - math.cos(angle) * r
+                )
+                indicator.Rotation               = math.deg(angle)
+                indicator.TextColor3             = FPSettings.IndicatorColor
+                indicator.TextTransparency       = 1 - alpha
+                indicator.TextStrokeTransparency = 1 - (alpha * 0.9)
+                indicator.TextSize               = FPSettings.IndicatorSize
+                indicator.Visible                = true
+            else
+                indicator.Visible = false
+            end
+        else
+            indicator.Visible = false
+        end
+    end
+end
+
+-- ── step tracking loop ───────────────────────────────────────
+task.spawn(function()
+    while gui.Parent and xDTaraZ.State.Alive do
+        task.wait(0.08)
+        if not FPSettings.Enabled then continue end
+        local localChar = FPGetChar(LocalPlayer)
+        local localHrp  = FPGetRoot(localChar)
+
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player == LocalPlayer then continue end
+            if FPSettings.TeamCheck and not FPIsEnemy(player) then continue end
+
+            local char = FPGetChar(player)
+            if not char then continue end
+            local hrp = FPGetRoot(char)
+            if not hrp then continue end
+
+            local curPos = hrp.Position
+            if localHrp and (curPos - localHrp.Position).Magnitude > FPSettings.MaxDistance then
+                continue
+            end
+
+            local lastPos = FP_LastPos[player]
+            if not lastPos then
+                FP_LastPos[player] = curPos
+                continue
+            end
+
+            local hDist = (
+                Vector3.new(curPos.X, 0, curPos.Z) -
+                Vector3.new(lastPos.X, 0, lastPos.Z)
+            ).Magnitude
+
+            if hDist >= FPSettings.StepDistance then
+                FP_LastPos[player] = curPos
+                local rp = RaycastParams.new()
+                rp.FilterDescendantsInstances = { char }
+                rp.FilterType  = Enum.RaycastFilterType.Exclude
+                rp.IgnoreWater = true
+                local hit = Workspace:Raycast(curPos, Vector3.new(0, -15, 0), rp)
+                if hit then
+                    local pos = hit.Position + Vector3.new(0, 0.05, 0)
+                    FP_LatestStep[player] = { Position = pos, SpawnTime = tick() }
+                    if FPSettings.Method == "2D ScreenGui Overlay" then
+                        FP_Spawn2D(pos)
+                    else
+                        FP_Spawn3D(pos, hit.Normal, hrp.CFrame)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not FPSettings.Enabled then return end
+    if FPSettings.Method == "2D ScreenGui Overlay" then FP_Update2D() end
+    if FPSettings.IndicatorEnabled then FP_UpdateIndicators() end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    FP_LastPos[player]    = nil
+    FP_LatestStep[player] = nil
+    if FP_IndCache[player] then
+        FP_IndCache[player]:Destroy()
+        FP_IndCache[player] = nil
+    end
+end)
+
+-- ─────────────────────────────────────────────────────────────────────────
+    state.stageVisuals=xDTaraZ
+    state.footsteps={Settings=FPSettings,Clear=FP_ClearAll}
+    function state.footsteps.SetIndicator(value)
+        FPSettings.IndicatorEnabled=value
+        if not value then for _,ind in pairs(FP_IndCache) do ind.Visible=false end end
+    end
+    local Lighting=game:GetService("Lighting")
+    local world={Fullbright=false,CameraFov=false,CameraFovValue=100}
+    state.visualWorld=world
+    local savedLight,savedCamera,savedFov
+    local lastVisual,lastSound,lastRetry,lastWarn=0,0,0,0
+    local visualConnection
+    visualConnection=RunService.Heartbeat:Connect(function()
+        local now=os.clock()
+        if not gui.Parent then
+            visualConnection:Disconnect()
+            RunService:UnbindFromRenderStep("NoirVisualFov")
+            xDTaraZ.State.Alive=false
+            FPSettings.Enabled=false
+            xDTaraZ.Visuals.ClearAll();FP_ClearAll();xDTaraZ.Sound.Uninstall()
+            if xDTaraZ.Esp.Folder then xDTaraZ.Esp.Folder:Destroy() end
+            if xDTaraZ.Sound.Folder then xDTaraZ.Sound.Folder:Destroy() end
+            if xDTaraZ.Visuals.Gui then xDTaraZ.Visuals.Gui:Destroy() end
+            if FPGui_ref then FPGui_ref:Destroy() end
+            if savedLight then Lighting.Brightness,Lighting.ClockTime,Lighting.FogEnd,Lighting.GlobalShadows,Lighting.Ambient=table.unpack(savedLight);savedLight=nil end
+            if savedCamera and savedFov then pcall(function() savedCamera.FieldOfView=savedFov end);savedCamera,savedFov=nil,nil end
+            return
+        end
+        if now-lastVisual>=0.05 then
+            lastVisual=now
+            local ok,err=pcall(xDTaraZ.Visuals.Render)
+            if not ok and now-lastWarn>5 then lastWarn=now;warn("[NOIR / Stage ESP] "..tostring(err)) end
+        end
+        if now-lastRetry>=2 then
+            lastRetry=now
+            xDTaraZ.GameLib.Net=state.net or getModule("Database","Security","Remotes")
+            if xDTaraZ.Options.SoundEsp or (xDTaraZ.Visuals.Settings.Enabled and xDTaraZ.Options.EspMemory>0) then
+                local ok,ready=pcall(xDTaraZ.Sound.Install)
+                xDTaraZ.Sound.Ready=ok and ready==true
+                if not xDTaraZ.Sound.Ready and xDTaraZ.Options.SoundEsp and now-(xDTaraZ.Sound.LastWarning or -math.huge)>10 then
+                    xDTaraZ.Sound.LastWarning=now;warn("[NOIR / Sound ESP] Listener или getupvalues недоступен; повторяем поиск")
+                end
+            else
+                if xDTaraZ.Sound.Entry then xDTaraZ.Sound.Uninstall() end
+                xDTaraZ.Sound.Ready=false
+            end
+        end
+        if now-lastSound>=0.1 then lastSound=now;pcall(xDTaraZ.Sound.Step) end
+        if world.Fullbright then
+            savedLight=savedLight or {Lighting.Brightness,Lighting.ClockTime,Lighting.FogEnd,Lighting.GlobalShadows,Lighting.Ambient}
+            Lighting.Brightness,Lighting.ClockTime,Lighting.FogEnd,Lighting.GlobalShadows,Lighting.Ambient=2,14,1e6,false,Color3.fromRGB(178,178,178)
+        elseif savedLight then
+            Lighting.Brightness,Lighting.ClockTime,Lighting.FogEnd,Lighting.GlobalShadows,Lighting.Ambient=table.unpack(savedLight);savedLight=nil
+        end
+    end)
+    RunService:BindToRenderStep("NoirVisualFov",Enum.RenderPriority.Camera.Value+3,function()
+        local camera=Workspace.CurrentCamera
+        if savedCamera and (not world.CameraFov or savedCamera~=camera) then
+            pcall(function() savedCamera.FieldOfView=savedFov end);savedCamera,savedFov=nil,nil
+        end
+        if world.CameraFov and camera then
+            if not savedCamera then savedCamera,savedFov=camera,camera.FieldOfView end
+            if LocalPlayer:GetAttribute("IsSniperScoped")~=true then camera.FieldOfView=world.CameraFovValue end
+        end
+    end)
+end
+
+
+-- Опции из stage 7 и Shitaro; работают независимо от окна AirFlow.
+do
+    local opt={AntiAfk=false,InfiniteJump=false,Crosshair=false,CrosshairColor=Color3.fromRGB(170,255,195),CrosshairLength=10,CrosshairGap=5,CrosshairThickness=2}
+    state.extraFeatures=opt
+    local okVU,virtualUser=pcall(game.GetService,game,"VirtualUser")
+    localPlayer.Idled:Connect(function()
+        if not (gui.Parent and opt.AntiAfk and okVU and virtualUser) then return end
+        local ok,err=pcall(function() virtualUser:CaptureController();virtualUser:ClickButton2(Vector2.new(0,0)) end)
+        if not ok and not opt.afkWarned then opt.afkWarned=true;warn("[NOIR / Anti AFK] "..tostring(err)) end
+    end)
+    UserInputService.JumpRequest:Connect(function()
+        if not (gui.Parent and opt.InfiniteJump) then return end
+        -- Stage 7 разрешает эту функцию только вне раунда: если контроллер
+        -- не найден, не предполагаем, что игрок в лобби.
+        local controller=getModule("Controllers","CharacterController")
+        if not controller or type(controller.getCurrentCharacter)~="function" then return end
+        local ok,body=pcall(controller.getCurrentCharacter)
+        if not ok or body then return end
+        local char=localPlayer.Character
+        local hum=char and char:FindFirstChildOfClass("Humanoid")
+        if hum and hum.Health>0 then pcall(hum.ChangeState,hum,Enum.HumanoidStateType.Jumping) end
+    end)
+    local cross=Instance.new("Frame")
+    cross.Name="NoirCrosshair";cross.BackgroundTransparency=1
+    cross.Position=UDim2.fromScale(0.5,0.5);cross.Size=UDim2.fromOffset(0,0)
+    cross.Visible=false;cross.ZIndex=5;cross.Parent=overlay
+    local pieces={}
+    for i=1,4 do
+        local p=Instance.new("Frame");p.BorderSizePixel=0;p.AnchorPoint=Vector2.new(0.5,0.5)
+        p.ZIndex=6;p.Parent=cross;pieces[i]=p
+        local stroke=Instance.new("UIStroke");stroke.Color=Color3.new(0,0,0);stroke.Thickness=1;stroke.Transparency=0.3;stroke.Parent=p
+    end
+    local function draw()
+        cross.Visible=opt.Crosshair
+        local len,gap,thick=opt.CrosshairLength,opt.CrosshairGap,opt.CrosshairThickness
+        local half=gap+len/2
+        for _,p in ipairs(pieces) do p.BackgroundColor3=opt.CrosshairColor end
+        pieces[1].Position=UDim2.fromOffset(-half,0);pieces[2].Position=UDim2.fromOffset(half,0)
+        pieces[3].Position=UDim2.fromOffset(0,-half);pieces[4].Position=UDim2.fromOffset(0,half)
+        pieces[1].Size=UDim2.fromOffset(len,thick);pieces[2].Size=UDim2.fromOffset(len,thick)
+        pieces[3].Size=UDim2.fromOffset(thick,len);pieces[4].Size=UDim2.fromOffset(thick,len)
+    end
+    opt.UpdateCrosshair=draw
+    draw()
+end
 
 local function LoadAirflow()
 local TweenService = game:GetService("TweenService")
@@ -22831,12 +23848,62 @@ local function buildAirflow()
     local window=library:CreateWindow({Name="NOIR",Title="Noir",LoadingTitle="Noir Creator",
         LoadingSubtitle="Blox Strike",Loading=false,UnsupportedExecutor=false,Home=false,Backdrop=false,
         DefaultTheme="Cybrion",Size=UDim2.fromOffset(760,520),AdaptiveSize=true,
+        ConfigurationSaving={Enabled=true,FolderName="Noir/Configs"},
         ToggleButton={Platform="Both",Icon="rbxassetid://106124864132557"}})
     state.airflow=window
+    local autoReady,saveSeq=false,0
+    local function scheduleSave()
+        if not autoReady then return end
+        saveSeq+=1
+        local serial=saveSeq
+        task.delay(1.5,function()
+            if serial~=saveSeq or not window.Gui or not window.Gui.Parent then return end
+            local previousName=window.ConfigName
+            local callOk,ok,err=pcall(window.SaveConfig,window,"Noir_Auto")
+            window.ConfigName=previousName
+            if not callOk then err,ok=ok,false end
+            if not ok and not state.configWarning then
+                state.configWarning=true
+                warn("[NOIR] Сохранение недоступно: "..tostring(err))
+            end
+        end)
+    end
     local map={}
     for _,entry in ipairs(entries) do
         if entry.button and entry.button.Name then map[entry.button.Name]=entry.button end
     end
+    local pendingIds={}
+    local function ready(id)
+        if id=="SILENT" then return state.ready end
+        if id=="RAPID" then return state.rapid and state.rapid.ready end
+        if id=="AUTOWALL" then return state.wallReady end
+        if id=="FORCE ORIGIN" then return state.forceReady end
+        return true
+    end
+    local function applyWanted(button,id,wanted)
+        local info=indicators[button]
+        if not info then return end
+        if info.lastEnabled==wanted then desiredBridge[button]=nil;return end
+        if wanted and not ready(id) then desiredBridge[button]=true;pendingIds[button]=id;return end
+        if not wanted and not ready(id) then
+            if id=="SILENT" then config.enabled=false;state.target=nil;restoreCamera()
+            elseif id=="RAPID" then state.rapid.enabled=false;state.rapid.currentWeapon=nil;state.rapid.lastShotAt=nil
+            elseif id=="AUTOWALL" then extras.autoWall=false
+            elseif id=="FORCE ORIGIN" then extras.forceOrigin=false end
+            desiredBridge[button]=nil;showToggle(button,id,false,false);return
+        end
+        local action=clickHandlers[button]
+        if action then action() else warn("[NOIR] Не привязана кнопка "..id) end
+        if info.lastEnabled==wanted then desiredBridge[button]=nil else desiredBridge[button]=wanted;pendingIds[button]=id end
+    end
+    local lastPending=0
+    RunService.Heartbeat:Connect(function()
+        local now=os.clock();if now-lastPending<0.5 then return end;lastPending=now
+        for button,wanted in pairs(desiredBridge) do
+            local id=pendingIds[button]
+            if id and ready(id) then applyWanted(button,id,wanted) end
+        end
+    end)
     local function bridge(group,id,title,description,explicit)
         local button=explicit or map[id.."Toggle"]
         assert(button,"Noir: control missing "..id)
@@ -22844,15 +23911,11 @@ local function buildAirflow()
         local widget
         widget=group:CreateToggle({Name=title or id,Desc=description,CurrentValue=data and data.lastEnabled==true or false,
             Callback=function(wanted)
-                local info=indicators[button]
-                local current=info and info.lastEnabled or false
-                if current~=wanted then
-                    local action=clickHandlers[button]
-                    if action then action() else warn("[NOIR] Не привязана кнопка "..id) end
-                end
+                desiredBridge[button]=nil
+                applyWanted(button,id,wanted)
                 task.defer(function()
                     local fresh=indicators[button]
-                    if widget and fresh then widget:Set(fresh.lastEnabled==true,true) end
+                    if widget and fresh and desiredBridge[button]==nil then widget:Set(fresh.lastEnabled==true,true) end
                 end)
             end})
         if data then frontWidgets[button]=widget end
@@ -22878,10 +23941,36 @@ local function buildAirflow()
             if not ok then icon.Rotation=icon.Rotation+90 end
         end)
     end
-    local function tab(name,icon) return window:CreateTab({Name=name,Icon=icon}) end
-    local function sub(parent,name) return parent:CreateSubTab({Name=name}) end
-    local function left(page,name,icon,collapsed) return page:AddLeftGroupbox({Name=name,Icon=icon,Collapsed=collapsed==true}) end
-    local function right(page,name,icon,collapsed) return page:AddRightGroupbox({Name=name,Icon=icon,Collapsed=collapsed==true}) end
+    local scope=setmetatable({},{__mode="k"})
+    local function tag(value) return tostring(value):gsub("[^%w]+","_") end
+    local function tab(name,icon)
+        local result=window:CreateTab({Name=name,Icon=icon});scope[result]=tag(name);return result
+    end
+    local function sub(parent,name)
+        local result=parent:CreateSubTab({Name=name});scope[result]=(scope[parent] or "Page").."_"..tag(name);return result
+    end
+    local function wire(group,path)
+        for _,method in ipairs({"CreateToggle","CreateSlider","CreateDropdown","CreateColorPicker","CreateKeybind"}) do
+            local original=group[method]
+            group[method]=function(self,options)
+                options.Flag=options.Flag or ("Noir_"..path.."_"..tag(options.Name or method))
+                for _,field in ipairs({"Callback","OnChanged"}) do
+                    local cb=options[field]
+                    if type(cb)=="function" then options[field]=function(...) local result=table.pack(cb(...));scheduleSave();return table.unpack(result,1,result.n) end end
+                end
+                return original(self,options)
+            end
+        end
+        return group
+    end
+    local function left(page,name,icon,collapsed)
+        local g=page:AddLeftGroupbox({Name=name,Icon=icon,Collapsed=collapsed==true})
+        return wire(g,(scope[page] or "Tab").."_L_"..tag(name))
+    end
+    local function right(page,name,icon,collapsed)
+        local g=page:AddRightGroupbox({Name=name,Icon=icon,Collapsed=collapsed==true})
+        return wire(g,(scope[page] or "Tab").."_R_"..tag(name))
+    end
     local combat=tab("Combat","crosshair")
     local silent=sub(combat,"Silent")
     local sa=left(silent,"Silent Aim","target")
@@ -22928,23 +24017,14 @@ local function buildAirflow()
     local gun=left(weapons,"Weapon control","zap")
     bridge(gun,"RAPID","Rapid Fire")
     slider(gun,"Rate",1,19,1,state.rapid.shotsPerSecond," /s",function(v)state.rapid.shotsPerSecond=v end)
+    local mods=left(weapons,"Weapon modifiers","target")
+    mods:CreateToggle({Name="No recoil",Desc="Camera recoil methods from stage 7",CurrentValue=false,Callback=function(v)state.gunMods.NoRecoil=v end})
+    mods:CreateToggle({Name="No spread",Desc="Bullet spread methods from stage 7",CurrentValue=false,Callback=function(v)state.gunMods.NoSpread=v end})
     local reload=right(weapons,"Reload","sliders")
     bridge(reload,"AUTO RELOAD","Auto reload")
     bridge(reload,"INSTA RELOAD","Insta reload")
 
     local visuals=tab("Visuals","eye")
-    local player=sub(visuals,"Player")
-    local boxes=left(player,"Player ESP","users")
-    local esp=bridge(boxes,"ESP BOX","ESP box")
-    bridge(boxes,"NAMES / HP","Names / health")
-    local outline=bridge(boxes,"OUTLINE","Outline")
-    local chams=bridge(boxes,"CHAMS","Chams")
-    local visualSettings=right(player,"Visual settings","settings",true)
-    gear(esp,visualSettings);gear(outline,visualSettings);gear(chams,visualSettings)
-    dropdown(visualSettings,"Box style",{"FULL","CORNERS","SOFT"},"CORNERS",function(v)state.setVisualStyle("box",v)end)
-    dropdown(visualSettings,"Outline style",{"GLOW","EDGE","SOFT"},"GLOW",function(v)state.setVisualStyle("outline",v)end)
-    dropdown(visualSettings,"Chams style",{"GLASS","SOLID","PULSE"},"GLASS",function(v)state.setVisualStyle("chams",v)end)
-    dropdown(visualSettings,"ESP color",{"MINT","ROSE","ICE"},"MINT",function(v)state.setVisualStyle("color",v)end)
     local radarPage=sub(visuals,"Radar / logs")
     local rad=left(radarPage,"Radar","target")
     local radToggle=bridge(rad,"RADAR","Radar")
@@ -22954,6 +24034,75 @@ local function buildAirflow()
     slider(radarSettings,"Radar size",100,240,1,state.stageRadar.Settings.RadarSize," px",function(v)state.stageRadar.Settings.RadarSize=v end)
     local logs=right(radarPage,"Notifications","info")
     bridge(logs,"HIT LOG","Hit / health log","Estimated from ray and observed HP")
+
+    -- Элементы оригинального stage 7 — отдельный слой, чтобы не ломать старый Noir ESP.
+    local stage=state.stageVisuals
+    local vs=stage.Visuals.Settings
+    local ep=sub(visuals,"Stage ESP")
+    local general=left(ep,"Stage 7 ESP","eye")
+    general:CreateToggle({Name="Enable Stage ESP",Desc="Stage 7 player overlay",CurrentValue=false,Callback=function(v)
+        vs.Enabled=v
+        if not v then stage.Visuals.ClearAll() end
+    end})
+    general:CreateToggle({Name="Stage team check",CurrentValue=vs.TeamCheck,Callback=function(v)vs.TeamCheck=v end})
+    slider(general,"ESP max distance",50,5000,50,vs.MaxDistance," st",function(v)vs.MaxDistance=v end)
+    slider(general,"ESP text size",9,20,1,vs.TextSize," px",function(v)vs.TextSize=v end)
+    local colorsExtra=left(ep,"ESP colors","sliders",true)
+    colorsExtra:CreateColorPicker({Name="Enemy color",Color=vs.EnemyColor,Callback=function(v)vs.EnemyColor=v end})
+    colorsExtra:CreateColorPicker({Name="Friend color",Color=vs.FriendColor,Callback=function(v)vs.FriendColor=v end})
+    local elements=right(ep,"ESP elements","users")
+    for _,item in ipairs({{"Stage box","Box"},{"Box fill","BoxFill"},{"Name / weapon / flags","Name"},{"Health bar","Health"},{"Health number","HealthText"},{"Distance","Distance"},{"Stage chams","Chams"},{"Head dot","HeadDot"},{"Tracers","Tracer"},{"Off-screen arrows","Arrows"}}) do
+        local labelName,key=item[1],item[2]
+        elements:CreateToggle({Name=labelName,CurrentValue=vs[key],Callback=function(v)vs[key]=v end})
+    end
+    dropdown(elements,"Stage box style",{"Full","Corner"},vs.BoxStyle,function(v)vs.BoxStyle=v end)
+    dropdown(elements,"Tracer origin",{"Bottom","Center","Mouse"},vs.TracerOrigin,function(v)vs.TracerOrigin=v end)
+    local dots=left(ep,"Head dot settings","target",true)
+    dots:CreateToggle({Name="Head dot visibility",CurrentValue=vs.HeadDotVisCheck,Callback=function(v)vs.HeadDotVisCheck=v end})
+    slider(dots,"Head dot size",2,30,1,vs.HeadDotSize," px",function(v)vs.HeadDotSize=v end)
+    local arrows=right(ep,"360° marker","target",true)
+    arrows:CreateToggle({Name="360° arrows",CurrentValue=vs.HeadDot360,Callback=function(v)vs.HeadDot360=v end})
+    arrows:CreateColorPicker({Name="360° arrow color",Color=vs.Dot360Color,Callback=function(v)vs.Dot360Color=v end})
+    slider(arrows,"360° arrow size",10,60,1,vs.Dot360Size," px",function(v)vs.Dot360Size=v end)
+    slider(arrows,"360° arrow radius",50,400,1,vs.Dot360Radius," px",function(v)vs.Dot360Radius=v end)
+
+    local footPage=sub(visuals,"Footsteps")
+    local fp=state.footsteps.Settings
+    local foot=left(footPage,"Footstep ESP","move")
+    foot:CreateToggle({Name="Enable footstep ESP",Desc="Inferred from character movement",CurrentValue=false,Callback=function(v)
+        fp.Enabled=v;if not v then state.footsteps.Clear() end
+    end})
+    foot:CreateToggle({Name="Footstep team check",CurrentValue=fp.TeamCheck,Callback=function(v)fp.TeamCheck=v end})
+    dropdown(foot,"Footstep method",{"3D Box Adornment","2D ScreenGui Overlay"},fp.Method,function(v)fp.Method=v;state.footsteps.Clear() end)
+    foot:CreateColorPicker({Name="Footprint color",Color=fp.Color,Callback=function(v)fp.Color=v end})
+    slider(foot,"Footprint size",0.5,3,0.1,fp.Size,"",function(v)fp.Size=v end)
+    slider(foot,"Step sensitivity",1,10,0.5,fp.StepDistance," st",function(v)fp.StepDistance=v end)
+    slider(foot,"Trail lifetime",1,15,1,fp.Lifetime," s",function(v)fp.Lifetime=v end)
+    slider(foot,"Footstep max distance",100,3000,50,fp.MaxDistance," st",function(v)fp.MaxDistance=v end)
+    local findicator=right(footPage,"360° footstep indicator","target")
+    findicator:CreateToggle({Name="Footstep indicator",CurrentValue=false,Callback=state.footsteps.SetIndicator})
+    findicator:CreateColorPicker({Name="Footstep indicator color",Color=fp.IndicatorColor,Callback=function(v)fp.IndicatorColor=v end})
+    slider(findicator,"Footstep arrow size",10,40,1,fp.IndicatorSize," px",function(v)fp.IndicatorSize=v end)
+    slider(findicator,"Footstep ring radius",50,300,1,fp.IndicatorRadius," px",function(v)fp.IndicatorRadius=v end)
+    local worldPage=sub(visuals,"World")
+    local sound=left(worldPage,"Sound and memory","users")
+    sound:CreateToggle({Name="Sound ESP",Desc="Requires game listener and getupvalues",CurrentValue=false,Callback=function(v)
+        stage.Options.SoundEsp=v
+        if not v then stage.Sound.Step() end
+    end})
+    slider(sound,"Sound lifetime",1,8,1,stage.Options.SoundEspLife," s",function(v)stage.Options.SoundEspLife=v end)
+    slider(sound,"Last-known memory",0,15,1,stage.Options.EspMemory," s",function(v)stage.Options.EspMemory=v end)
+    local crosshair=left(worldPage,"Crosshair","target",true)
+    local extra=state.extraFeatures
+    crosshair:CreateToggle({Name="Force crosshair",Desc="Independent center-screen crosshair",CurrentValue=false,Callback=function(v)extra.Crosshair=v;extra.UpdateCrosshair() end})
+    crosshair:CreateColorPicker({Name="Crosshair color",Color=extra.CrosshairColor,Callback=function(v)extra.CrosshairColor=v;extra.UpdateCrosshair() end})
+    slider(crosshair,"Crosshair length",2,30,1,extra.CrosshairLength," px",function(v)extra.CrosshairLength=v;extra.UpdateCrosshair() end)
+    slider(crosshair,"Crosshair gap",0,30,1,extra.CrosshairGap," px",function(v)extra.CrosshairGap=v;extra.UpdateCrosshair() end)
+    slider(crosshair,"Crosshair thickness",1,6,1,extra.CrosshairThickness," px",function(v)extra.CrosshairThickness=v;extra.UpdateCrosshair() end)
+    local world=right(worldPage,"World / camera","camera")
+    world:CreateToggle({Name="Fullbright",CurrentValue=false,Callback=function(v)state.visualWorld.Fullbright=v end})
+    world:CreateToggle({Name="Custom camera FOV",CurrentValue=false,Callback=function(v)state.visualWorld.CameraFov=v end})
+    slider(world,"Camera field of view",70,120,1,state.visualWorld.CameraFovValue,"°",function(v)state.visualWorld.CameraFovValue=v end)
 
     local tools=tab("Tools","settings")
     local bombPage=sub(tools,"Bomb")
@@ -22967,11 +24116,104 @@ local function buildAirflow()
     local movement=sub(tools,"Movement")
     local move=left(movement,"Movement","move")
     bridge(move,"BHOP","Bhop")
+    move:CreateToggle({Name="Infinite jump (lobby)",Desc="Stage 7: lobby only",CurrentValue=false,Callback=function(v)state.extraFeatures.InfiniteJump=v end})
+    move:CreateToggle({Name="Anti AFK",Desc="Uses VirtualUser when idle",CurrentValue=false,Callback=function(v)state.extraFeatures.AntiAfk=v end})
     local third=bridge(move,"THIRD PERSON","Third person")
     local thirdSettings=right(movement,"Third person settings","settings",true)
     gear(third,thirdSettings)
     slider(thirdSettings,"Camera distance",5,18,0.1,state.movement.distance," st",function(v)state.movement.distance=v end)
     thirdSettings:CreateToggle({Name="Camera collision",CurrentValue=state.movement.collision,Callback=function(v)state.movement.collision=v end})
+    local settingsTab=tab("Settings","settings")
+    local interface=left(settingsTab,"Interface","settings")
+    interface:CreateKeybind({Name="Menu key",CurrentKeybind="RightControl",OnChanged=function(key)if key then window:SetKeybind(key) end end})
+    dropdown(interface,"Toggle button",{"Mobile only","Mobile & PC"},"Mobile & PC",function(v)window:SetToggleButtonPlatform(v=="Mobile & PC" and "Both" or "Mobile") end)
+    interface:CreateToggle({Name="Backdrop",CurrentValue=false,Callback=function(v)window:SetBackdrop(v) end})
+    slider(interface,"Menu scale",0.6,1.5,0.05,1,"x",function(v)window:SetUIScale(v) end)
+    dropdown(interface,"Density",{"Compact","Default","Comfortable"},"Default",function(v)library:SetDensity(v)end)
+    slider(interface,"Corner radius",0,24,1,10," px",function(v)library:SetCornerRadius(v)end)
+    -- Panic как в stage 7: загружает заранее сохранённый пользователем конфиг.
+    local panic=right(settingsTab,"Panic config","shield")
+    local panicEnabled,panicConfig=false,nil
+    local panicButton=Instance.new("TextButton")
+    panicButton.Name="NoirPanicButton"
+    panicButton.Size=UDim2.fromOffset(72,30)
+    panicButton.Position=UDim2.new(1,-90,0.5,50)
+    panicButton.Text="PANIC"
+    panicButton.TextSize=12
+    panicButton.Font=Enum.Font.GothamBold
+    panicButton.TextColor3=Color3.fromRGB(231,244,234)
+    panicButton.BackgroundColor3=Color3.fromRGB(21,40,28)
+    panicButton.BorderSizePixel=0
+    panicButton.Visible=false
+    panicButton.ZIndex=150
+    panicButton.Parent=gui
+    round(panicButton,8)
+    local start,origin,dragged,pointer
+    panicButton.InputBegan:Connect(function(input)
+        if not start and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1) then
+            pointer=input;start=input.Position;origin=panicButton.AbsolutePosition;dragged=false
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if not start then return end
+        if pointer.UserInputType==Enum.UserInputType.Touch then
+            if input~=pointer then return end
+        elseif input.UserInputType~=Enum.UserInputType.MouseMovement then return end
+        local delta=input.Position-start
+        if delta.Magnitude>5 then dragged=true end
+        if dragged then
+            local camera=Workspace.CurrentCamera
+            local size=camera and camera.ViewportSize or Vector2.new(1920,1080)
+            panicButton.Position=UDim2.fromOffset(math.clamp(origin.X+delta.X,0,math.max(size.X-72,0)),math.clamp(origin.Y+delta.Y,0,math.max(size.Y-30,0)))
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then start=nil;pointer=nil end
+    end)
+    local function activatePanic()
+        if not panicEnabled then return end
+        if not panicConfig then warn("[NOIR] Panic: сначала выбери сохранённый конфиг") return end
+        local callOk,ok,err=pcall(window.LoadConfig,window,panicConfig)
+        if not callOk then err,ok=ok,false end
+        if not ok then warn("[NOIR] Panic: "..tostring(err)) end
+    end
+    panicButton.Activated:Connect(function()
+        if dragged then dragged=false;return end
+        activatePanic()
+    end)
+    panic:CreateToggle({Name="Enable panic",Desc="Loads selected config on panic key or mobile button",CurrentValue=false,Callback=function(v)
+        panicEnabled=v;panicButton.Visible=v and UserInputService.TouchEnabled
+    end})
+    panic:CreateKeybind({Name="Panic key",CurrentKeybind="RightShift",OnChanged=function()end,Callback=activatePanic})
+    local function configNames()
+        local ok,names=pcall(window.ListConfigs,window)
+        if not ok or type(names)~="table" or #names==0 then return {"(none)"} end
+        return names
+    end
+    local names=configNames()
+    panicConfig=names[1]~="(none)" and names[1] or nil
+    local panicChoice=panic:CreateDropdown({Name="Panic config",Desc="Save an all-off config first",Options=names,CurrentOption=names[1],AllowNone=false,
+        Callback=function(v)panicConfig=v~="(none)" and v or nil end})
+    window:OnConfigChanged(function()
+        local current=panicChoice:Get()
+        local fresh=configNames()
+        pcall(panicChoice.Refresh,panicChoice,fresh,true,true)
+        if not table.find(fresh,current) then panicConfig=nil else panicConfig=current~="(none)" and current or nil end
+    end)
+    settingsTab:CreateConfigManager({Name="Configs",Side="Left"})
+    settingsTab:CreateThemeManager({Name="Themes",Side="Right"})
+    -- В дополнение к именованным конфигам AirFlow автоматически восстанавливается последний выбор.
+    task.defer(function()
+        local chosen=window:GetAutoload()
+        local callOk,ok,err=pcall(window.LoadConfig,window,chosen or "Noir_Auto")
+        if not callOk then err,ok=ok,false end
+        autoReady=true
+        if not ok and type(isfile)=="function" then
+            local path=window.ConfigFolder.."/"..(chosen or "Noir_Auto")..".json"
+            local exists,found=pcall(isfile,path)
+            if exists and found then warn("[NOIR] Автозагрузка настроек: "..tostring(err)) end
+        end
+    end)
     return window
 end
 
