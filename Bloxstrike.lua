@@ -1,4 +1,4 @@
--- NOIR / Blox Strike: меню Silent Aim, Rapid Fire, Auto Shoot, Autowall и ESP.
+-- NOIR / Blox Strike — Silver Edition: меню Silent Aim, Rapid Fire, Auto Shoot, Autowall и ESP.
 -- Написан по принципу из приложенного stage_7; весь исходный скрипт не копируется.
 -- Перед запуском перезайди в игру, чтобы убрать старые перехватчики.
 -- Закрытие окна не отключает функции; открыть меню можно кнопкой MENU.
@@ -146,13 +146,45 @@ close.TextColor3 = Color3.fromRGB(217,232,220)
 close.TextSize = 21
 close.ZIndex = 12
 
-local reopen = smallButton(gui, "N  /  NOIR", UDim2.fromOffset(86, 36), UDim2.new(0, 12, 0.36, 0))
-reopen.Name = "NoirReopen"
-reopen.BackgroundColor3 = Color3.fromRGB(18, 51, 35)
-reopen.Visible = false
-reopen.ZIndex = 10
-close.MouseButton1Click:Connect(function() menu.Visible = false; reopen.Visible = true end)
-reopen.MouseButton1Click:Connect(function() menu.Visible = true; reopen.Visible = false end)
+local reopen = smallButton(gui, "", UDim2.fromOffset(110, 40), UDim2.new(0, 12, 0.36, 0))
+reopen.Name, reopen.BackgroundColor3, reopen.Visible, reopen.ZIndex = "NoirReopen", Color3.fromRGB(11,20,14), false, 10
+local reopenEdge=Instance.new("UIStroke")
+reopenEdge.Color,reopenEdge.Thickness,reopenEdge.Transparency,reopenEdge.Parent=Color3.fromRGB(190,208,193),1.4,0.1,reopen
+local reopenIcon=Instance.new("Frame")
+reopenIcon.Size,reopenIcon.Position=UDim2.fromOffset(29,29),UDim2.fromOffset(5,5)
+reopenIcon.BackgroundColor3,reopenIcon.BorderSizePixel,reopenIcon.ZIndex,reopenIcon.Parent=Color3.fromRGB(31,85,51),0,11,reopen
+round(reopenIcon,9)
+local reopenN=label(reopenIcon,"N",UDim2.fromScale(1,1),UDim2.fromOffset(0,0),14)
+reopenN.TextXAlignment,reopenN.TextColor3,reopenN.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(221,245,226),12
+local reopenText=label(reopen,"NOIR",UDim2.fromOffset(65,16),UDim2.fromOffset(40,5),11)
+reopenText.TextColor3,reopenText.ZIndex=Color3.fromRGB(226,235,228),12
+local reopenSub=label(reopen,"CONTROL",UDim2.fromOffset(62,12),UDim2.fromOffset(40,21),8)
+reopenSub.TextColor3,reopenSub.ZIndex=Color3.fromRGB(137,174,145),12
+local reopenDrag, reopenStart, reopenOriginal, reopenMoved
+reopen.InputBegan:Connect(function(input)
+    if input.UserInputType~=Enum.UserInputType.Touch and input.UserInputType~=Enum.UserInputType.MouseButton1 then return end
+    reopenDrag,reopenStart,reopenOriginal,reopenMoved=input,input.Position,reopen.Position,false
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if not reopenDrag then return end
+    local matching=(input==reopenDrag) or (reopenDrag.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseMovement)
+    if matching then
+        local delta=input.Position-reopenStart
+        if delta.Magnitude>5 then reopenMoved=true end
+        if reopenMoved then reopen.Position=UDim2.new(reopenOriginal.X.Scale,reopenOriginal.X.Offset+delta.X,reopenOriginal.Y.Scale,reopenOriginal.Y.Offset+delta.Y) end
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if reopenDrag and (input==reopenDrag or (reopenDrag.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then
+        reopenDrag=nil
+        task.delay(0.15,function() if not reopenDrag then reopenMoved=false end end)
+    end
+end)
+close.MouseButton1Click:Connect(function() menu.Visible=false; reopen.Visible=true end)
+reopen.MouseButton1Click:Connect(function()
+    if reopenMoved then return end
+    menu.Visible=true; reopen.Visible=false
+end)
 state.menu = menu
 -- Подгоняем панель под маленький экран; изменения устройства не растягивают её.
 local menuScale = Instance.new("UIScale")
@@ -204,19 +236,21 @@ local groups = {
     ["AUTOWALL"]={"COMBAT",2}, ["FORCE ORIGIN"]={"COMBAT",3}, ["TEAM CHECK"]={"COMBAT",4},
     ["RAPID"]={"WEAPON",0}, ["AUTO RELOAD"]={"WEAPON",1}, ["INSTA RELOAD"]={"WEAPON",2},
     ["ESP BOX"]={"VISUALS",0}, ["NAMES / HP"]={"VISUALS",1}, ["OUTLINE"]={"VISUALS",2}, ["CHAMS"]={"VISUALS",3},
-    ["BOX STYLE"]={"STYLE",0}, ["OUTLINE STYLE"]={"STYLE",1}, ["CHAMS STYLE"]={"STYLE",2}, ["ESP COLOR"]={"STYLE",3},
+    ["BOX STYLE"]={"SETTINGS",0}, ["OUTLINE STYLE"]={"SETTINGS",1}, ["CHAMS STYLE"]={"SETTINGS",2}, ["ESP COLOR"]={"SETTINGS",3},
     ["ANTI SMOKE"]={"EFFECTS",0}, ["ANTI FLASH"]={"EFFECTS",1},
     ["BOMB ESP"]={"OBJECTIVE",0}, ["BOMB TIMER"]={"OBJECTIVE",1}, ["AUTO DEFUSE"]={"OBJECTIVE",2}, ["AUTO PLANT"]={"OBJECTIVE",3},
-    ["AUTO BHOP"]={"MOVEMENT",0}, ["THIRD PERSON"]={"MOVEMENT",1},
+    ["BHOP"]={"MOVEMENT",0}, ["THIRD PERSON"]={"MOVEMENT",1},
 }
-local mainFor = {COMBAT="COMBAT", WEAPON="COMBAT", VISUALS="VISUALS", STYLE="VISUALS", OBJECTIVE="TOOLS", EFFECTS="TOOLS", MOVEMENT="TOOLS"}
-local subNames = {COMBAT="AIM", WEAPON="WEAPON", VISUALS="PLAYER", STYLE="STYLE", OBJECTIVE="BOMB", EFFECTS="EFFECTS", MOVEMENT="MOVEMENT"}
+local mainFor = {COMBAT="COMBAT", WEAPON="COMBAT", VISUALS="VISUALS", OBJECTIVE="TOOLS", EFFECTS="TOOLS", MOVEMENT="TOOLS"}
+local subNames = {COMBAT="AIM", WEAPON="WEAPON", VISUALS="PLAYER", OBJECTIVE="BOMB", EFFECTS="EFFECTS", MOVEMENT="MOVEMENT"}
 local subTabs, mainTabs = {}, {}
 local pageHint = label(menu, "", UDim2.fromOffset(290,20), UDim2.fromOffset(16,123), 12)
 pageHint.TextColor3, pageHint.ZIndex = Color3.fromRGB(226,237,229), 12
 local pageSub = label(menu, "", UDim2.fromOffset(180,16), UDim2.new(1,-195,0,125), 9)
 pageSub.TextXAlignment, pageSub.TextColor3, pageSub.ZIndex = Enum.TextXAlignment.Right, Color3.fromRGB(139,163,148), 12
+local hideSettings = function() end
 local function setTab(name)
+    hideSettings()
     selectedTab = name
     local main = mainFor[name]
     local headings = {COMBAT="PRECISION  /  AIM", WEAPON="COMBAT  /  WEAPON", VISUALS="VISUALS  /  PLAYER", STYLE="VISUALS  /  STYLE", OBJECTIVE="TOOLS  /  OBJECTIVE", EFFECTS="TOOLS  /  EFFECTS", MOVEMENT="TOOLS  /  MOVEMENT"}
@@ -228,7 +262,7 @@ local function setTab(name)
         button.TextColor3 = active and Color3.fromRGB(191,255,213) or Color3.fromRGB(151,171,157)
     end
     local slot=0
-    for _, sub in ipairs({"COMBAT","WEAPON","VISUALS","STYLE","OBJECTIVE","EFFECTS","MOVEMENT"}) do
+    for _, sub in ipairs({"COMBAT","WEAPON","VISUALS","OBJECTIVE","EFFECTS","MOVEMENT"}) do
         local item = subTabs[sub]
         item.Visible = mainFor[sub] == main
         if item.Visible then
@@ -248,7 +282,7 @@ for index, name in ipairs({"COMBAT", "VISUALS", "TOOLS"}) do
     local target = name == "TOOLS" and "OBJECTIVE" or name
     tab.MouseButton1Click:Connect(function() setTab(target) end)
 end
-for _, name in ipairs({"COMBAT","WEAPON","VISUALS","STYLE","OBJECTIVE","EFFECTS","MOVEMENT"}) do
+for _, name in ipairs({"COMBAT","WEAPON","VISUALS","OBJECTIVE","EFFECTS","MOVEMENT"}) do
     local tab = smallButton(menu, subNames[name], UDim2.fromOffset(93, 24), UDim2.fromOffset(15,91))
     tab.Name, tab.TextSize, tab.ZIndex = name.."Tab", 9, 12
     subTabs[name], tabs[name] = tab, tab
@@ -267,7 +301,11 @@ local function makeToggle(name, index)
     edge.Color, edge.Thickness, edge.Transparency, edge.Parent = Color3.fromRGB(117,138,123), 1, 0.52, item
     local status = label(item, "", UDim2.fromOffset(42,18), UDim2.new(1,-48,0.5,-9), 9)
     status.TextXAlignment, status.ZIndex = Enum.TextXAlignment.Right, 14
-    indicators[item] = {status=status, edge=edge}
+    local dot=Instance.new("Frame")
+    dot.Name,dot.Size,dot.Position= "StateDot",UDim2.fromOffset(3,16),UDim2.new(0,3,0.5,-8)
+    dot.BackgroundColor3,dot.BorderSizePixel,dot.ZIndex,dot.Parent=Color3.fromRGB(69,88,75),0,13,item
+    round(dot,2)
+    indicators[item] = {status=status, edge=edge, dot=dot}
     table.insert(entries, {group=layout[1], button=item})
     return item
 end
@@ -279,9 +317,14 @@ local function showToggle(item, name, enabled, waiting)
     data.status.TextColor3 = waiting and Color3.fromRGB(247,192,103) or (enabled and Color3.fromRGB(125,251,170) or Color3.fromRGB(132,150,137))
     data.edge.Color = enabled and Color3.fromRGB(80,200,119) or Color3.fromRGB(117,138,123)
     data.edge.Transparency = enabled and 0.08 or 0.52
+    data.dot.BackgroundColor3 = waiting and Color3.fromRGB(239,187,101) or (enabled and Color3.fromRGB(108,235,149) or Color3.fromRGB(69,88,75))
 end
 local footer = label(menu, "NOIR CREATOR   /   PRIVATE CONTROL", UDim2.fromOffset(280,16), UDim2.fromOffset(15,323), 9)
 footer.TextColor3, footer.ZIndex = Color3.fromRGB(120,143,127), 12
+do
+    local right=label(menu,"SILVER  /  MOBILE",UDim2.fromOffset(160,16),UDim2.new(1,-175,0,323),9)
+    right.TextXAlignment,right.TextColor3,right.ZIndex=Enum.TextXAlignment.Right,Color3.fromRGB(142,162,147),12
+end
 local button = makeToggle("SILENT", 0)
 
 local function refreshButton()
@@ -638,7 +681,7 @@ local outlineNames = {"GLOW", "EDGE", "SOFT"}
 local chamsNames = {"GLASS", "SOLID", "PULSE"}
 local colorNames = {"MINT", "ROSE", "ICE"}
 local colors = {
-    {bright=Color3.fromRGB(113,255,222), fill=Color3.fromRGB(36,207,177)},
+    {bright=Color3.fromRGB(151,255,188), fill=Color3.fromRGB(35,201,105)},
     {bright=Color3.fromRGB(255,138,175), fill=Color3.fromRGB(229,67,121)},
     {bright=Color3.fromRGB(138,201,255), fill=Color3.fromRGB(69,138,236)},
 }
@@ -690,8 +733,8 @@ local function redrawSlider()
     sliderValue.Text = string.format("%.1f st", config.originRadius)
 end
 redrawSlider()
-table.insert(entries, {group="COMBAT", button=slider})
-slider.Visible = selectedTab == "COMBAT"
+table.insert(entries, {group="SETTINGS", button=slider})
+slider.Visible = false
 local sliderInput
 local function sliderMove(input)
     local width = track.AbsoluteSize.X
@@ -853,17 +896,34 @@ end
 do
     local movement = {bhop=false, third=false, distance=8, bhopReady=false, thirdReady=false}
     state.movement = movement
-    local bhopButton = makeToggle("AUTO BHOP", 30)
+    local bhopButton = makeToggle("BHOP", 30)
     local thirdButton = makeToggle("THIRD PERSON", 31)
     local function refreshMovement()
-        showToggle(bhopButton, "AUTO BHOP", movement.bhop, movement.bhop and not movement.bhopReady)
+        showToggle(bhopButton, "BHOP", movement.bhop, movement.bhop and not movement.bhopReady)
         showToggle(thirdButton, "THIRD PERSON", movement.third, movement.third and not movement.thirdReady)
     end
-    bhopButton.MouseButton1Click:Connect(function() movement.bhop=not movement.bhop; refreshMovement() end)
+    state.thirdButton=thirdButton
+    local hopHeld, hopInput = false, nil
+    local hopControl=smallButton(gui,"HOLD / HOP",UDim2.fromOffset(76,37),UDim2.new(0.72,0,0.78,0))
+    hopControl.Name,hopControl.BackgroundColor3,hopControl.Visible,hopControl.ZIndex="NoirHopHold",Color3.fromRGB(20,54,32),false,9
+    local hopEdge=Instance.new("UIStroke")
+    hopEdge.Color,hopEdge.Transparency,hopEdge.Parent=Color3.fromRGB(177,210,183),0.2,hopControl
+    hopControl.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then hopInput=input;hopHeld=true end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if hopInput and (input==hopInput or (hopInput.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then hopHeld=false;hopInput=nil end
+    end)
+    bhopButton.MouseButton1Click:Connect(function()
+        movement.bhop=not movement.bhop
+        hopControl.Visible=movement.bhop
+        if not movement.bhop then hopHeld=false;hopInput=nil end
+        refreshMovement()
+    end)
     thirdButton.MouseButton1Click:Connect(function() movement.third=not movement.third; refreshMovement() end)
     refreshMovement()
 
-    -- Непрерывные прыжки только на земле, без ускорения и телепорта. Работает без удержания кнопки.
+    -- Bhop: повторяет прыжок только пока удерживается штатный прыжок или кнопка HOLD / HOP.
     local lastGroundPulse = false
     local function editCommand(character, command)
         if not movement.bhop or type(character)~="table" or type(command)~="table" then
@@ -874,6 +934,7 @@ do
             lastGroundPulse=false; return
         end
         if character.Player and character.Player~=localPlayer then return end
+        if not (character.JumpInputDown == true or hopHeld) then lastGroundPulse=false; return end
         if character.Character and localPlayer.Character and character.Character~=localPlayer.Character then return end
         if type(command.Buttons)~="number" or type(character.OnGround)~="boolean" then return end
         local pulse=character.OnGround and not lastGroundPulse
@@ -938,8 +999,9 @@ do
         value.Text=string.format("%.1f st",movement.distance)
     end
     draw()
-    slider.Visible=selectedTab=="MOVEMENT"
-    table.insert(entries,{group="MOVEMENT",button=slider})
+    slider.Visible=false
+    state.thirdSlider=slider
+    table.insert(entries,{group="SETTINGS",button=slider})
     local activeInput
     local function slide(input)
         if track.AbsoluteSize.X<=0 then return end
@@ -1030,6 +1092,72 @@ do
 end
 
 
+-- Настройки открываются непосредственно под карточкой и не включают саму функцию.
+do
+    local popup=Instance.new("Frame")
+    popup.Name,popup.BackgroundColor3,popup.BorderSizePixel="NoirSettings",Color3.fromRGB(12,21,15),0
+    popup.Size,popup.Position,popup.ZIndex,popup.Visible,popup.Parent=UDim2.fromOffset(450,78),UDim2.fromOffset(15,190),20,false,menu
+    round(popup,9)
+    local outline=Instance.new("UIStroke")
+    outline.Color,outline.Thickness,outline.Transparency,outline.Parent=Color3.fromRGB(154,191,162),1.2,0.1,popup
+    local heading=label(popup,"SETTINGS",UDim2.fromOffset(350,18),UDim2.fromOffset(10,5),10)
+    heading.TextColor3,heading.ZIndex=Color3.fromRGB(216,235,220),22
+    local dismiss=smallButton(popup,"×",UDim2.fromOffset(23,23),UDim2.new(1,-28,0,3))
+    dismiss.Name,dismiss.ZIndex,dismiss.TextSize="SettingsClose",23,16
+    dismiss.BackgroundColor3=Color3.fromRGB(29,46,34)
+    local all={slider,state.thirdSlider,boxStyleButton,outlineStyleButton,chamsStyleButton,colorButton}
+    for _,object in ipairs(all) do
+        object.Parent=popup; object.Visible=false
+        object.ZIndex=21
+        pcall(function()
+            for _,child in ipairs(object:GetDescendants()) do
+                if child:IsA("GuiObject") then child.ZIndex=math.max(child.ZIndex,22) end
+            end
+        end)
+    end
+    local active
+    hideSettings=function()
+        active=nil; popup.Visible=false
+        for _,object in ipairs(all) do object.Visible=false end
+    end
+    dismiss.MouseButton1Click:Connect(hideSettings)
+    local function open(item,title,objects)
+        if active==title then hideSettings();return end
+        hideSettings(); active=title
+        heading.Text=title.."  /  SETTINGS"
+        local y=math.min(item.Position.Y.Offset+38, menu.Size.Y.Offset-88)
+        popup.Position=UDim2.fromOffset(15,y)
+        for i,object in ipairs(objects) do
+            object.Visible=true
+            if object==slider or object==state.thirdSlider then
+                object.Position,object.Size=UDim2.fromOffset(6,29),UDim2.fromOffset(438,42)
+            else
+                object.Position,object.Size=UDim2.fromOffset(8+(i-1)*220,34),UDim2.fromOffset(214,34)
+            end
+        end
+        popup.Visible=true
+    end
+    local bindings={
+        {originButton,"FORCE ORIGIN",{slider}},
+        {state.thirdButton,"THIRD PERSON",{state.thirdSlider}},
+        {boxButton,"ESP BOX",{boxStyleButton,colorButton}},
+        {outlineButton,"OUTLINE",{outlineStyleButton,colorButton}},
+        {chamsButton,"CHAMS",{chamsStyleButton,colorButton}},
+    }
+    for _,binding in ipairs(bindings) do
+        local item,title,objects=binding[1],binding[2],binding[3]
+        local gear=smallButton(item,"⚙",UDim2.fromOffset(23,23),UDim2.new(1,-25,0,-8))
+        gear.Name,gear.TextSize,gear.ZIndex=title.."Settings",14,18
+        gear.BackgroundColor3,gear.TextColor3=Color3.fromRGB(37,52,41),Color3.fromRGB(217,231,218)
+        local stroke=Instance.new("UIStroke")
+        stroke.Color,stroke.Transparency,stroke.Thickness,stroke.Parent=Color3.fromRGB(165,185,168),0.25,1,gear
+        local status=indicators[item].status
+        status.Position=UDim2.new(1,-75,0.5,-9)
+        gear.MouseButton1Click:Connect(function() open(item,title,objects) end)
+    end
+end
+
+
 -- Objective: локальный ESP и автоматизация штатных взаимодействий C4.
 -- Нет телепорта и мгновенного разминирования: время и проверка остаются у сервера.
 do
@@ -1065,19 +1193,21 @@ do
     -- Отдельный мировой маркер и HUD-таймер не зависят от включённого ESP игроков.
     local marker = Instance.new("TextLabel")
     marker.Name, marker.AnchorPoint = "NoirBombMarker", Vector2.new(0.5,1)
-    marker.Size, marker.BackgroundTransparency, marker.BorderSizePixel = UDim2.fromOffset(180,32), 0.18, 0
+    marker.Size, marker.BackgroundTransparency, marker.BorderSizePixel = UDim2.fromOffset(126,24), 0.32, 0
     marker.BackgroundColor3, marker.TextColor3 = Color3.fromRGB(15,27,19), Color3.fromRGB(215,255,225)
-    marker.Font, marker.TextSize, marker.ZIndex = Enum.Font.GothamBold, 11, 4
+    marker.Font, marker.TextSize, marker.ZIndex = Enum.Font.GothamBold, 10, 4
     marker.TextStrokeTransparency, marker.Visible, marker.Parent = 0.25, false, overlay
     round(marker,6)
     local markerEdge = Instance.new("UIStroke")
     markerEdge.Color, markerEdge.Transparency, markerEdge.Parent = Color3.fromRGB(111,198,132), 0.18, marker
     local hud = Instance.new("Frame")
     hud.Name, hud.AnchorPoint = "NoirBombTimer", Vector2.new(0.5,0)
-    hud.Position, hud.Size = UDim2.new(0.5,0,0,64), UDim2.fromOffset(190,35)
+    hud.Position, hud.Size = UDim2.new(0.5,0,0,64), UDim2.fromOffset(170,38)
     hud.BackgroundColor3, hud.BackgroundTransparency, hud.BorderSizePixel, hud.ZIndex = Color3.fromRGB(13,23,16), 0.08, 0, 4
     hud.Visible, hud.Parent = false, gui
     round(hud,8)
+    local hudEdge=Instance.new("UIStroke")
+    hudEdge.Color,hudEdge.Transparency,hudEdge.Parent=Color3.fromRGB(145,175,153),0.2,hud
     local hudText = label(hud, "", UDim2.new(1,-18,1,-5), UDim2.fromOffset(9,1), 11)
     hudText.TextXAlignment, hudText.ZIndex = Enum.TextXAlignment.Center, 5
     local hudTrack = Instance.new("Frame")
@@ -1155,8 +1285,8 @@ do
             local screen, onScreen = camera:WorldToViewportPoint(pos)
             if onScreen and screen.Z > 0 then
                 local dist = math.floor((pos-camera.CFrame.Position).Magnitude)
-                marker.Text = bomb and (remaining and controls.timer and string.format("C4  /  %.1fs  ·  %d st",remaining,dist) or "C4  /  PLANTED  ·  "..dist.." st") or "C4  /  DROPPED  ·  "..dist.." st"
-                marker.Position = UDim2.fromOffset(screen.X,screen.Y-8)
+                marker.Text = bomb and (remaining and controls.timer and string.format("C4  %.1fs  ·  %d st",remaining,dist) or "C4  ·  "..dist.." st") or "C4  DROP  ·  "..dist.." st"
+                marker.Position = UDim2.fromOffset(screen.X,screen.Y-14)
                 marker.Visible = true
             end
         end
@@ -1442,7 +1572,7 @@ local function entryFor(model)
     local shadowStroke = Instance.new("UIStroke")
     shadowStroke.Color, shadowStroke.Thickness, shadowStroke.Transparency, shadowStroke.Parent = Color3.fromRGB(2,7,12), 3, 0.18, shadow
     local stroke = Instance.new("UIStroke")
-    stroke.Color, stroke.Thickness, stroke.Parent = Color3.fromRGB(106, 233, 208), 1.3, box
+    stroke.Color, stroke.Thickness, stroke.Parent = Color3.fromRGB(106, 233, 208), 1.5, box
     local corners = {}
     for i = 1, 8 do
         local bar = Instance.new("Frame")
@@ -1458,7 +1588,7 @@ local function entryFor(model)
     caption.Size = UDim2.fromOffset(220, 18)
     caption.BackgroundTransparency = 1
     caption.TextColor3 = Color3.fromRGB(239, 255, 252)
-    caption.TextStrokeTransparency = 0.12
+    caption.TextStrokeTransparency = 0.05
     caption.Font, caption.TextSize, caption.Visible, caption.ZIndex = Enum.Font.GothamBold, 11, false, 3
     caption.Parent = overlay
     local distance = Instance.new("TextLabel")
@@ -1491,11 +1621,14 @@ local function boundsOnScreen(camera, model)
     local anchor = model:FindFirstChild("Head") or model:FindFirstChild("HumanoidRootPart")
     if not anchor or not anchor:IsA("BasePart") then return nil end
     local anchorPos = anchor.Position
+    local anchorProjection = camera:WorldToViewportPoint(anchorPos)
+    if anchorProjection.Z <= 1 then return nil end
     local minX, minY, maxX, maxY
     local headMin, headMax
     for _, name in ipairs(bodyNames) do
         local part = model:FindFirstChild(name)
-        if part and part:IsA("BasePart") and (part.Position - anchorPos).Magnitude < 12 and part.Size.Magnitude < 20 then
+        if part and part:IsA("BasePart") and (part.Name ~= "HumanoidRootPart" or part == anchor)
+            and (part.Position - anchorPos).Magnitude < 12 and part.Size.Magnitude < 20 then
             for _, x in ipairs({-1, 1}) do
                 for _, y in ipairs({-1, 1}) do
                     for _, z in ipairs({-1, 1}) do
@@ -1516,7 +1649,7 @@ local function boundsOnScreen(camera, model)
     end
     if not minX or not headMin then return nil end
     -- Отсекаем аномально далёкие части даже при повреждённой модели.
-    local anchorScreen = camera:WorldToViewportPoint(anchorPos)
+    local anchorScreen = anchorProjection
     local headHeight = math.max(2, headMax - headMin)
     local maxWidth, maxHeight = math.max(12,headHeight*5), math.max(20,headHeight*8)
     minX, maxX = math.max(minX,anchorScreen.X-maxWidth/2), math.min(maxX,anchorScreen.X+maxWidth/2)
@@ -1560,7 +1693,7 @@ local function updateEsp()
                     entry.highlight.Enabled = true
                     entry.highlight.FillColor, entry.highlight.OutlineColor = color.fill, color.bright
                     if extras.chams then
-                        entry.highlight.FillTransparency = chamsStyle == 1 and 0.65 or (chamsStyle == 2 and 0.28 or 0.48 + math.sin(os.clock()*2.5)*0.12)
+                        entry.highlight.FillTransparency = chamsStyle == 1 and 0.52 or (chamsStyle == 2 and 0.24 or 0.4 + math.sin(os.clock()*2.5)*0.10)
                     else
                         entry.highlight.FillTransparency = 1
                     end
@@ -1617,7 +1750,7 @@ end
 local lastEsp, espWarnAt = 0, 0
 RunService.Heartbeat:Connect(function()
     local now = os.clock()
-    if now-lastEsp < 0.05 then return end
+    if now-lastEsp < 0.033 then return end
     lastEsp = now
     local ok, err = pcall(updateEsp)
     if not ok and now-espWarnAt > 5 then espWarnAt=now; warn("[ESP] "..tostring(err)) end
@@ -1626,76 +1759,59 @@ end)
 -- Последняя страховка, если отправка пакета не состоялась.
 RunService:BindToRenderStep("IndependentSilentRestore", Enum.RenderPriority.First.Value, restoreCamera)
 
--- NOIR CREATOR: локальная анимация интерфейса, не проверка готовности модулей.
+-- Полноэкранная локальная заставка: прогресс относится к интерфейсу, а не к игровым API.
 do
     local tweenService=game:GetService("TweenService")
-    local veil=Instance.new("Frame")
-    veil.Name,veil.Size= "NoirIntroVeil",UDim2.fromScale(1,1)
-    veil.BackgroundColor3,veil.BackgroundTransparency,veil.BorderSizePixel,veil.ZIndex,veil.Parent=Color3.fromRGB(0,4,2),0.35,0,29,gui
-    local splash=Instance.new("Frame")
-    splash.Name,splash.AnchorPoint="NoirIntro",Vector2.new(0.5,0.5)
-    splash.Position,splash.Size=UDim2.fromScale(0.5,0.5),UDim2.fromOffset(356,226)
-    splash.BackgroundColor3,splash.BorderSizePixel,splash.ZIndex,splash.Parent=Color3.fromRGB(9,15,11),0,30,gui
-    round(splash,16)
-    local stroke=Instance.new("UIStroke")
-    stroke.Color,stroke.Thickness,stroke.Transparency,stroke.Parent=Color3.fromRGB(157,181,163),1.4,0.12,splash
+    local screen=Instance.new("Frame")
+    screen.Name,screen.Size="NoirIntroVeil",UDim2.fromScale(1,1)
+    screen.BackgroundColor3,screen.BackgroundTransparency,screen.BorderSizePixel,screen.ZIndex,screen.Parent=Color3.fromRGB(0,0,0),0,0,30,gui
+    local center=Instance.new("Frame")
+    center.Name,center.AnchorPoint="NoirIntro",Vector2.new(0.5,0.5)
+    center.Position,center.Size=UDim2.fromScale(0.5,0.5),UDim2.fromOffset(360,142)
+    center.BackgroundTransparency,center.ZIndex,center.Parent=1,31,screen
     local introScale=Instance.new("UIScale")
-    introScale.Scale,introScale.Parent=menuScale.Scale,splash
-    local top=Instance.new("Frame")
-    top.Size,top.Position=UDim2.new(1,-48,0,2),UDim2.fromOffset(24,17)
-    top.BackgroundColor3,top.BorderSizePixel,top.ZIndex,top.Parent=Color3.fromRGB(76,210,127),0,31,splash
-    round(top,3)
-    local emblem=Instance.new("Frame")
-    emblem.AnchorPoint,emblem.Position,emblem.Size=Vector2.new(0.5,0),UDim2.new(0.5,0,0,28),UDim2.fromOffset(57,57)
-    emblem.BackgroundColor3,emblem.BorderSizePixel,emblem.ZIndex,emblem.Parent=Color3.fromRGB(18,49,30),0,31,splash
-    round(emblem,29)
-    local ring=Instance.new("UIStroke")
-    ring.Color,ring.Thickness,ring.Transparency,ring.Parent=Color3.fromRGB(126,246,167),1.4,0.15,emblem
-    local mark=label(emblem,"N",UDim2.fromScale(1,1),UDim2.fromOffset(0,0),28)
-    mark.TextXAlignment,mark.TextColor3,mark.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(231,244,234),32
-    local word=label(splash,"N O I R",UDim2.new(1,0,0,35),UDim2.fromOffset(0,91),25)
-    word.TextXAlignment,word.TextColor3,word.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(234,242,236),31
-    local creator=label(splash,"C R E A T O R   /   B L O X  S T R I K E",UDim2.new(1,0,0,15),UDim2.fromOffset(0,128),8)
-    creator.TextXAlignment,creator.TextColor3,creator.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(123,184,140),31
-    local loading=label(splash,"PREPARING INTERFACE",UDim2.new(1,-56,0,16),UDim2.fromOffset(28,165),9)
-    loading.TextColor3,loading.ZIndex=Color3.fromRGB(160,181,166),31
-    local percent=label(splash,"0%",UDim2.fromOffset(46,16),UDim2.new(1,-74,0,165),9)
-    percent.TextXAlignment,percent.TextColor3,percent.ZIndex=Enum.TextXAlignment.Right,Color3.fromRGB(153,250,181),31
-    local track=Instance.new("Frame")
-    track.Position,track.Size=UDim2.fromOffset(28,188),UDim2.new(1,-56,0,4)
-    track.BackgroundColor3,track.BorderSizePixel,track.ZIndex,track.Parent=Color3.fromRGB(43,59,47),0,31,splash
-    round(track,3)
-    local fill=Instance.new("Frame")
-    fill.Size,fill.BackgroundColor3,fill.BorderSizePixel,fill.ZIndex,fill.Parent=UDim2.fromScale(0,1),Color3.fromRGB(96,242,149),0,32,track
-    round(fill,3)
-    local bottom=label(splash,"DESIGNED FOR MOBILE  ·  NOIR",UDim2.new(1,0,0,14),UDim2.fromOffset(0,201),7)
-    bottom.TextXAlignment,bottom.TextColor3,bottom.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(108,137,116),31
+    introScale.Scale,introScale.Parent=menuScale.Scale,center
+    local title=label(center,"N O I R",UDim2.new(1,0,0,62),UDim2.fromOffset(0,6),38)
+    title.TextXAlignment,title.TextColor3,title.TextTransparency,title.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(223,229,225),1,32
+    local creator=label(center,"C R E A T O R",UDim2.new(1,0,0,18),UDim2.fromOffset(0,69),9)
+    creator.TextXAlignment,creator.TextColor3,creator.TextTransparency,creator.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(141,154,145),1,32
+    local rail=Instance.new("Frame")
+    rail.Position,rail.Size=UDim2.fromOffset(46,100),UDim2.new(1,-92,0,3)
+    rail.BackgroundColor3,rail.BackgroundTransparency,rail.BorderSizePixel,rail.ZIndex,rail.Parent=Color3.fromRGB(49,58,52),1,0,32,center
+    round(rail,2)
+    local progress=Instance.new("Frame")
+    progress.Size,progress.BackgroundColor3,progress.BackgroundTransparency,progress.BorderSizePixel,progress.ZIndex,progress.Parent=UDim2.fromScale(0,1),Color3.fromRGB(145,227,164),1,0,33,rail
+    round(progress,2)
+    local amount=label(center,"0%",UDim2.new(1,0,0,15),UDim2.fromOffset(0,112),9)
+    amount.TextXAlignment,amount.TextColor3,amount.TextTransparency,amount.ZIndex=Enum.TextXAlignment.Center,Color3.fromRGB(172,191,177),1,32
     task.spawn(function()
-        local function animate(obj,seconds,props)
-            local ok,tween=pcall(tweenService.Create,tweenService,obj,TweenInfo.new(seconds,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),props)
-            if ok and tween then tween:Play() else for k,v in pairs(props) do obj[k]=v end end
+        local function tween(obj,seconds,props)
+            local ok,t=pcall(tweenService.Create,tweenService,obj,TweenInfo.new(seconds,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),props)
+            if ok and t then t:Play() else for k,v in pairs(props) do obj[k]=v end end
         end
-        local introFull=introScale.Scale
-        introScale.Scale=introFull*0.9
-        animate(introScale,0.4,{Scale=introFull})
-        for _,stage in ipairs({{0.18,"PREPARING INTERFACE"},{0.49,"BUILDING CONTROLS"},{0.78,"CONNECTING PAGES"},{1,"INTERFACE READY"}}) do
-            loading.Text,percent.Text=stage[2],tostring(math.floor(stage[1]*100)).."%"
-            animate(fill,0.38,{Size=UDim2.fromScale(stage[1],1)})
-            task.wait(0.42)
+        local full=introScale.Scale
+        introScale.Scale=full*0.96
+        tween(introScale,0.8,{Scale=full})
+        tween(title,0.65,{TextTransparency=0})
+        tween(creator,0.7,{TextTransparency=0})
+        tween(amount,0.7,{TextTransparency=0})
+        tween(rail,0.7,{BackgroundTransparency=0})
+        tween(progress,0.7,{BackgroundTransparency=0})
+        for _,p in ipairs({0.2,0.48,0.76,1}) do
+            amount.Text=tostring(math.floor(p*100)).."%"
+            tween(progress,0.43,{Size=UDim2.fromScale(p,1)})
+            task.wait(0.47)
         end
-        task.wait(0.2)
-        animate(splash,0.25,{BackgroundTransparency=1})
-        animate(veil,0.25,{BackgroundTransparency=1})
-        animate(stroke,0.25,{Transparency=1});animate(ring,0.25,{Transparency=1})
-        animate(introScale,0.25,{Scale=introFull*1.03})
-        for _,text in ipairs({mark,word,creator,loading,percent,bottom}) do animate(text,0.25,{TextTransparency=1}) end
-        for _,part in ipairs({top,emblem,track,fill}) do animate(part,0.25,{BackgroundTransparency=1}) end
-        task.wait(0.27)
-        splash.Visible=false;veil.Visible=false;menu.Visible=true
-        local full=menuScale.Scale
-        menuScale.Scale=full*0.94
-        animate(menuScale,0.35,{Scale=full})
-        splash:Destroy();veil:Destroy()
+        task.wait(0.25)
+        tween(screen,0.35,{BackgroundTransparency=1})
+        tween(title,0.28,{TextTransparency=1}); tween(creator,0.28,{TextTransparency=1})
+        tween(amount,0.28,{TextTransparency=1}); tween(rail,0.28,{BackgroundTransparency=1}); tween(progress,0.28,{BackgroundTransparency=1})
+        task.wait(0.36)
+        screen.Visible=false; menu.Visible=true
+        local fullMenu=menuScale.Scale
+        menuScale.Scale=fullMenu*0.96
+        tween(menuScale,0.3,{Scale=fullMenu})
+        screen:Destroy()
     end)
 end
 
