@@ -1,4 +1,4 @@
--- Blox Strike v4: меню Silent Aim, Rapid Fire, Auto Shoot, Autowall и ESP.
+-- NOIR / Blox Strike: меню Silent Aim, Rapid Fire, Auto Shoot, Autowall и ESP.
 -- Написан по принципу из приложенного stage_7; весь исходный скрипт не копируется.
 -- Перед запуском перезайди в игру, чтобы убрать старые перехватчики.
 -- Закрытие окна не отключает функции; открыть меню можно кнопкой MENU.
@@ -39,7 +39,7 @@ local state = {
 }
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "IndependentSilentAim"
+gui.Name = "NoirControl"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 gui.DisplayOrder = 100
@@ -101,22 +101,23 @@ overlay.Parent = gui
 
 local menu = Instance.new("Frame")
 menu.Name = "BloxMenu"
-menu.Size = UDim2.fromOffset(360, 280)
+menu.Size = UDim2.fromOffset(430, 300)
 menu.AnchorPoint = Vector2.new(0.5, 0.5)
 menu.Position = UDim2.new(0.5, 0, 0.5, 0)
-menu.BackgroundColor3 = Color3.fromRGB(12, 15, 25)
+menu.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
 menu.BorderSizePixel = 0
 menu.ZIndex = 10
 menu.Parent = gui
+menu.Visible = false -- до завершения заставки
 round(menu, 14)
 local border = Instance.new("UIStroke")
-border.Color = Color3.fromRGB(52, 66, 88)
+border.Color = Color3.fromRGB(76, 65, 99)
 border.Thickness = 1
 border.Parent = menu
 local accent = Instance.new("Frame")
 accent.Size = UDim2.new(1, -28, 0, 1)
 accent.Position = UDim2.fromOffset(14, 47)
-accent.BorderSizePixel, accent.BackgroundColor3, accent.ZIndex = 0, Color3.fromRGB(72, 225, 202), 12
+accent.BorderSizePixel, accent.BackgroundColor3, accent.ZIndex = 0, Color3.fromRGB(144, 112, 209), 12
 accent.Parent = menu
 round(accent, 2)
 
@@ -128,22 +129,22 @@ header.Active = true
 header.ZIndex = 11
 header.Parent = menu
 local badge = Instance.new("Frame")
-badge.Name, badge.BackgroundColor3, badge.BorderSizePixel = "BrandBadge", Color3.fromRGB(24, 65, 62), 0
+badge.Name, badge.BackgroundColor3, badge.BorderSizePixel = "BrandBadge", Color3.fromRGB(54, 39, 76), 0
 badge.Size, badge.Position, badge.ZIndex, badge.Parent = UDim2.fromOffset(30,30), UDim2.fromOffset(14,9), 12, header
 round(badge, 9)
-local badgeText = label(badge, "BS", UDim2.fromScale(1,1), UDim2.fromOffset(0,0), 11)
-badgeText.TextXAlignment, badgeText.TextColor3, badgeText.ZIndex = Enum.TextXAlignment.Center, Color3.fromRGB(157,255,232), 13
-local title = label(header, "BLOXSTRIKE", UDim2.new(1, -60, 0, 22), UDim2.fromOffset(54, 6), 15)
+local badgeText = label(badge, "N", UDim2.fromScale(1,1), UDim2.fromOffset(0,0), 11)
+badgeText.TextXAlignment, badgeText.TextColor3, badgeText.ZIndex = Enum.TextXAlignment.Center, Color3.fromRGB(232,214,255), 13
+local title = label(header, "N O I R", UDim2.new(1, -60, 0, 22), UDim2.fromOffset(54, 6), 15)
 title.ZIndex = 12
-local subtitle = label(header, "CONTROL STUDIO  /  DRAG TO MOVE", UDim2.new(1, -60, 0, 17), UDim2.fromOffset(54, 26), 9)
+local subtitle = label(header, "CREATOR  /  BLOX STRIKE", UDim2.new(1, -60, 0, 17), UDim2.fromOffset(54, 26), 9)
 subtitle.TextColor3 = Color3.fromRGB(139, 156, 190)
 subtitle.ZIndex = 12
 local close = smallButton(menu, "×", UDim2.fromOffset(32, 32), UDim2.new(1, -42, 0, 8))
 close.TextSize = 21
 close.ZIndex = 12
 
-local reopen = smallButton(gui, "≡  MENU", UDim2.fromOffset(86, 36), UDim2.new(0, 12, 0.36, 0))
-reopen.BackgroundColor3 = Color3.fromRGB(22, 49, 54)
+local reopen = smallButton(gui, "N  /  NOIR", UDim2.fromOffset(86, 36), UDim2.new(0, 12, 0.36, 0))
+reopen.BackgroundColor3 = Color3.fromRGB(49, 37, 68)
 reopen.Visible = false
 reopen.ZIndex = 10
 close.MouseButton1Click:Connect(function() menu.Visible = false; reopen.Visible = true end)
@@ -156,7 +157,7 @@ local function updateMenuScale()
     local camera = Workspace.CurrentCamera
     if camera then
         local size = camera.ViewportSize
-        menuScale.Scale = math.clamp(math.min((size.X-16)/360, (size.Y-16)/280), 0.55, 1)
+        menuScale.Scale = math.clamp(math.min((size.X-16)/430, (size.Y-16)/300), 0.3, 1)
     end
 end
 local viewportConnection
@@ -191,7 +192,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Компактная панель: четыре страницы, единые карточки и состояния.
+-- NOIR: боковая навигация, рабочая область и карточки вместо старой сетки вкладок.
 local selectedTab = "COMBAT"
 local tabs, entries, indicators = {}, {}, {}
 local groups = {
@@ -201,24 +202,43 @@ local groups = {
     ["ESP BOX"]={"VISUALS",0}, ["NAMES / HP"]={"VISUALS",1}, ["OUTLINE"]={"VISUALS",2}, ["CHAMS"]={"VISUALS",3},
     ["BOX STYLE"]={"VISUALS",4}, ["OUTLINE STYLE"]={"VISUALS",5}, ["CHAMS STYLE"]={"VISUALS",6}, ["ESP COLOR"]={"VISUALS",7},
     ["ANTI SMOKE"]={"EFFECTS",0}, ["ANTI FLASH"]={"EFFECTS",1},
+    ["BOMB ESP"]={"OBJECTIVE",0}, ["BOMB TIMER"]={"OBJECTIVE",1},
+    ["AUTO DEFUSE"]={"OBJECTIVE",2}, ["AUTO PLANT"]={"OBJECTIVE",3},
 }
-local pageHint = label(menu, "TARGETING  /  360°", UDim2.fromOffset(240,15), UDim2.fromOffset(15,84), 9)
-pageHint.TextColor3 = Color3.fromRGB(108, 128, 152)
+do
+    local rail = Instance.new("Frame")
+    rail.Name, rail.BackgroundColor3, rail.BorderSizePixel = "NavigationRail", Color3.fromRGB(19,18,29), 0
+    rail.Size, rail.Position, rail.ZIndex, rail.Parent = UDim2.fromOffset(101,226), UDim2.fromOffset(11,61), 11, menu
+    round(rail, 10)
+    local line = Instance.new("Frame")
+    line.BackgroundColor3, line.BorderSizePixel = Color3.fromRGB(46,39,58), 0
+    line.Size, line.Position, line.ZIndex, line.Parent = UDim2.fromOffset(1,205), UDim2.fromOffset(116,68), 11, menu
+    local tag = label(rail, "NAVIGATION", UDim2.fromOffset(86,16), UDim2.fromOffset(10,8), 8)
+    tag.TextColor3, tag.ZIndex = Color3.fromRGB(110,103,127), 12
+    local edition = label(rail, "NOIR  /  V", UDim2.fromOffset(90,15), UDim2.fromOffset(10,207), 8)
+    edition.TextColor3, edition.ZIndex = Color3.fromRGB(105,95,122), 12
+end
+local pageHint = label(menu, "", UDim2.fromOffset(260,19), UDim2.fromOffset(129,63), 11)
+pageHint.TextColor3 = Color3.fromRGB(231,224,245)
 pageHint.ZIndex = 12
+local pageSub = label(menu, "", UDim2.fromOffset(260,13), UDim2.fromOffset(129,81), 8)
+pageSub.TextColor3, pageSub.ZIndex = Color3.fromRGB(127,118,145), 12
 local function setTab(name)
     selectedTab = name
-    local hints = {COMBAT="TARGETING  /  360°", WEAPON="WEAPON CONTROL", VISUALS="ENEMY VISUALS", EFFECTS="LOCAL EFFECT FILTERS"}
-    pageHint.Text = hints[name]
+    local headings = {COMBAT="COMBAT", WEAPON="WEAPON", VISUALS="VISUALS", OBJECTIVE="OBJECTIVE", EFFECTS="EFFECTS"}
+    local hints = {COMBAT="TARGETING & PRECISION", WEAPON="FIRE & RELOAD", VISUALS="ENEMY OVERLAYS", OBJECTIVE="BOMB / CONTROL", EFFECTS="LOCAL EFFECT FILTERS"}
+    pageHint.Text, pageSub.Text = headings[name], hints[name]
     for group, button in pairs(tabs) do
         local active = group == name
-        button.BackgroundColor3 = active and Color3.fromRGB(31, 82, 78) or Color3.fromRGB(22, 27, 40)
-        button.TextColor3 = active and Color3.fromRGB(175, 255, 238) or Color3.fromRGB(139, 156, 178)
+        button.BackgroundColor3 = active and Color3.fromRGB(65,49,91) or Color3.fromRGB(19,18,29)
+        button.TextColor3 = active and Color3.fromRGB(241,229,255) or Color3.fromRGB(154,144,169)
     end
     for _, entry in ipairs(entries) do entry.button.Visible = entry.group == name end
 end
-for index, name in ipairs({"COMBAT", "WEAPON", "VISUALS", "EFFECTS"}) do
-    local tab = smallButton(menu, name, UDim2.fromOffset(79, 26), UDim2.fromOffset(14+(index-1)*84, 53))
+for index, name in ipairs({"COMBAT", "WEAPON", "VISUALS", "OBJECTIVE", "EFFECTS"}) do
+    local tab = smallButton(menu, "  "..name, UDim2.fromOffset(91, 30), UDim2.fromOffset(16, 86+(index-1)*34))
     tab.Name, tab.TextSize, tab.ZIndex = name.."Tab", 9, 12
+    tab.TextXAlignment = Enum.TextXAlignment.Left
     tabs[name] = tab
     tab.MouseButton1Click:Connect(function() setTab(name) end)
 end
@@ -226,14 +246,14 @@ setTab(selectedTab)
 local function makeToggle(name, index)
     local layout = assert(groups[name], "unknown toggle: " .. name)
     local col, row = layout[2] % 2, math.floor(layout[2] / 2)
-    local item = smallButton(menu, "   "..name, UDim2.fromOffset(162, 32), UDim2.fromOffset(14+col*170, 103+row*37))
-    item.Name, item.ZIndex, item.TextSize = name.."Toggle", 12, 10
+    local item = smallButton(menu, "   "..name, UDim2.fromOffset(136, 34), UDim2.fromOffset(129+col*143, 101+row*39))
+    item.Name, item.ZIndex, item.TextSize = name.."Toggle", 12, 9
     item.TextXAlignment = Enum.TextXAlignment.Left
-    item.BackgroundColor3 = Color3.fromRGB(24, 30, 44)
+    item.BackgroundColor3 = Color3.fromRGB(26,24,37)
     item.Visible = layout[1] == selectedTab
     local edge = Instance.new("UIStroke")
-    edge.Color, edge.Thickness, edge.Transparency, edge.Parent = Color3.fromRGB(55, 68, 88), 1, 0.35, item
-    local status = label(item, "", UDim2.fromOffset(35,18), UDim2.new(1,-40,0.5,-9), 9)
+    edge.Color, edge.Thickness, edge.Transparency, edge.Parent = Color3.fromRGB(69,61,82), 1, 0.35, item
+    local status = label(item, "", UDim2.fromOffset(33,18), UDim2.new(1,-38,0.5,-9), 8)
     status.TextXAlignment, status.ZIndex = Enum.TextXAlignment.Right, 14
     indicators[item] = {status=status, edge=edge}
     table.insert(entries, {group=layout[1], button=item})
@@ -241,14 +261,14 @@ local function makeToggle(name, index)
 end
 local function showToggle(item, name, enabled, waiting)
     item.Text = "   " .. name
-    item.BackgroundColor3 = enabled and Color3.fromRGB(22, 49, 49) or Color3.fromRGB(24, 30, 44)
+    item.BackgroundColor3 = enabled and Color3.fromRGB(48,36,64) or Color3.fromRGB(26,24,37)
     local data = indicators[item]
     data.status.Text = waiting and "WAIT" or (enabled and "ON" or "OFF")
-    data.status.TextColor3 = waiting and Color3.fromRGB(247, 192, 103) or (enabled and Color3.fromRGB(109, 246, 210) or Color3.fromRGB(112, 129, 151))
-    data.edge.Color = enabled and Color3.fromRGB(65, 164, 143) or Color3.fromRGB(55, 68, 88)
+    data.status.TextColor3 = waiting and Color3.fromRGB(247,192,103) or (enabled and Color3.fromRGB(218,183,255) or Color3.fromRGB(119,111,132))
+    data.edge.Color = enabled and Color3.fromRGB(147,112,196) or Color3.fromRGB(69,61,82)
 end
-local footer = label(menu, "CLIENT CONTROL     •     TAP TO CONFIGURE", UDim2.new(1, -28, 0, 16), UDim2.fromOffset(14, 258), 9)
-footer.TextColor3 = Color3.fromRGB(95, 112, 135)
+local footer = label(menu, "NOIR CREATOR   /   LOCAL CONTROL", UDim2.fromOffset(272,16), UDim2.fromOffset(129,280), 8)
+footer.TextColor3 = Color3.fromRGB(103,93,117)
 footer.ZIndex = 12
 local button = makeToggle("SILENT", 0)
 
@@ -613,7 +633,7 @@ local colors = {
 local function styleCard(item, title, value)
     item.Text = "   "..title
     local status = indicators[item].status
-    status.Text, status.TextColor3 = value, Color3.fromRGB(131, 220, 209)
+    status.Text, status.TextColor3 = value, Color3.fromRGB(209, 175, 244)
     status.Size = UDim2.fromOffset(62,18)
     status.Position = UDim2.new(1,-67,0.5,-9)
 end
@@ -631,8 +651,8 @@ refreshStyles()
 
 -- Ползунок Force Origin. AbsolutePosition/AbsoluteSize учитывают UIScale телефона.
 local slider = Instance.new("Frame")
-slider.Name, slider.BackgroundColor3, slider.BorderSizePixel = "OriginSlider", Color3.fromRGB(24,30,44), 0
-slider.Size, slider.Position, slider.ZIndex = UDim2.fromOffset(332, 42), UDim2.fromOffset(14, 211), 12
+slider.Name, slider.BackgroundColor3, slider.BorderSizePixel = "OriginSlider", Color3.fromRGB(26,24,37), 0
+slider.Size, slider.Position, slider.ZIndex = UDim2.fromOffset(279, 42), UDim2.fromOffset(129, 220), 12
 slider.Parent = menu
 round(slider, 8)
 local sliderEdge = Instance.new("UIStroke")
@@ -640,17 +660,17 @@ sliderEdge.Color, sliderEdge.Transparency, sliderEdge.Parent = Color3.fromRGB(55
 local sliderTitle = label(slider, "ORIGIN RADIUS", UDim2.fromOffset(170,14), UDim2.fromOffset(10,5), 9)
 sliderTitle.TextColor3, sliderTitle.ZIndex = Color3.fromRGB(172,190,205), 13
 local sliderValue = label(slider, "", UDim2.fromOffset(65,14), UDim2.new(1,-75,0,5), 9)
-sliderValue.TextXAlignment, sliderValue.TextColor3, sliderValue.ZIndex = Enum.TextXAlignment.Right, Color3.fromRGB(120,246,221), 13
+sliderValue.TextXAlignment, sliderValue.TextColor3, sliderValue.ZIndex = Enum.TextXAlignment.Right, Color3.fromRGB(221,189,255), 13
 local track = Instance.new("Frame")
 track.Name, track.BorderSizePixel, track.BackgroundColor3 = "Track", 0, Color3.fromRGB(45,58,73)
 track.Position, track.Size, track.ZIndex, track.Parent = UDim2.fromOffset(12,28), UDim2.new(1,-24,0,4), 13, slider
 round(track, 3)
 local fill = Instance.new("Frame")
-fill.BorderSizePixel, fill.BackgroundColor3, fill.ZIndex, fill.Parent = 0, Color3.fromRGB(95,230,200), 14, track
+fill.BorderSizePixel, fill.BackgroundColor3, fill.ZIndex, fill.Parent = 0, Color3.fromRGB(174,131,231), 14, track
 round(fill, 3)
 local knob = Instance.new("Frame")
 knob.AnchorPoint, knob.Size = Vector2.new(0.5,0.5), UDim2.fromOffset(13,13)
-knob.BackgroundColor3, knob.BorderSizePixel, knob.ZIndex, knob.Parent = Color3.fromRGB(211,255,244), 0, 15, track
+knob.BackgroundColor3, knob.BorderSizePixel, knob.ZIndex, knob.Parent = Color3.fromRGB(245,225,255), 0, 15, track
 round(knob, 8)
 local function redrawSlider()
     local ratio = config.originRadius/9
@@ -817,6 +837,257 @@ local function getModule(...)
     local ok, result = pcall(require, node)
     if ok and type(result) == "table" then return result end
 end
+-- Objective: локальный ESP и автоматизация штатных взаимодействий C4.
+-- Нет телепорта и мгновенного разминирования: время и проверка остаются у сервера.
+do
+    local collection = game:GetService("CollectionService")
+    local http = game:GetService("HttpService")
+    local controls = {esp=false, timer=false, plant=false, defuse=false}
+    local ui = {
+        esp=makeToggle("BOMB ESP", 20), timer=makeToggle("BOMB TIMER", 21),
+        defuse=makeToggle("AUTO DEFUSE", 22), plant=makeToggle("AUTO PLANT", 23),
+    }
+    state.objective = controls
+    local function packets()
+        local net = state.net
+        if not net then net=getModule("Database","Security","Remotes"); if net then state.net=net end end
+        return net and net.C4
+    end
+    local function refreshObjective()
+        showToggle(ui.esp, "BOMB ESP", controls.esp, false)
+        showToggle(ui.timer, "BOMB TIMER", controls.timer, false)
+        local p = packets()
+        local available = p and p.StartDefuse and type(p.StartDefuse.Send)=="function" and p.Defused and type(p.Defused.Send)=="function"
+        showToggle(ui.defuse, "AUTO DEFUSE", controls.defuse, controls.defuse and not available)
+        showToggle(ui.plant, "AUTO PLANT", controls.plant, controls.plant and not (state.rapid and state.rapid.ready))
+    end
+    for key, item in pairs(ui) do
+        item.MouseButton1Click:Connect(function()
+            controls[key] = not controls[key]
+            refreshObjective()
+        end)
+    end
+    refreshObjective()
+
+    -- Отдельный мировой маркер и HUD-таймер не зависят от включённого ESP игроков.
+    local marker = Instance.new("TextLabel")
+    marker.Name, marker.AnchorPoint = "NoirBombMarker", Vector2.new(0.5,1)
+    marker.Size, marker.BackgroundTransparency, marker.BorderSizePixel = UDim2.fromOffset(180,32), 0.18, 0
+    marker.BackgroundColor3, marker.TextColor3 = Color3.fromRGB(24,18,33), Color3.fromRGB(244,214,255)
+    marker.Font, marker.TextSize, marker.ZIndex = Enum.Font.GothamBold, 11, 4
+    marker.TextStrokeTransparency, marker.Visible, marker.Parent = 0.25, false, overlay
+    round(marker,6)
+    local markerEdge = Instance.new("UIStroke")
+    markerEdge.Color, markerEdge.Transparency, markerEdge.Parent = Color3.fromRGB(167,113,213), 0.18, marker
+    local hud = Instance.new("Frame")
+    hud.Name, hud.AnchorPoint = "NoirBombTimer", Vector2.new(0.5,0)
+    hud.Position, hud.Size = UDim2.new(0.5,0,0,64), UDim2.fromOffset(190,35)
+    hud.BackgroundColor3, hud.BackgroundTransparency, hud.BorderSizePixel, hud.ZIndex = Color3.fromRGB(21,17,28), 0.08, 0, 4
+    hud.Visible, hud.Parent = false, gui
+    round(hud,8)
+    local hudText = label(hud, "", UDim2.new(1,-18,1,-5), UDim2.fromOffset(9,1), 11)
+    hudText.TextXAlignment, hudText.ZIndex = Enum.TextXAlignment.Center, 5
+    local hudTrack = Instance.new("Frame")
+    hudTrack.Size, hudTrack.Position = UDim2.new(1,-16,0,3), UDim2.new(0,8,1,-7)
+    hudTrack.BackgroundColor3, hudTrack.BorderSizePixel, hudTrack.ZIndex, hudTrack.Parent = Color3.fromRGB(58,43,66), 0, 5, hud
+    round(hudTrack,3)
+    local hudFill = Instance.new("Frame")
+    hudFill.BackgroundColor3, hudFill.BorderSizePixel, hudFill.ZIndex, hudFill.Parent = Color3.fromRGB(194,145,240), 0, 6, hudTrack
+    round(hudFill,3)
+    local cachedBomb, cachedDropped, nextScan = nil, nil, 0
+    local function livePlanted(obj)
+        return obj and obj:IsDescendantOf(Workspace) and obj:GetAttribute("BombPlanted") ~= nil
+            and obj:GetAttribute("Defused") ~= true and obj:GetAttribute("Exploded") ~= true and obj:GetAttribute("Exploding") ~= true
+    end
+    local function scanBombs(now)
+        if now < nextScan then return end
+        nextScan = now + 0.35
+        cachedBomb, cachedDropped = nil, nil
+        for _, obj in ipairs(collection:GetTagged("Bomb")) do
+            if livePlanted(obj) then cachedBomb=obj; break end
+        end
+        if not cachedBomb then
+            local debris = Workspace:FindFirstChild("Debris")
+            if debris then for _, obj in ipairs(debris:GetChildren()) do
+                if livePlanted(obj) then cachedBomb=obj; break end
+            end end
+        end
+        if not cachedBomb and controls.esp then
+            for _, obj in ipairs(collection:GetTagged("WeaponDropped")) do
+                if obj:IsDescendantOf(Workspace) and obj:GetAttribute("Weapon") == "C4" then cachedDropped=obj; break end
+            end
+        end
+    end
+    local function positionOf(obj)
+        if not obj then return nil end
+        if obj:IsA("BasePart") then return obj.Position end
+        if obj:IsA("Model") then
+            local part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart", true)
+            if part then return part.Position end
+            local ok, pivot = pcall(obj.GetPivot, obj)
+            if ok and pivot then return pivot.Position end
+        end
+    end
+    local rawSaved, timeData, rawOwner
+    local function timerFor(bomb)
+        local raw = bomb and bomb:GetAttribute("BombPlanted")
+        if bomb ~= rawOwner or raw ~= rawSaved then
+            rawOwner, rawSaved, timeData = bomb, raw, nil
+            if type(raw)=="string" then
+                local ok, decoded = pcall(http.JSONDecode, http, raw)
+                if ok and type(decoded)=="table" then timeData=decoded end
+            elseif type(raw)=="table" then timeData=raw end
+        end
+        local start = timeData and tonumber(timeData.Time)
+        local duration = timeData and tonumber(timeData.TimeUntilExplode)
+        if not start or not duration or start ~= start or duration ~= duration or math.abs(start)==math.huge or duration<=0 or duration==math.huge then return nil,nil end
+        local ok, now = pcall(Workspace.GetServerTimeNow, Workspace)
+        if not ok or type(now)~="number" then return nil,nil end
+        return math.max(0,start+duration-now), duration
+    end
+    local function renderObjective()
+        local camera, bomb = Workspace.CurrentCamera, cachedBomb
+        if bomb and not livePlanted(bomb) then bomb=nil end
+        local remaining, duration = timerFor(bomb)
+        hud.Visible = controls.timer and bomb ~= nil
+        if hud.Visible then
+            hudText.Text = remaining and string.format("BOMB  /  %.1f s",remaining) or "BOMB  /  TIME UNKNOWN"
+            hudFill.Size = UDim2.fromScale(remaining and math.clamp(remaining/duration,0,1) or 0,1)
+            hudFill.BackgroundColor3 = remaining and remaining < 10 and Color3.fromRGB(255,105,131) or Color3.fromRGB(194,145,240)
+        end
+        local obj = bomb or cachedDropped
+        local pos = positionOf(obj)
+        marker.Visible = false
+        if controls.esp and camera and pos then
+            local screen, onScreen = camera:WorldToViewportPoint(pos)
+            if onScreen and screen.Z > 0 then
+                local dist = math.floor((pos-camera.CFrame.Position).Magnitude)
+                marker.Text = bomb and (remaining and controls.timer and string.format("C4  /  %.1fs  ·  %d st",remaining,dist) or "C4  /  PLANTED  ·  "..dist.." st") or "C4  /  DROPPED  ·  "..dist.." st"
+                marker.Position = UDim2.fromOffset(screen.X,screen.Y-8)
+                marker.Visible = true
+            end
+        end
+    end
+    local ray = RaycastParams.new()
+    ray.FilterType, ray.IgnoreWater = Enum.RaycastFilterType.Exclude, true
+    local plantNext = 0
+    local function aliveCharacter()
+        local chars = Workspace:FindFirstChild("Characters")
+        local character = (chars and chars:FindFirstChild(localPlayer.Name)) or localPlayer.Character
+        if not character or not character.Parent or character:GetAttribute("Dead")==true then return nil end
+        local health = tonumber(character:GetAttribute("Health"))
+        if health and health<=0 then return nil end
+        return character
+    end
+    local function doPlant(now)
+        if not controls.plant or now < plantNext or livePlanted(cachedBomb) or localPlayer:GetAttribute("Team") ~= "Terrorists" then return end
+        local character = aliveCharacter()
+        local root = character and (character.PrimaryPart or character:FindFirstChild("HumanoidRootPart"))
+        local controller = state.rapid and state.rapid.controller
+        local getter = controller and controller.peekCurrentEquippedForMovement
+        if not root or type(getter)~="function" then return end
+        local ok, weapon = pcall(getter)
+        if not ok or type(weapon)~="table" or not weapon.Properties or weapon.Properties.Class~="C4"
+            or weapon.IsDestroyed or weapon.IsPlanting or type(weapon.shoot)~="function" then return end
+        if tick()-(tonumber(weapon.PlantStartedTick) or 0)<0.55 then return end
+        local ignored = {character}
+        if Workspace.CurrentCamera then table.insert(ignored,Workspace.CurrentCamera) end
+        local debris = Workspace:FindFirstChild("Debris")
+        if debris then table.insert(ignored,debris) end
+        ray.FilterDescendantsInstances = ignored
+        local hit = Workspace:Raycast(root.Position,Vector3.new(0,-5,0),ray)
+        local part = hit and hit.Instance
+        if not part or not collection:HasTag(part,"PlantArea") or part:GetAttribute("Site")==nil then return end
+        plantNext=now+0.7
+        pcall(weapon.shoot,weapon)
+    end
+    local defuse = {phase="idle", session=0, lastStart=0, lastFinish=0}
+    local function stopDefuse(send)
+        if defuse.phase=="idle" then return end
+        if send then
+            local p = packets()
+            if p and p.CancelDefuse and type(p.CancelDefuse.Send)=="function" then pcall(p.CancelDefuse.Send,{SessionId=defuse.session}) end
+        end
+        pcall(localPlayer.SetAttribute,localPlayer,"IsLocallyDefusingBomb",nil)
+        defuse.phase, defuse.bomb = "idle", nil
+    end
+    local function nextSession()
+        -- Синхронизируем счётчик штатного DefuseBomb.StartDefuse, если executor даёт доступ.
+        local module = getModule("Interface","Screens","Gameplay","Middle","DefuseBomb")
+        local fn = module and module.StartDefuse
+        local getter = getupvalues or (debug and debug.getupvalues)
+        local setter = setupvalue or (debug and debug.setupvalue)
+        if type(fn)=="function" and type(getter)=="function" and type(setter)=="function" then
+            local ok, values = pcall(getter,fn)
+            if ok and type(values)=="table" then
+                local index, value, count = nil, 0, 0
+                for k,v in pairs(values) do if type(v)=="number" then index,value,count=k,v,count+1 end end
+                if count==1 then
+                    defuse.session=(math.floor(math.max(value,defuse.session)) % 4294967295)+1
+                    pcall(setter,fn,index,defuse.session)
+                    return defuse.session
+                end
+            end
+        end
+        defuse.session=(defuse.session % 4294967295)+1
+        return defuse.session
+    end
+    local function doDefuse(now)
+        if not controls.defuse then stopDefuse(true); return end
+        local character = aliveCharacter()
+        local root = character and (character.PrimaryPart or character:FindFirstChild("HumanoidRootPart"))
+        local bomb = cachedBomb
+        local position = livePlanted(bomb) and positionOf(bomb) or nil
+        local p = packets()
+        local canSend = p and p.StartDefuse and type(p.StartDefuse.Send)=="function" and p.Defused and type(p.Defused.Send)=="function"
+        if not controls.defuse or localPlayer:GetAttribute("Team")~="Counter-Terrorists" or not root or not position or not canSend
+            or (root.Position-position).Magnitude>5.2 or (defuse.bomb and defuse.bomb~=bomb) then
+            stopDefuse(true); return
+        end
+        local ack = localPlayer:GetAttribute("IsDefusingBomb")==true
+        if defuse.phase=="idle" then
+            if ack or localPlayer:GetAttribute("IsLocallyDefusingBomb")==true or bomb:GetAttribute("IsGettingDefused")==true or now-defuse.lastStart<1.5 then return end
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player~=localPlayer and player:GetAttribute("IsDefusingBomb")==true then return end
+            end
+            defuse.session=nextSession()
+            defuse.phase, defuse.bomb, defuse.lastStart = "starting", bomb, now
+            pcall(localPlayer.SetAttribute,localPlayer,"IsLocallyDefusingBomb",true)
+            local sent, response = pcall(p.StartDefuse.Send,{SessionId=defuse.session})
+            if not sent or response==false then stopDefuse(false) end
+            return
+        end
+        if defuse.phase=="starting" then
+            if ack then defuse.phase="active"; defuse.acked=now
+            elseif now-defuse.lastStart>1.5 then stopDefuse(true) end
+            return
+        end
+        if not ack then stopDefuse(false); return end
+        local total = localPlayer:GetAttribute("HasDefuseKit")==true and 5 or 10
+        local started = tonumber(localPlayer:GetAttribute("DefuseStartTime"))
+        local ok, serverNow = pcall(Workspace.GetServerTimeNow,Workspace)
+        local elapsed = now-(defuse.acked or now)
+        if ok and started and started<=serverNow and serverNow-started<=total+5 then elapsed=serverNow-started end
+        if elapsed>=total+0.05 and now-defuse.lastFinish>=0.5 then
+            defuse.lastFinish=now
+            pcall(p.Defused.Send)
+        end
+    end
+    local last, lastWarning, nextUiRefresh = 0, 0, 0
+    RunService.Heartbeat:Connect(function()
+        local now=os.clock()
+        if now-last<0.1 then return end
+        last=now
+        local ok, err=pcall(function()
+            if controls.esp or controls.timer or controls.defuse or controls.plant then scanBombs(now) end
+            renderObjective(); doPlant(now); doDefuse(now)
+            if now >= nextUiRefresh then nextUiRefresh=now+1; refreshObjective() end
+        end)
+        if not ok and now-lastWarning>5 then lastWarning=now; warn("[NOIR / Objective] "..tostring(err)) end
+    end)
+end
+
+
 -- Удаляем только локальные визуальные эффекты; на серверное состояние гранат не влияет.
 local effectModules = {}
 local function cancelExisting(kind)
@@ -1162,6 +1433,68 @@ end)
 -- Последняя страховка, если отправка пакета не состоялась.
 RunService:BindToRenderStep("IndependentSilentRestore", Enum.RenderPriority.First.Value, restoreCamera)
 
+-- Заставка — локальная анимация интерфейса, а не индикатор готовности сетевых функций.
+do
+    local tweenService = game:GetService("TweenService")
+    local splash = Instance.new("Frame")
+    splash.Name, splash.AnchorPoint = "NoirIntro", Vector2.new(0.5,0.5)
+    splash.Position, splash.Size = UDim2.fromScale(0.5,0.5), UDim2.fromOffset(300,180)
+    splash.BackgroundColor3, splash.BorderSizePixel, splash.ZIndex = Color3.fromRGB(12,10,19), 0, 30
+    splash.Parent = gui
+    round(splash,14)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color, stroke.Thickness, stroke.Transparency, stroke.Parent = Color3.fromRGB(131,99,171), 1, 0.2, splash
+    local introScale = Instance.new("UIScale")
+    introScale.Scale, introScale.Parent = menuScale.Scale, splash
+    local line = Instance.new("Frame")
+    line.Size, line.Position = UDim2.fromOffset(48,2), UDim2.new(0.5,-24,0,25)
+    line.BackgroundColor3, line.BorderSizePixel, line.ZIndex, line.Parent = Color3.fromRGB(191,145,242), 0, 31, splash
+    round(line,2)
+    local word = label(splash, "N O I R", UDim2.new(1,0,0,41), UDim2.fromOffset(0,38), 28)
+    word.TextXAlignment, word.TextColor3, word.ZIndex = Enum.TextXAlignment.Center, Color3.fromRGB(244,237,255), 31
+    local creator = label(splash, "C R E A T O R", UDim2.new(1,0,0,18), UDim2.fromOffset(0,79), 9)
+    creator.TextXAlignment, creator.TextColor3, creator.ZIndex = Enum.TextXAlignment.Center, Color3.fromRGB(177,148,207), 31
+    local loading = label(splash, "INITIALISING INTERFACE", UDim2.new(1,-48,0,16), UDim2.fromOffset(24,119), 8)
+    loading.TextColor3, loading.ZIndex = Color3.fromRGB(154,142,170), 31
+    local percent = label(splash, "0%", UDim2.fromOffset(42,16), UDim2.new(1,-66,0,119), 8)
+    percent.TextXAlignment, percent.TextColor3, percent.ZIndex = Enum.TextXAlignment.Right, Color3.fromRGB(205,171,240), 31
+    local track = Instance.new("Frame")
+    track.Position, track.Size = UDim2.fromOffset(24,144), UDim2.new(1,-48,0,4)
+    track.BackgroundColor3, track.BorderSizePixel, track.ZIndex, track.Parent = Color3.fromRGB(54,43,68), 0, 31, splash
+    round(track,3)
+    local fill = Instance.new("Frame")
+    fill.Size, fill.BackgroundColor3, fill.BorderSizePixel, fill.ZIndex, fill.Parent = UDim2.fromScale(0,1), Color3.fromRGB(190,140,242), 0, 32, track
+    round(fill,3)
+    task.spawn(function()
+        local function animate(obj, seconds, props)
+            local ok, tween = pcall(tweenService.Create,tweenService,obj,TweenInfo.new(seconds,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),props)
+            if ok and tween then tween:Play() else for k,v in pairs(props) do obj[k]=v end end
+        end
+        local introFull = introScale.Scale
+        introScale.Scale = introFull * 0.94
+        animate(introScale,0.3,{Scale=introFull})
+        for _, stage in ipairs({{0.28,"PREPARING INTERFACE"},{0.64,"CONNECTING CONTROLS"},{1,"INTERFACE READY"}}) do
+            loading.Text, percent.Text = stage[2], tostring(math.floor(stage[1]*100)).."%"
+            animate(fill,0.38,{Size=UDim2.fromScale(stage[1],1)})
+            task.wait(0.45)
+        end
+        task.wait(0.2)
+        animate(splash,0.23,{BackgroundTransparency=1})
+        animate(stroke,0.23,{Transparency=1})
+        animate(introScale,0.23,{Scale=introFull*0.96})
+        for _, text in ipairs({word,creator,loading,percent}) do animate(text,0.23,{TextTransparency=1}) end
+        for _, part in ipairs({line,track,fill}) do animate(part,0.23,{BackgroundTransparency=1}) end
+        task.wait(0.25)
+        splash.Visible = false
+        menu.Visible = true
+        local full = menuScale.Scale
+        menuScale.Scale = full*0.93
+        animate(menuScale,0.3,{Scale=full})
+        splash:Destroy()
+    end)
+end
+
+
 local hook = hookfunction or replaceclosure
 if type(hook) ~= "function" or type(getgc) ~= "function" then
     state.message = "Нет hookfunction/getgc"
@@ -1309,3 +1642,4 @@ task.spawn(function()
     refreshButton()
     warn("[Silent Aim] Не найдены bullet.create или Remotes.Inventory.ShootWeapon.Send; версия игры либо возможности executor могут отличаться")
 end)
+
