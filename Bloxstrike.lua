@@ -1,4 +1,4 @@
--- Blox Strike v3: меню Silent Aim, Rapid Fire, Auto Shoot, Autowall и ESP.
+-- Blox Strike v4: меню Silent Aim, Rapid Fire, Auto Shoot, Autowall и ESP.
 -- Написан по принципу из приложенного stage_7; весь исходный скрипт не копируется.
 -- Перед запуском перезайди в игру, чтобы убрать старые перехватчики.
 -- Закрытие окна не отключает функции; открыть меню можно кнопкой MENU.
@@ -22,7 +22,7 @@ local config = {
     maxDistance = 2000,    -- максимальное расстояние до цели
     visibilityCheck = true,
     teamCheck = true,
-    originRadius = 6, -- 3 / 6 / 9 studs вокруг текущей камеры
+    originRadius = 6, -- плавная настройка от 0 до 9 studs
 }
 
 local state = {
@@ -35,7 +35,7 @@ local state = {
     message = "Поиск функций...",
     wallReady = false,
     wallMessage = "Поиск модулей...",
-    extras = { autoShoot = false, autoWall = false, box = false, names = false, outline = false, forceOrigin = false, autoReload = false, instaReload = false },
+    extras = { autoShoot = false, autoWall = false, box = false, names = false, outline = false, forceOrigin = false, autoReload = false, instaReload = false, chams = false, antiSmoke = false, antiFlash = false },
 }
 
 local gui = Instance.new("ScreenGui")
@@ -101,22 +101,22 @@ overlay.Parent = gui
 
 local menu = Instance.new("Frame")
 menu.Name = "BloxMenu"
-menu.Size = UDim2.fromOffset(310, 244)
+menu.Size = UDim2.fromOffset(360, 280)
 menu.AnchorPoint = Vector2.new(0.5, 0.5)
 menu.Position = UDim2.new(0.5, 0, 0.5, 0)
-menu.BackgroundColor3 = Color3.fromRGB(13, 19, 31)
+menu.BackgroundColor3 = Color3.fromRGB(12, 15, 25)
 menu.BorderSizePixel = 0
 menu.ZIndex = 10
 menu.Parent = gui
 round(menu, 14)
 local border = Instance.new("UIStroke")
-border.Color = Color3.fromRGB(51, 112, 126)
+border.Color = Color3.fromRGB(52, 66, 88)
 border.Thickness = 1
 border.Parent = menu
 local accent = Instance.new("Frame")
-accent.Size = UDim2.new(1, -28, 0, 2)
+accent.Size = UDim2.new(1, -28, 0, 1)
 accent.Position = UDim2.fromOffset(14, 47)
-accent.BorderSizePixel, accent.BackgroundColor3, accent.ZIndex = 0, Color3.fromRGB(63, 195, 176), 12
+accent.BorderSizePixel, accent.BackgroundColor3, accent.ZIndex = 0, Color3.fromRGB(72, 225, 202), 12
 accent.Parent = menu
 round(accent, 2)
 
@@ -127,9 +127,15 @@ header.BackgroundTransparency = 1
 header.Active = true
 header.ZIndex = 11
 header.Parent = menu
-local title = label(header, "BLOX  /  STRIKE", UDim2.new(1, -16, 0, 22), UDim2.fromOffset(16, 6), 15)
+local badge = Instance.new("Frame")
+badge.Name, badge.BackgroundColor3, badge.BorderSizePixel = "BrandBadge", Color3.fromRGB(24, 65, 62), 0
+badge.Size, badge.Position, badge.ZIndex, badge.Parent = UDim2.fromOffset(30,30), UDim2.fromOffset(14,9), 12, header
+round(badge, 9)
+local badgeText = label(badge, "BS", UDim2.fromScale(1,1), UDim2.fromOffset(0,0), 11)
+badgeText.TextXAlignment, badgeText.TextColor3, badgeText.ZIndex = Enum.TextXAlignment.Center, Color3.fromRGB(157,255,232), 13
+local title = label(header, "BLOXSTRIKE", UDim2.new(1, -60, 0, 22), UDim2.fromOffset(54, 6), 15)
 title.ZIndex = 12
-local subtitle = label(header, "CONTROL PANEL  •  DRAG HERE", UDim2.new(1, -16, 0, 17), UDim2.fromOffset(16, 26), 9)
+local subtitle = label(header, "CONTROL STUDIO  /  DRAG TO MOVE", UDim2.new(1, -60, 0, 17), UDim2.fromOffset(54, 26), 9)
 subtitle.TextColor3 = Color3.fromRGB(139, 156, 190)
 subtitle.ZIndex = 12
 local close = smallButton(menu, "×", UDim2.fromOffset(32, 32), UDim2.new(1, -42, 0, 8))
@@ -137,12 +143,32 @@ close.TextSize = 21
 close.ZIndex = 12
 
 local reopen = smallButton(gui, "≡  MENU", UDim2.fromOffset(86, 36), UDim2.new(0, 12, 0.36, 0))
-reopen.BackgroundColor3 = Color3.fromRGB(35, 45, 70)
+reopen.BackgroundColor3 = Color3.fromRGB(22, 49, 54)
 reopen.Visible = false
 reopen.ZIndex = 10
 close.MouseButton1Click:Connect(function() menu.Visible = false; reopen.Visible = true end)
 reopen.MouseButton1Click:Connect(function() menu.Visible = true; reopen.Visible = false end)
 state.menu = menu
+-- Подгоняем панель под маленький экран; изменения устройства не растягивают её.
+local menuScale = Instance.new("UIScale")
+menuScale.Parent = menu
+local function updateMenuScale()
+    local camera = Workspace.CurrentCamera
+    if camera then
+        local size = camera.ViewportSize
+        menuScale.Scale = math.clamp(math.min((size.X-16)/360, (size.Y-16)/280), 0.55, 1)
+    end
+end
+local viewportConnection
+local function watchCamera()
+    if viewportConnection then viewportConnection:Disconnect(); viewportConnection = nil end
+    if Workspace.CurrentCamera then
+        viewportConnection = Workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateMenuScale)
+    end
+    updateMenuScale()
+end
+watchCamera()
+Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCamera)
 
 -- Сохраняем UDim2 как есть: вместо пересчёта AbsolutePosition не появляется скачок.
 local drag, origin, original
@@ -165,27 +191,34 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+-- Компактная панель: четыре страницы, единые карточки и состояния.
 local selectedTab = "COMBAT"
-local tabs, entries = {}, {}
+local tabs, entries, indicators = {}, {}, {}
 local groups = {
-    ["SILENT"] = {"COMBAT", 0}, ["AUTO SHOOT"] = {"COMBAT", 1},
-    ["AUTOWALL"] = {"COMBAT", 2}, ["FORCE ORIGIN"] = {"COMBAT", 3},
-    ["TEAM CHECK"] = {"COMBAT", 4}, ["ORIGIN RANGE"] = {"COMBAT", 5},
-    ["RAPID"] = {"WEAPON", 0}, ["AUTO RELOAD"] = {"WEAPON", 1}, ["INSTA RELOAD"] = {"WEAPON", 2},
-    ["ESP BOX"] = {"VISUALS", 0}, ["NAMES / HP"] = {"VISUALS", 1}, ["OUTLINE"] = {"VISUALS", 2},
-    ["BOX STYLE"] = {"VISUALS", 3}, ["OUTLINE STYLE"] = {"VISUALS", 4},
+    ["SILENT"]={"COMBAT",0}, ["AUTO SHOOT"]={"COMBAT",1},
+    ["AUTOWALL"]={"COMBAT",2}, ["FORCE ORIGIN"]={"COMBAT",3}, ["TEAM CHECK"]={"COMBAT",4},
+    ["RAPID"]={"WEAPON",0}, ["AUTO RELOAD"]={"WEAPON",1}, ["INSTA RELOAD"]={"WEAPON",2},
+    ["ESP BOX"]={"VISUALS",0}, ["NAMES / HP"]={"VISUALS",1}, ["OUTLINE"]={"VISUALS",2}, ["CHAMS"]={"VISUALS",3},
+    ["BOX STYLE"]={"VISUALS",4}, ["OUTLINE STYLE"]={"VISUALS",5}, ["CHAMS STYLE"]={"VISUALS",6}, ["ESP COLOR"]={"VISUALS",7},
+    ["ANTI SMOKE"]={"EFFECTS",0}, ["ANTI FLASH"]={"EFFECTS",1},
 }
+local pageHint = label(menu, "TARGETING  /  360°", UDim2.fromOffset(240,15), UDim2.fromOffset(15,84), 9)
+pageHint.TextColor3 = Color3.fromRGB(108, 128, 152)
+pageHint.ZIndex = 12
 local function setTab(name)
     selectedTab = name
+    local hints = {COMBAT="TARGETING  /  360°", WEAPON="WEAPON CONTROL", VISUALS="ENEMY VISUALS", EFFECTS="LOCAL EFFECT FILTERS"}
+    pageHint.Text = hints[name]
     for group, button in pairs(tabs) do
-        button.BackgroundColor3 = group == name and Color3.fromRGB(65, 86, 138) or Color3.fromRGB(31, 37, 54)
+        local active = group == name
+        button.BackgroundColor3 = active and Color3.fromRGB(31, 82, 78) or Color3.fromRGB(22, 27, 40)
+        button.TextColor3 = active and Color3.fromRGB(175, 255, 238) or Color3.fromRGB(139, 156, 178)
     end
     for _, entry in ipairs(entries) do entry.button.Visible = entry.group == name end
 end
-for index, name in ipairs({"COMBAT", "WEAPON", "VISUALS"}) do
-    local tab = smallButton(menu, name, UDim2.fromOffset(90, 28), UDim2.fromOffset(14 + (index - 1) * 96, 51))
-    tab.TextSize = 10
-    tab.ZIndex = 12
+for index, name in ipairs({"COMBAT", "WEAPON", "VISUALS", "EFFECTS"}) do
+    local tab = smallButton(menu, name, UDim2.fromOffset(79, 26), UDim2.fromOffset(14+(index-1)*84, 53))
+    tab.Name, tab.TextSize, tab.ZIndex = name.."Tab", 9, 12
     tabs[name] = tab
     tab.MouseButton1Click:Connect(function() setTab(name) end)
 end
@@ -193,20 +226,29 @@ setTab(selectedTab)
 local function makeToggle(name, index)
     local layout = assert(groups[name], "unknown toggle: " .. name)
     local col, row = layout[2] % 2, math.floor(layout[2] / 2)
-    local item = smallButton(menu, name .. "  OFF", UDim2.fromOffset(137, 37), UDim2.fromOffset(14 + col * 145, 87 + row * 42))
-    item.Name, item.ZIndex = name .. "Toggle", 12
-    item.TextSize = 11
+    local item = smallButton(menu, "   "..name, UDim2.fromOffset(162, 32), UDim2.fromOffset(14+col*170, 103+row*37))
+    item.Name, item.ZIndex, item.TextSize = name.."Toggle", 12, 10
+    item.TextXAlignment = Enum.TextXAlignment.Left
+    item.BackgroundColor3 = Color3.fromRGB(24, 30, 44)
     item.Visible = layout[1] == selectedTab
-    table.insert(entries, {group = layout[1], button = item})
+    local edge = Instance.new("UIStroke")
+    edge.Color, edge.Thickness, edge.Transparency, edge.Parent = Color3.fromRGB(55, 68, 88), 1, 0.35, item
+    local status = label(item, "", UDim2.fromOffset(35,18), UDim2.new(1,-40,0.5,-9), 9)
+    status.TextXAlignment, status.ZIndex = Enum.TextXAlignment.Right, 14
+    indicators[item] = {status=status, edge=edge}
+    table.insert(entries, {group=layout[1], button=item})
     return item
 end
 local function showToggle(item, name, enabled, waiting)
-    item.Text = name .. (waiting and "  …" or (enabled and "  ON" or "  OFF"))
-    item.BackgroundColor3 = waiting and Color3.fromRGB(93, 75, 44)
-        or (enabled and Color3.fromRGB(37, 122, 100) or Color3.fromRGB(38, 45, 67))
+    item.Text = "   " .. name
+    item.BackgroundColor3 = enabled and Color3.fromRGB(22, 49, 49) or Color3.fromRGB(24, 30, 44)
+    local data = indicators[item]
+    data.status.Text = waiting and "WAIT" or (enabled and "ON" or "OFF")
+    data.status.TextColor3 = waiting and Color3.fromRGB(247, 192, 103) or (enabled and Color3.fromRGB(109, 246, 210) or Color3.fromRGB(112, 129, 151))
+    data.edge.Color = enabled and Color3.fromRGB(65, 164, 143) or Color3.fromRGB(55, 68, 88)
 end
-local footer = label(menu, "360° AIM   •   TOGGLE & PLAY", UDim2.new(1, -28, 0, 16), UDim2.fromOffset(14, 224), 9)
-footer.TextColor3 = Color3.fromRGB(130, 147, 181)
+local footer = label(menu, "CLIENT CONTROL     •     TAP TO CONFIGURE", UDim2.new(1, -28, 0, 16), UDim2.fromOffset(14, 258), 9)
+footer.TextColor3 = Color3.fromRGB(95, 112, 135)
 footer.ZIndex = 12
 local button = makeToggle("SILENT", 0)
 
@@ -467,6 +509,7 @@ end
 -- Сканируем точки вокруг камеры, не проходя через препятствия от исходной точки.
 -- Исключения те же, что у проверки видимости; это приближение, не копия Shitaro.
 local function findShiftedOrigin(origin, target, camera)
+    if config.originRadius <= 0 then return nil end
     local direction = target.Position - origin
     if direction.Magnitude < 0.01 then return nil end
     local right = direction.Unit:Cross(Vector3.new(0, 1, 0))
@@ -550,33 +593,101 @@ local extras = state.extras
 local originButton = makeToggle("FORCE ORIGIN", 8)
 local autoReloadButton = makeToggle("AUTO RELOAD", 9)
 local instaReloadButton = makeToggle("INSTA RELOAD", 10)
-local rangeButton = makeToggle("ORIGIN RANGE", 11)
 local boxStyleButton = makeToggle("BOX STYLE", 12)
 local outlineStyleButton = makeToggle("OUTLINE STYLE", 13)
-local boxStyle, outlineStyle = 1, 1
+local chamsButton = makeToggle("CHAMS", 14)
+local chamsStyleButton = makeToggle("CHAMS STYLE", 15)
+local colorButton = makeToggle("ESP COLOR", 16)
+local smokeButton = makeToggle("ANTI SMOKE", 17)
+local flashButton = makeToggle("ANTI FLASH", 18)
+local boxStyle, outlineStyle, chamsStyle, colorStyle = 2, 1, 1, 1
 local boxNames = {"FULL", "CORNERS", "SOFT"}
-local outlineNames = {"GLOW", "EDGE", "SOLID"}
-local function refreshStyles()
-    rangeButton.Text = "RANGE  " .. config.originRadius .. " st"
-    boxStyleButton.Text = "BOX  " .. boxNames[boxStyle]
-    outlineStyleButton.Text = "OUTLINE  " .. outlineNames[outlineStyle]
+local outlineNames = {"GLOW", "EDGE", "SOFT"}
+local chamsNames = {"GLASS", "SOLID", "PULSE"}
+local colorNames = {"MINT", "ROSE", "ICE"}
+local colors = {
+    {bright=Color3.fromRGB(113,255,222), fill=Color3.fromRGB(36,207,177)},
+    {bright=Color3.fromRGB(255,138,175), fill=Color3.fromRGB(229,67,121)},
+    {bright=Color3.fromRGB(138,201,255), fill=Color3.fromRGB(69,138,236)},
+}
+local function styleCard(item, title, value)
+    item.Text = "   "..title
+    local status = indicators[item].status
+    status.Text, status.TextColor3 = value, Color3.fromRGB(131, 220, 209)
+    status.Size = UDim2.fromOffset(62,18)
+    status.Position = UDim2.new(1,-67,0.5,-9)
 end
-rangeButton.MouseButton1Click:Connect(function()
-    config.originRadius = config.originRadius == 3 and 6 or (config.originRadius == 6 and 9 or 3)
-    refreshStyles()
-end)
-boxStyleButton.MouseButton1Click:Connect(function() boxStyle = boxStyle % 3 + 1; refreshStyles() end)
-outlineStyleButton.MouseButton1Click:Connect(function() outlineStyle = outlineStyle % 3 + 1; refreshStyles() end)
+local function refreshStyles()
+    styleCard(boxStyleButton, "BOX", boxNames[boxStyle])
+    styleCard(outlineStyleButton, "OUTLINE", outlineNames[outlineStyle])
+    styleCard(chamsStyleButton, "CHAMS", chamsNames[chamsStyle])
+    styleCard(colorButton, "COLOR", colorNames[colorStyle])
+end
+boxStyleButton.MouseButton1Click:Connect(function() boxStyle = boxStyle % #boxNames + 1; refreshStyles() end)
+outlineStyleButton.MouseButton1Click:Connect(function() outlineStyle = outlineStyle % #outlineNames + 1; refreshStyles() end)
+chamsStyleButton.MouseButton1Click:Connect(function() chamsStyle = chamsStyle % #chamsNames + 1; refreshStyles() end)
+colorButton.MouseButton1Click:Connect(function() colorStyle = colorStyle % #colorNames + 1; refreshStyles() end)
 refreshStyles()
+
+-- Ползунок Force Origin. AbsolutePosition/AbsoluteSize учитывают UIScale телефона.
+local slider = Instance.new("Frame")
+slider.Name, slider.BackgroundColor3, slider.BorderSizePixel = "OriginSlider", Color3.fromRGB(24,30,44), 0
+slider.Size, slider.Position, slider.ZIndex = UDim2.fromOffset(332, 42), UDim2.fromOffset(14, 211), 12
+slider.Parent = menu
+round(slider, 8)
+local sliderEdge = Instance.new("UIStroke")
+sliderEdge.Color, sliderEdge.Transparency, sliderEdge.Parent = Color3.fromRGB(55,68,88), 0.35, slider
+local sliderTitle = label(slider, "ORIGIN RADIUS", UDim2.fromOffset(170,14), UDim2.fromOffset(10,5), 9)
+sliderTitle.TextColor3, sliderTitle.ZIndex = Color3.fromRGB(172,190,205), 13
+local sliderValue = label(slider, "", UDim2.fromOffset(65,14), UDim2.new(1,-75,0,5), 9)
+sliderValue.TextXAlignment, sliderValue.TextColor3, sliderValue.ZIndex = Enum.TextXAlignment.Right, Color3.fromRGB(120,246,221), 13
+local track = Instance.new("Frame")
+track.Name, track.BorderSizePixel, track.BackgroundColor3 = "Track", 0, Color3.fromRGB(45,58,73)
+track.Position, track.Size, track.ZIndex, track.Parent = UDim2.fromOffset(12,28), UDim2.new(1,-24,0,4), 13, slider
+round(track, 3)
+local fill = Instance.new("Frame")
+fill.BorderSizePixel, fill.BackgroundColor3, fill.ZIndex, fill.Parent = 0, Color3.fromRGB(95,230,200), 14, track
+round(fill, 3)
+local knob = Instance.new("Frame")
+knob.AnchorPoint, knob.Size = Vector2.new(0.5,0.5), UDim2.fromOffset(13,13)
+knob.BackgroundColor3, knob.BorderSizePixel, knob.ZIndex, knob.Parent = Color3.fromRGB(211,255,244), 0, 15, track
+round(knob, 8)
+local function redrawSlider()
+    local ratio = config.originRadius/9
+    fill.Size, knob.Position = UDim2.fromScale(ratio,1), UDim2.fromScale(ratio,0.5)
+    sliderValue.Text = string.format("%.1f st", config.originRadius)
+end
+redrawSlider()
+table.insert(entries, {group="COMBAT", button=slider})
+slider.Visible = selectedTab == "COMBAT"
+local sliderInput
+local function sliderMove(input)
+    local width = track.AbsoluteSize.X
+    if width <= 0 then return end
+    local ratio = math.clamp((input.Position.X-track.AbsolutePosition.X)/width, 0, 1)
+    config.originRadius = math.floor(ratio*90+0.5)/10
+    redrawSlider()
+end
+slider.Active = true
+slider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        sliderInput = input
+        sliderMove(input)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if not sliderInput then return end
+    if input == sliderInput or (sliderInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseMovement) then sliderMove(input) end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if sliderInput and (input == sliderInput or (sliderInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseButton1)) then sliderInput=nil end
+end)
 
 
 local function refreshExtras()
     showToggle(autoButton, "AUTO SHOOT", extras.autoShoot, false)
     showToggle(wallButton, "AUTOWALL", extras.autoWall, not state.wallReady)
-    if state.wallFailed then
-        wallButton.Text = "AUTOWALL  N/A"
-        wallButton.BackgroundColor3 = Color3.fromRGB(80, 49, 55)
-    end
+
     showToggle(boxButton, "ESP BOX", extras.box, false)
     showToggle(namesButton, "NAMES / HP", extras.names, false)
     showToggle(outlineButton, "OUTLINE", extras.outline, false)
@@ -584,8 +695,9 @@ local function refreshExtras()
     showToggle(originButton, "FORCE ORIGIN", extras.forceOrigin, not state.forceReady)
     showToggle(autoReloadButton, "AUTO RELOAD", extras.autoReload, false)
     showToggle(instaReloadButton, "INSTA RELOAD", extras.instaReload, extras.instaReload and not state.reloadReady)
-    if state.forceFailed then originButton.Text = "FORCE ORIGIN  N/A" end
-    if state.reloadFailed and extras.instaReload then instaReloadButton.Text = "RELOAD  WAIT" end
+    showToggle(chamsButton, "CHAMS", extras.chams, false)
+    showToggle(smokeButton, "ANTI SMOKE", extras.antiSmoke, extras.antiSmoke and not state.smokeReady)
+    showToggle(flashButton, "ANTI FLASH", extras.antiFlash, extras.antiFlash and not state.flashReady)
 end
 
 originButton.MouseButton1Click:Connect(function()
@@ -620,11 +732,12 @@ end)
 boxButton.MouseButton1Click:Connect(function() extras.box = not extras.box; refreshExtras() end)
 namesButton.MouseButton1Click:Connect(function() extras.names = not extras.names; refreshExtras() end)
 outlineButton.MouseButton1Click:Connect(function() extras.outline = not extras.outline; refreshExtras() end)
+chamsButton.MouseButton1Click:Connect(function() extras.chams = not extras.chams; refreshExtras() end)
 teamButton.MouseButton1Click:Connect(function() config.teamCheck = not config.teamCheck; refreshExtras() end)
 refreshExtras()
 
 task.spawn(function()
-    for _ = 1, 60 do
+    while gui.Parent do
         local sharedFolder = ReplicatedStorage:FindFirstChild("Shared")
         local rayModule = sharedFolder and sharedFolder:FindFirstChild("Raycast")
         local components = ReplicatedStorage:FindFirstChild("Components")
@@ -704,6 +817,67 @@ local function getModule(...)
     local ok, result = pcall(require, node)
     if ok and type(result) == "table" then return result end
 end
+-- Удаляем только локальные визуальные эффекты; на серверное состояние гранат не влияет.
+local effectModules = {}
+local function cancelExisting(kind)
+    local module = effectModules[kind]
+    if not module then return end
+    if kind == "flash" and type(module.CancelFlash) == "function" then pcall(module.CancelFlash) end
+    if kind == "smoke" and type(module.DestroyAll) == "function" then pcall(module.DestroyAll) end
+end
+smokeButton.MouseButton1Click:Connect(function()
+    extras.antiSmoke = not extras.antiSmoke
+    if extras.antiSmoke then cancelExisting("smoke") end
+    refreshExtras()
+end)
+flashButton.MouseButton1Click:Connect(function()
+    extras.antiFlash = not extras.antiFlash
+    if extras.antiFlash then cancelExisting("flash") end
+    refreshExtras()
+end)
+local function installEffect(module, method, flag, blockedReturn)
+    local fn = module and module[method]
+    if type(fn) ~= "function" then return false end
+    -- hookfunction перехватывает и сохранённые ссылки; если недоступен, меняем поле модуля.
+    local hookFn = hookfunction or replaceclosure
+    if type(hookFn) == "function" then
+        local previous
+        local ok, result = pcall(function()
+            return hookFn(fn, function(...)
+                if extras[flag] then return blockedReturn end
+                return previous(...)
+            end)
+        end)
+        if ok and type(result) == "function" then previous = result; return true end
+    end
+    local wrapped = function(...)
+        if extras[flag] then return blockedReturn end
+        return fn(...)
+    end
+    local ok = pcall(function() module[method] = wrapped end)
+    return ok and module[method] == wrapped
+end
+task.spawn(function()
+    while gui.Parent and not (state.smokeReady and state.flashReady) do
+        if not state.smokeReady then
+            local module = getModule("Components", "Common", "VFXLibary", "CreateVoxelSmoke")
+            if module and installEffect(module, "Create", "antiSmoke", nil) then
+                state.smokeReady, effectModules.smoke = true, module
+                if extras.antiSmoke then cancelExisting("smoke") end
+            end
+        end
+        if not state.flashReady then
+            local module = getModule("Components", "Common", "VFXLibary", "FlashEffect")
+            if module and installEffect(module, "Flash", "antiFlash", false) then
+                state.flashReady, effectModules.flash = true, module
+                if extras.antiFlash then cancelExisting("flash") end
+            end
+        end
+        refreshExtras()
+        task.wait(2)
+    end
+end)
+
 local function tryInstantReload(w)
     local inventory = state.net and state.net.Inventory
     local packet = inventory and inventory.ReloadWeapon
@@ -789,7 +963,7 @@ local bodyNames = {"Head", "UpperTorso", "LowerTorso", "Torso", "HumanoidRootPar
 local function removeEntry(model)
     local entry = esp[model]
     if not entry then return end
-    entry.box:Destroy(); entry.caption:Destroy(); entry.healthBack:Destroy()
+    entry.box:Destroy(); entry.shadow:Destroy(); entry.caption:Destroy(); entry.distance:Destroy(); entry.hpText:Destroy(); entry.healthBack:Destroy()
     if entry.highlight then entry.highlight:Destroy() end
     esp[model] = nil
 end
@@ -798,6 +972,11 @@ local function entryFor(model)
     local box = Instance.new("Frame")
     box.Name, box.BackgroundTransparency, box.BorderSizePixel, box.Visible, box.ZIndex = "EnemyBox", 1, 0, false, 2
     box.Parent = overlay
+    local shadow = Instance.new("Frame")
+    shadow.Name, shadow.BackgroundTransparency, shadow.BorderSizePixel, shadow.ZIndex = "BoxShadow", 1, 0, 1
+    shadow.Parent = overlay
+    local shadowStroke = Instance.new("UIStroke")
+    shadowStroke.Color, shadowStroke.Thickness, shadowStroke.Transparency, shadowStroke.Parent = Color3.fromRGB(2,7,12), 3, 0.18, shadow
     local stroke = Instance.new("UIStroke")
     stroke.Color, stroke.Thickness, stroke.Parent = Color3.fromRGB(106, 233, 208), 1.3, box
     local corners = {}
@@ -805,6 +984,8 @@ local function entryFor(model)
         local bar = Instance.new("Frame")
         bar.Name, bar.BackgroundColor3, bar.BorderSizePixel, bar.ZIndex = "Corner"..i, Color3.fromRGB(106,233,208), 0, 3
         bar.Parent = box
+        local blackEdge = Instance.new("UIStroke")
+        blackEdge.Color, blackEdge.Thickness, blackEdge.Transparency, blackEdge.Parent = Color3.fromRGB(1,8,12), 1, 0.2, bar
         corners[i] = bar
     end
     local caption = Instance.new("TextLabel")
@@ -814,8 +995,20 @@ local function entryFor(model)
     caption.BackgroundTransparency = 1
     caption.TextColor3 = Color3.fromRGB(239, 255, 252)
     caption.TextStrokeTransparency = 0.12
-    caption.Font, caption.TextSize, caption.Visible, caption.ZIndex = Enum.Font.GothamBold, 11, false, 2
+    caption.Font, caption.TextSize, caption.Visible, caption.ZIndex = Enum.Font.GothamBold, 11, false, 3
     caption.Parent = overlay
+    local distance = Instance.new("TextLabel")
+    distance.Name, distance.AnchorPoint = "EnemyDistance", Vector2.new(0.5, 0)
+    distance.Size, distance.BackgroundTransparency = UDim2.fromOffset(110, 15), 1
+    distance.TextColor3, distance.TextStrokeTransparency = Color3.fromRGB(211, 228, 235), 0.15
+    distance.Font, distance.TextSize, distance.Visible, distance.ZIndex = Enum.Font.GothamBold, 10, false, 3
+    distance.Parent = overlay
+    local hpText = Instance.new("TextLabel")
+    hpText.Name, hpText.AnchorPoint = "EnemyHealth", Vector2.new(1, 0.5)
+    hpText.Size, hpText.BackgroundTransparency = UDim2.fromOffset(35, 14), 1
+    hpText.TextColor3, hpText.TextStrokeTransparency = Color3.fromRGB(225,255,235), 0.1
+    hpText.TextXAlignment, hpText.Font, hpText.TextSize, hpText.ZIndex = Enum.TextXAlignment.Right, Enum.Font.GothamBold, 9, 3
+    hpText.Visible, hpText.Parent = false, overlay
     local healthBack = Instance.new("Frame")
     healthBack.Name = "HealthBack"
     healthBack.BackgroundColor3 = Color3.fromRGB(12, 18, 24)
@@ -826,7 +1019,7 @@ local function entryFor(model)
     healthFill.Position = UDim2.fromScale(0, 1)
     healthFill.BorderSizePixel, healthFill.ZIndex = 0, 3
     healthFill.Parent = healthBack
-    local entry = {box = box, stroke = stroke, corners = corners, caption = caption, healthBack = healthBack, healthFill = healthFill}
+    local entry = {box = box, shadow = shadow, stroke = stroke, corners = corners, caption = caption, distance = distance, hpText = hpText, healthBack = healthBack, healthFill = healthFill}
     esp[model] = entry
     return entry
 end
@@ -873,7 +1066,7 @@ local function boundsOnScreen(camera, model)
 end
 local function updateEsp()
     local camera, characters = Workspace.CurrentCamera, Workspace:FindFirstChild("Characters")
-    if not (extras.box or extras.names or extras.outline) or not camera or not characters then
+    if not (extras.box or extras.names or extras.outline or extras.chams) or not camera or not characters then
         for model in pairs(esp) do removeEntry(model) end
         return
     end
@@ -890,7 +1083,7 @@ local function updateEsp()
             if not hp or hp > 0 then
                 seen[model] = true
                 local entry = entryFor(model)
-                if extras.outline then
+                if extras.outline or extras.chams then
                     if not entry.highlight then
                         local h = Instance.new("Highlight")
                         h.Name, h.DepthMode = "EnemyOutline", Enum.HighlightDepthMode.AlwaysOnTop
@@ -899,19 +1092,31 @@ local function updateEsp()
                         h.Adornee, h.Parent = model, gui
                         entry.highlight = h
                     end
+                    local color = colors[colorStyle]
                     entry.highlight.Enabled = true
-                    entry.highlight.FillTransparency = outlineStyle == 1 and 0.86 or (outlineStyle == 2 and 1 or 0.55)
-                    entry.highlight.OutlineTransparency = outlineStyle == 3 and 0.1 or 0
+                    entry.highlight.FillColor, entry.highlight.OutlineColor = color.fill, color.bright
+                    if extras.chams then
+                        entry.highlight.FillTransparency = chamsStyle == 1 and 0.65 or (chamsStyle == 2 and 0.28 or 0.48 + math.sin(os.clock()*2.5)*0.12)
+                    else
+                        entry.highlight.FillTransparency = 1
+                    end
+                    entry.highlight.OutlineTransparency = not extras.outline and 1 or (outlineStyle == 1 and 0 or (outlineStyle == 2 and 0.18 or 0.48))
                 elseif entry.highlight then entry.highlight.Enabled = false end
                 local x,y,w,h = boundsOnScreen(camera,model)
                 entry.box.Visible = extras.box and x ~= nil
+                entry.shadow.Visible = extras.box and boxStyle ~= 2 and x ~= nil
                 entry.caption.Visible = extras.names and x ~= nil
+                entry.distance.Visible = extras.names and x ~= nil
+                entry.hpText.Visible = extras.names and x ~= nil and hp ~= nil
                 entry.healthBack.Visible = extras.names and x ~= nil and hp ~= nil
                 if x then
                     entry.box.Position,entry.box.Size = UDim2.fromOffset(x,y),UDim2.fromOffset(w,h)
+                    entry.shadow.Position,entry.shadow.Size = entry.box.Position,entry.box.Size
+                    local color = colors[colorStyle]
+                    entry.stroke.Color = color.bright
                     entry.stroke.Enabled = boxStyle ~= 2
                     entry.stroke.Transparency = boxStyle == 3 and 0.42 or 0
-                    entry.box.BackgroundColor3 = Color3.fromRGB(46, 186, 165)
+                    entry.box.BackgroundColor3 = color.fill
                     entry.box.BackgroundTransparency = boxStyle == 3 and 0.91 or 1
                     local cw, ch = math.max(4, math.floor(w*0.25)), math.max(4, math.floor(h*0.20))
                     local positions = {{0,0,cw,2},{0,0,2,ch},{w-cw,0,cw,2},{w-2,0,2,ch},
@@ -919,10 +1124,12 @@ local function updateEsp()
                     for i, bar in ipairs(entry.corners) do
                         local q = positions[i]
                         bar.Visible = boxStyle == 2
+                        bar.BackgroundColor3 = color.bright
                         bar.Position, bar.Size = UDim2.fromOffset(q[1],q[2]), UDim2.fromOffset(q[3],q[4])
                     end
                     entry.caption.Position = UDim2.fromOffset(x+w/2,y-3)
-                    entry.healthBack.Position,entry.healthBack.Size = UDim2.fromOffset(x-5,y),UDim2.fromOffset(3,h)
+                    entry.caption.TextColor3 = color.bright
+                    entry.healthBack.Position,entry.healthBack.Size = UDim2.fromOffset(x-7,y-1),UDim2.fromOffset(4,h+2)
                     if hp then
                         local ratio = math.clamp(hp / math.max(1, maxHp),0,1)
                         entry.healthFill.Size = UDim2.fromScale(1,ratio)
@@ -930,7 +1137,13 @@ local function updateEsp()
                     end
                     local head = model:FindFirstChild("Head")
                     local distance = head and math.floor((head.Position-camera.CFrame.Position).Magnitude) or 0
-                    entry.caption.Text = model.Name .. "  ·  " .. (hp and tostring(math.floor(hp)).." HP" or "HP ?") .. "  ·  " .. tostring(distance).." st"
+                    entry.caption.Text = model.Name
+                    entry.distance.Position = UDim2.fromOffset(x+w/2,y+h+3)
+                    entry.distance.Text = tostring(distance).." st"
+                    if hp then
+                        entry.hpText.Text = tostring(math.floor(hp))
+                        entry.hpText.Position = UDim2.fromOffset(x-9, y+h*(1-math.clamp(hp/math.max(1,maxHp),0,1)))
+                    end
                 end
             end
         end
@@ -1043,6 +1256,7 @@ local function install(bullet, sendFunction)
                 if not blocked then return previousRay(...) end
                 local shifted = findShiftedOrigin(origin, target, camera)
                 if not shifted or (aim-shifted).Magnitude < 0.01 then return previousRay(...) end
+                if Workspace:Raycast(shifted, aim-shifted, losParams) then return previousRay(...) end
                 local moved = pcall(function() camera.CFrame = CFrame.lookAt(shifted, aim) end)
                 if not moved then return previousRay(...) end
                 local resultPack = table.pack(pcall(previousRay, ...))
