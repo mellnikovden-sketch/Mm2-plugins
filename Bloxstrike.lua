@@ -5662,10 +5662,55 @@ do
     local pending=false;local lastCharacter
     local pixelNormal,pixelAt=nil,0
     local function clear()pending=false;lastCharacter=nil;pixelNormal=nil;pixelAt=0 end
+    -- Меняем только наши поля, возвращая исходную защиту таблицы сразу после записи.
+    local function writeRuntimeFields(rt,newAdvance,newCompose)
+        local beforeAdvance,beforeCompose=rt.advance,rt._composeWorld
+        if beforeAdvance==newAdvance and beforeCompose==newCompose then return true end
+        local wasReadonly=false
+        if type(isreadonly)=="function" then
+            local ok,value=pcall(isreadonly,rt);wasReadonly=ok and value==true
+        end
+        if wasReadonly then
+            if type(setreadonly)~="function" then return false,"readonly Runtime; setreadonly unavailable" end
+            local ok,err=pcall(setreadonly,rt,false)
+            if not ok then
+                local locked=pcall(setreadonly,rt,true)
+                local checked,stillReadonly=pcall(isreadonly,rt)
+                if not locked or not checked or stillReadonly~=true then q.Fatal=true;return false,"could not restore Runtime readonly state" end
+                return false,"could not unlock Runtime: "..tostring(err)
+            end
+        end
+        local written,err=pcall(function()
+            if rt.advance~=newAdvance then rt.advance=newAdvance end
+            if rt._composeWorld~=newCompose then rt._composeWorld=newCompose end
+            if rt.advance~=newAdvance or rt._composeWorld~=newCompose then error("assignment rejected") end
+        end)
+        if not written then
+            local rolled,rollbackError=pcall(function()
+                if rt.advance~=beforeAdvance then rt.advance=beforeAdvance end
+                if rt._composeWorld~=beforeCompose then rt._composeWorld=beforeCompose end
+                if rt.advance~=beforeAdvance or rt._composeWorld~=beforeCompose then error("rollback rejected") end
+            end)
+            if not rolled then q.Fatal=true;err=tostring(err).."; rollback failed: "..tostring(rollbackError) end
+        end
+        if wasReadonly then
+            local locked,lockError=pcall(setreadonly,rt,true)
+            local checked,stillReadonly=pcall(isreadonly,rt)
+            if not locked or not checked or stillReadonly~=true then
+                q.Fatal=true;return false,"could not restore Runtime readonly state: "..tostring(lockError or stillReadonly)
+            end
+        end
+        return written,err
+    end
     local function restore()
+        q.HookActive=false
         if runtimeModule then
-            pcall(function()if runtimeModule.advance==advanceWrapper then runtimeModule.advance=advanceOld end end)
-            pcall(function()if runtimeModule._composeWorld==composeWrapper then runtimeModule._composeWorld=composeOld end end)
+            local ok,worked,reason=pcall(function()
+                local advance=runtimeModule.advance==advanceWrapper and advanceOld or runtimeModule.advance
+                local compose=runtimeModule._composeWorld==composeWrapper and composeOld or runtimeModule._composeWorld
+                return writeRuntimeFields(runtimeModule,advance,compose)
+            end)
+            if not ok or not worked then warn("[NOIR / Movement] Runtime restore failed: "..tostring(ok and reason or worked)) end
         end
         q.Ready=false;clear();table.clear(captured)
     end
@@ -5697,30 +5742,29 @@ do
         end
         local oldAdvance,oldCompose=rt.advance,rt._composeWorld
         local newAdvance=function(self,...)
-            captured.runtime=self
+            if q.HookActive then captured.runtime=self end
             return oldAdvance(self,...)
         end
         local newCompose=function(self,tick,...)
             local result=table.pack(oldCompose(self,tick,...))
-            if result[1]~=nil then captured.world=result[1];captured.tick=tick;captured.owner=self end
+            if q.HookActive and result[1]~=nil then captured.world=result[1];captured.tick=tick;captured.owner=self end
             return table.unpack(result,1,result.n)
         end
-        local installed,installError=pcall(function() rt.advance=newAdvance;rt._composeWorld=newCompose end)
-        if not installed or rt.advance~=newAdvance or rt._composeWorld~=newCompose then
-            pcall(function() if rt.advance==newAdvance then rt.advance=oldAdvance end end)
-            pcall(function() if rt._composeWorld==newCompose then rt._composeWorld=oldCompose end end)
-            local message=installed and "assignment rejected" or tostring(installError):gsub("[%c]+"," "):sub(1,110)
+        local installed,installError=writeRuntimeFields(rt,newAdvance,newCompose)
+        if not installed then
+            local message=tostring(installError):gsub("[%c]+"," "):sub(1,150)
             q.Reason="Runtime hook unavailable: "..message;return false
         end
         sim,cloner,settings,serial,runtimeModule=s,c,cfg,ser,rt
         advanceOld,advanceWrapper,composeOld,composeWrapper=oldAdvance,newAdvance,oldCompose,newCompose
-        q.Reason=nil;q.Ready=true;return true
+        q.Reason=nil;q.HookActive=true;q.Ready=true;return true
     end
     task.spawn(function()
         while gui.Parent and not q.Ready do
             local ok,result=pcall(install)
             if ok and result then break end
             if not ok then q.Reason="setup error: "..tostring(result):gsub("[%c]+"," "):sub(1,110) end
+            if q.Fatal then break end
             task.wait(2)
         end
     end)
