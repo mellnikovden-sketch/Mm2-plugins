@@ -83,6 +83,14 @@ do
     end)
 end
 
+-- RaycastResult.Instance может быть недоступен в ограниченном игровом потоке.
+local function safeHitInstance(hit)
+    if hit==nil then return nil end
+    local ok,part=pcall(function()return hit.Instance end)
+    if ok then return part end
+    return nil
+end
+
 -- Интерфейс: одно окно, а не отдельные кнопки.
 local function round(object, radius)
     local c = Instance.new("UICorner")
@@ -1740,11 +1748,21 @@ do
 
     -- MovementV2 input: сохраняем штатную логику Bhop и изменяем только нужные поля команды.
     local lastGroundPulse,lastStrafeYaw,strafeSide = false,nil,1
+    local context={alive=false,character=nil,blocked=true};movement.context=context
+    local lastMovementContext=0;local movementContextConnection
+    movementContextConnection=RunService.Heartbeat:Connect(function()
+        if not gui.Parent then context.alive=false;context.blocked=true;movementContextConnection:Disconnect();return end
+        local now=os.clock();if now-lastMovementContext<0.05 then return end;lastMovementContext=now
+        local ok=pcall(function()
+            context.character=localPlayer.Character;context.alive=true
+            context.blocked=not context.character or localPlayer:GetAttribute("IsDefusingBomb")==true or localPlayer:GetAttribute("IsLocallyDefusingBomb")==true or localPlayer:GetAttribute("IsPlantingBomb")==true
+        end)
+        if not ok then context.blocked=true end
+    end)
     local function editCommand(character, command)
-        if type(character)~="table" or type(command)~="table" or not gui.Parent then lastGroundPulse=false;lastStrafeYaw=nil;return end
+        if type(character)~="table" or type(command)~="table" or not context.alive or context.blocked then lastGroundPulse=false;lastStrafeYaw=nil;return end
         if character.Player and character.Player~=localPlayer then return end
-        if character.Character and localPlayer.Character and character.Character~=localPlayer.Character then return end
-        if localPlayer:GetAttribute("IsDefusingBomb")==true or localPlayer:GetAttribute("IsLocallyDefusingBomb")==true then lastGroundPulse=false;lastStrafeYaw=nil;return end
+        if character.Character and context.character and character.Character~=context.character then return end
         local ms=type(character.MovementState)=="table" and character.MovementState or nil
         local grounded=ms and ms.OnGround
         if type(grounded)~="boolean" then grounded=character.OnGround end
@@ -2273,7 +2291,7 @@ do
         if debris then table.insert(ignored,debris) end
         ray.FilterDescendantsInstances = ignored
         local hit = Workspace:Raycast(root.Position,Vector3.new(0,-5,0),ray)
-        local part = hit and hit.Instance
+        local part = safeHitInstance(hit)
         if not part or not collection:HasTag(part,"PlantArea") or part:GetAttribute("Site")==nil then return end
         plantNext=now+0.7
         pcall(weapon.shoot,weapon)
@@ -4135,7 +4153,8 @@ do
         ColorCorrection=false,Tint=Color3.new(1,1,1),Saturation=0,Brightness=0,Contrast=0,
         Tracers=false,TracerColor=Color3.fromRGB(120,255,170),TracerWidth=0.05,TracerLife=1.2,
         Impacts=false,ImpactColor=Color3.fromRGB(255,180,90),ImpactLife=3,
-        Triggerbot=false,TriggerPart="Any",TriggerDelay=0.12,TriggerRange=2000}
+        Triggerbot=false,TriggerPart="Any",TriggerDelay=0.12,TriggerRange=2000,
+        TriggerMulti=false,TriggerParts={Head=true,Chest=true,Stomach=true,Arms=true},TriggerReaction=0,TriggerScoped=false}
     state.shitaro=q
     local original={}
     local bloom,correction
@@ -4215,6 +4234,53 @@ do
     end
     local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.IgnoreWater=true
     local lastShot,lastStep,lastWarn=0,0,0
+    local triggerTarget,triggerSince
+    local function clearTrigger()triggerTarget=nil;triggerSince=nil end
+    local function partGroup(name)
+        if name=="Head" then return "Head" end
+        if name=="LowerTorso" then return "Stomach" end
+        if name=="UpperTorso" or name=="Torso" or name=="HumanoidRootPart" then return "Chest" end
+        if name:find("Arm",1,true) or name:find("Hand",1,true) then return "Arms" end
+        if name:find("Leg",1,true) or name:find("Foot",1,true) then return "Legs" end
+        return nil
+    end
+    local function triggerStep(now)
+        if not q.Triggerbot then clearTrigger();return end
+        if q.TriggerScoped and localPlayer:GetAttribute("IsSniperScoped")~=true then clearTrigger();return end
+        local cam=Workspace.CurrentCamera
+        local characters=Workspace:FindFirstChild("Characters")
+        local own=characters and characters:FindFirstChild(localPlayer.Name) or localPlayer.Character
+        local controller=state.rapid and state.rapid.controller
+        if not (cam and characters and own and controller and type(controller.peekCurrentEquippedForMovement)=="function") then clearTrigger();return end
+        params.FilterDescendantsInstances={cam,own}
+        local hit=Workspace:Raycast(cam.CFrame.Position,cam.CFrame.LookVector*q.TriggerRange,params)
+        local part=safeHitInstance(hit)
+        if not part then clearTrigger();return end
+        local target
+        for _,model in ipairs(characters:GetChildren()) do
+            if part:IsDescendantOf(model) then target=model;break end
+        end
+        local mine=localPlayer:GetAttribute("Team") or teamOf(own)
+        local ffa=string.find(tostring(Workspace:GetAttribute("Gamemode")),"Deathmatch",1,true)~=nil
+        if not (target and isEnemy(target,own,ffa,mine)) then clearTrigger();return end
+        if q.TriggerMulti then
+            local group=partGroup(part.Name)
+            if not group or not q.TriggerParts[group] then clearTrigger();return end
+        elseif (q.TriggerPart=="Head" and part.Name~="Head") or (q.TriggerPart=="Torso" and not string.find(part.Name,"Torso",1,true)) then
+            clearTrigger();return
+        end
+        if target~=triggerTarget then triggerTarget=target;triggerSince=now end
+        if now-(triggerSince or now)<math.clamp(tonumber(q.TriggerReaction) or 0,0,2) or now-lastShot<q.TriggerDelay then return end
+        local ok,weapon=pcall(controller.peekCurrentEquippedForMovement)
+        if not ok or type(weapon)~="table" or weapon.Player~=localPlayer or weapon.IsDestroyed or weapon.IsReloading or weapon.IsShooting or type(weapon.shoot)~="function" or (tonumber(weapon.Rounds) or 1)<=0 then return end
+        local props=weapon.Properties;local modes=type(props)=="table" and props.FireModes
+        local primary=type(modes)=="table" and modes.Primary
+        local fireRate=tonumber(type(primary)=="table" and primary.FireRate) or tonumber(type(props)=="table" and props.FireRate) or 0.12
+        lastShot=now+math.max(0,math.clamp(fireRate,1/19,2)-q.TriggerDelay)
+        local fired,err=pcall(weapon.shoot,weapon,"Primary")
+        if not fired and now-lastWarn>5 then lastWarn=now;warn("[NOIR / Triggerbot] "..tostring(err)) end
+    end
+
     local con
     con=RunService.Heartbeat:Connect(function()
         if not gui.Parent then
@@ -4226,33 +4292,7 @@ do
             local ok,err=pcall(lighting)
             if not ok and now-lastWarn>5 then lastWarn=now;warn("[NOIR / Lighting] "..tostring(err)) end
         end
-        if not q.Triggerbot or now-lastShot<q.TriggerDelay then return end
-        local cam=Workspace.CurrentCamera
-        local characters=Workspace:FindFirstChild("Characters")
-        local own=characters and characters:FindFirstChild(localPlayer.Name) or localPlayer.Character
-        local controller=state.rapid and state.rapid.controller
-        if not (cam and characters and own and controller and type(controller.peekCurrentEquippedForMovement)=="function") then return end
-        params.FilterDescendantsInstances={cam,own}
-        local hit=Workspace:Raycast(cam.CFrame.Position,cam.CFrame.LookVector*q.TriggerRange,params)
-        local part=hit and hit.Instance
-        if not part then return end
-        local target
-        for _,model in ipairs(characters:GetChildren()) do
-            if part:IsDescendantOf(model) then target=model;break end
-        end
-        local mine=localPlayer:GetAttribute("Team") or teamOf(own)
-        local ffa=string.find(tostring(Workspace:GetAttribute("Gamemode")),"Deathmatch",1,true)~=nil
-        if not (target and isEnemy(target,own,ffa,mine)) then return end
-        if q.TriggerPart=="Head" and part.Name~="Head" then return end
-        if q.TriggerPart=="Torso" and not string.find(part.Name,"Torso",1,true) then return end
-        local ok,weapon=pcall(controller.peekCurrentEquippedForMovement)
-        if not ok or type(weapon)~="table" or weapon.Player~=localPlayer or weapon.IsDestroyed or weapon.IsReloading or weapon.IsShooting or type(weapon.shoot)~="function" or (tonumber(weapon.Rounds) or 1)<=0 then return end
-        local props=weapon.Properties;local modes=type(props)=="table" and props.FireModes
-        local primary=type(modes)=="table" and modes.Primary
-        local fireRate=tonumber(type(primary)=="table" and primary.FireRate) or tonumber(type(props)=="table" and props.FireRate) or 0.12
-        lastShot=now+math.max(0,math.clamp(fireRate,1/19,2)-q.TriggerDelay)
-        local fired,err=pcall(weapon.shoot,weapon,"Primary")
-        if not fired and now-lastWarn>5 then lastWarn=now;warn("[NOIR / Triggerbot] "..tostring(err)) end
+        triggerStep(now)
     end)
 end
 
@@ -4603,7 +4643,14 @@ do
         ["Red night"]={401664839,401664862,401664960,401664881,401664936},
         Purple={13694952867,13694968325,13694980654,13694998113,13695002700,13695007103},
         Foggy={1370717244,1370717336,1370717438,1370717567,1370717698,1370717782}}
+    local customSkyAssets={Galaxy=15983996673,Anime=13107361022,Minecraft=2758029221}
     local hiddenSkies={};local sky,skyPreset
+    local requests,responses={},{};local loading=0;local closed=false;local closedAt=0;local lastSkyWarning=0
+    local function hideOriginalSkies()
+        for _,child in ipairs(Lighting:GetChildren()) do
+            if child~=sky and child:IsA("Sky") then hiddenSkies[child]=child.Parent;child.Parent=nil end
+        end
+    end
     local function restoreSky()
         if sky then sky:Destroy();sky=nil;skyPreset=nil end
         for object,parent in pairs(hiddenSkies) do
@@ -4611,12 +4658,63 @@ do
             hiddenSkies[object]=nil
         end
     end
+    local function cleanupLoaded(objects)
+        if type(objects)~="table" then return end
+        for _,object in ipairs(objects) do
+            if typeof(object)=="Instance" then pcall(function()object:Destroy()end) end
+        end
+    end
+    local function processSkyResponses()
+        local pending=responses;responses={}
+        for _,response in ipairs(pending) do
+            loading=math.max(0,loading-1)
+            local selected=not closed and q.Sky and q.SkyPreset==response.name and gui.Parent
+            local newSky
+            if selected and response.ok and type(response.objects)=="table" then
+                for _,object in ipairs(response.objects) do
+                    if typeof(object)=="Instance" then
+                        local ok,result=pcall(function()
+                            local found=object:IsA("Sky") and object or object:FindFirstChildWhichIsA("Sky",true)
+                            return found and found:Clone()
+                        end)
+                        if ok and result and result:IsA("Sky") then newSky=result;break end
+                    end
+                end
+            end
+            cleanupLoaded(response.objects)
+            if newSky then
+                -- Копируем только Sky, не импортируем скрипты и прочие объекты asset.
+                local ok=pcall(function()
+                    hideOriginalSkies()
+                    newSky.Name="NoirCustomSky";newSky.Parent=Lighting
+                    if sky then sky:Destroy() end
+                    sky=newSky;skyPreset=response.name
+                end)
+                if not ok then pcall(function()newSky:Destroy()end);restoreSky() end
+            elseif selected and os.clock()-lastSkyWarning>10 then
+                lastSkyWarning=os.clock();warn("[NOIR / Sky] Asset недоступен или не содержит Sky: "..response.name)
+            end
+        end
+    end
+    local function requestSky(name,id,now)
+        local last=requests[name]
+        if loading>=2 or (last and now-last<12) then return end
+        requests[name]=now;loading+=1
+        task.spawn(function()
+            -- После GetObjects поток может потерять права: только кладём ответ в Lua-очередь.
+            local ok,objects=pcall(function()return game:GetObjects("rbxassetid://"..tostring(id))end)
+            responses[#responses+1]={name=name,ok=ok,objects=objects}
+        end)
+    end
     local function updateSky()
         if not q.Sky then restoreSky();return end
-        local ids=presets[q.SkyPreset] or presets.Jungle
-        for _,child in ipairs(Lighting:GetChildren()) do
-            if child~=sky and child:IsA("Sky") then hiddenSkies[child]=child.Parent;child.Parent=nil end
+        local id=customSkyAssets[q.SkyPreset]
+        if id then
+            if sky and sky.Parent and skyPreset==q.SkyPreset then hideOriginalSkies();return end
+            requestSky(q.SkyPreset,id,os.clock());return
         end
+        local ids=presets[q.SkyPreset] or presets.Jungle
+        hideOriginalSkies()
         if not sky or not sky.Parent or skyPreset~=q.SkyPreset then
             if sky then sky:Destroy() end
             sky=Instance.new("Sky");sky.Name="NoirCustomSky"
@@ -4688,8 +4786,13 @@ do
     end
     local last,lastWarn=0,0;local con
     con=RunService.Heartbeat:Connect(function()
-        if not gui.Parent then
-            con:Disconnect();pcall(restoreSky);pcall(stopWeather);pcall(restoreOffsets);return
+        if not gui.Parent and not closed then
+            closed=true;closedAt=os.clock();pcall(restoreSky);pcall(stopWeather);pcall(restoreOffsets)
+        end
+        pcall(processSkyResponses)
+        if closed then
+            if loading==0 or os.clock()-closedAt>30 then con:Disconnect() end
+            return
         end
         local now=os.clock();if now-last<0.2 then return end;last=now
         for _,fn in ipairs({updateSky,updateWeather,updateOffsets}) do
@@ -5228,7 +5331,8 @@ do
                     local delta=target.Position-origin;local distance=delta.Magnitude
                     if distance>0.05 and distance<=limit and (not nearestDistance or distance<nearestDistance) then
                         local hit=Workspace:Raycast(origin,delta,ray)
-                        if not hit or (hit.Instance and hit.Instance:IsDescendantOf(model)) then nearest,nearestPart,nearestDistance=model,target,distance end
+                        local hitPart=safeHitInstance(hit)
+                        if not hit or (hitPart and hitPart:IsDescendantOf(model)) then nearest,nearestPart,nearestDistance=model,target,distance end
                     end
                 end
             end
@@ -5687,15 +5791,29 @@ do
         local nextState,events=predict(snapshot,current,simulated,bit32.band(command.Buttons,bit32.bnot(1)))
         if nextState and nextState.OnGround==true and not events.StartSolid then return localMove end
     end
+    local function safeSimulation(fn,...)
+        local result=table.pack(pcall(fn,...))
+        if not result[1] then
+            local message=tostring(result[2])
+            if message:find("lacking capability",1,true) or message:find("cannot access",1,true) then q.Blocked=true;q.BlockReason=message end
+        end
+        return table.unpack(result,1,result.n)
+    end
+    q.GetStatus=function()
+        if q.Blocked then return "Prediction: restricted; turn all prediction toggles off to retry" end
+        if not (q.EdgeJump or q.JumpBug or q.EdgeBug or q.PixelSurf) then return "Prediction: off" end
+        if not q.Ready then return "Prediction: waiting for MovementV2" end
+        return "Prediction: ready (requires compatible input thread)"
+    end
     function state.applyMovementPrediction(character,snapshot,command)
-        if not (q.EdgeJump or q.JumpBug or q.EdgeBug or q.PixelSurf) or not gui.Parent then clear();return end
+        local ctx=state.movement and state.movement.context
+        if not (q.EdgeJump or q.JumpBug or q.EdgeBug or q.PixelSurf) or q.Blocked or not ctx or not ctx.alive or ctx.blocked then clear();return end
         if type(character)~="table" or type(command)~="table" then return end
         if character.Player and character.Player~=localPlayer then return end
-        if character.Character and localPlayer.Character and character.Character~=localPlayer.Character then return end
-        if localPlayer:GetAttribute("IsDefusingBomb")==true or localPlayer:GetAttribute("IsLocallyDefusingBomb")==true or localPlayer:GetAttribute("IsPlantingBomb")==true then clear();return end
+        if character.Character and ctx.character and character.Character~=ctx.character then return end
         local current=type(snapshot)=="table" and snapshot.State or character.MovementState
         if type(current)~="table" or (current.MovementMode~=nil and current.MovementMode~="Walking") or type(command.Buttons)~="number" then clear();return end
-        local identity=character.Character or localPlayer.Character or character
+        local identity=character.Character or ctx.character or character
         if identity~=lastCharacter then pending=false;pixelNormal=nil;pixelAt=0;lastCharacter=identity end
         if not q.JumpBug then pending=false end
         if pending then
@@ -5710,19 +5828,19 @@ do
             return
         end
         if q.PixelSurf and current.OnGround==true then
-            local ok,move=pcall(pixelRide,snapshot,current,command)
+            local ok,move=safeSimulation(pixelRide,snapshot,current,command)
             if ok and typeof(move)=="Vector2" then command.Move=move;return end
         else pixelNormal=nil end
         if q.EdgeJump and current.OnGround==true then
             local buttons=bit32.band(command.Buttons,bit32.bnot(1))
-            local ok,nextState,events=pcall(predict,snapshot,current,command,buttons)
+            local ok,nextState,events=safeSimulation(predict,snapshot,current,command,buttons)
             if ok and nextState and events.LeftGround and not events.Jumped and nextState.OnGround~=true then
                 command.Buttons=bit32.bor(command.Buttons,1)
             end
         elseif current.OnGround==false and typeof(current.Velocity)=="Vector3" and current.Velocity.Y< -4 then
             local found=false
             if q.EdgeBug and type(snapshot)=="table" and type(snapshot.Mapping)=="table" then
-                local ok,move,duck=pcall(findEdgeBug,snapshot,current,command)
+                local ok,move,duck=safeSimulation(findEdgeBug,snapshot,current,command)
                 if ok and typeof(move)=="Vector2" then
                     command.Move=move
                     command.Buttons=bit32.band(command.Buttons,bit32.bnot(bit32.bor(1,2)))
@@ -5732,13 +5850,16 @@ do
             end
             if not found and q.JumpBug then
                 local buttons=bit32.bor(bit32.band(command.Buttons,bit32.bnot(1)),2)
-                local ok,nextState,events=pcall(predict,snapshot,current,command,buttons)
+                local ok,nextState,events=safeSimulation(predict,snapshot,current,command,buttons)
                 if ok and nextState and events.Landed then command.Buttons=buttons;pending=true end
             end
         end
     end
+    local reportedBlock=false
     local con;con=RunService.Heartbeat:Connect(function()
-        if not gui.Parent then con:Disconnect();restore() end
+        if not gui.Parent then con:Disconnect();restore();return end
+        if q.Blocked and not reportedBlock then reportedBlock=true;warn("[NOIR / Movement] Prediction paused: "..tostring(q.BlockReason)) end
+        if q.Blocked and not (q.EdgeJump or q.JumpBug or q.EdgeBug or q.PixelSurf) then q.Blocked=false;q.BlockReason=nil;reportedBlock=false end
     end)
 end
 
@@ -5793,28 +5914,43 @@ do
         end
         return false
     end
-    local function replacement(item,skin)
-        if not gui.Parent or not q.Enabled then return item,skin end
-        local desc=mapping[item]
-        if not desc or localPlayer:GetAttribute("Team")~=desc[1] or not viewmodelCaller() then return item,skin end
+    -- Значения читаются на Heartbeat, перехваченный игровой поток только использует снимок.
+    local previewContext={allowed=false,team=nil,weaponName=nil,knifeSkin="Stock",gloveSkin="Stock"}
+    local function chosenSkin(inputValue,listWidget,model)
+        local skinName=type(inputValue)=="string" and inputValue:match("^%s*(.-)%s*$") or "Stock"
+        if skinName=="" or skinName=="Stock" then
+            local ok,value=false,nil
+            if listWidget and type(listWidget.Get)=="function" then ok,value=pcall(listWidget.Get,listWidget) end
+            skinName=ok and type(value)=="string" and value or "Stock"
+        end
+        if #skinName>80 then return "Stock" end
+        if skinName=="Stock" or skinName=="" then return "Stock" end
+        local known=q.ValidSkins and q.ValidSkins[model]
+        if type(known)=="table" and not known[skinName] then return "Stock" end
+        return skinName
+    end
+    local function refreshPreviewContext()
+        local context=previewContext;context.allowed=false
+        if not gui.Parent or not q.Enabled then return end
+        local team=localPlayer:GetAttribute("Team")
         local ctrl=state.rapid and state.rapid.controller;local getter=ctrl and ctrl.peekCurrentEquippedForMovement
-        if type(getter)~="function" then return item,skin end
+        if type(getter)~="function" then return end
         local ok,weapon=pcall(getter)
-        if not ok or type(weapon)~="table" or weapon.Player~=localPlayer or weapon.IsDestroyed then return item,skin end
-        if desc[2]=="Knife" and item~=weapon.Name then return item,skin end
+        if not ok or type(weapon)~="table" or weapon.Player~=localPlayer or weapon.IsDestroyed then return end
+        context.team=team;context.weaponName=weapon.Name
+        context.knifeSkin=chosenSkin(q.KnifeSkin,q.KnifeList,q.KnifeModel)
+        context.gloveSkin=chosenSkin(q.GloveSkin,q.GloveList,q.GloveModel)
+        context.allowed=true
+    end
+    local function replacement(item,skin)
+        if not q.Enabled or not previewContext.allowed then return item,skin end
+        local desc=mapping[item]
+        if not desc or previewContext.team~=desc[1] or not viewmodelCaller() then return item,skin end
+        if desc[2]=="Knife" and item~=previewContext.weaponName then return item,skin end
         local selected=desc[2]=="Knife" and q.KnifeModel or q.GloveModel
         local allowed=desc[2]=="Knife" and knife or glove
         if not allowed[selected] then return item,skin end
-        local input=desc[2]=="Knife" and q.KnifeInput or q.GloveInput
-        local skinName=desc[2]=="Knife" and q.KnifeSkin or q.GloveSkin
-        local list=desc[2]=="Knife" and q.KnifeList or q.GloveList
-        local chosen="Stock"
-        if list and type(list.Get)=="function" then local valid,value=pcall(list.Get,list);if valid and type(value)=="string" then chosen=value end end
-        if input and type(input.Get)=="function" then local valid,value=pcall(input.Get,input);if valid and type(value)=="string" then skinName=value end end
-        skinName=type(skinName)=="string" and skinName:match("^%s*(.-)%s*$") or "Stock"
-        if skinName=="" or skinName=="Stock" then skinName=chosen end
-        if skinName=="" or skinName=="Stock" or #skinName>80 then skinName=skin end
-        return selected,skinName
+        return selected,desc[2]=="Knife" and previewContext.knifeSkin or previewContext.gloveSkin
     end
     local function restore()
         if lib then
@@ -5852,7 +5988,8 @@ do
     end
     local last=0;local connection
     connection=RunService.Heartbeat:Connect(function()
-        if not gui.Parent then connection:Disconnect();restore();return end
+        if not gui.Parent then previewContext.allowed=false;connection:Disconnect();restore();return end
+        local updated=pcall(refreshPreviewContext);if not updated then previewContext.allowed=false end
         local now=os.clock();if now-last<1 then return end;last=now
         if not q.Enabled then if q.Ready then restore() end;return end
         if not q.Ready then
@@ -27562,7 +27699,7 @@ local function buildAirflow()
         ["Enable Obsidian"]=true,["No recoil"]=true,["No spread"]=true,
         ["Enable Stage ESP"]=true,["Enable footstep ESP"]=true,["Sound ESP"]=true,
         ["Fullbright"]=true,["Custom camera FOV"]=true,["Force crosshair"]=true,
-        ["Infinite jump (lobby)"]=true,["Anti AFK"]=true,["Triggerbot"]=true,
+        ["Infinite jump (lobby)"]=true,["Anti AFK"]=true,["Triggerbot"]=true,["Trigger multi hitbox"]=true,["Trigger scoped only"]=true,
         ["Custom time"]=true,["Custom fog"]=true,["Custom ambient"]=true,["Custom exposure"]=true,
         ["No shadows"]=true,["Bloom"]=true,["Color correction"]=true,["Bullet tracers"]=true,["Bullet impacts"]=true,
         ["Scope crosshair"]=true,["Auto buy"]=true,
@@ -27740,6 +27877,12 @@ local function buildAirflow()
     local tg=left(triggerPage,"Triggerbot","crosshair")
     tg:CreateToggle({Name="Triggerbot",Desc="Fires at an enemy under the center crosshair",CurrentValue=false,Callback=function(v)sh.Triggerbot=v end})
     dropdown(tg,"Trigger hitbox",{"Any","Head","Torso"},sh.TriggerPart,function(v)sh.TriggerPart=v end)
+    tg:CreateToggle({Name="Trigger multi hitbox",Desc="Use selected hitboxes instead of single hitbox",CurrentValue=false,Callback=function(v)sh.TriggerMulti=v end})
+    tg:CreateDropdown({Name="Trigger selected hitboxes",Options={"Head","Chest","Stomach","Arms","Legs"},Multi=true,CurrentOption={"Head","Chest","Stomach","Arms"},Callback=function(values)
+        local parts={};if type(values)=="table" then for _,name in ipairs(values) do parts[name]=true end end;sh.TriggerParts=parts
+    end})
+    tg:CreateToggle({Name="Trigger scoped only",Desc="Requires sniper scope",CurrentValue=false,Callback=function(v)sh.TriggerScoped=v end})
+    slider(tg,"Trigger reaction delay",0,2,0.05,sh.TriggerReaction," s",function(v)sh.TriggerReaction=v end)
     slider(tg,"Trigger delay",0.05,1,0.01,sh.TriggerDelay," s",function(v)sh.TriggerDelay=v end)
     slider(tg,"Trigger range",50,5000,50,sh.TriggerRange," st",function(v)sh.TriggerRange=v end)
 
@@ -27938,8 +28081,8 @@ local function buildAirflow()
     local worldExtra=state.shitaroWorld
     local skyPage=sub(visuals,"Sky & weather")
     local skyPanel=left(skyPage,"Skybox","cloud")
-    skyPanel:CreateToggle({Name="Custom skybox",CurrentValue=false,Callback=function(v)worldExtra.Sky=v end})
-    dropdown(skyPanel,"Skybox preset",{"Jungle","Blossom","Red night","Purple","Foggy"},worldExtra.SkyPreset,function(v)worldExtra.SkyPreset=v end)
+    skyPanel:CreateToggle({Name="Custom skybox",Desc="Galaxy / Anime / Minecraft require access to Roblox assets",CurrentValue=false,Callback=function(v)worldExtra.Sky=v end})
+    dropdown(skyPanel,"Skybox preset",{"Jungle","Blossom","Red night","Purple","Foggy","Galaxy","Anime","Minecraft"},worldExtra.SkyPreset,function(v)worldExtra.SkyPreset=v end)
     local weather=right(skyPage,"Weather effects","sparkles")
     weather:CreateToggle({Name="World weather",Desc="Local particles around the camera",CurrentValue=false,Callback=function(v)worldExtra.Weather=v end})
     dropdown(weather,"Weather type",{"Snow","Sakura","Stars"},worldExtra.WeatherType,function(v)worldExtra.WeatherType=v end)
@@ -27952,11 +28095,13 @@ local function buildAirflow()
     slider(offsets,"Viewmodel Z",-100,100,1,worldExtra.ViewZ,"",function(v)worldExtra.ViewZ=v end)
 
     local preview=state.skinPreview
+    preview.ValidSkins={}
     local skinsPage=sub(visuals,"Skin preview")
     local skinPanel=left(skinsPage,"Local viewmodel preview","sparkles")
     -- Каталог читаем из базы игры. Выбранное сохраняется как отдельный флаг.
     local knifeFin,gloveFin;local skinSignatures={}
     local function skinOptions(model)
+        preview.ValidSkins[model]=nil
         local result={"Stock"}
         if model=="Stock" then return result end
         local data=getModule("Database","Components","Libraries","Skins")
@@ -27964,6 +28109,7 @@ local function buildAirflow()
         local ok,items=pcall(data.GetAllSkinsForWeapon,model)
         if not ok or type(items)~="table" then return result end
         local seen={Stock=true}
+        preview.ValidSkins[model]=seen
         for _,item in ipairs(items) do
             if type(item)=="table" and item.isEnabled==true and type(item.skin)=="string" and item.skin~="" and not seen[item.skin] then
                 seen[item.skin]=true;table.insert(result,item.skin)
@@ -28013,6 +28159,7 @@ local function buildAirflow()
     move:CreateToggle({Name="Auto strafe",Desc="Airborne movement input; uses MovementV2",CurrentValue=false,Callback=function(v)state.movement.autoStrafe=v end})
     move:CreateToggle({Name="Slow walk",Desc="Uses the game's Walk input on ground",CurrentValue=false,Callback=function(v)state.movement.slowWalk=v end})
     local prediction=state.movementPrediction
+    move:CreateLabel({Text="Prediction: off",Update=function()return prediction.GetStatus()end,UpdateRate=0.5})
     move:CreateToggle({Name="Edge jump",Desc="One-tick MovementV2 prediction; requires writable game modules",CurrentValue=false,Callback=function(v)prediction.EdgeJump=v end})
     move:CreateToggle({Name="Jump bug",Desc="One-tick predicted landing; requires writable game modules",CurrentValue=false,Callback=function(v)prediction.JumpBug=v end})
     move:CreateToggle({Name="Edge bug",Desc="Searches predicted landing inputs; requires writable game modules",CurrentValue=false,Callback=function(v)prediction.EdgeBug=v end})
