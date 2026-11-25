@@ -4418,6 +4418,9 @@ do
     local q={HitMarker=false,KillMarker=false,HitFlash=false,KillFlash=false,
         HitColor=Color3.fromRGB(230,255,235),KillColor=Color3.fromRGB(255,100,100),
         MarkerSize=14,MarkerFade=0.8,FlashPower=0.15,
+        SeparateKillFeedback=false,KillMarkerSize=14,KillMarkerFade=0.8,KillFlashPower=0.15,
+        SeparateFlashColors=false,HitFlashColor=Color3.fromRGB(230,255,235),KillFlashColor=Color3.fromRGB(255,100,100),
+        FlashStyle="Full screen",
         Body=false,Hands=false,Weapon=false,BodyColor=Color3.fromRGB(130,255,170),HandsColor=Color3.fromRGB(130,255,170),WeaponColor=Color3.fromRGB(130,255,170),
         BodyMaterial="ForceField",HandsMaterial="ForceField",WeaponMaterial="Neon",
         GrenadePath=false,GrenadeColor=Color3.fromRGB(130,255,170),GrenadeWidth=2,GrenadeMode="Far",
@@ -4429,14 +4432,50 @@ do
     local lines={}
     for i=1,4 do local line=Instance.new("Frame");line.BorderSizePixel=0;line.AnchorPoint=Vector2.new(0.5,0.5);line.ZIndex=8;line.Parent=cross;lines[i]=line end
     local flash=Instance.new("Frame");flash.Name="NoirHitFlash";flash.Size=UDim2.fromScale(1,1);flash.BackgroundTransparency=1;flash.BorderSizePixel=0;flash.ZIndex=2;flash.Parent=gui
-    local startTime,showMark,showFlash,lastColor=0,false,false,q.HitColor
+    -- Приближение health-shot: локальная подсветка краёв без загрузки внешних файлов.
+    local edgeFlashes={}
+    for i=1,4 do
+        local edge=Instance.new("Frame");edge.Name="NoirFeedbackEdge";edge.BorderSizePixel=0;edge.BackgroundTransparency=1;edge.ZIndex=3;edge.Parent=gui
+        if i==1 then edge.Size=UDim2.fromScale(0.25,1);edge.Position=UDim2.fromScale(0,0)
+        elseif i==2 then edge.Size=UDim2.fromScale(0.25,1);edge.Position=UDim2.fromScale(0.75,0)
+        elseif i==3 then edge.Size=UDim2.fromScale(1,0.25);edge.Position=UDim2.fromScale(0,0)
+        else edge.Size=UDim2.fromScale(1,0.25);edge.Position=UDim2.fromScale(0,0.75) end
+        local gradient=Instance.new("UIGradient");gradient.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0),NumberSequenceKeypoint.new(1,1)})
+        gradient.Rotation=({0,180,90,270})[i];gradient.Parent=edge;edgeFlashes[i]=edge
+    end
+    local startTime,showMark,showFlash,lastColor,lastKilled=0,false,false,q.HitColor,false
     function state.showHitFeedback(_,before,after)
         local killed=after<=0
         showMark=killed and q.KillMarker or (not killed and q.HitMarker)
         showFlash=killed and q.KillFlash or (not killed and q.HitFlash)
         if not showMark and not showFlash then return end
-        lastColor=killed and q.KillColor or q.HitColor
+        lastKilled=killed;lastColor=killed and q.KillColor or q.HitColor
         startTime=os.clock();cross.Visible=showMark
+    end
+    local function updateFeedback(now)
+        local separate=lastKilled and q.SeparateKillFeedback
+        local fade=separate and q.KillMarkerFade or q.MarkerFade
+        local size=separate and q.KillMarkerSize or q.MarkerSize
+        local power=separate and q.KillFlashPower or q.FlashPower
+        local alpha=math.clamp(1-(now-startTime)/math.max(0.1,fade),0,1)
+        local markEnabled=lastKilled and q.KillMarker or (not lastKilled and q.HitMarker)
+        local flashEnabled=lastKilled and q.KillFlash or (not lastKilled and q.HitFlash)
+        cross.Visible=showMark and markEnabled and alpha>0
+        local flashAlpha=showFlash and flashEnabled and alpha*power or 0
+        local flashColor=q.SeparateFlashColors and (lastKilled and q.KillFlashColor or q.HitFlashColor) or lastColor
+        flash.BackgroundTransparency=q.FlashStyle=="Full screen" and (1-flashAlpha) or 1;flash.BackgroundColor3=flashColor
+        for _,edge in ipairs(edgeFlashes) do
+            edge.BackgroundColor3=flashColor
+            edge.BackgroundTransparency=q.FlashStyle=="Edge glow" and (1-flashAlpha) or 1
+        end
+        if cross.Visible then
+            local d=size*0.45
+            for i,ln in ipairs(lines) do
+                local x=(i%2==0) and d or -d;local y=(i<=2) and -d or d
+                ln.Position=UDim2.fromOffset(x,y);ln.Size=UDim2.fromOffset(size,2);ln.Rotation=(x*y>0) and 45 or -45
+                ln.BackgroundColor3=lastColor;ln.BackgroundTransparency=1-alpha
+            end
+        end
     end
     local saved=setmetatable({},{__mode="k"})
     local mats={ForceField=Enum.Material.ForceField,Neon=Enum.Material.Neon,Metal=Enum.Material.Metal,Glass=Enum.Material.Glass}
@@ -4555,7 +4594,7 @@ do
     local lastModel,lastPath,lastWarn=0,0,0
     local heartbeat,renderConnection
     heartbeat=RunService.Heartbeat:Connect(function()
-        if not gui.Parent then heartbeat:Disconnect();if renderConnection then renderConnection:Disconnect() end;generation+=1;restoreUnseen({});cross:Destroy();flash:Destroy();for _,v in ipairs(linePool) do v:Destroy() end;for _,v in ipairs(radiusLines) do v:Destroy() end;return end
+        if not gui.Parent then heartbeat:Disconnect();if renderConnection then renderConnection:Disconnect() end;generation+=1;restoreUnseen({});cross:Destroy();flash:Destroy();for _,v in ipairs(edgeFlashes) do v:Destroy() end;for _,v in ipairs(linePool) do v:Destroy() end;for _,v in ipairs(radiusLines) do v:Destroy() end;return end
         local now=os.clock()
         if now-lastModel>=0.25 then
             lastModel=now
@@ -4588,18 +4627,7 @@ do
     end)
     renderConnection=RunService.RenderStepped:Connect(function()
         if not gui.Parent then return end
-        local age=os.clock()-startTime
-        local alpha=math.clamp(1-age/math.max(0.1,q.MarkerFade),0,1)
-        cross.Visible=showMark and alpha>0
-        flash.BackgroundTransparency=showFlash and (1-alpha*q.FlashPower) or 1;flash.BackgroundColor3=lastColor
-        if cross.Visible then
-            local d=q.MarkerSize*0.45
-            for i,ln in ipairs(lines) do
-                local x=(i%2==0) and d or -d;local y=(i<=2) and -d or d
-                ln.Position=UDim2.fromOffset(x,y);ln.Size=UDim2.fromOffset(q.MarkerSize,2);ln.Rotation=(x*y>0) and 45 or -45
-                ln.BackgroundColor3=lastColor;ln.BackgroundTransparency=1-alpha
-            end
-        end
+        updateFeedback(os.clock())
         local cam=Workspace.CurrentCamera
         for i,line in ipairs(linePool) do
             local a,b=path[i],path[i+1]
@@ -5863,36 +5891,92 @@ do
     end)
 end
 
--- Индикатор оценки пробития по игровым лучам, не является подтверждением сервера.
+-- Индикатор оценки пробития: игровой расчёт, Drawing при наличии, GUI fallback.
+-- Ошибка любого этапа останавливает повторные попытки до выключения индикатора.
 do
-    local q={Enabled=false,YesColor=Color3.fromRGB(50,255,115),NoColor=Color3.fromRGB(255,65,75),Size=12};state.penIndicator=q
-    local mark=Instance.new("Frame");mark.Name="NoirPenIndicator";mark.AnchorPoint=Vector2.new(0.5,0.5)
-    mark.Position=UDim2.fromScale(0.5,0.5);mark.BorderSizePixel=0;mark.BackgroundTransparency=0.35;mark.ZIndex=6;mark.Visible=false;mark.Parent=overlay
+    local q={Enabled=false,YesColor=Color3.fromRGB(50,255,115),NoColor=Color3.fromRGB(255,65,75),Size=12,Status="off",Failed=false};state.penIndicator=q
+    function q.GetStatus() return "Penetration: "..q.Status end
+    local mark,renderer=nil,nil
+    local function destroyMark()
+        if not mark then return end
+        local old,kind=mark,renderer;mark=nil;renderer=nil
+        pcall(function()
+            if kind=="Drawing" then old.Visible=false;old:Remove() else old:Destroy() end
+        end)
+    end
+    local function hideMark()
+        if mark then mark.Visible=false end
+    end
+    local function createMark()
+        if mark then return end
+        if type(Drawing)=="table" and type(Drawing.new)=="function" then
+            local candidate
+            local ok=pcall(function()
+                candidate=Drawing.new("Square");candidate.Filled=true;candidate.Thickness=1;candidate.Transparency=0.65;candidate.Visible=false
+            end)
+            if ok and candidate then mark=candidate;renderer="Drawing";return end
+            if candidate then pcall(function() candidate:Remove() end) end
+        end
+        local candidate=Instance.new("Frame")
+        local ok,err=pcall(function()
+            candidate.Name="NoirPenIndicator";candidate.AnchorPoint=Vector2.new(0.5,0.5)
+            candidate.Position=UDim2.fromScale(0.5,0.5);candidate.BorderSizePixel=0;candidate.BackgroundTransparency=0.35;candidate.ZIndex=6;candidate.Visible=false;candidate.Parent=overlay
+        end)
+        if not ok then pcall(function()candidate:Destroy()end);error(err) end
+        mark=candidate;renderer="GUI"
+    end
+    local function estimate()
+        local cam=Workspace.CurrentCamera;local ray,ignoreFn=state.wallRay,state.wallIgnore
+        local ctrl=state.rapid and state.rapid.controller;local getter=ctrl and ctrl.peekCurrentEquippedForMovement
+        if not (cam and state.wallReady and ray and type(ray.cast)=="function" and type(ray.castThrough)=="function" and type(ignoreFn)=="function" and type(getter)=="function") then return nil,cam end
+        local weapon=getter();local props=type(weapon)=="table" and weapon.Properties
+        if not (type(props)=="table" and props.Class=="Weapon" and not weapon.IsDestroyed and weapon.IsEquipped~=false) then return nil,cam end
+        local range=math.clamp(tonumber(props.Range) or 500,0,5000);if range<=0 then return nil,cam end
+        local pen=math.max(0,tonumber(props.Penetration) or 0)
+        local ignore=ignoreFn();if type(ignore)~="table" then return nil,cam end
+        local origin,dir=cam.CFrame.Position,cam.CFrame.LookVector
+        local first=ray.cast(origin,dir*range,nil,ignore)
+        if type(first)~="table" or not first.instance or typeof(first.position)~="Vector3" then return nil,cam end
+        if pen<=0 then return false,cam end
+        local entries=ray.castThrough(first.position-dir*0.001,dir*(pen+0.001),pen,ignore,nil)
+        if type(entries)~="table" then return nil,cam end
+        return type(entries[1])=="table" and type(entries[2])=="table" and entries[1].instance==first.instance and entries[2].instance==first.instance,cam
+    end
+    local function updateMark(result,cam)
+        if type(result)~="boolean" then hideMark();q.Status="waiting for a valid surface / weapon";return end
+        createMark()
+        local size=math.clamp(tonumber(q.Size) or 12,6,36);local color=result and q.YesColor or q.NoColor
+        if renderer=="Drawing" then
+            local viewport=cam and cam.ViewportSize
+            if typeof(viewport)~="Vector2" then hideMark();q.Status="waiting for camera";return end
+            mark.Size=Vector2.new(size,size);mark.Position=Vector2.new((viewport.X-size)/2,(viewport.Y-size)/2);mark.Color=color;mark.Visible=true
+        else
+            mark.Size=UDim2.fromOffset(size,size);mark.BackgroundColor3=color;mark.Visible=true
+        end
+        q.Status="active ("..renderer..")"
+    end
     local last=0;local conn
     conn=RunService.Heartbeat:Connect(function()
-        if not gui.Parent then conn:Disconnect();mark:Destroy();return end
-        if not q.Enabled then mark.Visible=false;return end
-        local now=os.clock();if now-last<0.1 then return end;last=now
-        mark.Visible=false
-        local ok,result=pcall(function()
-            local cam=Workspace.CurrentCamera;local ray,ignoreFn=state.wallRay,state.wallIgnore
-            local ctrl=state.rapid and state.rapid.controller;local getter=ctrl and ctrl.peekCurrentEquippedForMovement
-            if not (cam and state.wallReady and ray and type(ray.cast)=="function" and type(ray.castThrough)=="function" and type(ignoreFn)=="function" and type(getter)=="function") then return nil end
-            local weapon=getter();local props=type(weapon)=="table" and weapon.Properties
-            if not (type(props)=="table" and props.Class=="Weapon" and not weapon.IsDestroyed and weapon.IsEquipped~=false) then return nil end
-            local range=math.clamp(tonumber(props.Range) or 500,0,5000);if range<=0 then return nil end
-            local pen=math.max(0,tonumber(props.Penetration) or 0)
-            local ignore=ignoreFn();if type(ignore)~="table" then return nil end
-            local origin,dir=cam.CFrame.Position,cam.CFrame.LookVector
-            local first=ray.cast(origin,dir*range,nil,ignore)
-            if type(first)~="table" or not first.instance or typeof(first.position)~="Vector3" then return nil end
-            if pen<=0 then return false end
-            local entries=ray.castThrough(first.position-dir*0.001,dir*(pen+0.001),pen,ignore,nil)
-            if type(entries)~="table" then return nil end
-            return type(entries[1])=="table" and type(entries[2])=="table" and entries[1].instance==first.instance and entries[2].instance==first.instance
+        -- Пользователь может снять блокировку обычным выключением; ошибки не спамятся.
+        if not q.Enabled then
+            if q.Failed then q.Failed=false end
+            q.Status="off";pcall(hideMark)
+        elseif q.Failed then
+            -- Только ограниченная проверка выгрузки; сам индикатор не выполняется повторно.
+            local ok,alive=pcall(function()return gui.Parent~=nil end)
+            if ok and not alive then conn:Disconnect();destroyMark() end
+            return
+        end
+        local ok,err=pcall(function()
+            if not gui.Parent then conn:Disconnect();destroyMark();return end
+            if not q.Enabled then return end
+            local now=os.clock();if now-last<0.1 then return end;last=now
+            local result,cam=estimate();updateMark(result,cam)
         end)
-        if ok and type(result)=="boolean" then
-            mark.Size=UDim2.fromOffset(q.Size,q.Size);mark.BackgroundColor3=result and q.YesColor or q.NoColor;mark.Visible=true
+        if not ok then
+            q.Failed=true;q.Status="paused after error; turn off to retry"
+            destroyMark()
+            warn("[NOIR / Penetration] Indicator paused after error: "..tostring(err))
         end
     end)
 end
@@ -27972,6 +28056,7 @@ local function buildAirflow()
     slider(crosshair,"Crosshair thickness",1,6,1,extra.CrosshairThickness," px",function(v)extra.CrosshairThickness=v;extra.UpdateCrosshair() end)
     local pen=state.penIndicator
     crosshair:CreateToggle({Name="Penetration indicator",Desc="Estimated from game raycast; no server guarantee",CurrentValue=false,Callback=function(v)pen.Enabled=v end})
+    crosshair:CreateLabel({Text="Penetration: off",Update=function()return pen.GetStatus()end,UpdateRate=0.5})
     crosshair:CreateColorPicker({Name="Penetrable color",Color=pen.YesColor,Callback=function(v)pen.YesColor=v end})
     crosshair:CreateColorPicker({Name="Blocked color",Color=pen.NoColor,Callback=function(v)pen.NoColor=v end})
     slider(crosshair,"Penetration indicator size",6,36,1,pen.Size," px",function(v)pen.Size=v end)
@@ -28026,6 +28111,14 @@ local function buildAirflow()
     slider(feedback,"Marker size",4,24,1,more.MarkerSize," px",function(v)more.MarkerSize=v end)
     slider(feedback,"Marker fade",0.1,5,0.1,more.MarkerFade," s",function(v)more.MarkerFade=v end)
     slider(feedback,"Flash strength",0.02,0.4,0.01,more.FlashPower,"",function(v)more.FlashPower=v end)
+    feedback:CreateToggle({Name="Separate kill feedback",Desc="Use separate kill marker size, fade and flash strength",CurrentValue=false,Callback=function(v)more.SeparateKillFeedback=v end})
+    slider(feedback,"Kill marker size",4,24,1,more.KillMarkerSize," px",function(v)more.KillMarkerSize=v end)
+    slider(feedback,"Kill marker fade",0.1,5,0.1,more.KillMarkerFade," s",function(v)more.KillMarkerFade=v end)
+    slider(feedback,"Kill flash strength",0.02,0.4,0.01,more.KillFlashPower,"",function(v)more.KillFlashPower=v end)
+    dropdown(feedback,"Flash style",{"Full screen","Edge glow"},more.FlashStyle,function(v)more.FlashStyle=v end)
+    feedback:CreateToggle({Name="Separate flash colors",Desc="Flash can use a different color from the hit or kill marker",CurrentValue=false,Callback=function(v)more.SeparateFlashColors=v end})
+    feedback:CreateColorPicker({Name="Hit flash color",Color=more.HitFlashColor,Callback=function(v)more.HitFlashColor=v end})
+    feedback:CreateColorPicker({Name="Kill flash color",Color=more.KillFlashColor,Callback=function(v)more.KillFlashColor=v end})
     local feedbackExtra=state.feedbackExtras
     local sounds=right(feedbackPage,"Feedback effects","volume-2")
     sounds:CreateToggle({Name="Hit sound",Desc="Uses an accessible Roblox audio asset ID",CurrentValue=false,Callback=function(v)feedbackExtra.HitSound=v end})
