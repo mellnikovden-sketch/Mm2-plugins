@@ -589,6 +589,12 @@ do
             rapid.lastShotAt = nil
             rapid.previousShooting = false
         end
+        local props=weapon.Properties
+        if weapon.IsEquipped==false or weapon.IsAdjustingSuppressor or weapon.IsChargeFiring or weapon.IsBurstShooting
+            or type(props)~="table" or props.Class~="Weapon" or props.ShootingOptions=="Revolver" or (tonumber(weapon.Rounds) or 0)<=0 then
+            rapid.lastSequence=weapon.ShotSeq;rapid.lastShotAt=nil;rapid.previousShooting=false
+            return
+        end
         if weapon.IsReloading then
             -- Перезарядку не прерываем и таймер повторного выстрела не сбрасываем.
             rapid.lastSequence = weapon.ShotSeq
@@ -1560,6 +1566,8 @@ local nextAutoAttempt = 0
 local lastAutoWarning = 0
 RunService.Heartbeat:Connect(function()
     if not extras.autoShoot or not config.enabled or not state.ready or not state.target or not state.target.Parent then return end
+    if state.doubleTap and state.doubleTap.pending then return end
+    if state.autoStop and state.autoStop.Enabled and not state.autoStop.AllowFire then return end
     local controller = state.rapid and state.rapid.controller
     if not controller then return end
     local now = os.clock()
@@ -1618,6 +1626,96 @@ local function getModule(...)
     local ok, result = pcall(require, node)
     if ok and type(result) == "table" then return result end
 end
+-- Двойной выстрел / очередь: ограниченные попытки после локально подтверждённого первого выстрела.
+do
+    local q={Enabled=false,RequireTarget=true,Interval=0.06,Cooldown=0.4,BurstCount=2,Status="off",pending=nil,blocked=false}
+    state.doubleTap=q
+    local tracked,lastSeq,lastRounds,cooldownUntil=nil,nil,nil,0
+    local timings,lastLookup=nil,0
+    local function reset()tracked=nil;lastSeq=nil;lastRounds=nil;q.pending=nil;cooldownUntil=0 end
+    function q.SetEnabled(v)q.Enabled=v==true;q.blocked=false;reset();q.Status=q.Enabled and "waiting for shot" or "off" end
+    local function eligible(weapon)
+        if type(weapon)~="table" or weapon.Player~=localPlayer or weapon.IsDestroyed or weapon.IsEquipped==false
+            or weapon.IsReloading or weapon.IsAdjustingSuppressor or weapon.IsChargeFiring or weapon.IsBurstShooting
+            or type(weapon.shoot)~="function" or (tonumber(weapon.Rounds) or 0)<=0 then return false end
+        local props=weapon.Properties
+        return type(props)=="table" and props.Class=="Weapon" and props.ShootingOptions~="Revolver"
+    end
+    local function minInterval(props,now)
+        if not timings and now-lastLookup>=2 then lastLookup=now;timings=getModule("Components","Common","WeaponTimings") end
+        local minimum=0.05
+        if timings and type(timings.MinShotInterval)=="function" then
+            local ok,value=pcall(timings.MinShotInterval,props)
+            if ok and type(value)=="number" and value==value and value>0 then minimum=math.max(minimum,math.min(value,2)) end
+        else
+            local value=tonumber(props.FireRate)
+            if value and value==value and value>0 then minimum=math.max(minimum,math.min(value,2)) end
+        end
+        return minimum
+    end
+    local function step()
+        if not q.Enabled or q.blocked then return end
+        local ctrl=state.rapid and state.rapid.controller;local getter=ctrl and ctrl.peekCurrentEquippedForMovement
+        if type(getter)~="function" then reset();q.Status="waiting for weapon controller";return end
+        local ok,w=pcall(getter)
+        if not ok or not eligible(w) then reset();q.Status="waiting for usable weapon";return end
+        if localPlayer:GetAttribute("Dead")==true or localPlayer:GetAttribute("IsDefusingBomb")==true or localPlayer:GetAttribute("IsLocallyDefusingBomb")==true then
+            reset();q.Status="paused";return
+        end
+        local now=os.clock();local seq,rounds=tonumber(w.ShotSeq),tonumber(w.Rounds)
+        if tracked~=w then tracked=w;lastSeq=seq;lastRounds=rounds;q.pending=nil;q.Status="waiting for shot";return end
+        local shot=(seq and lastSeq and seq>lastSeq) or (rounds and lastRounds and rounds<lastRounds)
+        lastSeq,lastRounds=seq,rounds
+        if shot and not q.pending and now>=cooldownUntil then
+            local target=state.target
+            if not q.RequireTarget or (config.enabled and target and target.Parent) then
+                local interval=math.max(math.clamp(tonumber(q.Interval) or 0.06,0.05,0.4),minInterval(w.Properties,now))
+                q.pending={weapon=w,due=now+interval,target=q.RequireTarget and target.Parent or nil,remaining=math.clamp(math.floor(tonumber(q.BurstCount) or 2),2,4)-1}
+                q.Status="follow-up queued"
+            end
+        end
+        local pending=q.pending
+        if not pending then return end
+        if pending.weapon~=w or not eligible(w) then q.pending=nil;q.Status="cancelled: weapon changed";return end
+        if pending.target then
+            local target=state.target
+            if not config.enabled or not target or not target.Parent or target.Parent~=pending.target then
+                q.pending=nil;q.Status="cancelled: target lost";return
+            end
+        end
+        if now<pending.due then return end
+        if state.autoStop and state.autoStop.Enabled and not state.autoStop.AllowFire then
+            if now-pending.due>0.4 then q.pending=nil;q.Status="cancelled: not stopped" end
+            return
+        end
+        q.pending=nil
+        local beforeSeq,beforeRounds=tonumber(w.ShotSeq),tonumber(w.Rounds)
+        if w.ShootDelayThread then pcall(task.cancel,w.ShootDelayThread);w.ShootDelayThread=nil end
+        w.IsShooting=false;w.NextShotDue=0
+        local success=pcall(w.shoot,w,"Primary")
+        local afterSeq,afterRounds=tonumber(w.ShotSeq),tonumber(w.Rounds)
+        lastSeq,lastRounds=afterSeq,afterRounds
+        local confirmed=(beforeSeq and afterSeq and afterSeq>beforeSeq) or (beforeRounds and afterRounds and afterRounds<beforeRounds)
+        if success and confirmed and pending.remaining>1 and q.Enabled and eligible(w) then
+            local interval=math.max(math.clamp(tonumber(q.Interval) or 0.06,0.05,0.4),minInterval(w.Properties,now))
+            q.pending={weapon=w,due=now+interval,target=pending.target,remaining=pending.remaining-1}
+            q.Status="local shot; next queued"
+        else
+            cooldownUntil=now+math.clamp(tonumber(q.Cooldown) or 0.4,0.1,2)
+            q.Status=not success and "follow-up error" or (confirmed and "follow-up fired locally; server unknown" or "follow-up requested; not confirmed")
+        end
+    end
+    local lastWarning=0;local con
+    con=RunService.Heartbeat:Connect(function()
+        if not gui.Parent then q.SetEnabled(false);con:Disconnect();return end
+        local ok,err=pcall(step)
+        if not ok then
+            q.pending=nil;q.blocked=true;q.Status="error; toggle to retry"
+            if os.clock()-lastWarning>5 then lastWarning=os.clock();warn("[NOIR / Double tap] "..tostring(err)) end
+        end
+    end)
+end
+
 -- Автоприцеливание с оптикой, радар и журнал наблюдаемого изменения здоровья.
 do
     local radarButton=makeToggle("RADAR",40)
@@ -1948,6 +2046,49 @@ do
     end)
 end
 
+-- Остановка по горизонтальной скорости до автоматического выстрела; движение в callback только по снимку.
+do
+    local q={Enabled=false,AllowFire=false,Status="off",MaxSpeed=2,grounded=nil};state.autoStop=q
+    local direction=nil;local active=false
+    function q.SetEnabled(v)q.Enabled=v==true;q.AllowFire=false;q.grounded=nil;direction=nil;active=false;q.Status=q.Enabled and "waiting for target" or "off" end
+    function state.applyAutoStop(character,command)
+        if not q.Enabled or not active or type(command)~="table" or typeof(command.Move)~="Vector2" then return end
+        local ms=type(character)=="table" and character.MovementState
+        local onGround
+        if type(ms)=="table" then onGround=ms.OnGround end
+        if onGround==nil and type(character)=="table" then onGround=character.OnGround end
+        q.grounded=onGround==true
+        if not q.grounded then q.AllowFire=false;return end
+        local yaw=tonumber(command.LookYaw);if not yaw then return end
+        if not direction then command.Move=Vector2.new(0,0);return end
+        local c,s=math.cos(yaw),math.sin(yaw)
+        command.Move=Vector2.new(c*direction.X-s*direction.Z,s*direction.X+c*direction.Z)
+    end
+    local con;con=RunService.Heartbeat:Connect(function()
+        if not gui.Parent then q.SetEnabled(false);con:Disconnect();return end
+        if not q.Enabled then return end
+        local target=state.target
+        if not config.enabled or not target or not target.Parent then active=false;direction=nil;q.grounded=nil;q.AllowFire=false;q.Status="waiting for target";return end
+        if state.autoPeek and state.autoPeek.returning then active=false;direction=nil;q.AllowFire=false;q.Status="peek returning";return end
+        if not (state.movement and state.movement.bhopReady and state.movement.lastInputAt and os.clock()-state.movement.lastInputAt<0.5) then
+            active=false;direction=nil;q.AllowFire=false;q.Status="input hook unavailable";return
+        end
+        local chars=Workspace:FindFirstChild("Characters")
+        local own=chars and chars:FindFirstChild(localPlayer.Name) or localPlayer.Character
+        local root=own and own:FindFirstChild("HumanoidRootPart")
+        if not (own and own.Parent and root and root:IsA("BasePart")) or localPlayer:GetAttribute("Dead")==true then
+            active=false;direction=nil;q.AllowFire=false;q.Status="waiting for character";return
+        end
+        local velocity=root.AssemblyLinearVelocity
+        if typeof(velocity)~="Vector3" then active=false;direction=nil;q.AllowFire=false;q.Status="velocity unavailable";return end
+        local horizontal=Vector3.new(velocity.X,0,velocity.Z);local speed=horizontal.Magnitude
+        if speed~=speed or speed>200 then active=false;direction=nil;q.AllowFire=false;q.Status="velocity unavailable";return end
+        active=true;direction=speed>math.clamp(tonumber(q.MaxSpeed) or 2,0.5,8) and -horizontal.Unit or nil
+        q.AllowFire=not direction and q.grounded==true
+        q.Status=q.grounded~=true and "waiting for grounded input" or (direction and "stopping" or "ready")
+    end)
+end
+
 -- Movement: прыжковая команда игры и камера от третьего лица.
 do
     local movement = {bhop=false, autoStrafe=false, slowWalk=false, third=false, collision=true, distance=8, bhopReady=false, thirdReady=false}
@@ -2029,6 +2170,7 @@ do
             movement.lastInputAt=os.clock()
             pcall(editCommand,character,results[1])
             if state.applyMovementPrediction then pcall(state.applyMovementPrediction,character,select(1,...),results[1]) end
+            if state.applyAutoStop then pcall(state.applyAutoStop,character,results[1]) end
             if state.applyAutoPeek then pcall(state.applyAutoPeek,character,results[1]) end
             if state.applyAntiAim then
                 local ok,err=pcall(state.applyAntiAim,character,results[1])
@@ -28655,7 +28797,7 @@ local function buildAirflow()
         ["Flying grenades"]=true,["HE danger estimate"]=true,["Grenade zones"]=true,["Zone ground fill"]=true,["Zone timer"]=true,["Knife bot"]=true,["Zeus bot"]=true,
         ["Anti Aim"]=true,["Auto manual"]=true,["Spin in air"]=true,["Fake duck"]=true,["Hide hands"]=true,["Hide scope overlay"]=true,
         ["Hit sound"]=true,["Kill sound"]=true,["Hit particles"]=true,["Kill particles"]=true,
-        ["Edge jump"]=true,["Jump bug"]=true,["Edge bug"]=true,["Pixel surf assist"]=true,["Auto peek"]=true,["Skin preview"]=true,["Penetration indicator"]=true,["Predicted grenade radius"]=true,
+        ["Edge jump"]=true,["Jump bug"]=true,["Edge bug"]=true,["Pixel surf assist"]=true,["Auto peek"]=true,["Auto stop"]=true,["Double tap"]=true,["Skin preview"]=true,["Penetration indicator"]=true,["Predicted grenade radius"]=true,
     }
     local map={}
     for _,entry in ipairs(entries) do
@@ -28829,6 +28971,15 @@ local function buildAirflow()
     local gun=left(weapons,"Weapon control","zap")
     bridge(gun,"RAPID","Rapid Fire")
     slider(gun,"Rate",1,19,1,state.rapid.shotsPerSecond," /s",function(v)state.rapid.shotsPerSecond=v end)
+    gun:CreateToggle({Name="Double tap",Desc="Follow-up shots after a locally detected shot; server timing still applies",CurrentValue=false,Callback=state.doubleTap.SetEnabled})
+    gun:CreateToggle({Name="Double tap target only",Desc="Cancel follow-up if the original target is lost",CurrentValue=true,Callback=function(v)state.doubleTap.RequireTarget=v end})
+    slider(gun,"Burst length",2,4,1,state.doubleTap.BurstCount," shots",function(v)state.doubleTap.BurstCount=v end)
+    slider(gun,"Double tap interval",0.05,0.4,0.01,state.doubleTap.Interval," s",function(v)state.doubleTap.Interval=v end)
+    slider(gun,"Double tap cooldown",0.1,2,0.1,state.doubleTap.Cooldown," s",function(v)state.doubleTap.Cooldown=v end)
+    gun:CreateLabel({Text="Double tap: off",Update=function()return "Double tap: "..state.doubleTap.Status end,UpdateRate=0.3})
+    gun:CreateToggle({Name="Auto stop",Desc="Counter-strafe on target; Auto Shoot waits for low horizontal speed",CurrentValue=false,Callback=state.autoStop.SetEnabled})
+    slider(gun,"Auto stop speed",0.5,8,0.5,state.autoStop.MaxSpeed," st/s",function(v)state.autoStop.MaxSpeed=v end)
+    gun:CreateLabel({Text="Auto stop: off",Update=function()return "Auto stop: "..state.autoStop.Status end,UpdateRate=0.3})
     local mods=left(weapons,"Weapon modifiers","target")
     mods:CreateToggle({Name="No recoil",Desc="Camera recoil methods from stage 7",CurrentValue=false,Callback=function(v)state.gunMods.NoRecoil=v end})
     mods:CreateToggle({Name="No spread",Desc="Bullet spread methods from stage 7",CurrentValue=false,Callback=function(v)state.gunMods.NoSpread=v end})
