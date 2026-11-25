@@ -5659,7 +5659,7 @@ do
     local q={EdgeJump=false,JumpBug=false,EdgeBug=false,PixelSurf=false,Ready=false};state.movementPrediction=q
     local captured={};local sim,cloner,settings,serial,runtimeModule
     local advanceOld,advanceWrapper,composeOld,composeWrapper
-    local pending=false;local lastCharacter;local lastWarn=0
+    local pending=false;local lastCharacter
     local pixelNormal,pixelAt=nil,0
     local function clear()pending=false;lastCharacter=nil;pixelNormal=nil;pixelAt=0 end
     local function restore()
@@ -5669,13 +5669,32 @@ do
         end
         q.Ready=false;clear();table.clear(captured)
     end
+    local function diagnoseModule(...)
+        local names={...};local path=table.concat(names,"/");local node=ReplicatedStorage
+        for _,name in ipairs(names) do
+            node=node and node:FindFirstChild(name)
+            if not node then return nil,"missing "..path end
+        end
+        if not node:IsA("ModuleScript") then return nil,"not a ModuleScript: "..path end
+        local ok,value=pcall(require,node)
+        if not ok then
+            local message=tostring(value):gsub("[%c]+"," "):sub(1,110)
+            return nil,"require failed: "..path.." ("..message..")"
+        end
+        if type(value)~="table" then return nil,"not a table: "..path end
+        return value
+    end
     local function install()
-        local s=getModule("MovementV2","Simulation")
-        local c=getModule("MovementV2","Simulation","State")
-        local cfg=getModule("MovementV2","Simulation","RuntimeSettings")
-        local ser=getModule("MovementV2","Serial")
-        local rt=getModule("MovementV2","Client","Runtime")
-        if not (s and c and cfg and ser and rt and type(s.step)=="function" and type(c.clone)=="function" and type(c.cloneSupport)=="function" and type(cfg.getMovementConfig)=="function" and type(ser.addUInt32)=="function" and type(rt.advance)=="function" and type(rt._composeWorld)=="function") then return false end
+        local s,reason=diagnoseModule("MovementV2","Simulation");if not s then q.Reason=reason;return false end
+        local c;c,reason=diagnoseModule("MovementV2","Simulation","State");if not c then q.Reason=reason;return false end
+        local cfg;cfg,reason=diagnoseModule("MovementV2","Simulation","RuntimeSettings");if not cfg then q.Reason=reason;return false end
+        local ser;ser,reason=diagnoseModule("MovementV2","Serial");if not ser then q.Reason=reason;return false end
+        local rt;rt,reason=diagnoseModule("MovementV2","Client","Runtime");if not rt then q.Reason=reason;return false end
+        for _,item in ipairs({{s,"Simulation.step","step"},{c,"State.clone","clone"},{c,"State.cloneSupport","cloneSupport"},
+            {cfg,"RuntimeSettings.getMovementConfig","getMovementConfig"},{ser,"Serial.addUInt32","addUInt32"},
+            {rt,"Runtime.advance","advance"},{rt,"Runtime._composeWorld","_composeWorld"}}) do
+            if type(item[1][item[3]])~="function" then q.Reason="missing method "..item[2];return false end
+        end
         local oldAdvance,oldCompose=rt.advance,rt._composeWorld
         local newAdvance=function(self,...)
             captured.runtime=self
@@ -5686,20 +5705,22 @@ do
             if result[1]~=nil then captured.world=result[1];captured.tick=tick;captured.owner=self end
             return table.unpack(result,1,result.n)
         end
-        local installed=pcall(function() rt.advance=newAdvance;rt._composeWorld=newCompose end)
+        local installed,installError=pcall(function() rt.advance=newAdvance;rt._composeWorld=newCompose end)
         if not installed or rt.advance~=newAdvance or rt._composeWorld~=newCompose then
             pcall(function() if rt.advance==newAdvance then rt.advance=oldAdvance end end)
             pcall(function() if rt._composeWorld==newCompose then rt._composeWorld=oldCompose end end)
-            return false
+            local message=installed and "assignment rejected" or tostring(installError):gsub("[%c]+"," "):sub(1,110)
+            q.Reason="Runtime hook unavailable: "..message;return false
         end
         sim,cloner,settings,serial,runtimeModule=s,c,cfg,ser,rt
         advanceOld,advanceWrapper,composeOld,composeWrapper=oldAdvance,newAdvance,oldCompose,newCompose
-        q.Ready=true;return true
+        q.Reason=nil;q.Ready=true;return true
     end
     task.spawn(function()
         while gui.Parent and not q.Ready do
             local ok,result=pcall(install)
             if ok and result then break end
+            if not ok then q.Reason="setup error: "..tostring(result):gsub("[%c]+"," "):sub(1,110) end
             task.wait(2)
         end
     end)
@@ -5830,8 +5851,9 @@ do
     q.GetStatus=function()
         if q.Blocked then return "Prediction: restricted; turn all prediction toggles off to retry" end
         if not (q.EdgeJump or q.JumpBug or q.EdgeBug or q.PixelSurf) then return "Prediction: off" end
-        if not q.Ready then return "Prediction: waiting for MovementV2" end
-        return "Prediction: ready (requires compatible input thread)"
+        if not q.Ready then return "Prediction: "..(q.Reason or "waiting for MovementV2") end
+        if not captured.runtime or not captured.world then return "Prediction: waiting for runtime / world" end
+        return "Prediction: initialized (requires compatible input thread)"
     end
     function state.applyMovementPrediction(character,snapshot,command)
         local ctx=state.movement and state.movement.context
@@ -5851,10 +5873,7 @@ do
                 return
             end
         end
-        if not q.Ready then
-            local now=os.clock();if now-lastWarn>10 then lastWarn=now;warn("[NOIR / Movement] MovementV2 prediction unavailable; prediction-based movement is inactive") end
-            return
-        end
+        if not q.Ready then return end
         if q.PixelSurf and current.OnGround==true then
             local ok,move=safeSimulation(pixelRide,snapshot,current,command)
             if ok and typeof(move)=="Vector2" then command.Move=move;return end
@@ -5883,11 +5902,16 @@ do
             end
         end
     end
-    local reportedBlock=false
+    local reportedBlock=false;local lastReportedReason=nil
     local con;con=RunService.Heartbeat:Connect(function()
         if not gui.Parent then con:Disconnect();restore();return end
+        local enabled=q.EdgeJump or q.JumpBug or q.EdgeBug or q.PixelSurf
+        if enabled and not q.Ready and q.Reason and lastReportedReason~=q.Reason then
+            lastReportedReason=q.Reason
+            warn("[NOIR / Movement] Prediction inactive: "..q.Reason)
+        elseif not enabled or q.Ready then lastReportedReason=nil end
         if q.Blocked and not reportedBlock then reportedBlock=true;warn("[NOIR / Movement] Prediction paused: "..tostring(q.BlockReason)) end
-        if q.Blocked and not (q.EdgeJump or q.JumpBug or q.EdgeBug or q.PixelSurf) then q.Blocked=false;q.BlockReason=nil;reportedBlock=false end
+        if q.Blocked and not enabled then q.Blocked=false;q.BlockReason=nil;reportedBlock=false end
     end)
 end
 
@@ -6171,6 +6195,79 @@ do
         if killRemote~=killEndpoint then stop(killStop);killStop=nil;killEndpoint=killRemote;q.KillReady=false end
         if not q.HitReady and hitRemote then hitStop=attach(hitRemote,hit);q.HitReady=hitStop~=nil end
         if not q.KillReady and killRemote then killStop=attach(killRemote,kill);q.KillReady=killStop~=nil end
+    end)
+end
+
+-- Адаптация списка наблюдателей: счётчик из атрибута игры, имена только кандидаты.
+do
+    local q={Enabled=false,ShowCandidates=false};state.spectatorPanel=q
+    local panel=Instance.new("Frame");panel.Name="NoirSpectatorPanel";panel.Size=UDim2.fromOffset(218,62)
+    panel.Position=UDim2.new(1,-238,0,160);panel.BackgroundColor3=Color3.fromRGB(20,27,24)
+    panel.BackgroundTransparency=0.12;panel.BorderSizePixel=0;panel.Visible=false;panel.Active=true;panel.ZIndex=45;panel.Parent=gui;round(panel,8)
+    local title=Instance.new("TextLabel");title.Name="Title";title.Size=UDim2.new(1,-20,0,25);title.Position=UDim2.fromOffset(10,3)
+    title.BackgroundTransparency=1;title.Text="SPECTATORS";title.Font=Enum.Font.GothamBold;title.TextSize=13
+    title.TextColor3=Color3.fromRGB(170,235,190);title.TextXAlignment=Enum.TextXAlignment.Left;title.ZIndex=46;title.Parent=panel
+    local body=Instance.new("TextLabel");body.Name="Details";body.Size=UDim2.new(1,-20,1,-31);body.Position=UDim2.fromOffset(10,28)
+    body.BackgroundTransparency=1;body.Text="Watching you: unavailable";body.Font=Enum.Font.Gotham;body.TextSize=12
+    body.TextColor3=Color3.fromRGB(230,241,233);body.TextXAlignment=Enum.TextXAlignment.Left;body.TextYAlignment=Enum.TextYAlignment.Top
+    body.RichText=false;body.ZIndex=46;body.Parent=panel
+    local function readSnapshot()
+        local raw=tonumber(localPlayer:GetAttribute("Spectators"));local count
+        if raw and raw==raw and raw>=0 and raw<math.huge then count=math.floor(raw) end
+        local names={}
+        if q.ShowCandidates and count~=0 then
+            for _,p in ipairs(Players:GetPlayers()) do
+                if p~=localPlayer then
+                    local ok,isSpectating=pcall(p.GetAttribute,p,"IsSpectating")
+                    if ok and isSpectating==true and type(p.Name)=="string" then names[#names+1]=p.Name end
+                end
+            end
+            table.sort(names,function(a,b)local x,y=a:lower(),b:lower();if x==y then return a<b end;return x<y end)
+        end
+        return count,names
+    end
+    local function drawSnapshot(count,names)
+        local text={"Watching you: "..(count~=nil and tostring(count) or "unavailable")}
+        if q.ShowCandidates and count~=0 then
+            text[#text+1]="Spectating players (unconfirmed):"
+            for i=1,math.min(#names,8) do text[#text+1]="  "..names[i] end
+            if #names>8 then text[#text+1]="  +"..tostring(#names-8).." more" end
+            if #names==0 then text[#text+1]="  none visible" end
+        end
+        body.Text=table.concat(text,"\n")
+        panel.Size=UDim2.fromOffset(218,math.max(62,34+17*#text))
+        panel.Visible=true
+    end
+    function q.SetEnabled(value) q.Enabled=value==true;if not q.Enabled then panel.Visible=false end end
+    local inputStart,origin,pointer
+    local connections={}
+    connections[#connections+1]=panel.InputBegan:Connect(function(input)
+        if not q.Enabled or pointer then return end
+        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+            pointer=input;inputStart=input.Position;origin=panel.AbsolutePosition
+        end
+    end)
+    connections[#connections+1]=UserInputService.InputChanged:Connect(function(input)
+        if not pointer or not q.Enabled then return end
+        if pointer.UserInputType==Enum.UserInputType.Touch then if input~=pointer then return end
+        elseif input.UserInputType~=Enum.UserInputType.MouseMovement then return end
+        local delta=input.Position-inputStart;local cam=Workspace.CurrentCamera;local viewport=cam and cam.ViewportSize
+        if not viewport then return end
+        local size=panel.AbsoluteSize
+        panel.Position=UDim2.fromOffset(math.clamp(origin.X+delta.X,0,math.max(0,viewport.X-size.X)),math.clamp(origin.Y+delta.Y,0,math.max(0,viewport.Y-size.Y)))
+    end)
+    connections[#connections+1]=UserInputService.InputEnded:Connect(function(input)
+        if pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then pointer=nil;inputStart=nil;origin=nil end
+    end)
+    local last,lastWarn=0,0;local beat
+    beat=RunService.Heartbeat:Connect(function()
+        if not gui.Parent then
+            beat:Disconnect();for _,connection in ipairs(connections) do connection:Disconnect() end;panel:Destroy();return
+        end
+        if not q.Enabled then return end
+        local now=os.clock();if now-last<0.5 then return end;last=now
+        local ok,err=pcall(function()local count,names=readSnapshot();drawSnapshot(count,names)end)
+        if not ok then panel.Visible=false;if now-lastWarn>15 then lastWarn=now;warn("[NOIR / Spectators] "..tostring(err)) end end
     end)
 end
 
@@ -27781,7 +27878,7 @@ local function buildAirflow()
     local panicControls={}
     local directPanicNames={
         ["Enable Obsidian"]=true,["No recoil"]=true,["No spread"]=true,
-        ["Enable Stage ESP"]=true,["Enable footstep ESP"]=true,["Sound ESP"]=true,
+        ["Enable Stage ESP"]=true,["Enable footstep ESP"]=true,["Sound ESP"]=true,["Spectator panel"]=true,
         ["Fullbright"]=true,["Custom camera FOV"]=true,["Force crosshair"]=true,
         ["Infinite jump (lobby)"]=true,["Anti AFK"]=true,["Triggerbot"]=true,["Trigger multi hitbox"]=true,["Trigger scoped only"]=true,
         ["Custom time"]=true,["Custom fog"]=true,["Custom ambient"]=true,["Custom exposure"]=true,
@@ -27988,6 +28085,10 @@ local function buildAirflow()
     slider(radarSettings,"Radar size",100,240,1,state.stageRadar.Settings.RadarSize," px",function(v)state.stageRadar.Settings.RadarSize=v end)
     local logs=right(radarPage,"Notifications","info")
     bridge(logs,"HIT LOG","Hit / health log","Game events when available; HP-change estimate otherwise")
+    local spectators=right(radarPage,"Spectators","users")
+    local spectatorPanel=state.spectatorPanel
+    spectators:CreateToggle({Name="Spectator panel",Desc="Displays the game's spectator count when available; drag the panel to move",CurrentValue=false,Callback=spectatorPanel.SetEnabled})
+    spectators:CreateToggle({Name="Show spectator candidates",Desc="Players marked spectating, not confirmed to be watching you",CurrentValue=false,Callback=function(v)spectatorPanel.ShowCandidates=v end})
 
     -- Элементы оригинального stage 7 — отдельный слой, чтобы не ломать старый Noir ESP.
     local stage=state.stageVisuals
