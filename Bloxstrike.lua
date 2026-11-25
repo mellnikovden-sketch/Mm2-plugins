@@ -5704,7 +5704,8 @@ do
     end
     local function restore()
         q.HookActive=false
-        if runtimeModule then
+        -- Detour после выгрузки остаётся пассивным passthrough до перезахода; не удаляем чужие перехваты.
+        if runtimeModule and q.HookMode=="field" then
             local ok,worked,reason=pcall(function()
                 local advance=runtimeModule.advance==advanceWrapper and advanceOld or runtimeModule.advance
                 local compose=runtimeModule._composeWorld==composeWrapper and composeOld or runtimeModule._composeWorld
@@ -5713,6 +5714,31 @@ do
             if not ok or not worked then warn("[NOIR / Movement] Runtime restore failed: "..tostring(ok and reason or worked)) end
         end
         q.Ready=false;clear();table.clear(captured)
+    end
+    -- Fallback: перехватываем только _composeWorld, не записывая в readonly Runtime.
+    -- Требуем отдельную копию исходной функции, чтобы при неполной установке сохранить passthrough.
+    local function installRuntimeDetour(target)
+        local hookFn=hookfunction or replaceclosure
+        if type(hookFn)~="function" then return false,"hookfunction unavailable" end
+        if type(clonefunction)~="function" then return false,"clonefunction unavailable; safe detour disabled" end
+        local clonedOk,backup=pcall(clonefunction,target)
+        if not clonedOk or type(backup)~="function" or backup==target then return false,"could not safely clone _composeWorld" end
+        local previous=backup
+        local wrapper=function(self,tick,...)
+            local result=table.pack(previous(self,tick,...))
+            if q.HookActive and result[1]~=nil then
+                captured.runtime=self;captured.world=result[1];captured.tick=tick;captured.owner=self
+            end
+            return table.unpack(result,1,result.n)
+        end
+        -- Даже если исполнитель изменил функцию, но не вернул исходник, оставляем пассивный passthrough и не повторяем попытку.
+        local ok,original=pcall(hookFn,target,wrapper)
+        if not ok or type(original)~="function" or original==target or original==wrapper then
+            q.Fatal=true
+            return false,"detour failed or returned invalid original; rejoin before retry"
+        end
+        previous=original
+        return true
     end
     local function diagnoseModule(...)
         local names={...};local path=table.concat(names,"/");local node=ReplicatedStorage
@@ -5751,13 +5777,19 @@ do
             return table.unpack(result,1,result.n)
         end
         local installed,installError=writeRuntimeFields(rt,newAdvance,newCompose)
+        local mode="field"
+        if not installed and not q.Fatal then
+            local detoured,detourError=installRuntimeDetour(oldCompose)
+            if detoured then installed=true;mode="detour"
+            else installError=tostring(installError).."; "..tostring(detourError) end
+        end
         if not installed then
-            local message=tostring(installError):gsub("[%c]+"," "):sub(1,150)
+            local message=tostring(installError):gsub("[%c]+"," "):sub(1,200)
             q.Reason="Runtime hook unavailable: "..message;return false
         end
         sim,cloner,settings,serial,runtimeModule=s,c,cfg,ser,rt
         advanceOld,advanceWrapper,composeOld,composeWrapper=oldAdvance,newAdvance,oldCompose,newCompose
-        q.Reason=nil;q.HookActive=true;q.Ready=true;return true
+        q.Reason=nil;q.HookMode=mode;q.HookActive=true;q.Ready=true;return true
     end
     task.spawn(function()
         while gui.Parent and not q.Ready do
@@ -5897,7 +5929,7 @@ do
         if not (q.EdgeJump or q.JumpBug or q.EdgeBug or q.PixelSurf) then return "Prediction: off" end
         if not q.Ready then return "Prediction: "..(q.Reason or "waiting for MovementV2") end
         if not captured.runtime or not captured.world then return "Prediction: waiting for runtime / world" end
-        return "Prediction: initialized (requires compatible input thread)"
+        return "Prediction: initialized ("..tostring(q.HookMode or "unknown").."; requires compatible input thread)"
     end
     function state.applyMovementPrediction(character,snapshot,command)
         local ctx=state.movement and state.movement.context
