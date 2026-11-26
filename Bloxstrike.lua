@@ -3249,7 +3249,7 @@ do
         State={Alive=true},Panic={Panicked=false},GameLib={},Caps={Upvalues=type(getupvalues)=="function"},
         Config={SeeThrough={"Characters","Debris","ThirdPersonWeaponStash"},EspCacheMax=256,SoundSelfRange=6,
             GhostSnap=45,SoundMaxMarks=24,SoundColor=Color3.fromRGB(255,196,64)},
-        Options={SoundEsp=false,SoundEspLife=3,EspMemory=0},
+        Options={SoundEsp=false,SoundEspLife=3,EspMemory=0,PredictedGhosts=false},
         Target={},Player={},Util={},
     }
     function xDTaraZ.Util.Decode(raw)
@@ -3390,6 +3390,26 @@ function xDTaraZ.Esp.Targets()
         ghost.Friendly = not ffa and mine ~= nil and xDTaraZ.Target.TeamOf(model) == mine
         live[model.Name] = true
         list[#list + 1] = esp.Row(ghost, model, xDTaraZ.Target.Owner(model), mine, focus)
+    end
+    -- Оценки Anti Aim — отдельный opt-in слой. Живые модели и обычная память
+    -- Stage ESP остаются приоритетными; ghost никогда не становится Adornee.
+    local aa=state.antiAim
+    if xDTaraZ.Options.PredictedGhosts and aa and type(aa.GetEstimatedGhosts)=="function" then
+        local ok,estimates=pcall(aa.GetEstimatedGhosts)
+        if ok and type(estimates)=="table" then
+            for _,item in ipairs(estimates) do
+                local owner,model=item.owner,item.model
+                local name=owner and owner.Name
+                if name and not live[name] and model and model.Parent then
+                    live[name]=true
+                    local display=(owner:IsA("Player") and owner.DisplayName) or name
+                    list[#list+1]={Model=model,Root=item.root,Adornee=false,EstimatedGhost=true,EstimatedOwner=owner,
+                        EstimatedHead=item.head,Name=tostring(display).." [estimate]",Friendly=false,
+                        Health=tonumber(owner:GetAttribute("Health")) or 100,
+                        MaxHealth=tonumber(owner:GetAttribute("MaxHealth")) or 100}
+                end
+            end
+        end
     end
     local memory = xDTaraZ.Options.EspMemory
     for name, ghost in pairs(esp.Ghosts) do
@@ -3932,6 +3952,11 @@ xDTaraZ.Visuals.Render = function()
     for _, info in ipairs(visuals.Targets) do
         local model = info.Model
         if typeof(model) ~= "Instance" or not model.Parent then continue end
+        if info.EstimatedGhost then
+            local aa=state.antiAim
+            if not xDTaraZ.Options.PredictedGhosts or not aa or not aa.IsEstimatedGhost
+                or not aa.IsEstimatedGhost(info.EstimatedOwner,model) then continue end
+        end
         if settings.TeamCheck and info.Friendly then continue end
         local root = info.Root or model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
         if not root then continue end
@@ -3980,7 +4005,7 @@ xDTaraZ.Visuals.Render = function()
         -- info.Root    = live HumanoidRootPart or ghost root (what the box uses).
         if settings.HeadDot then
             local realModel = info.Adornee          -- real char Model, or false
-            local head      = realModel and realModel:FindFirstChild("Head")
+            local head      = (realModel and realModel:FindFirstChild("Head")) or info.EstimatedHead
             -- ghost-only: estimate head ~1.5 studs above root (same root the box draws from)
             local headPos   = head and head.Position or (root.Position + Vector3.new(0, 1.5, 0))
             local hs, hOn   = cam:WorldToViewportPoint(headPos)
@@ -4506,7 +4531,7 @@ do
         Triggerbot=false,TriggerPart="Any",TriggerDelay=0.12,TriggerRange=2000,
         TriggerMulti=false,TriggerParts={Head=true,Chest=true,Stomach=true,Arms=true},TriggerReaction=0,TriggerScoped=false,
         TriggerDamageEnabled=false,TriggerMinDamage=20,TriggerChanceEnabled=false,TriggerMinChance=70,TriggerStatus="off",
-        TriggerTeamCheck=true,TriggerWall=false,TriggerWallMin=20,TriggerSampled=false,TriggerDraw=false,TriggerDrawColor=Color3.fromRGB(255,200,110)}
+        TriggerTeamCheck=true,TriggerWall=false,TriggerWallMin=20,TriggerSampled=false,TriggerDraw=false,TriggerDrawColor=Color3.fromRGB(255,200,110),TriggerFireFrame=false,TriggerFrameStatus="camera direction"}
     state.gameExtras=q
     local original={}
     local bloom,correction
@@ -4584,7 +4609,8 @@ do
             tracer(pos,pos+result.Direction*math.min(result.Distance,5000))
         end
     end
-    local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.IgnoreWater=true
+    local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.IgnoreWater=false
+    pcall(function()params.CollisionGroup="Bullet"end)
     local lastShot,lastStep,lastWarn=0,0,0
     local triggerTarget,triggerSince
     local lastTriggerSample=0
@@ -4622,7 +4648,7 @@ do
         if q.TriggerPart=="Torso" then return part.Name:find("Torso",1,true)~=nil end
         return partGroup(part.Name)~=nil
     end
-    -- Spread config copied from the source calculation; fire frame remains the camera frame.
+    -- Расчёт spread из D.au; направление может использовать игровой CFrame.
     local function triggerSpread(weapon)
         local props=weapon.Properties;local bullet=weapon.Bullet
         if type(props)~="table" or type(bullet)~="table" or bullet.IsDestroyed then return nil end
@@ -4642,6 +4668,101 @@ do
         if sniper and weapon.IsAiming and weapon.Name=="AWP" and tick()-(tonumber(weapon.ScopeStartTick) or 0)<0.2 then value=math.max(value,floor) end
         return math.clamp(value,0,69)
     end
+    q.ReadTriggerSpread=triggerSpread
+    -- D.au: обнаружение игрового расчёта позиции выстрела через upvalues.
+    -- Обе пружины временно обнуляются только на время вызова и восстанавливаются.
+    local fireFrame={fn=nil,kick=nil,other=nil,lastFind=0,failed=false}
+    local function locateFireFrame(now)
+        if fireFrame.fn or now-fireFrame.lastFind<3 then return end
+        fireFrame.lastFind=now
+        local getups=getupvalues or (debug and debug.getupvalues)
+        local cameraController=getModule("Controllers","CameraController")
+        local fire=type(cameraController)=="table" and rawget(cameraController,"toWeaponFirePosition")
+        local kick=type(cameraController)=="table" and rawget(cameraController,"getWeaponKickRotation")
+        if type(getups)~="function" or type(fire)~="function" or type(kick)~="function" then return end
+        local ok,a=pcall(getups,fire);local ok2,b=pcall(getups,kick)
+        if not ok or not ok2 or type(a)~="table" or type(b)~="table" then return end
+        local common={}
+        for _,v in pairs(b) do if type(v)=="table" then common[v]=true end end
+        local sample,first,second
+        for _,v in pairs(a) do
+            if type(v)=="function" and not sample then sample=v
+            elseif type(v)=="table" and typeof(rawget(v,"p"))=="Vector3" and rawget(v,"d")~=nil then
+                if common[v] then if first and first~=v then return end;first=v
+                else if second and second~=v then return end;second=v end
+            end
+        end
+        if sample and first and second and first~=second then fireFrame.fn,fireFrame.kick,fireFrame.other=sample,first,second end
+    end
+    local function getFireFrame(camera)
+        if not q.TriggerFireFrame or fireFrame.failed then q.TriggerFrameStatus=fireFrame.failed and "game direction paused" or "camera direction";return camera.CFrame end
+        locateFireFrame(os.clock())
+        local fn,a,b=fireFrame.fn,fireFrame.kick,fireFrame.other
+        if not (fn and a and b) then q.TriggerFrameStatus="game direction unavailable; camera fallback";return camera.CFrame end
+        local ap,bp=rawget(a,"p"),rawget(b,"p")
+        local changed=pcall(function()a.p=Vector3.zero;b.p=Vector3.zero end)
+        local ok,result=false,nil
+        if changed then ok,result=pcall(fn,1) end
+        local restoredA=rawget(a,"p")==ap or pcall(function()a.p=ap end)
+        local restoredB=rawget(b,"p")==bp or pcall(function()b.p=bp end)
+        if not restoredA or not restoredB or rawget(a,"p")~=ap or rawget(b,"p")~=bp then
+            fireFrame.failed=true;q.TriggerFrameStatus="game direction restore failed; rejoin"
+            return camera.CFrame
+        end
+        if changed and ok and typeof(result)=="CFrame" then q.TriggerFrameStatus="game direction";return result end
+        q.TriggerFrameStatus="game direction unavailable; camera fallback";return camera.CFrame
+    end
+    function q.GetTriggerFrame(camera)return getFireFrame(camera)end
+    -- Выборка по кольцам D.av. trace выдаёт только допустимые попадания.
+    -- Результат при раннем успехе является нижней границей, не точным процентом.
+    local function sampleTriggerCone(frame,spread,distance,threshold,trace)
+        local half=math.rad(math.clamp(spread,0,69)*0.5)
+        local function central()return trace(frame.LookVector)end
+        if half<1e-7 then
+            local model,part,wall=central()
+            return model,part,wall,model and 100 or 0
+        end
+        local function direction(angle,phi)
+            return frame.LookVector*math.cos(angle)+(frame.UpVector*math.cos(phi)+frame.RightVector*math.sin(phi))*math.sin(angle)
+        end
+        local radius=distance*math.tan(half)
+        if threshold>=0.999999 or radius<=0.02 then
+            local model,part,wall=central();if not model then return nil,nil,nil,0 end
+            if radius>0.02 then
+                local count=math.clamp(math.ceil(radius*2*math.pi/0.3),6,24)
+                for i=1,count do
+                    if not trace(direction(half,i*2*math.pi/count)) then return nil,nil,nil,0 end
+                end
+                if radius>0.45 then
+                    local inner=math.max(4,math.ceil(count*0.5))
+                    for i=1,inner do
+                        if not trace(direction(half*0.5,(i-0.5)*2*math.pi/inner)) then return nil,nil,nil,0 end
+                    end
+                end
+            end
+            return model,part,wall,100
+        end
+        local rings=math.clamp(math.ceil(radius/0.3),2,6)
+        local remaining,passed=1,0
+        local picked,hitPart,hitWall
+        for ring=rings,1,-1 do
+            local angle=(ring-0.5)*half/rings
+            local count=math.clamp(math.ceil(distance*math.tan(angle)*2*math.pi/0.3),6,24)
+            local w=1/rings/count;local phase=ring%2*0.5
+            for i=1,count do
+                remaining=math.max(0,remaining-w)
+                local model,part,wall=trace(direction(angle,(i-phase)*2*math.pi/count))
+                if model then
+                    passed+=w
+                    if not picked then picked,hitPart,hitWall=model,part,wall end
+                    if passed+1e-6>=threshold then return picked,hitPart,hitWall,math.min(100,passed*100) end
+                end
+                if passed+remaining+1e-6<threshold then return nil,nil,nil,passed*100 end
+            end
+        end
+        if passed+1e-6>=threshold then return picked,hitPart,hitWall,math.min(100,passed*100) end
+        return nil,nil,nil,passed*100
+    end
     local function triggerStep(now)
         if not q.Triggerbot then clearTrigger();return end
         if q.TriggerScoped and localPlayer:GetAttribute("IsSniperScoped")~=true then clearTrigger();return end
@@ -4653,87 +4774,116 @@ do
         local ok,weapon=pcall(controller.peekCurrentEquippedForMovement)
         if not ok or type(weapon)~="table" or weapon.Player~=localPlayer or weapon.IsDestroyed or weapon.IsReloading or weapon.IsShooting or type(weapon.shoot)~="function" or (tonumber(weapon.Rounds) or 1)<=0 then clearTrigger();return end
         local props=type(weapon.Properties)=="table" and weapon.Properties or {}
-        local range=math.min(math.clamp(tonumber(q.TriggerRange) or 2000,1,5000),tonumber(props.Range) or 5000)
-        local origin,frame=cam.CFrame.Position,cam.CFrame
-        params.FilterDescendantsInstances={cam,own}
+        local weaponRange=math.clamp(tonumber(props.Range) or 5000,1,5000)
+        local range=math.min(math.clamp(tonumber(q.TriggerRange) or 2000,1,5000),weaponRange)
+        local frame=getFireFrame(cam);local origin=frame.Position
+        if q.TriggerFireFrame and fireFrame.failed then clearTrigger();q.TriggerStatus="firing frame restore failed; rejoin";return end
+        q.TriggerVisualFrame=frame;q.TriggerFrameAt=now
+        local baseIgnore={cam,own}
+        local debris=Workspace:FindFirstChild("Debris")
+        local visuals=debris and debris:FindFirstChild("RaycastVisualizers")
+        if visuals then baseIgnore[#baseIgnore+1]=visuals end
         local mine=localPlayer:GetAttribute("Team") or teamOf(own)
         local ffa=string.find(tostring(Workspace:GetAttribute("Gamemode")),"Deathmatch",1,true)~=nil
-        local targets={};local targetOf={}
+        local targets={};local targetOf={};local characterModels={};local hitboxes={}
         for _,model in ipairs(characters:GetChildren()) do
+            if model:IsA("Model") then characterModels[#characterModels+1]=model end
             local health=tonumber(model:GetAttribute("Health"))
             local owner=Players:FindFirstChild(model.Name)
             if isEnemy(model,own,ffa,mine,q.TriggerTeamCheck) and (health==nil or health>0) and model:GetAttribute("Invincible")~=true and not (owner and owner:GetAttribute("Invincible")==true) then
                 targets[#targets+1]=model;targetOf[model]=true
-            end
-        end
-        local function trace(direction)
-            local hit=Workspace:Raycast(origin,direction*range,params);local part=safeHitInstance(hit)
-            local directModel=part and part:FindFirstAncestorOfClass("Model")
-            if directModel and targetOf[directModel] and validTriggerPart(part) then return directModel,part,false end
-            if not q.TriggerWall or not state.wallReady or not part then return nil end
-            local candidate,bestDistance=nil,range+1
-            for _,model in ipairs(targets) do
-                for _,p in ipairs(model:GetChildren()) do
-                    if validTriggerPart(p) then
-                        local distance=rayBox(p,origin,direction,range)
-                        if distance and distance<bestDistance then candidate={model,p,distance};bestDistance=distance end
-                    end
+                if q.TriggerWall and state.wallReady then
+                    for _,part in ipairs(model:GetChildren()) do if validTriggerPart(part) then hitboxes[#hitboxes+1]={model,part} end end
                 end
             end
+        end
+        local function characterOf(part)
+            if not part then return nil end
+            for _,model in ipairs(characterModels) do if part:IsDescendantOf(model) then return model end end
+        end
+        local function ignoredPart(part)
+            if not part then return false end
+            if part.Name=="CollisionCapsule" or part.Name=="HumanoidRootPart" then return true end
+            local ok,tagged=pcall(part.HasTag,part,"CharacterAccessory")
+            if ok and tagged then return true end
+            local ok2,accessory=pcall(part.FindFirstAncestorWhichIsA,part,"Accessory")
+            return ok2 and accessory~=nil
+        end
+        local function probe(direction)
+            params.FilterDescendantsInstances=baseIgnore
+            for _=1,24 do
+                local hit=Workspace:Raycast(origin,direction*range,params)
+                local part=safeHitInstance(hit)
+                if not part or not ignoredPart(part) then return hit,part end
+                params:AddToFilter(part)
+            end
+            return nil,nil
+        end
+        local function trace(direction)
+            local hit,part=probe(direction)
+            local model=characterOf(part)
+            if model then
+                if targetOf[model] and validTriggerPart(part) then return model,part,false end
+                return nil -- a different character or a disabled hitbox blocks the ray
+            end
+            if not q.TriggerWall or not state.wallReady or not part then return nil end
+            local candidate,bestDistance=nil,range+1
+            for _,entry in ipairs(hitboxes) do
+                local distance=rayBox(entry[2],origin,direction,range)
+                if distance and distance<bestDistance then candidate={entry[1],entry[2],distance};bestDistance=distance end
+            end
             if candidate then
-                local model,p,distance=candidate[1],candidate[2],candidate[3]
-                -- Не выбираем часть перед препятствием и проверяем именно точку луча.
-                if hit and typeof(hit.Position)=="Vector3" and distance+0.05>=(hit.Position-origin).Magnitude and tracePenetration(origin,p,origin+direction*math.min(distance+0.05,range)) then return model,p,true end
+                local target,p,distance=candidate[1],candidate[2],candidate[3]
+                if hit and typeof(hit.Position)=="Vector3" and distance+0.05>=(hit.Position-origin).Magnitude and tracePenetration(origin,p,origin+direction*math.min(distance+0.05,range)) then return target,p,true end
             end
             return nil
         end
-        local target,part,wall=trace(frame.LookVector)
-        if not target then clearTrigger();return end
-        if target~=triggerTarget then triggerTarget=target;triggerSince=now end
-        if now-(triggerSince or now)<math.clamp(tonumber(q.TriggerReaction) or 0,0,2) or now-lastShot<q.TriggerDelay then return end
-        local distance=(part.Position-origin).Magnitude
-        if (wall and q.TriggerWall) or q.TriggerDamageEnabled then
-            local damage=rageDamage(weapon,part,target,distance,wall)
-            local threshold=wall and q.TriggerWallMin or q.TriggerMinDamage
-            if not damage or damage<threshold then q.TriggerStatus=damage and string.format("%s damage ~%.0f",wall and "wall" or "direct",damage) or "damage unavailable";return end
+        local function qualified(direction)
+            local target,part,wall=trace(direction)
+            if not target then return nil end
+            if wall or q.TriggerDamageEnabled then
+                local damage=rageDamage(weapon,part,target,(part.Position-origin).Magnitude,wall)
+                local pellets=math.clamp(tonumber(props.BulletsPerShot) or 1,1,64)
+                if damage then damage*=pellets end
+                local threshold=wall and q.TriggerWallMin or q.TriggerMinDamage
+                if not damage or damage<threshold then return nil end
+            end
+            return target,part,wall
         end
-        if q.TriggerChanceEnabled then
-            local chance
-            if q.TriggerSampled then
-                if now-lastTriggerSample<0.15 then return end
-                lastTriggerSample=now
-                local spread=triggerSpread(weapon)
-                if not spread then q.TriggerStatus="spread config unavailable";return end
-                local half=math.rad(spread*0.5)
-                if half<1e-7 then chance=100 else
-                    -- Same concentric ring counts and area weighting as the source;
-                    -- camera frame and per-sample visibility remain approximations.
-                    local rings=math.clamp(math.ceil(distance*math.tan(half)/0.3),2,6)
-                    local weight,passed=0,0
-                    for ring=1,rings do
-                        local angle=(ring-0.5)*half/rings
-                        local count=math.clamp(math.ceil(distance*math.tan(angle)*2*math.pi/0.3),6,24)
-                        local w=1/rings/count;local phase=ring%2*0.5
-                        for i=1,count do
-                            local phi=(i-phase)*2*math.pi/count
-                            local direction=frame.LookVector*math.cos(angle)+(frame.UpVector*math.cos(phi)+frame.RightVector*math.sin(phi))*math.sin(angle)
-                            local found,hitPart,hitWall=trace(direction)
-                            if found==target then
-                                local acceptable=true
-                                if hitWall or q.TriggerDamageEnabled then
-                                    local dmg=rageDamage(weapon,hitPart,found,(hitPart.Position-origin).Magnitude,hitWall)
-                                    acceptable=dmg~=nil and dmg>=(hitWall and q.TriggerWallMin or q.TriggerMinDamage)
-                                end
-                                if acceptable then passed+=w end
-                            end
-                            weight+=w
-                        end
+        if now-lastShot<q.TriggerDelay then return end
+        local target,part,wall,chance
+        if q.TriggerChanceEnabled and q.TriggerSampled then
+            if now-lastTriggerSample<0.15 then return end
+            lastTriggerSample=now
+            local spread=triggerSpread(weapon)
+            if not spread then clearTrigger();q.TriggerStatus="spread config unavailable";return end
+            local half=math.rad(spread*0.5);local nearestAngle=math.huge;local sampleDistance=nil
+            for _,model in ipairs(targets) do
+                local root=model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("UpperTorso") or model:FindFirstChild("Head")
+                if root and root:IsA("BasePart") then
+                    local delta=root.Position-origin;local distance=delta.Magnitude
+                    if distance>0.5 and distance<=range+5 then
+                        local angle=math.acos(math.clamp(frame.LookVector:Dot(delta.Unit),-1,1))
+                        if angle<=half+math.asin(math.min(1,4.5/distance)) and angle<nearestAngle then nearestAngle=angle;sampleDistance=distance end
                     end
-                    chance=weight>0 and 100*passed/weight or 0
                 end
-            else chance=rageChance(weapon,part,distance,nil) end
-            if not chance or chance<q.TriggerMinChance then q.TriggerStatus=chance and string.format("chance ~%.0f%%",chance) or "spread unavailable";return end
-            q.TriggerStatus=string.format("%s ~%.0f%%",q.TriggerSampled and "sampled" or "estimated",chance)
+            end
+            if not sampleDistance then clearTrigger();return end
+            local threshold=math.clamp((tonumber(q.TriggerMinChance) or 70)/100,0.01,1)
+            target,part,wall,chance=sampleTriggerCone(frame,spread,sampleDistance,threshold,qualified)
+            if not target then clearTrigger();q.TriggerStatus="sampled chance below threshold";return end
+        else
+            target,part,wall=qualified(frame.LookVector)
+            if not target then clearTrigger();return end
+            if q.TriggerChanceEnabled then
+                chance=rageChance(weapon,part,(part.Position-origin).Magnitude,nil)
+                if not chance or chance<q.TriggerMinChance then q.TriggerStatus=chance and string.format("chance ~%.0f%%",chance) or "spread unavailable";return end
+            end
+        end
+        if target~=triggerTarget then triggerTarget=target;triggerSince=now end
+        if now-(triggerSince or now)<math.clamp(tonumber(q.TriggerReaction) or 0,0,2) then return end
+        if chance then
+            q.TriggerStatus=q.TriggerSampled and string.format("sampled ≥%.0f%%",chance) or string.format("estimated ~%.0f%%",chance)
         else q.TriggerStatus=wall and "wall trace" or "direct trace" end
         local modes=props.FireModes;local primary=type(modes)=="table" and modes.Primary
         local fireRate=tonumber(type(primary)=="table" and primary.FireRate) or tonumber(props.FireRate) or 0.12
@@ -4753,7 +4903,11 @@ do
             local ok,err=pcall(lighting)
             if not ok and now-lastWarn>5 then lastWarn=now;warn("[NOIR / Lighting] "..tostring(err)) end
         end
-        triggerStep(now)
+        local ok,err=pcall(triggerStep,now)
+        if not ok then
+            clearTrigger();q.TriggerStatus="paused by input error"
+            if now-lastWarn>5 then lastWarn=now;warn("[NOIR / Triggerbot] "..tostring(err)) end
+        end
     end)
 end
 
@@ -4788,12 +4942,13 @@ do
         end
         gradient.Enabled=enabled
     end
-    local function draw(circle,enabled,cam,half,color,grad,color2,fill,fillColor,fillGrad,fillColor2,opacity)
+    local function draw(circle,enabled,cam,half,color,grad,color2,fill,fillColor,fillGrad,fillColor2,opacity,center)
         local r=enabled and cam and radius(cam,half) or nil
         local frame,stroke=circle.frame,circle.stroke
         frame.Visible=r~=nil
         if not r then return end
         frame.Size=UDim2.fromOffset(r*2,r*2)
+        frame.Position=center and UDim2.fromOffset(center.X,center.Y) or UDim2.fromScale(0.5,0.5)
         circle.outlineCache=circle.outlineCache or {};circle.fillCache=circle.fillCache or {}
         style(circle.outline,circle.outlineCache,color,color2,grad)
         style(circle.fill,circle.fillCache,fillColor,fillColor2,fillGrad)
@@ -4805,11 +4960,21 @@ do
         if not gui.Parent then con:Disconnect();a.frame:Destroy();t.frame:Destroy();return end
         local cam=Workspace.CurrentCamera
         draw(a,q.Silent and config.enabled and config.silentFovLimit,cam,math.rad(math.clamp(tonumber(config.silentFovAngle) or 30,1,180)),q.SilentColor,q.SilentGradient,q.SilentColor2,q.Fill,q.FillColor,q.FillGradient,q.FillColor2,q.FillOpacity)
-        local trigger=state.gameExtras;local weapon=rageWeapon();local spread
-        if trigger.Triggerbot and trigger.TriggerDraw and weapon and weapon.Bullet and type(weapon.Bullet.getTrueSpread)=="function" then
-            local ok,value=pcall(weapon.Bullet.getTrueSpread,weapon.Bullet);if ok and type(value)=="number" and value==value then spread=math.clamp(value,0,69) end
+        local trigger=state.gameExtras;local weapon=rageWeapon();local spread,center
+        if trigger.Triggerbot and trigger.TriggerDraw and weapon then
+            if type(trigger.ReadTriggerSpread)=="function" then
+                local ok,value=pcall(trigger.ReadTriggerSpread,weapon);if ok and type(value)=="number" and value==value then spread=value end
+            end
+            if not spread and weapon.Bullet and type(weapon.Bullet.getTrueSpread)=="function" then
+                local ok,value=pcall(weapon.Bullet.getTrueSpread,weapon.Bullet);if ok and type(value)=="number" and value==value then spread=math.clamp(value,0,69) end
+            end
+            local frame=trigger.TriggerVisualFrame
+            if cam and trigger.TriggerFireFrame and frame and os.clock()-(trigger.TriggerFrameAt or 0)<0.5 then
+                local ok,point=pcall(cam.WorldToViewportPoint,cam,frame.Position+frame.LookVector*100)
+                if ok and point.Z>0 then center=point end
+            end
         end
-        draw(t,spread~=nil,cam,math.rad((spread or 0)*0.5),trigger.TriggerDrawColor,q.TriggerGradient,q.TriggerColor2,q.TriggerFill,q.TriggerFillColor,q.TriggerFillGradient,q.TriggerFillColor2,q.TriggerFillOpacity)
+        draw(t,spread~=nil,cam,math.rad((spread or 0)*0.5),trigger.TriggerDrawColor,q.TriggerGradient,q.TriggerColor2,q.TriggerFill,q.TriggerFillColor,q.TriggerFillGradient,q.TriggerFillColor2,q.TriggerFillOpacity,center)
     end)
 end
 
@@ -6027,7 +6192,7 @@ end
 
 -- Снимки удалённого движения: декодирование и работа с игроками только на Heartbeat.
 do
-    local q={records={},Ready=false};state.aaSnapshots=q
+    local q={records={},Ready=false,DecodedPackets=0,ActorUpdates=0};state.aaSnapshots=q
     local endpoint,connection,codec,rootFrame=nil,nil,nil,nil
     local active=false;local generation=0;local lastFind=0;local lastWarning=0
     local baseline,baselineSeq={},nil
@@ -6037,6 +6202,7 @@ do
     local function clear()
         table.clear(q.records);table.clear(baseline);table.clear(pending);table.clear(chunks)
         baselineSeq=nil;pendingSeq=nil;chunkCount=0;expectedChunks=nil;pendingActors=0;lastTick=-math.huge;pendingAt=0
+        q.DecodedPackets=0;q.ActorUpdates=0;q.LastDecodedAt=nil;q.LastActorAt=nil
     end
     local function detach()
         active=false;q.Ready=false;generation+=1
@@ -6069,6 +6235,7 @@ do
                         if not vector(velocity) or velocity.Magnitude>200 then velocity=Vector3.zero end
                         local generation=owner:GetAttribute("CharacterGeneration") or owner:GetAttribute("Generation")
                         q.records[key]={owner=owner,position=pos,velocity=Vector3.new(velocity.X,0,velocity.Z),at=now,error=0.3,generation=generation,duck=actor.DuckAmount,yaw=actor.LookYaw}
+                        q.ActorUpdates+=1;q.LastActorAt=now
                     end
                 end
             end
@@ -6085,7 +6252,7 @@ do
             if type(seq)~="number" or count<1 or count>64 or index<0 or index>=count or count%1~=0 or index%1~=0 or seq==baselineSeq then return end
             if pendingSeq~=seq or now-pendingAt>3 then table.clear(pending);table.clear(chunks);chunkCount=0;pendingActors=0;pendingSeq=seq;pendingAt=now;expectedChunks=count end
             if count~=expectedChunks or chunks[index] then return end
-            chunks[index]=true;chunkCount+=1
+            chunks[index]=true;chunkCount+=1;q.DecodedPackets+=1;q.LastDecodedAt=now
             local actors=type(data.Actors)=="table" and data.Actors or {}
             for i,actor in ipairs(actors) do
                 if i>256 then break end
@@ -6101,7 +6268,8 @@ do
                 baseline=pending;baselineSeq=seq;pending={};pendingSeq=nil;table.clear(chunks);chunkCount=0;pendingActors=0;expectedChunks=nil
             end
         elseif data.Kind=="Delta" and tick>lastTick then
-            lastTick=tick;local actors={};local removed={}
+            lastTick=tick;q.DecodedPackets+=1;q.LastDecodedAt=now
+            local actors={};local removed={}
             if data.BaselineSequence==baselineSeq and baselineSeq~=nil then
                 if type(data.RemovedActorIds)=="table" then for i,id in ipairs(data.RemovedActorIds) do if i>256 then break end;removed[id]=true end end
                 local changes={};local fn=codec.applyDeltaToCanonicalBaseline
@@ -6156,6 +6324,7 @@ do
     local spin,lastYaw=0,nil
     local cover={character=nil,side=0,nextAt=0,lockUntil=0}
     local pose,poseJoints,poseCharacter,poseActive;local wantedPitch,wantedAt=nil,0
+    local clearGhosts
     local hooks,hookTried={},{throw={},predict={}};local throwUntil=0;local grenadeReady,predictReady=false,false
     local grenadeNames={["HE Grenade"]=true,Flashbang=true,["Smoke Grenade"]=true,["Decoy Grenade"]=true,["Incendiary Grenade"]=true,Molotov=true}
     local coverRay=RaycastParams.new();coverRay.FilterType=Enum.RaycastFilterType.Exclude;coverRay.IgnoreWater=false;coverRay.RespectCanCollide=false
@@ -6167,7 +6336,7 @@ do
     end
     function q.SetEnabled(value)
         q.Enabled=value==true;q.Reset()
-        if not q.Enabled then relax() end
+        if not q.Enabled then relax();if clearGhosts then clearGhosts(false) end end
     end
     local function assignField(tab,key,value)
         local wasReadonly=false
@@ -6233,9 +6402,73 @@ do
         end
     end
     local observed={};local speedProfile,kinematics=nil,nil;local lastProfile=0
-    -- Память пропорций и позы: локальные CFrame конечностей без создания видимых объектов.
+    -- Память пропорций и позы и локальные невидимые модели, не находящиеся в Workspace.
     local rigs,rigAssets={},{}
     local rigNames={"Head","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"}
+    -- Полный невидимый локальный ghost по D.l: папка не подключается к Workspace.
+    -- На отказ Instance используем прежнюю геометрическую оценку и не повторяем
+    -- создание до выключения AA, не оставляя частично построенную модель.
+    local ghostFolder,ghostFailure=nil,false
+    q.GhostCount=0
+    local function dropGhost(slot)
+        local ghost=slot and slot.cloneGhost
+        if not ghost then return end
+        slot.cloneGhost=nil;q.GhostCount=math.max(0,q.GhostCount-1)
+        pcall(function()ghost.model:Destroy()end)
+    end
+    local function dropRig(key)
+        local slot=rigs[key]
+        if slot then dropGhost(slot);rigs[key]=nil end
+    end
+    clearGhosts=function(destroyFolder)
+        for _,slot in pairs(rigs) do dropGhost(slot) end
+        if destroyFolder and ghostFolder then pcall(function()ghostFolder:Destroy()end);ghostFolder=nil end
+        ghostFailure=false;q.GhostError=nil;q.GhostCount=0
+    end
+    local function makeGhost(slot,owner,kit)
+        if ghostFailure then return nil end
+        local key=owner:GetAttribute("PresentationCharacterName") or owner:GetAttribute("CharacterName") or "?"
+        local old=slot.cloneGhost
+        if old and old.key==key and old.model.Parent==ghostFolder then return old end
+        dropGhost(slot)
+        local model
+        local ok,result=pcall(function()
+            if not ghostFolder then ghostFolder=Instance.new("Folder");ghostFolder.Name="NoirLocalGhosts" end
+            model=Instance.new("Model");model.Name=owner.Name
+            local function newPart(name,size)
+                local p=Instance.new("Part");p.Name=name;p.Size=size;p.Anchored=true
+                p.CanCollide=false;p.CanQuery=false;p.CanTouch=false;p.CastShadow=false;p.Massless=true;p.Transparency=1;p.Parent=model
+                return p
+            end
+            local root=newPart("HumanoidRootPart",kit.root or Vector3.new(2,2,1));local parts={}
+            for _,name in ipairs(rigNames) do parts[name]=newPart(name,kit.size[name] or Vector3.new(1,1,1)) end
+            model.PrimaryPart=root;model:SetAttribute("CharacterType","PlayerCustomCharacter");model:SetAttribute("Dead",false)
+            model.Parent=ghostFolder
+            return {model=model,root=root,parts=parts,key=key,src=nil}
+        end)
+        if not ok then
+            if model then pcall(function()model:Destroy()end) end
+            ghostFailure=true;q.GhostError=tostring(result);return nil
+        end
+        slot.cloneGhost=result;q.GhostCount+=1;return result
+    end
+    local function placeGhost(slot,owner,kit,base)
+        local ghost=makeGhost(slot,owner,kit);if not ghost then return nil end
+        local ok,err=pcall(function()
+            if ghost.src~=kit.size then
+                ghost.src=kit.size
+                for name,part in pairs(ghost.parts) do local size=kit.size[name];if size and part.Size~=size then part.Size=size end end
+                if kit.root and ghost.root.Size~=kit.root then ghost.root.Size=kit.root end
+            end
+            ghost.root.CFrame=base
+            for name,part in pairs(ghost.parts) do local offset=kit.off[name];if offset then part.CFrame=base*offset end end
+            local health=owner:GetAttribute("Health");local maximum=owner:GetAttribute("MaxHealth")
+            if ghost.health~=health then ghost.health=health;ghost.model:SetAttribute("Health",health) end
+            if ghost.maximum~=maximum then ghost.maximum=maximum;ghost.model:SetAttribute("MaxHealth",maximum) end
+        end)
+        if not ok then dropGhost(slot);ghostFailure=true;q.GhostError=tostring(err);return nil end
+        return ghost
+    end
     local function grabRig(model)
         local root=model and model:FindFirstChild("HumanoidRootPart")
         if not root or not root:IsA("BasePart") then return nil end
@@ -6251,6 +6484,7 @@ do
         local generation=owner:GetAttribute("CharacterGeneration") or owner:GetAttribute("Generation")
         local slot=rigs[key]
         if not slot or slot.owner~=owner or slot.generation~=generation then
+            if slot then dropGhost(slot) end
             slot={owner=owner,generation=generation,stance=nil,since=now,learnt=0,last=now};rigs[key]=slot
         end
         slot.last=now;return slot
@@ -6272,8 +6506,7 @@ do
         local ok,offsets=pcall(grabRig,model)
         if ok and offsets then rigAssets[name]=offsets;return offsets end
     end
-    -- Возвращает полный набор CFrame/размеров; как и в source, позиции
-    -- вычисляются из root/yaw и запомненного набора позы, но без физического клона.
+    -- Возвращает позу всех частей; ghost-модель используется при доступности Instance.
     local function loweredRig(kit)
         if kit.low then return kit.low end
         local offsets={}
@@ -6316,12 +6549,13 @@ do
             if kit and duck then kit=loweredRig(kit) end
             if not kit then kit=slot.duck end
         end
-        if not kit then slot.ghostPose=nil;return position+Vector3.new(0,1.8,0),position+Vector3.new(0,0.6,0),false end
+        if not kit then dropGhost(slot);slot.ghostPose=nil;return position+Vector3.new(0,1.8,0),position+Vector3.new(0,0.6,0),false end
         local yaw=tonumber(record.yaw) or 0
         if yaw~=yaw or math.abs(yaw)>1000000 then yaw=0 end
         local base=CFrame.new(position)*CFrame.Angles(0,yaw,0)
+        local modelGhost=placeGhost(slot,owner,kit,base)
         local ghost=slot.ghostPose or {parts={}};slot.ghostPose=ghost
-        ghost.root=base;ghost.rootSize=kit.root;ghost.at=now
+        ghost.root=base;ghost.rootSize=kit.root;ghost.at=now;ghost.model=modelGhost and modelGhost.model or nil
         for _,name in ipairs(rigNames) do
             local offset=kit.off[name]
             if offset then
@@ -6329,7 +6563,9 @@ do
             else ghost.parts[name]=nil end
         end
         local head=ghost.parts.Head;local torso=ghost.parts.UpperTorso
-        return head and head.CFrame.Position or position+Vector3.new(0,1.8,0),torso and torso.CFrame.Position or position+Vector3.new(0,0.6,0),true
+        local headPos=modelGhost and kit.off.Head and modelGhost.parts.Head.Position or (head and head.CFrame.Position)
+        local torsoPos=modelGhost and kit.off.UpperTorso and modelGhost.parts.UpperTorso.Position or (torso and torso.CFrame.Position)
+        return headPos or position+Vector3.new(0,1.8,0),torsoPos or position+Vector3.new(0,0.6,0),true
     end
 
     local deaths={}
@@ -6347,26 +6583,36 @@ do
         if not owner or owner==localPlayer then return end
         local key=owner:IsA("Player") and owner.UserId or owner
         local generation=owner:GetAttribute("CharacterGeneration") or owner:GetAttribute("Generation")
-        deaths[key]={at=os.clock(),generation=generation};observed[key]=nil;rigs[key]=nil
+        deaths[key]={at=os.clock(),generation=generation};observed[key]=nil;dropRig(key)
         local snaps=state.aaSnapshots and state.aaSnapshots.records;if snaps then snaps[key]=nil end
     end
     -- D.k: состояние live / est / none. Snapshot и смена поколения обрабатываются
     -- отдельно, чтобы последний живой кадр не устаревал раньше перехода в est.
     local function syncSlot(slot,now,generation,dead,frozen,snapshot,live,spawnPos,spawnYaw)
+        -- Never carry last-generation snapshots into a new life.
+        local changed=slot.generation~=generation
+        local first=slot.generation==nil
+        if changed then
+            slot.generation=generation;slot.mode="none";slot.live=nil;slot.void=false;slot.seen=nil
+            slot.position=nil;slot.velocity=nil;slot.yaw=nil;slot.at=0;slot.hit=0;slot.error=0.5;slot.cur=nil
+            slot.lastSnapshot=nil;slot.snapAt=nil;slot.snapPosition=nil;slot.snapVelocity=nil;slot.snapYaw=nil;slot.snapDuck=nil
+        end
+        if dead then
+            slot.mode="none";slot.live=nil;slot.cur=nil;slot.position=nil;slot.velocity=nil
+            slot.snapAt=nil;slot.snapPosition=nil;slot.snapVelocity=nil;slot.snapYaw=nil;slot.snapDuck=nil
+            slot.lastSnapshot=snapshot;slot.void=false;slot.seen=nil
+            return changed
+        end
         if snapshot and snapshot.generation==generation and snapshot~=slot.lastSnapshot then
             slot.lastSnapshot=snapshot;slot.snapAt=snapshot.at;slot.snapPosition=snapshot.position
             slot.snapVelocity=snapshot.velocity;slot.snapYaw=type(snapshot.yaw)=="number" and snapshot.yaw or slot.snapYaw or 0
             slot.snapDuck=type(snapshot.duck)=="number" and snapshot.duck or 0
-            if slot.mode~="live" and not dead then
+            if slot.mode~="live" then
                 slot.position=slot.snapPosition;slot.velocity=slot.snapVelocity;slot.yaw=slot.snapYaw
                 slot.at=slot.snapAt;slot.hit=slot.snapAt;slot.error=0.3;slot.mode="est";slot.void=false;slot.seen=nil
             end
         end
-        if dead then slot.mode="none";slot.live=nil;return false end
-        local changed=slot.generation~=generation
-        if changed then
-            local first=slot.generation==nil
-            slot.generation=generation;slot.mode="none";slot.live=nil;slot.void=false;slot.seen=nil
+        if changed and slot.mode~="est" then
             local position,yaw,err
             if first and slot.snapPosition and now-(slot.snapAt or 0)<1 then
                 position,yaw,err=slot.snapPosition,slot.snapYaw,0.3
@@ -6420,24 +6666,35 @@ do
             kinematics=getModule("MovementV2","RuntimeKinematics") or kinematics
         end
         local folder=Workspace:FindFirstChild("Characters");local models=folder and folder:GetChildren() or {}
+        local roster=Players:GetPlayers();local ownerByCharacter={};local added={}
+        for _,model in ipairs(models) do added[model]=true end
+        for _,player in ipairs(roster) do
+            local character=player.Character
+            if character and character.Parent and character:IsDescendantOf(Workspace) then
+                ownerByCharacter[character]=player
+                if not added[character] then added[character]=true;models[#models+1]=character end
+            end
+        end
         local bots=state.aaBots;bots.refresh(now)
         local pvs=state.aaPvs;local pvsReady=pvs.sync()
         local eyePart=own and (own:FindFirstChild("CameraPart") or own:FindFirstChild("Head"))
         local eye=pvsReady and (myTeam=="Terrorists" or myTeam=="Counter-Terrorists") and own and own:GetAttribute("Dead")==false and eyePart and eyePart:IsA("BasePart") and eyePart.Position or nil
         local best,bestHead,bestModel,bestDistance=nil,nil,nil,math.huge
+        local refKind,refRig="none",false
         local allowedTeam={["Counter-Terrorists"]=true,Terrorists=true};local liveByKey={};local seenOwners={}
         -- Живые модели имеют приоритет над оценкой, как в D.U.
         for _,model in ipairs(models) do
             if model~=own and model:IsA("Model") and model.Name~=localPlayer.Name and model:GetAttribute("Dead")~=true and model:GetAttribute("ClientCharacterPresentationVisible")~=false then
                 local bot=model:GetAttribute("Bot")==true and bots.byCombatant[model:GetAttribute("CombatantId")] or nil
-                local owner=bot or Players:FindFirstChild(model.Name)
-                local other=owner and owner:GetAttribute("Team") or teamOf(model)
+                local owner=bot or ownerByCharacter[model] or Players:FindFirstChild(model.Name)
+                local other=owner and owner:GetAttribute("Team")
                 local key=owner and (bot or owner.UserId)
                 local root=model:FindFirstChild("HumanoidRootPart")
-                if root and root:IsA("BasePart") and (ffa or (allowedTeam[myTeam] and allowedTeam[other] and myTeam~=other)) and not (key and state.aaIsRecentlyDead(owner,key,now)) then
+                local canonical=owner and (bot or not owner.Character or owner.Character==model or not owner.Character:IsDescendantOf(Workspace))
+                if canonical and owner~=localPlayer and root and root:IsA("BasePart") and (ffa or (allowedTeam[myTeam] and allowedTeam[other] and myTeam~=other)) and not (key and state.aaIsRecentlyDead(owner,key,now)) then
                     local head=model:FindFirstChild("Head");local headPosition=head and head:IsA("BasePart") and head.Position or root.Position+Vector3.new(0,1.8,0)
                     local distance=(root.Position-position).Magnitude
-                    if distance<bestDistance then best,bestHead,bestModel,bestDistance=root.Position,headPosition,model,distance end
+                    if distance<bestDistance then best,bestHead,bestModel,bestDistance=root.Position,headPosition,model,distance;refKind="live";refRig=true end
                     if key then
                         local velocity=root.AssemblyLinearVelocity
                         if type(kinematics)=="table" and type(kinematics.getVelocity)=="function" then
@@ -6456,7 +6713,7 @@ do
             if not owner or owner==localPlayer or not owner.Parent then return end
             seenOwners[key]=true
             local other=owner:GetAttribute("Team")
-            if not allowedTeam[other] or not (ffa or (allowedTeam[myTeam] and myTeam~=other)) then observed[key]=nil;rigs[key]=nil;return end
+            if not allowedTeam[other] or not (ffa or (allowedTeam[myTeam] and myTeam~=other)) then observed[key]=nil;dropRig(key);return end
             local slot=observed[key]
             if not slot or slot.owner~=owner then slot={owner=owner,mode="none",generation=nil,at=0,error=0};observed[key]=slot end
             local generation=owner:GetAttribute("CharacterGeneration") or owner:GetAttribute("Generation")
@@ -6468,13 +6725,14 @@ do
             if typeof(spawn)=="Vector3" and (spawn.X~=spawn.X or spawn.Y~=spawn.Y or spawn.Z~=spawn.Z or spawn.Magnitude>100000) then spawn=nil end
             local snap=network[key];local live=not dead and liveByKey[key] or nil
             local changed=syncSlot(slot,now,generation,dead,frozen,snap,live,spawn,owner:GetAttribute("PresentationSpawnYaw"))
-            if changed then rigs[key]=nil end
+            if changed then dropRig(key) end
             if slot.mode=="live" then
+                dropGhost(rigs[key])
                 local duck=slot.snapAt and now-slot.snapAt<0.5 and slot.snapDuck>=0.5 or (not slot.snapAt or now-slot.snapAt>=0.5) and owner:GetAttribute("IsCrouching")==true
                 learnRig(key,owner,slot.live,duck,now)
                 return
             end
-            local predicted=estimate(slot,now);if not predicted then slot.cur=nil;return end
+            local predicted=estimate(slot,now);if not predicted then dropGhost(rigs[key]);slot.cur=nil;return end
             slot.cur=predicted;slot.duck=slot.snapDuck
             -- ghostParts ожидает время последнего snapshot для оценки приседания.
             local poseRecord={owner=owner,at=slot.snapAt or -math.huge,duck=slot.snapDuck,yaw=slot.yaw}
@@ -6490,21 +6748,49 @@ do
             elseif not eye then slot.seen=nil end
             -- D.U не проверяет void: значение используется ghost/ESP, а не выбором AA.
             local distance=(predicted-position).Magnitude
-            if not liveBest and distance<bestDistance then best,bestHead,bestModel,bestDistance=predicted,head,nil,distance end
+            if not liveBest and distance<bestDistance then best,bestHead,bestModel,bestDistance=predicted,head,nil,distance;refKind="estimate";refRig=hasRig end
         end
-        for index,player in ipairs(Players:GetPlayers()) do
+        for index,player in ipairs(roster) do
             if index>256 then break end
             if player~=localPlayer and player.UserId>0 then visit(player,player.UserId) end
         end
         for _,bot in ipairs(bots.all or {}) do visit(bot,bot) end
-        for key in pairs(observed) do if not seenOwners[key] then observed[key]=nil;rigs[key]=nil end end
-        for key,slot in pairs(rigs) do if now-slot.last>30 or not slot.owner.Parent then rigs[key]=nil end end
+        for key in pairs(observed) do if not seenOwners[key] then observed[key]=nil;dropRig(key) end end
+        for key,slot in pairs(rigs) do if now-slot.last>30 or not slot.owner.Parent then dropRig(key) end end
         for key,death in pairs(deaths) do if now-death.at>=2 then deaths[key]=nil end end
+        local slots=0;for _ in pairs(observed) do slots+=1 end
+        q.ReferenceKind=refKind;q.ReferenceRig=refRig;q.ReferenceAt=now;q.TrackedEnemies=slots
         return best,bestHead,bestModel
+    end
+    -- Публичное представление только для визуализации, не для выбора цели или стрельбы.
+    function q.IsEstimatedGhost(owner,model)
+        if not q.Enabled or not context.allowed or not owner or not owner.Parent then return false end
+        local key=owner:IsA("Player") and owner.UserId or owner
+        local slot,rig=observed[key],rigs[key]
+        if not slot or slot.owner~=owner or slot.mode~="est" or slot.void or not slot.cur
+            or not rig or not rig.cloneGhost or rig.cloneGhost.model~=model or not model.Parent then return false end
+        local generation=owner:GetAttribute("CharacterGeneration") or owner:GetAttribute("Generation")
+        local age=os.clock()-(slot.at or 0)
+        if generation~=slot.generation or owner:GetAttribute("Dead")~=false or (tonumber(owner:GetAttribute("Health")) or 1)<=0
+            or age<0 or age>2 or (slot.cerr or math.huge)>10 then return false end
+        local updated=rig.ghostPose and rig.ghostPose.at
+        return updated~=nil and os.clock()-updated>=0 and os.clock()-updated<=0.3
+    end
+    function q.GetEstimatedGhosts()
+        local result={}
+        if not q.Enabled or not context.allowed then return result end
+        for key,slot in pairs(observed) do
+            local rig=rigs[key];local ghost=rig and rig.cloneGhost
+            if ghost and q.IsEstimatedGhost(slot.owner,ghost.model) then
+                local head=rig.ghostPose.parts.Head and ghost.parts.Head or nil
+                result[#result+1]={owner=slot.owner,model=ghost.model,root=ghost.root,head=head}
+            end
+        end
+        return result
     end
     local function updateReference(now)
         local own=context.character;local root=own and (own:FindFirstChild("HumanoidRootPart") or own.PrimaryPart)
-        if not root or not root:IsA("BasePart") then context.enemyYaw=nil;context.coverSide=0;return end
+        if not root or not root:IsA("BasePart") then context.enemyYaw=nil;context.coverSide=0;q.ReferenceKind="no root";q.ReferenceAt=now;return end
         local rootPos=root.Position;context.rootPosition=rootPos
         local enemy,enemyHead,enemyModel=nearestEnemy(rootPos,own)
         local delta=enemy and enemy-rootPos
@@ -6518,16 +6804,28 @@ do
         local head=own:FindFirstChild("Head");local ownEye=Vector3.new(rootPos.X,head and head.Position.Y or rootPos.Y+1.8,rootPos.Z)
         local side=Vector3.new(-math.cos(reference),0,math.sin(reference))
         local exclude={own};if enemyModel then exclude[#exclude+1]=enemyModel end
-        local chars=Workspace:FindFirstChild("Characters");if chars then exclude[#exclude+1]=chars end
         local debris=Workspace:FindFirstChild("Debris");local visuals=debris and debris:FindFirstChild("RaycastVisualizers")
         if visuals then exclude[#exclude+1]=visuals end
-        coverRay.FilterDescendantsInstances=exclude
         local function clear(from,to)
             local direction=to-from
             if direction.Magnitude<0.01 then return true end
             local pvs=state.aaPvs
             if pvs and pvs.sync() then return pvs.clear(from,to) end
-            return Workspace:Raycast(from,direction,coverRay)==nil
+            -- D.L.probe: только свои/выбранные модели в исключениях;
+            -- капсулы, аксессуары и визуализаторы обходятся по одному.
+            coverRay.FilterDescendantsInstances=exclude
+            for _=1,24 do
+                local hit=Workspace:Raycast(from,direction,coverRay)
+                local part=safeHitInstance(hit)
+                if not hit then return true end
+                if not part then return false end
+                local skip=part.Name=="CollisionCapsule" or part.Name=="HumanoidRootPart"
+                if not skip then local ok,value=pcall(part.HasTag,part,"CharacterAccessory");skip=ok and value==true end
+                if not skip then local ok,value=pcall(part.FindFirstAncestorWhichIsA,part,"Accessory");skip=ok and value~=nil end
+                if not skip then return false end
+                coverRay:AddToFilter(part)
+            end
+            return false
         end
         local choice=nil
         if enemyHead then
@@ -6562,12 +6860,12 @@ do
             if grenadeNames[weapon.Name] then context.reason="grenade (guard fallback)";return end
         end
         context.allowed=true;context.reason="ready"
-        local worked=pcall(updateReference,now)
-        if not worked then context.enemyYaw=nil;context.coverSide=0 end
+        local worked,err=pcall(updateReference,now)
+        if not worked then context.enemyYaw=nil;context.coverSide=0;q.ReferenceKind="error";q.ReferenceError=tostring(err) else q.ReferenceError=nil end
     end
     local lastContext,lastHook,lastPose=0,0,0;local connection
     connection=RunService.Heartbeat:Connect(function()
-        if not gui.Parent then context.alive=false;context.allowed=false;relax();restoreHooks();table.clear(observed);table.clear(rigs);table.clear(rigAssets);table.clear(deaths);state.aaOnKilled=nil;state.aaIsRecentlyDead=nil;connection:Disconnect();return end
+        if not gui.Parent then context.alive=false;context.allowed=false;relax();restoreHooks();clearGhosts(true);table.clear(observed);table.clear(rigs);table.clear(rigAssets);table.clear(deaths);state.aaOnKilled=nil;state.aaIsRecentlyDead=nil;connection:Disconnect();return end
         local now=os.clock()
         if q.Enabled and now-lastHook>=2 then lastHook=now;pcall(updateHooks) end
         if now-lastContext>=0.05 then
@@ -6601,6 +6899,20 @@ do
         local snapshots=state.aaSnapshots and state.aaSnapshots.Ready and "snapshots listening" or "live / recent estimates"
         local pvs=state.aaPvs and state.aaPvs.ready and "PVS" or "ray fallback"
         return "Anti Aim: commands applied ("..tostring(movement.hookKind or "hook")..", "..guard..", "..snapshots..", "..pvs..")"
+    end
+    function q.GetDetails()
+        if not q.Enabled then return "Reference: off" end
+        local now=os.clock();local ref=q.ReferenceKind or "waiting"
+        if q.ReferenceAt and now-q.ReferenceAt>1 then ref="stale" end
+        if ref=="estimate" then ref=ref..(q.ReferenceRig and " / pose" or " / height fallback") end
+        local snap=state.aaSnapshots;local feed="snapshots offline"
+        if snap and snap.Ready then
+            if snap.LastActorAt then feed=string.format("snapshot actor %.1fs ago",math.max(0,now-snap.LastActorAt))
+            elseif snap.LastDecodedAt then feed="snapshots decoded, no matched actors"
+            else feed="listening, no snapshots yet" end
+        end
+        local ghost=q.GhostError and "ghost model unavailable" or ("ghost models "..tostring(q.GhostCount or 0))
+        return "Reference: "..ref.." · tracked "..tostring(q.TrackedEnemies or 0).." · "..ghost.." · "..feed
     end
     function state.applyAntiAim(character,command)
         if not q.Enabled or not context.alive or not context.allowed or type(character)~="table" or type(command)~="table" then return end
@@ -29184,12 +29496,12 @@ local function buildAirflow()
     local panicControls={}
     local directPanicNames={
         ["Enable Obsidian"]=true,["No recoil"]=true,["No spread"]=true,
-        ["Enable Stage ESP"]=true,["Enable footstep ESP"]=true,["Sound ESP"]=true,["Spectator panel"]=true,
+        ["Enable Stage ESP"]=true,["Predicted ghost ESP"]=true,["Enable footstep ESP"]=true,["Sound ESP"]=true,["Spectator panel"]=true,
         ["Fullbright"]=true,["Custom camera FOV"]=true,["Force crosshair"]=true,["Game crosshair override"]=true,
         ["Infinite jump (lobby)"]=true,["Anti AFK"]=true,["Triggerbot"]=true,["Trigger multi hitbox"]=true,["Trigger scoped only"]=true,
         ["Custom time"]=true,["Custom fog"]=true,["Custom ambient"]=true,["Custom exposure"]=true,
         ["No shadows"]=true,["Bloom"]=true,["Color correction"]=true,["Bullet tracers"]=true,["Bullet impacts"]=true,
-        ["Scope crosshair"]=true,["Auto buy"]=true,["Silent draw FOV"]=true,["Trigger draw spread"]=true,["Trigger auto wall"]=true,["Trigger sampled hitchance"]=true,
+        ["Scope crosshair"]=true,["Auto buy"]=true,["Silent draw FOV"]=true,["Trigger draw spread"]=true,["Trigger auto wall"]=true,["Trigger sampled hitchance"]=true,["Trigger game firing direction"]=true,
         ["Hit marker"]=true,["Kill marker"]=true,["Hit flash"]=true,["Kill flash"]=true,
         ["Local body material"]=true,["Hands material"]=true,["Weapon material"]=true,["Grenade trajectory"]=true,
         ["Custom skybox"]=true,["World weather"]=true,["Viewmodel offset"]=true,["Auto strafe"]=true,["Slow walk"]=true,
@@ -29434,8 +29746,10 @@ local function buildAirflow()
     tg:CreateToggle({Name="Trigger team check",Desc="Independent from Silent Aim team check",CurrentValue=true,Callback=function(v)sh.TriggerTeamCheck=v end})
     tg:CreateToggle({Name="Trigger auto wall",Desc="Checks the center ray against the game penetration module",CurrentValue=false,Callback=function(v)sh.TriggerWall=v end})
     slider(tg,"Trigger wall minimum damage",0,150,1,sh.TriggerWallMin," dmg",function(v)sh.TriggerWallMin=v end)
-    tg:CreateToggle({Name="Trigger sampled hitchance",Desc="Concentric spread rays; requires Trigger hitchance; camera-frame approximation",CurrentValue=false,Callback=function(v)sh.TriggerSampled=v end})
-    tg:CreateToggle({Name="Trigger draw spread",Desc="Camera-centered spread from getTrueSpread",CurrentValue=false,Callback=function(v)sh.TriggerDraw=v end})
+    tg:CreateToggle({Name="Trigger sampled hitchance",Desc="Concentric spread rays; requires Trigger hitchance; penetration and damage remain estimates",CurrentValue=false,Callback=function(v)sh.TriggerSampled=v end})
+    tg:CreateToggle({Name="Trigger game firing direction",Desc="Uses game camera springs when accessible; otherwise camera fallback",CurrentValue=false,Callback=function(v)sh.TriggerFireFrame=v end})
+    tg:CreateLabel({Text="Firing direction: camera",Update=function()return "Firing direction: "..sh.TriggerFrameStatus end,UpdateRate=0.5})
+    tg:CreateToggle({Name="Trigger draw spread",Desc="Spread config with optional projected game firing direction",CurrentValue=false,Callback=function(v)sh.TriggerDraw=v end})
     tg:CreateColorPicker({Name="Trigger spread color",Color=sh.TriggerDrawColor,Callback=function(v)sh.TriggerDrawColor=v end})
     tg:CreateToggle({Name="Trigger spread gradient",CurrentValue=false,Callback=function(v)fv.TriggerGradient=v end})
     tg:CreateColorPicker({Name="Trigger spread second color",Color=fv.TriggerColor2,Callback=function(v)fv.TriggerColor2=v end})
@@ -29486,6 +29800,7 @@ local function buildAirflow()
         vs.Enabled=v
         if not v then stage.Visuals.ClearAll() end
     end})
+    general:CreateToggle({Name="Predicted ghost ESP",Desc="Approximate estimates; requires Anti Aim and Stage ESP. No ghost chams",CurrentValue=false,Callback=function(v)stage.Options.PredictedGhosts=v end})
     general:CreateToggle({Name="Stage team check",CurrentValue=vs.TeamCheck,Callback=function(v)vs.TeamCheck=v end})
     slider(general,"ESP max distance",50,5000,50,vs.MaxDistance," st",function(v)vs.MaxDistance=v end)
     slider(general,"ESP text size",9,20,1,vs.TextSize," px",function(v)vs.TextSize=v end)
@@ -29772,11 +30087,19 @@ local function buildAirflow()
     local anti=wire(movement:AddRightGroupbox({Name="Anti Aim",Icon="shield"}),(scope[movement] or "Tab").."_R_AntiAim_New")
     anti:CreateToggle({Name="Anti Aim",Desc="Movement commands; rejoin before testing",CurrentValue=false,Callback=aa.SetEnabled})
     anti:CreateLabel({Text="Anti Aim: off",Update=function()return aa.GetStatus()end,UpdateRate=0.5})
+    anti:CreateLabel({Text="Reference: off",Update=function()return aa.GetDetails()end,UpdateRate=0.5})
     dropdown(anti,"Anti Aim yaw",{"Backward","Spin","Jitter","Off"},aa.Yaw,function(v)aa.Yaw=v;aa.Reset() end)
     slider(anti,"Yaw jitter",0,180,1,aa.Jitter," deg",function(v)aa.Jitter=v end)
     slider(anti,"Spin speed",1,90,1,aa.SpinSpeed," deg/sample",function(v)aa.SpinSpeed=v end)
     dropdown(anti,"Anti Aim pitch",{"Off","Down","Up","Jitter"},aa.Pitch,function(v)aa.Pitch=v end)
-    dropdown(anti,"Manual yaw",{"Off","Left","Right"},aa.Manual,function(v)aa.Manual=v end)
+    local manualYaw=dropdown(anti,"Manual yaw",{"Off","Left","Right"},aa.Manual,function(v)aa.Manual=v end)
+    local function manualSwitch(side)
+        manualYaw:Set(aa.Manual==side and "Off" or side)
+    end
+    anti:CreateButton({Name="Manual left / off",Desc="Tap to toggle; manual yaw has priority over auto",Callback=function()manualSwitch("Left")end})
+    anti:CreateButton({Name="Manual right / off",Desc="Tap to toggle; manual yaw has priority over auto",Callback=function()manualSwitch("Right")end})
+    anti:CreateKeybind({Name="Manual left key",Desc="Optional; press to toggle left",OnChanged=function()end,Callback=function()manualSwitch("Left")end})
+    anti:CreateKeybind({Name="Manual right key",Desc="Optional; press to toggle right",OnChanged=function()end,Callback=function()manualSwitch("Right")end})
     anti:CreateToggle({Name="Auto manual",Desc="Choose the covered side; manual yaw has priority",CurrentValue=false,Callback=function(v)aa.AutoManual=v;aa.Reset() end})
     slider(anti,"Manual yaw angle",0,180,1,aa.ManualAngle," deg",function(v)aa.ManualAngle=v end)
     anti:CreateToggle({Name="Spin in air",CurrentValue=false,Callback=function(v)aa.AirSpin=v;aa.Reset() end})
