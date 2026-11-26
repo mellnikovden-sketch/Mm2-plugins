@@ -1,26 +1,28 @@
--- NoirFlick · silent aim + ESP · Luau / Roblox executor
--- protocol (from the remote spy dumps):
---   Shared.Weapons.Net.Remote:FireServer("Hit", t, eyeCFrame, hitPos)   <- damage call
---   Shared.Weapons.Net.Remote:FireServer("Fire", t, muzzlePos)          <- left untouched
---   Remotes.WeaponFX:FireServer("impact", t, impactPos, normal, ...)    <- impactPos == Hit hitPos
---   Remotes.WeaponFX:FireServer("tracer", t, start, end)               <- end == impactPos
+-- NoirFlick v2 · silent aim + ESP · Luau / Roblox executor
+-- protocol (CONFIRMED from the remote spy dumps, 8 screenshots):
+--   ReplicatedStorage.Shared.Weapons.Net.Remote:FireServer("Hit", t, eyeCFrame, hitPos) <- damage call
+--     eyeCFrame look vector points at hitPos (dump: eye 86.5,339.7,81.8 -> hit 83.2,337.8,76.7)
+--   ReplicatedStorage.Shared.Weapons.Net.Remote:FireServer("Fire", t, muzzlePos)      <- left untouched
+--   ReplicatedStorage.Shared.Weapons.Net.Remote:FireServer("Reload")                   <- left untouched
+--   ReplicatedStorage.Remotes.WeaponFX:FireServer("impact", t, impactPos, normal, bool, tracerStart)
+--   ReplicatedStorage.Remotes.WeaponFX:FireServer("tracer", t, start, end)             <- end == impactPos
+--   ReplicatedStorage.Remotes.PoseEvent:FireServer("fire", nil)                        <- left untouched
+-- v2 changes: no Drawing lib (instance ESP + fov ring, works on any executor),
+--             no CoreGui (PlayerGui always renders), no team check, hook installs
+--             without newcclosure as a fallback, status line in the menu.
 -- tags: OK = Roblox client API, VERIFY = executor global, FILL = value to confirm
--- ui: instance-built menu (Instances + TweenService), no external libs; features are menu-only, Q/V removed
 
 local Config = {
-    TeamCheck = false, -- FFA by the leaderboard; flip true if the mode has teams
     SilentAim = {
-        Enabled   = false, -- off by default, toggled from the menu
-        Fov       = 150,   -- px, radius around screen center
+        Fov       = 150,  -- px, radius around screen center
         ShowFov   = true,
         HitPart   = "Head", -- falls back to HumanoidRootPart
         WallCheck = true,
     },
     Esp = {
-        Enabled = false,
-        Box     = true,
-        Name    = true,
-        Health  = true,
+        Box    = true,
+        Name   = true,
+        Health = true,
     },
     Ui = {
         ShowKey = Enum.KeyCode.RightShift, -- OK: hides/shows the menu window itself, not the features
@@ -34,27 +36,19 @@ if Env.NOIR_FLICK and Env.NOIR_FLICK.Unload then
     pcall(Env.NOIR_FLICK.Unload)
 end
 
-local Players     = game:GetService("Players")         -- OK
-local RunService  = game:GetService("RunService")      -- OK
+local Players     = game:GetService("Players")          -- OK
+local RunService  = game:GetService("RunService")       -- OK
 local UIS         = game:GetService("UserInputService") -- OK
 local RS          = game:GetService("ReplicatedStorage") -- OK
-local LocalPlayer = Players.LocalPlayer                -- OK
+local LocalPlayer = Players.LocalPlayer                 -- OK
 
 local State = {
-    sa     = Config.SilentAim.Enabled,
-    esp    = Config.Esp.Enabled,
+    sa     = false,
+    esp    = false,
     target = nil, -- { pos = Vector3 }, refreshed every frame
 }
 
 -- helpers ---------------------------------------------------------------
-
-local function make(class, props)
-    local ok, d = pcall(function() return Drawing.new(class) end) -- VERIFY: Drawing
-    if not ok or not d then return nil end
-    for k, v in pairs(props) do pcall(function() d[k] = v end) end
-    d.Visible = false
-    return d
-end
 
 local function wallVisible(targetPos, targetPlr)
     local cam = workspace.CurrentCamera
@@ -84,7 +78,14 @@ do
     NetRemote     = net and net:WaitForChild("Remote", 10) or nil
 end
 
--- ESP --------------------------------------------------------------------
+-- ESP overlay (instances, no Drawing) ----------------------------------------
+
+local overlay = Instance.new("ScreenGui") -- OK
+overlay.Name = "NoirFlickEsp"
+overlay.ResetOnSpawn = false
+overlay.IgnoreGuiInset = true -- W2S viewport coords == gui coords, no inset math
+overlay.DisplayOrder = 998 -- under the menu (999)
+overlay.Parent = LocalPlayer:WaitForChild("PlayerGui") -- OK: PlayerGui always renders
 
 local EspPool = {}
 
@@ -92,7 +93,7 @@ local function killEsp(plr)
     local e = EspPool[plr]
     if not e then return end
     for _, obj in ipairs({ e.box, e.name, e.hpBg, e.hpFg }) do
-        if obj then pcall(function() obj:Remove() end) end
+        if obj then pcall(function() obj:Destroy() end) end
     end
     EspPool[plr] = nil
 end
@@ -103,44 +104,85 @@ local function hideEsp(e)
     end
 end
 
+local function espInstance(class, props)
+    local o = Instance.new(class) -- OK
+    o.BackgroundTransparency = 1
+    o.BorderSizePixel = 0
+    o.Visible = false
+    for k, v in pairs(props) do o[k] = v end
+    o.Parent = overlay
+    return o
+end
+
 local function getEspObjects(plr)
     local e = EspPool[plr]
     if e then return e end
     e = {}
-    e.box  = make("Square", { Thickness = 1, Filled = false, Color = Color3.fromRGB(255, 255, 255) }) -- VERIFY
-    e.name = make("Text",   { Size = 13, Center = true, Outline = true, Color = Color3.fromRGB(255, 255, 255) }) -- VERIFY
-    e.hpBg = make("Square", { Thickness = 1, Filled = true, Color = Color3.fromRGB(0, 0, 0) }) -- VERIFY
-    e.hpFg = make("Square", { Thickness = 1, Filled = true, Color = Color3.fromRGB(0, 255, 0) }) -- VERIFY
-    if not (e.box and e.name and e.hpBg and e.hpFg) then e.dead = true end
+    e.box = espInstance("Frame", { ZIndex = 2 })
+    local boxStroke = Instance.new("UIStroke") -- OK
+    boxStroke.Color = Color3.fromRGB(255, 255, 255)
+    boxStroke.Thickness = 1
+    boxStroke.Parent = e.box
+    e.name = espInstance("TextLabel", {
+        Size = UDim2.fromOffset(140, 14),
+        Font = Enum.Font.Gotham,
+        TextSize = 13,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextStrokeTransparency = 0.4, -- OK
+        Text = "",
+        ZIndex = 3,
+    })
+    e.hpBg = espInstance("Frame", {
+        BackgroundTransparency = 0.2,
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        ZIndex = 2,
+    })
+    e.hpFg = espInstance("Frame", {
+        BackgroundColor3 = Color3.fromRGB(0, 255, 0),
+        ZIndex = 3,
+    })
     EspPool[plr] = e
     return e
 end
 
 local function updateEsp(plr, cam, hum, hrp, head)
     local e = getEspObjects(plr)
-    if e.dead then return end
     -- viewport convention: origin top-left, Y grows down
-    local tv, onT = cam:WorldToViewportPoint(head.Position + Vector3.new(0, 1, 0))
+    local tv = cam:WorldToViewportPoint(head.Position + Vector3.new(0, 1, 0))
     local bv, onB = cam:WorldToViewportPoint(hrp.Position - Vector3.new(0, 2.5, 0))
-    if not onB then hideEsp(e) return end
+    if not onB or bv.Z <= 0 then hideEsp(e) return end
     local h = tv.Y - bv.Y
     if h < 8 or h > cam.ViewportSize.Y * 2 then hideEsp(e) return end
     local w = h * 0.55
     local x0, y0 = tv.X - w / 2, tv.Y
-    e.box.Position = Vector2.new(x0, y0)
-    e.box.Size = Vector2.new(w, h)
+    e.box.Position = UDim2.fromOffset(x0, y0)
+    e.box.Size = UDim2.fromOffset(w, h)
     e.box.Visible = Config.Esp.Box
     e.name.Text = plr.DisplayName -- OK
-    e.name.Position = Vector2.new(tv.X, y0 - 16)
+    e.name.Position = UDim2.fromOffset(tv.X - 70, y0 - 17)
     e.name.Visible = Config.Esp.Name
     local ratio = math.clamp(hum.Health / hum.MaxHealth, 0, 1) -- OK: Luau clamp
-    e.hpBg.Position = Vector2.new(x0 - 6, y0)
-    e.hpBg.Size = Vector2.new(4, h)
+    e.hpBg.Position = UDim2.fromOffset(x0 - 6, y0)
+    e.hpBg.Size = UDim2.fromOffset(4, h)
     e.hpBg.Visible = Config.Esp.Health
-    e.hpFg.Position = Vector2.new(x0 - 5, y0 + (h - h * ratio))
-    e.hpFg.Size = Vector2.new(2, h * ratio)
+    e.hpFg.Position = UDim2.fromOffset(x0 - 5, y0 + (h - h * ratio))
+    e.hpFg.Size = UDim2.fromOffset(2, h * ratio)
     e.hpFg.Color = Color3.fromRGB(math.floor(255 * (1 - ratio)), math.floor(255 * ratio), 0)
     e.hpFg.Visible = Config.Esp.Health
+end
+
+-- fov ring (square frame + full UICorner + UIStroke = circle, no Drawing)
+
+local fovRing = espInstance("Frame", { ZIndex = 1 })
+do
+    local corner = Instance.new("UICorner") -- OK
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = fovRing
+    local stroke = Instance.new("UIStroke") -- OK
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Thickness = 1
+    stroke.Transparency = 0.2
+    stroke.Parent = fovRing
 end
 
 -- target picker ------------------------------------------------------------
@@ -153,7 +195,7 @@ local function pickTarget()
     local center = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
     local bestD, bestHead = math.huge, nil
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and (not Config.TeamCheck or plr.Team ~= LocalPlayer.Team) then
+        if plr ~= LocalPlayer then
             local char = plr.Character
             local hum  = char and char:FindFirstChildOfClass("Humanoid")
             local hrp  = char and char:FindFirstChild("HumanoidRootPart")
@@ -177,71 +219,85 @@ end
 -- silent aim hook ------------------------------------------------------------
 
 local oldNamecall
-local hookInstalled = false
-if NetRemote then
-    local ok = pcall(function()
-        -- VERIFY: hookmetamethod / newcclosure / getnamecallmethod (executor globals;
-        -- the spy in the dumps hooks the same path, so they should exist here)
-        oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-            if State.sa and State.target then
-                local m = getnamecallmethod()
-                if m == "FireServer" and (self == NetRemote or self == WeaponFX) then
-                    local hitPos = State.target.pos
-                    local a1 = select(1, ...)
-                    if self == NetRemote and a1 == "Hit" then
-                        local cf = select(3, ...)
-                        local v4 = select(4, ...)
-                        if typeof(cf) == "CFrame" and typeof(v4) == "Vector3" then
-                            -- keep the real eye position, re-aim the look vector
-                            -- convention: CFrame.lookAt(from, to), -Z forward, right-handed (Luau default)
-                            local t = table.pack(...) -- OK: preserves nil holes + n
-                            t[3] = CFrame.lookAt(cf.Position, hitPos)
-                            t[4] = hitPos
-                            return oldNamecall(self, table.unpack(t, 1, t.n)) -- OK
-                        end
-                    elseif self == WeaponFX and a1 == "impact" then
-                        local p3 = select(3, ...)
-                        if typeof(p3) == "Vector3" then
-                            local t = table.pack(...)
-                            t[3] = hitPos
-                            return oldNamecall(self, table.unpack(t, 1, t.n))
-                        end
-                    elseif self == WeaponFX and a1 == "tracer" then
-                        local p4 = select(4, ...)
-                        if typeof(p4) == "Vector3" then
-                            local t = table.pack(...)
-                            t[4] = hitPos
-                            return oldNamecall(self, table.unpack(t, 1, t.n))
-                        end
-                    end
+local hookInstalled, hookMode = false, "none"
+
+local function reaim(self, ...)
+    if State.sa and State.target then
+        local m = ""
+        if type(getnamecallmethod) == "function" then m = getnamecallmethod() end -- VERIFY: executor global
+        if (m == "" or m == "FireServer") and (self == NetRemote or self == WeaponFX) then
+            local hitPos = State.target.pos
+            local a1 = select(1, ...)
+            if self == NetRemote and a1 == "Hit" then
+                local cf = select(3, ...)
+                local v4 = select(4, ...)
+                if typeof(cf) == "CFrame" and typeof(v4) == "Vector3"
+                    and (cf.Position - hitPos).Magnitude > 0.05 then -- no degenerate lookAt
+                    -- keep the real eye position, re-aim the look vector
+                    -- convention: CFrame.lookAt(from, to), -Z forward, right-handed (Luau default)
+                    local t = table.pack(...) -- OK: preserves nil holes + n
+                    t[3] = CFrame.lookAt(cf.Position, hitPos)
+                    t[4] = hitPos
+                    return oldNamecall(self, table.unpack(t, 1, t.n)) -- OK
+                end
+            elseif self == WeaponFX and a1 == "impact" then
+                local p3 = select(3, ...)
+                if typeof(p3) == "Vector3" then
+                    local t = table.pack(...)
+                    t[3] = hitPos
+                    return oldNamecall(self, table.unpack(t, 1, t.n))
+                end
+            elseif self == WeaponFX and a1 == "tracer" then
+                local p4 = select(4, ...)
+                if typeof(p4) == "Vector3" then
+                    local t = table.pack(...)
+                    t[4] = hitPos
+                    return oldNamecall(self, table.unpack(t, 1, t.n))
                 end
             end
-            return oldNamecall(self, ...)
-        end))
-    end)
-    hookInstalled = ok
-    if not hookInstalled then warn("[NoirFlick] hookmetamethod failed, silent aim inert") end
+        end
+    end
+    return oldNamecall(self, ...)
+end
+
+if NetRemote then
+    if type(hookmetamethod) == "function" then -- VERIFY: executor global
+        if type(newcclosure) == "function" then -- VERIFY: executor global; some executors drop it
+            local ok = pcall(function()
+                oldNamecall = hookmetamethod(game, "__namecall", newcclosure(reaim))
+            end)
+            if ok then hookInstalled, hookMode = true, "hook+closure" end
+        end
+        if not hookInstalled then
+            local ok = pcall(function() -- fallback: raw function, no closure wrapper
+                oldNamecall = hookmetamethod(game, "__namecall", reaim)
+            end)
+            if ok then hookInstalled, hookMode = true, "hook" end
+        end
+    end
+    if not hookInstalled then
+        warn("[NoirFlick] hookmetamethod not available, silent aim inert (menu shows hook:no)")
+    end
 else
     warn("[NoirFlick] Net.Remote not found, silent aim inert (ESP still up)")
 end
 
 -- main loop -----------------------------------------------------------------
 
-local FovCircle = make("Circle", { Thickness = 1, Color = Color3.fromRGB(255, 255, 255), Filled = false, NumSides = 64, Radius = Config.SilentAim.Fov }) -- VERIFY
-
 local renderConn = RunService.RenderStepped:Connect(function() -- OK
     local cam = workspace.CurrentCamera
     if not cam then return end
     pickTarget()
-    if FovCircle then
-        FovCircle.Radius = Config.SilentAim.Fov
-        FovCircle.Position = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
-        FovCircle.Visible = State.sa and Config.SilentAim.ShowFov
+    if fovRing then
+        local r = Config.SilentAim.Fov
+        fovRing.Size = UDim2.fromOffset(r * 2, r * 2)
+        fovRing.Position = UDim2.fromOffset(cam.ViewportSize.X / 2 - r, cam.ViewportSize.Y / 2 - r)
+        fovRing.Visible = State.sa and Config.SilentAim.ShowFov
     end
     local seen = {}
     if State.esp then
         for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= LocalPlayer and (not Config.TeamCheck or plr.Team ~= LocalPlayer.Team) then
+            if plr ~= LocalPlayer then
                 local char = plr.Character
                 local hum  = char and char:FindFirstChildOfClass("Humanoid")
                 local hrp  = char and char:FindFirstChild("HumanoidRootPart")
@@ -274,7 +330,7 @@ local Theme = {
     off    = Color3.fromRGB(52, 52, 64),
 }
 
-local guiRef  = nil  -- ScreenGui, destroyed in Unload
+local guiRef  = nil  -- menu ScreenGui, destroyed in Unload
 local uiConns = {}   -- UIS-level connections (drag / slider / show key), disconnected in Unload
 
 local function buildUi()
@@ -287,16 +343,17 @@ local function buildUi()
         return o
     end
 
-    local W, HEADER_H, BODY_H = 236, 38, 286
-    -- BODY_H math: padding 10+10, gaps 6*8, sections 12*2, toggles 26*5, slider 34, unload 30 = 286
+    local W, HEADER_H, BODY_H = 236, 38, 272
+    -- BODY_H math: padding 10+10, gaps 6*8, sections 12*2, toggles 26*4, slider 34, unload 30, status 12 = 272
     local FULL_H = HEADER_H + BODY_H
 
+    -- PlayerGui, not CoreGui: CoreGui can silently not render on some mobile executors
     local gui = mk("ScreenGui", {
         Name = "NoirFlickUi",
         ResetOnSpawn = false,
-        IgnoreGuiInset = true, -- raw mouse coords align with AbsolutePosition, slider math stays simple
+        IgnoreGuiInset = true, -- raw touch/mouse coords align with AbsolutePosition, slider math stays simple
         DisplayOrder = 999,
-    })
+    }, LocalPlayer:WaitForChild("PlayerGui")) -- OK
 
     local main = mk("Frame", {
         Size = UDim2.fromOffset(W, 0), -- opens with a grow tween to FULL_H
@@ -510,7 +567,7 @@ local function buildUi()
             value.Text = tostring(v)
             onChange(v)
         end
-        track.InputBegan:Connect(function(input) -- OK
+        track.InputBegan:Connect(function(input) -- OK: mouse and touch
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
                 apply(input.Position.X)
@@ -540,9 +597,6 @@ local function buildUi()
     end)
     toggleRow("wall check", Config.SilentAim.WallCheck, function(on)
         Config.SilentAim.WallCheck = on
-    end)
-    toggleRow("team check", Config.TeamCheck, function(on)
-        Config.TeamCheck = on
     end)
     toggleRow("fov ring", Config.SilentAim.ShowFov, function(on)
         Config.SilentAim.ShowFov = on
@@ -578,6 +632,21 @@ local function buildUi()
         if Env.NOIR_FLICK and Env.NOIR_FLICK.Unload then Env.NOIR_FLICK.Unload() end
     end)
 
+    -- status line: net/fx remotes found + hook mode; send it back if something is dead
+    mk("TextLabel", {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, 12),
+        LayoutOrder = nextOrder(),
+        Font = Enum.Font.Code,
+        TextSize = 11,
+        TextColor3 = Theme.sub,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Text = ("net:%s fx:%s hook:%s"):format(
+            NetRemote and "ok" or "no",
+            WeaponFX and "ok" or "no",
+            hookInstalled and hookMode or "no"),
+    }, body)
+
     -- collapse / hide
     local collapsed = false
     collapseBtn.Activated:Connect(function()
@@ -598,7 +667,7 @@ local function buildUi()
     -- drag by the header
     do
         local dragging, dragStart, startPos = false, nil, nil
-        header.InputBegan:Connect(function(input) -- OK
+        header.InputBegan:Connect(function(input) -- OK: mouse and touch
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
                 dragStart = input.Position
@@ -625,13 +694,6 @@ local function buildUi()
         Size = UDim2.fromOffset(W, FULL_H),
     }):Play()
 
-    -- parent: CoreGui when the executor allows it, PlayerGui otherwise
-    local okCore = pcall(function()
-        gui.Parent = game:GetService("CoreGui") -- VERIFY: executor-specific, fallback below
-    end)
-    if not okCore then
-        gui.Parent = LocalPlayer:WaitForChild("PlayerGui") -- OK
-    end
     guiRef = gui
 end
 
@@ -650,8 +712,8 @@ local function Unload()
         pcall(function() c:Disconnect() end)
     end
     for plr in pairs(EspPool) do killEsp(plr) end
-    if FovCircle then pcall(function() FovCircle:Remove() end) end
     if guiRef then pcall(function() guiRef:Destroy() end) end
+    if overlay then pcall(function() overlay:Destroy() end) end
     Env.NOIR_FLICK = nil
     print("[NoirFlick] unloaded")
 end
@@ -673,5 +735,5 @@ if not okUi then
     end)
 end
 
-print(("[NoirFlick] loaded · ui=%s · sa=%s esp=%s · net=%s fx=%s hook=%s"):format(
-    tostring(okUi), tostring(State.sa), tostring(State.esp), tostring(NetRemote), tostring(WeaponFX), tostring(hookInstalled)))
+print(("[NoirFlick] v2 loaded · ui=%s · net=%s fx=%s hook=%s"):format(
+    tostring(okUi), tostring(NetRemote), tostring(WeaponFX), tostring(hookInstalled)))
