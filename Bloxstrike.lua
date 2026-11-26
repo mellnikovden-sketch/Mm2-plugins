@@ -2509,7 +2509,7 @@ do
             and obj:GetAttribute("Defused") ~= true and obj:GetAttribute("Exploded") ~= true and obj:GetAttribute("Exploding") ~= true
     end
     local function scanBombs(now)
-        if now < nextScan then return end
+        if now < nextScan then return nil end
         nextScan = now + 0.35
         cachedBomb, cachedDropped = nil, nil
         for _, obj in ipairs(collection:GetTagged("Bomb")) do
@@ -2526,6 +2526,7 @@ do
                 if obj:IsDescendantOf(Workspace) and obj:GetAttribute("Weapon") == "C4" then cachedDropped=obj; break end
             end
         end
+        return true
     end
     local function positionOf(obj)
         if not obj then return nil end
@@ -2706,17 +2707,40 @@ do
             pcall(p.Defused.Send)
         end
     end
-    local last, lastWarning, nextUiRefresh = 0, 0, 0
+    -- Ошибка одной ветви больше не прерывает остальные; диагностируем её имя.
+    local last,nextUiRefresh=0,0
+    local warningAt={};local scanValid=false
+    local function objectiveStep(name,fn,...)
+        local ok,err=pcall(fn,...)
+        if not ok then
+            local now=os.clock()
+            if now-(warningAt[name] or -math.huge)>5 then
+                warningAt[name]=now;warn("[NOIR / Objective / "..name.."] "..tostring(err))
+            end
+        end
+        return ok,err
+    end
     RunService.Heartbeat:Connect(function()
         local now=os.clock()
         if now-last<0.1 then return end
         last=now
-        local ok, err=pcall(function()
-            if controls.esp or controls.timer or controls.defuse or controls.plant then scanBombs(now) end
-            renderObjective(); doPlant(now); doDefuse(now)
-            if now >= nextUiRefresh then nextUiRefresh=now+1; refreshObjective() end
-        end)
-        if not ok and now-lastWarning>5 then lastWarning=now; warn("[NOIR / Objective] "..tostring(err)) end
+        local scanOk=true
+        if controls.esp or controls.timer or controls.defuse or controls.plant then
+            local ok,completed=objectiveStep("scan",scanBombs,now)
+            if not ok then scanValid=false;cachedBomb=nil;cachedDropped=nil
+            elseif completed==true then scanValid=true end
+            scanOk=scanValid
+        end
+        if not objectiveStep("display",renderObjective) then
+            pcall(function()marker.Visible=false;hud.Visible=false;danger.BackgroundTransparency=1 end)
+        end
+        if scanOk then
+            objectiveStep("plant",doPlant,now)
+            objectiveStep("defuse",doDefuse,now)
+        elseif defuse.phase~="idle" then
+            objectiveStep("cancel defuse",stopDefuse,true)
+        end
+        if now>=nextUiRefresh then nextUiRefresh=now+1;objectiveStep("settings",refreshObjective) end
     end)
 end
 
@@ -3391,7 +3415,7 @@ function xDTaraZ.Esp.Targets()
         live[model.Name] = true
         list[#list + 1] = esp.Row(ghost, model, xDTaraZ.Target.Owner(model), mine, focus)
     end
-    -- Оценки Anti Aim — отдельный opt-in слой. Живые модели и обычная память
+    -- Оценки ghost-трекера — отдельный opt-in слой. Живые модели и обычная память
     -- Stage ESP остаются приоритетными; ghost никогда не становится Adornee.
     local aa=state.antiAim
     if xDTaraZ.Options.PredictedGhosts and aa and type(aa.GetEstimatedGhosts)=="function" then
@@ -6209,6 +6233,7 @@ do
         if connection then pcall(connection.Disconnect,connection);connection=nil end
         endpoint=nil;clear()
     end
+    q.Stop=detach
     local function finite(n)return type(n)=="number" and n==n and math.abs(n)<1000000 end
     local function vector(v)return typeof(v)=="Vector3" and finite(v.X) and finite(v.Y) and finite(v.Z) end
     local function visualPosition(actor)
@@ -6294,7 +6319,8 @@ do
     local heartbeat
     heartbeat=RunService.Heartbeat:Connect(function()
         if not gui.Parent then detach();heartbeat:Disconnect();return end
-        if not (state.antiAim and state.antiAim.Enabled) then if active or endpoint then detach() end;return end
+        local tracker=state.antiAim
+        if not (tracker and tracker.IsTracking and tracker.IsTracking()) then if active or endpoint then detach() end;return end
         local now=os.clock();state.aaBots.refresh(now)
         for id,record in pairs(q.records) do if now-record.at>2 then q.records[id]=nil end end
         if now-lastFind<2 then return end;lastFind=now
@@ -6324,11 +6350,17 @@ do
     local spin,lastYaw=0,nil
     local cover={character=nil,side=0,nextAt=0,lockUntil=0}
     local pose,poseJoints,poseCharacter,poseActive;local wantedPitch,wantedAt=nil,0
-    local clearGhosts
+    local clearGhosts,clearTracking
     local hooks,hookTried={},{throw={},predict={}};local throwUntil=0;local grenadeReady,predictReady=false,false
     local grenadeNames={["HE Grenade"]=true,Flashbang=true,["Smoke Grenade"]=true,["Decoy Grenade"]=true,["Incendiary Grenade"]=true,Molotov=true}
     local coverRay=RaycastParams.new();coverRay.FilterType=Enum.RaycastFilterType.Exclude;coverRay.IgnoreWater=false;coverRay.RespectCanCollide=false
     pcall(function()coverRay.CollisionGroup="Bullet"end)
+    -- Отображение ghost независимо от перехвата движения и Anti Aim.
+    function q.GhostDisplayRequested()
+        local stage=state.stageVisuals
+        return stage~=nil and stage.Options.PredictedGhosts==true and stage.Visuals.Settings.Enabled==true
+    end
+    function q.IsTracking() return q.Enabled or q.GhostDisplayRequested() end
     function q.Reset()spin=0;lastYaw=nil;cover.side=0;cover.nextAt=0;cover.lockUntil=0 end
     local function relax()
         if poseActive and pose and poseJoints then pcall(pose.applyVerticalLook,poseJoints,0,0) end
@@ -6336,7 +6368,10 @@ do
     end
     function q.SetEnabled(value)
         q.Enabled=value==true;q.Reset()
-        if not q.Enabled then relax();if clearGhosts then clearGhosts(false) end end
+        if not q.Enabled then
+            relax()
+            if not q.IsTracking() and clearTracking then clearTracking() end
+        end
     end
     local function assignField(tab,key,value)
         local wasReadonly=false
@@ -6569,6 +6604,12 @@ do
     end
 
     local deaths={}
+    clearTracking=function()
+        clearGhosts(false);table.clear(observed);table.clear(rigs)
+        q.TrackingUpdatedAt=nil;q.TrackingError=nil;q.TrackedEnemies=0;q.ReferenceAt=nil;q.ReferenceKind=nil
+        local snapshots=state.aaSnapshots
+        if snapshots and snapshots.Stop then snapshots.Stop() end
+    end
     function state.aaIsRecentlyDead(owner,key,now)
         local death=deaths[key];if not death then return false end
         local generation=owner and (owner:GetAttribute("CharacterGeneration") or owner:GetAttribute("Generation"))
@@ -6576,7 +6617,7 @@ do
         return true
     end
     function state.aaOnKilled(victim)
-        if not q.Enabled then return end
+        if not q.IsTracking() then return end
         local id=tonumber(victim);if not id or id~=id then return end
         local owner=id>0 and Players:GetPlayerByUserId(id) or nil
         if not owner then local bots=state.aaBots;bots.refresh(os.clock());owner=bots.byUser[id] end
@@ -6678,7 +6719,7 @@ do
         local bots=state.aaBots;bots.refresh(now)
         local pvs=state.aaPvs;local pvsReady=pvs.sync()
         local eyePart=own and (own:FindFirstChild("CameraPart") or own:FindFirstChild("Head"))
-        local eye=pvsReady and (myTeam=="Terrorists" or myTeam=="Counter-Terrorists") and own and own:GetAttribute("Dead")==false and eyePart and eyePart:IsA("BasePart") and eyePart.Position or nil
+        local eye=pvsReady and (myTeam=="Terrorists" or myTeam=="Counter-Terrorists") and own and own:IsDescendantOf(Workspace) and own:GetAttribute("Dead")==false and eyePart and eyePart:IsA("BasePart") and eyePart.Position or nil
         local best,bestHead,bestModel,bestDistance=nil,nil,nil,math.huge
         local refKind,refRig="none",false
         local allowedTeam={["Counter-Terrorists"]=true,Terrorists=true};local liveByKey={};local seenOwners={}
@@ -6759,12 +6800,14 @@ do
         for key,slot in pairs(rigs) do if now-slot.last>30 or not slot.owner.Parent then dropRig(key) end end
         for key,death in pairs(deaths) do if now-death.at>=2 then deaths[key]=nil end end
         local slots=0;for _ in pairs(observed) do slots+=1 end
-        q.ReferenceKind=refKind;q.ReferenceRig=refRig;q.ReferenceAt=now;q.TrackedEnemies=slots
+        q.ReferenceKind=refKind;q.ReferenceRig=refRig;q.ReferenceAt=now;q.TrackingUpdatedAt=now;q.TrackingError=nil;q.TrackedEnemies=slots
         return best,bestHead,bestModel
     end
     -- Публичное представление только для визуализации, не для выбора цели или стрельбы.
     function q.IsEstimatedGhost(owner,model)
-        if not q.Enabled or not context.allowed or not owner or not owner.Parent then return false end
+        if not q.IsTracking() or not owner or not owner.Parent then return false end
+        local last=q.TrackingUpdatedAt;local now=os.clock()
+        if not last or now-last<0 or now-last>0.3 then return false end
         local key=owner:IsA("Player") and owner.UserId or owner
         local slot,rig=observed[key],rigs[key]
         if not slot or slot.owner~=owner or slot.mode~="est" or slot.void or not slot.cur
@@ -6778,7 +6821,7 @@ do
     end
     function q.GetEstimatedGhosts()
         local result={}
-        if not q.Enabled or not context.allowed then return result end
+        if not q.IsTracking() then return result end
         for key,slot in pairs(observed) do
             local rig=rigs[key];local ghost=rig and rig.cloneGhost
             if ghost and q.IsEstimatedGhost(slot.owner,ghost.model) then
@@ -6863,14 +6906,29 @@ do
         local worked,err=pcall(updateReference,now)
         if not worked then context.enemyYaw=nil;context.coverSide=0;q.ReferenceKind="error";q.ReferenceError=tostring(err) else q.ReferenceError=nil end
     end
-    local lastContext,lastHook,lastPose=0,0,0;local connection
+    -- Если AA недоступен (например, defuse), визуальный трекер всё равно
+    -- обновляется самостоятельно: он не меняет команды и не ставит AA-хуки.
+    local function updateVisualTracking(now)
+        local own=context.character
+        local root=own and (own:FindFirstChild("HumanoidRootPart") or own.PrimaryPart)
+        local camera=Workspace.CurrentCamera
+        local position=(root and root:IsA("BasePart") and root.Position) or (camera and camera.CFrame.Position)
+        if not position then q.TrackingError="waiting for camera or root";return end
+        local ok,err=pcall(nearestEnemy,position,own)
+        if not ok then q.TrackingError=tostring(err) end
+    end
+    local lastContext,lastHook,lastPose=0,0,0;local trackingWasActive=false;local connection
     connection=RunService.Heartbeat:Connect(function()
         if not gui.Parent then context.alive=false;context.allowed=false;relax();restoreHooks();clearGhosts(true);table.clear(observed);table.clear(rigs);table.clear(rigAssets);table.clear(deaths);state.aaOnKilled=nil;state.aaIsRecentlyDead=nil;connection:Disconnect();return end
         local now=os.clock()
+        local tracking=q.IsTracking()
+        if trackingWasActive and not tracking then clearTracking() end
+        trackingWasActive=tracking
         if q.Enabled and now-lastHook>=2 then lastHook=now;pcall(updateHooks) end
         if now-lastContext>=0.05 then
-            lastContext=now;local ok=pcall(updateContext,now)
+            lastContext=now;local before=q.TrackingUpdatedAt;local ok=pcall(updateContext,now)
             if not ok then context.allowed=false;context.reason="context unavailable" end
+            if q.GhostDisplayRequested() and q.TrackingUpdatedAt==before then updateVisualTracking(now) end
         end
         if q.Enabled and now-lastPose>=2 and not pose then
             lastPose=now;local mod=getModule("Components","Common","CharacterPose")
@@ -6887,6 +6945,19 @@ do
             if poseJoints and wantedPitch then poseActive=pcall(pose.applyVerticalLook,poseJoints,wantedPitch,0) end
         end
     end)
+    function q.GetGhostStatus()
+        local stage=state.stageVisuals
+        if not stage or not stage.Options.PredictedGhosts then return "Predicted ghosts: off" end
+        if not stage.Visuals.Settings.Enabled then return "Predicted ghosts: enable Stage ESP" end
+        if q.GhostError then return "Predicted ghosts: model unavailable" end
+        local now=os.clock()
+        if not q.TrackingUpdatedAt or now-q.TrackingUpdatedAt>0.3 then
+            return q.TrackingError and "Predicted ghosts: tracker unavailable" or "Predicted ghosts: waiting for tracker"
+        end
+        local snap=state.aaSnapshots
+        local feed=snap and snap.Ready and (snap.LastActorAt and "snapshot actors received" or "snapshot listener connected") or "live / recent estimates"
+        return "Predicted ghosts: "..tostring(#q.GetEstimatedGhosts()).." eligible · "..feed
+    end
     q.GetStatus=function()
         if not q.Enabled then return "Anti Aim: off" end
         local movement=state.movement;local now=os.clock()
@@ -7635,6 +7706,8 @@ do
         if type(known)=="table" and not known[skinName] then return "Stock" end
         return skinName
     end
+    -- Один и тот же резолвер для локального перехвата и карточки каталога.
+    q.ResolveSkin=chosenSkin
     local function refreshPreviewContext()
         local context=previewContext;context.allowed=false
         if not gui.Parent or not q.Enabled then return end
@@ -7797,47 +7870,108 @@ do
     end)
 end
 
--- Адаптация списка наблюдателей: счётчик из атрибута игры, имена только кандидаты.
+-- Счётчик наблюдающих — из игры; список имён является лишь оценкой.
 do
     local q={Enabled=false,ShowCandidates=false};state.spectatorPanel=q
-    local panel=Instance.new("Frame");panel.Name="NoirSpectatorPanel";panel.Size=UDim2.fromOffset(218,62)
-    panel.Position=UDim2.new(1,-238,0,160);panel.BackgroundColor3=Color3.fromRGB(20,27,24)
-    panel.BackgroundTransparency=0.12;panel.BorderSizePixel=0;panel.Visible=false;panel.Active=true;panel.ZIndex=45;panel.Parent=gui;round(panel,8)
-    local title=Instance.new("TextLabel");title.Name="Title";title.Size=UDim2.new(1,-20,0,25);title.Position=UDim2.fromOffset(10,3)
+    local panel=Instance.new("Frame");panel.Name="NoirSpectatorPanel";panel.Size=UDim2.fromOffset(244,64)
+    panel.Position=UDim2.new(1,-260,0,160);panel.BackgroundColor3=Color3.fromRGB(20,27,24)
+    panel.BackgroundTransparency=0.08;panel.BorderSizePixel=0;panel.Visible=false;panel.Active=true;panel.ZIndex=45;panel.Parent=gui;round(panel,8)
+    local border=Instance.new("UIStroke");border.Color=Color3.fromRGB(82,122,93);border.Transparency=0.48;border.Thickness=1;border.Parent=panel
+    local title=Instance.new("TextLabel");title.Name="Title";title.Size=UDim2.new(1,-65,0,23);title.Position=UDim2.fromOffset(12,5)
     title.BackgroundTransparency=1;title.Text="SPECTATORS";title.Font=Enum.Font.GothamBold;title.TextSize=13
     title.TextColor3=Color3.fromRGB(170,235,190);title.TextXAlignment=Enum.TextXAlignment.Left;title.ZIndex=46;title.Parent=panel
-    local body=Instance.new("TextLabel");body.Name="Details";body.Size=UDim2.new(1,-20,1,-31);body.Position=UDim2.fromOffset(10,28)
-    body.BackgroundTransparency=1;body.Text="Watching you: unavailable";body.Font=Enum.Font.Gotham;body.TextSize=12
-    body.TextColor3=Color3.fromRGB(230,241,233);body.TextXAlignment=Enum.TextXAlignment.Left;body.TextYAlignment=Enum.TextYAlignment.Top
-    body.RichText=false;body.ZIndex=46;body.Parent=panel
+    local countLabel=Instance.new("TextLabel");countLabel.Name="Count";countLabel.Size=UDim2.fromOffset(42,22);countLabel.Position=UDim2.new(1,-52,0,6)
+    countLabel.BackgroundColor3=Color3.fromRGB(38,66,47);countLabel.BorderSizePixel=0;countLabel.Font=Enum.Font.GothamBold
+    countLabel.TextSize=12;countLabel.TextColor3=Color3.fromRGB(191,245,206);countLabel.ZIndex=46;countLabel.Parent=panel;round(countLabel,6)
+    local subtitle=Instance.new("TextLabel");subtitle.Name="Subtitle";subtitle.Size=UDim2.new(1,-24,0,15);subtitle.Position=UDim2.fromOffset(12,28)
+    subtitle.BackgroundTransparency=1;subtitle.Text="POSSIBLE VIEWERS · UNCONFIRMED";subtitle.Font=Enum.Font.Gotham;subtitle.TextSize=9
+    subtitle.TextColor3=Color3.fromRGB(149,173,154);subtitle.TextXAlignment=Enum.TextXAlignment.Left;subtitle.ZIndex=46;subtitle.Parent=panel
+    local footer=Instance.new("TextLabel");footer.Name="Footer";footer.Size=UDim2.new(1,-24,0,16)
+    footer.BackgroundTransparency=1;footer.Font=Enum.Font.Gotham;footer.TextSize=10;footer.TextColor3=Color3.fromRGB(160,176,164)
+    footer.TextXAlignment=Enum.TextXAlignment.Left;footer.ZIndex=46;footer.Parent=panel
+    local rows={}
+    local function createRow(index)
+        local frame=Instance.new("Frame");frame.Name="Candidate"..index;frame.Size=UDim2.new(1,-20,0,38)
+        frame.Position=UDim2.fromOffset(10,46+(index-1)*40);frame.BackgroundColor3=Color3.fromRGB(32,43,35)
+        frame.BackgroundTransparency=0.24;frame.BorderSizePixel=0;frame.ZIndex=46;frame.Parent=panel;round(frame,6)
+        local avatar=Instance.new("ImageLabel");avatar.Name="Avatar";avatar.Size=UDim2.fromOffset(30,30);avatar.Position=UDim2.fromOffset(4,4)
+        avatar.BackgroundColor3=Color3.fromRGB(69,99,75);avatar.BorderSizePixel=0;avatar.ScaleType=Enum.ScaleType.Fit
+        avatar.ZIndex=47;avatar.Parent=frame;round(avatar,15)
+        local name=Instance.new("TextLabel");name.Name="DisplayName";name.Position=UDim2.fromOffset(42,3);name.Size=UDim2.new(1,-48,0,17)
+        name.BackgroundTransparency=1;name.Font=Enum.Font.GothamBold;name.TextSize=12;name.TextColor3=Color3.fromRGB(238,246,240)
+        name.TextXAlignment=Enum.TextXAlignment.Left;name.TextTruncate=Enum.TextTruncate.AtEnd;name.RichText=false;name.ZIndex=47;name.Parent=frame
+        local detail=Instance.new("TextLabel");detail.Name="Username";detail.Position=UDim2.fromOffset(42,20);detail.Size=UDim2.new(1,-48,0,14)
+        detail.BackgroundTransparency=1;detail.Font=Enum.Font.Gotham;detail.TextSize=10;detail.TextColor3=Color3.fromRGB(160,184,166)
+        detail.TextXAlignment=Enum.TextXAlignment.Left;detail.TextTruncate=Enum.TextTruncate.AtEnd;detail.RichText=false;detail.ZIndex=47;detail.Parent=frame
+        return {frame=frame,avatar=avatar,name=name,detail=detail}
+    end
+    local function attr(object,key)
+        local ok,value=pcall(object.GetAttribute,object,key)
+        if ok then return value end
+        return nil
+    end
     local function readSnapshot()
-        local raw=tonumber(localPlayer:GetAttribute("Spectators"));local count
-        if raw and raw==raw and raw>=0 and raw<math.huge then count=math.floor(raw) end
-        local names={}
-        if q.ShowCandidates and count~=0 then
-            for _,p in ipairs(Players:GetPlayers()) do
-                if p~=localPlayer then
-                    local ok,isSpectating=pcall(p.GetAttribute,p,"IsSpectating")
-                    if ok and isSpectating==true and type(p.Name)=="string" then names[#names+1]=p.Name end
+        local raw=tonumber(attr(localPlayer,"Spectators"));local count
+        if raw and raw==raw and raw>=0 and raw<math.huge then count=math.min(math.floor(raw),1000000) end
+        local candidates={}
+        if not count or count==0 then return count,candidates end
+        local myTeam=attr(localPlayer,"Team");local competitive=attr(Workspace,"ServerGamemode")=="Competitive"
+        for index,p in ipairs(Players:GetPlayers()) do
+            if index>256 then break end
+            if p~=localPlayer and p.Parent==Players and attr(p,"IsSpectating")==true then
+                local team=attr(p,"Team")
+                if not competitive or myTeam==nil or myTeam=="Spectators" or team==myTeam then
+                    local id=tonumber(p.UserId)
+                    if id and id>0 and id==math.floor(id) and type(p.Name)=="string" then
+                        local display=type(p.DisplayName)=="string" and p.DisplayName or p.Name
+                        candidates[#candidates+1]={id=id,name=p.Name,display=display,killer=attr(p,"LastKiller")==localPlayer.Name}
+                    end
                 end
             end
-            table.sort(names,function(a,b)local x,y=a:lower(),b:lower();if x==y then return a<b end;return x<y end)
         end
-        return count,names
+        table.sort(candidates,function(a,b)
+            if a.killer~=b.killer then return a.killer end
+            local x,y=(a.display.."\0"..a.name):lower(),(b.display.."\0"..b.name):lower()
+            if x==y then return a.id<b.id end
+            return x<y
+        end)
+        return count,candidates
     end
-    local function drawSnapshot(count,names)
-        local text={"Watching you: "..(count~=nil and tostring(count) or "unavailable")}
-        if q.ShowCandidates and count~=0 then
-            text[#text+1]="Spectating players (unconfirmed):"
-            for i=1,math.min(#names,8) do text[#text+1]="  "..names[i] end
-            if #names>8 then text[#text+1]="  +"..tostring(#names-8).." more" end
-            if #names==0 then text[#text+1]="  none visible" end
+    local function drawSnapshot(count,candidates)
+        if not q.Enabled or not count or count<=0 then panel.Visible=false;return end
+        countLabel.Text=count>999 and "999+" or tostring(count)
+        local primary=math.min(count,#candidates)
+        local want=q.ShowCandidates and #candidates or primary
+        local displayed=math.min(want,6)
+        for i=1,displayed do
+            local item=candidates[i];local row=rows[i]
+            if not row then row=createRow(i);rows[i]=row end
+            row.avatar.Image="rbxthumb://type=AvatarHeadShot&id="..tostring(item.id).."&w=150&h=150"
+            row.name.Text=item.display
+            local suffix=i>primary and " · spectating" or (item.killer and " · last killer" or " · candidate")
+            row.detail.Text="@"..item.name..suffix;row.frame.Visible=true
         end
-        body.Text=table.concat(text,"\n")
-        panel.Size=UDim2.fromOffset(218,math.max(62,34+17*#text))
+        for i=displayed+1,#rows do rows[i].frame.Visible=false end
+        local missing=math.max(0,count-primary);local overflow=math.max(0,primary-displayed)
+        local notes={}
+        if missing>0 then notes[#notes+1]=tostring(missing).." name(s) unavailable" end
+        if overflow>0 then notes[#notes+1]="+"..tostring(overflow).." more candidates" end
+        if q.ShowCandidates and #candidates>math.max(primary,displayed) then
+            notes[#notes+1]="+"..tostring(#candidates-math.max(primary,displayed)).." other spectators"
+        end
+        footer.Text=#notes>0 and table.concat(notes,"  ·  ") or (displayed==0 and "Names unavailable" or "Names are not confirmed")
+        footer.Position=UDim2.fromOffset(12,46+displayed*40)
+        panel.Size=UDim2.fromOffset(244,46+displayed*40+21)
         panel.Visible=true
     end
-    function q.SetEnabled(value) q.Enabled=value==true;if not q.Enabled then panel.Visible=false end end
+    local lastWarn=0
+    local function refresh()
+        if not q.Enabled then panel.Visible=false;return end
+        local ok,err=pcall(function()local count,candidates=readSnapshot();drawSnapshot(count,candidates)end)
+        if not ok then panel.Visible=false;local now=os.clock();if now-lastWarn>15 then lastWarn=now;warn("[NOIR / Spectators] "..tostring(err)) end end
+    end
+    function q.SetEnabled(value) q.Enabled=value==true;refresh() end
+    function q.SetCandidates(value) q.ShowCandidates=value==true;refresh() end
     local inputStart,origin,pointer
     local connections={}
     connections[#connections+1]=panel.InputBegan:Connect(function(input)
@@ -7858,15 +7992,15 @@ do
     connections[#connections+1]=UserInputService.InputEnded:Connect(function(input)
         if pointer and (input==pointer or (pointer.UserInputType==Enum.UserInputType.MouseButton1 and input.UserInputType==Enum.UserInputType.MouseButton1)) then pointer=nil;inputStart=nil;origin=nil end
     end)
-    local last,lastWarn=0,0;local beat
+    local ok,signal=pcall(localPlayer.GetAttributeChangedSignal,localPlayer,"Spectators")
+    if ok and signal then connections[#connections+1]=signal:Connect(refresh) end
+    local last=0;local beat
     beat=RunService.Heartbeat:Connect(function()
         if not gui.Parent then
             beat:Disconnect();for _,connection in ipairs(connections) do connection:Disconnect() end;panel:Destroy();return
         end
         if not q.Enabled then return end
-        local now=os.clock();if now-last<0.5 then return end;last=now
-        local ok,err=pcall(function()local count,names=readSnapshot();drawSnapshot(count,names)end)
-        if not ok then panel.Visible=false;if now-lastWarn>15 then lastWarn=now;warn("[NOIR / Spectators] "..tostring(err)) end end
+        local now=os.clock();if now-last<0.35 then return end;last=now;refresh()
     end)
 end
 
@@ -29599,7 +29733,19 @@ local function buildAirflow()
                 options.Flag=options.Flag or ("Noir_"..path.."_"..tag(options.Name or method))
                 for _,field in ipairs({"Callback","OnChanged"}) do
                     local cb=options[field]
-                    if type(cb)=="function" then options[field]=function(...) local result=table.pack(cb(...));scheduleSave();return table.unpack(result,1,result.n) end end
+                    if type(cb)=="function" then
+                        local function invoke(...)
+                            local result=table.pack(cb(...));scheduleSave();return table.unpack(result,1,result.n)
+                        end
+                        local controlName=tostring(options.Name or method);local callbackName=field
+                        options[field]=function(...)
+                            local result=table.pack(pcall(invoke,...))
+                            if not result[1] then
+                                error("["..path.." / "..controlName.." / "..callbackName.."] "..tostring(result[2]),0)
+                            end
+                            return table.unpack(result,2,result.n)
+                        end
+                    end
                 end
                 local element=original(self,options)
                 if method=="CreateToggle" and directPanicNames[options.Name] then
@@ -29788,8 +29934,8 @@ local function buildAirflow()
     bridge(logs,"HIT LOG","Hit / health log","Game events when available; HP-change estimate otherwise")
     local spectators=right(radarPage,"Spectators","users")
     local spectatorPanel=state.spectatorPanel
-    spectators:CreateToggle({Name="Spectator panel",Desc="Displays the game's spectator count when available; drag the panel to move",CurrentValue=false,Callback=spectatorPanel.SetEnabled})
-    spectators:CreateToggle({Name="Show spectator candidates",Desc="Players marked spectating, not confirmed to be watching you",CurrentValue=false,Callback=function(v)spectatorPanel.ShowCandidates=v end})
+    spectators:CreateToggle({Name="Spectator panel",Desc="Shows only when the game reports viewers; drag to move",CurrentValue=false,Callback=spectatorPanel.SetEnabled})
+    spectators:CreateToggle({Name="Show spectator candidates",Desc="Also show extra spectating players; their target is unknown",CurrentValue=false,Callback=spectatorPanel.SetCandidates})
 
     -- Элементы оригинального stage 7 — отдельный слой, чтобы не ломать старый Noir ESP.
     local stage=state.stageVisuals
@@ -29800,7 +29946,8 @@ local function buildAirflow()
         vs.Enabled=v
         if not v then stage.Visuals.ClearAll() end
     end})
-    general:CreateToggle({Name="Predicted ghost ESP",Desc="Approximate estimates; requires Anti Aim and Stage ESP. No ghost chams",CurrentValue=false,Callback=function(v)stage.Options.PredictedGhosts=v end})
+    general:CreateToggle({Name="Predicted ghost ESP",Desc="Approximate estimates; requires Stage ESP, not Anti Aim. No ghost chams",CurrentValue=false,Callback=function(v)stage.Options.PredictedGhosts=v end})
+    general:CreateLabel({Text="Predicted ghosts: off",Update=function()return state.antiAim.GetGhostStatus()end,UpdateRate=0.5})
     general:CreateToggle({Name="Stage team check",CurrentValue=vs.TeamCheck,Callback=function(v)vs.TeamCheck=v end})
     slider(general,"ESP max distance",50,5000,50,vs.MaxDistance," st",function(v)vs.MaxDistance=v end)
     slider(general,"ESP text size",9,20,1,vs.TextSize," px",function(v)vs.TextSize=v end)
@@ -30000,28 +30147,42 @@ local function buildAirflow()
     slider(offsets,"Viewmodel Z",-100,100,1,worldExtra.ViewZ,"",function(v)worldExtra.ViewZ=v end)
 
     local preview=state.skinPreview
-    preview.ValidSkins={}
+    preview.ValidSkins={};preview.Catalog={};preview.CatalogWear=0
     local skinsPage=sub(visuals,"Skin preview")
     local skinPanel=left(skinsPage,"Local viewmodel preview","sparkles")
     -- Каталог читаем из базы игры. Выбранное сохраняется как отдельный флаг.
-    local knifeFin,gloveFin;local skinSignatures={}
+    local knifeFin,gloveFin;local skinSignatures={};local refreshSkinCards
+    -- Имена с числовыми паттернами сортируются естественно, значения флагов не меняются.
+    local function skinSortKey(name)
+        return (tostring(name):gsub("%d+",function(n)
+            if #n>12 then return n end
+            return string.format("%012d",tonumber(n) or 0)
+        end):lower())
+    end
     local function skinOptions(model)
-        preview.ValidSkins[model]=nil
+        preview.ValidSkins[model]=nil;preview.Catalog[model]=nil
         local result={"Stock"}
         if model=="Stock" then return result end
         local data=getModule("Database","Components","Libraries","Skins")
         if not data or type(data.GetAllSkinsForWeapon)~="function" then return result end
         local ok,items=pcall(data.GetAllSkinsForWeapon,model)
         if not ok or type(items)~="table" then return result end
-        local seen={Stock=true}
-        preview.ValidSkins[model]=seen
-        for _,item in ipairs(items) do
-            if type(item)=="table" and item.isEnabled==true and type(item.skin)=="string" and item.skin~="" and not seen[item.skin] then
-                seen[item.skin]=true;table.insert(result,item.skin)
-                if #result>=500 then break end
+        local seen={Stock=true};local catalog={}
+        preview.ValidSkins[model]=seen;preview.Catalog[model]=catalog
+        for index,item in ipairs(items) do
+            if index>1000 then break end
+            if type(item)=="table" and type(item.skin)=="string" and item.skin~="" then
+                if item.skin=="Stock" and not catalog.Stock then catalog.Stock=item end
+                if item.isEnabled==true and item.skin~="Stock" and not seen[item.skin] then
+                    seen[item.skin]=true;catalog[item.skin]=item;table.insert(result,item.skin)
+                    if #result>=500 then break end
+                end
             end
         end
-        table.sort(result,function(a,b)if a=="Stock" then return b~="Stock" elseif b=="Stock" then return false end return a:lower()<b:lower() end)
+        table.sort(result,function(a,b)
+            if a=="Stock" then return b~="Stock" elseif b=="Stock" then return false end
+            local x,y=skinSortKey(a),skinSortKey(b);if x==y then return a<b end;return x<y
+        end)
         return result
     end
     local function refreshSkinLists()
@@ -30032,15 +30193,85 @@ local function buildAirflow()
                 if skinSignatures[key]~=sig then skinSignatures[key]=sig;widget:Refresh(options,true,true) end
             end
         end
+        if refreshSkinCards then refreshSkinCards() end
     end
 
     skinPanel:CreateToggle({Name="Skin preview",Desc="Local only; change weapon after selecting; writable Skins module required",CurrentValue=false,Callback=function(v)preview.Enabled=v end})
     dropdown(skinPanel,"Knife model",{"Stock","Butterfly Knife","Karambit","M9 Bayonet","Flip Knife","Gut Knife","Skeleton Knife","Stiletto Knife","LightSaber"},preview.KnifeModel,function(v)preview.KnifeModel=v;refreshSkinLists() end)
-    preview.KnifeInput=skinPanel:CreateInput({Name="Knife skin name",Desc="Manual name overrides the list; Stock uses list",CurrentValue="Stock",PlaceholderText="Exact game skin name",Callback=function(v)preview.KnifeSkin=tostring(v) end})
-    knifeFin=dropdown(skinPanel,"Knife skin list",{"Stock"},"Stock",function()end);preview.KnifeList=knifeFin
+    preview.KnifeInput=skinPanel:CreateInput({Name="Knife skin name",Desc="Manual name overrides the list; Stock uses list",CurrentValue="Stock",PlaceholderText="Exact game skin name",Callback=function(v)preview.KnifeSkin=tostring(v);if refreshSkinCards then refreshSkinCards() end end})
+    knifeFin=dropdown(skinPanel,"Knife skin list",{"Stock"},"Stock",function()if refreshSkinCards then refreshSkinCards() end end);preview.KnifeList=knifeFin
     dropdown(skinPanel,"Glove model",{"Stock","Sports Gloves","Driver Gloves","Operator Gloves","Hand Wraps"},preview.GloveModel,function(v)preview.GloveModel=v;refreshSkinLists() end)
-    preview.GloveInput=skinPanel:CreateInput({Name="Glove skin name",Desc="Manual name overrides the list; Stock uses list",CurrentValue="Stock",PlaceholderText="Exact game skin name",Callback=function(v)preview.GloveSkin=tostring(v) end})
-    gloveFin=dropdown(skinPanel,"Glove skin list",{"Stock"},"Stock",function()end);preview.GloveList=gloveFin
+    preview.GloveInput=skinPanel:CreateInput({Name="Glove skin name",Desc="Manual name overrides the list; Stock uses list",CurrentValue="Stock",PlaceholderText="Exact game skin name",Callback=function(v)preview.GloveSkin=tostring(v);if refreshSkinCards then refreshSkinCards() end end})
+    gloveFin=dropdown(skinPanel,"Glove skin list",{"Stock"},"Stock",function()if refreshSkinCards then refreshSkinCards() end end);preview.GloveList=gloveFin
+
+    -- Картинки — только каталог игры; без изменения инвентаря, Float или StatTrack.
+    local skinPictures=right(skinsPage,"Catalog images","image")
+    local knifeCard=skinPictures:CreateImage({Name="Knife finish",Height=84,ScaleType="Fit",Caption="No catalog image"})
+    local gloveCard=skinPictures:CreateImage({Name="Glove finish",Height=84,ScaleType="Fit",Caption="No catalog image"})
+    local function skinImageAsset(value)
+        if type(value)=="number" and value>0 and value==math.floor(value) and value<1e18 then return "rbxassetid://"..string.format("%.0f",value) end
+        if type(value)~="string" then return nil end
+        value=value:match("^%s*(.-)%s*$")
+        if value:match("^%d+$") then return "rbxassetid://"..value end
+        if value:match("^rbxassetid://%d+$") or value:match("^rbxasset://[%w_/%-.]+$") then return value end
+        return nil
+    end
+    local function cardAsset(model,finish,kind)
+        local data=getModule("Database","Components","Libraries","Skins")
+        if type(data)~="table" then return nil end
+        local lookup=model
+        if model=="Stock" then
+            local prefix=localPlayer:GetAttribute("Team")=="Counter-Terrorists" and "CT " or "T "
+            lookup=prefix..(kind=="knife" and "Knife" or "Glove")
+        end
+        local item=preview.Catalog[lookup] and preview.Catalog[lookup][finish]
+        if not item and finish=="Stock" and type(data.GetAllSkinsForWeapon)=="function" then
+            local ok,items=pcall(data.GetAllSkinsForWeapon,lookup)
+            if ok and type(items)=="table" then
+                for index,row in ipairs(items) do
+                    if index>1000 then break end
+                    if type(row)=="table" and row.skin=="Stock" then item=row;break end
+                end
+            end
+        end
+        if item then
+            local wearImages=item.wearImages
+            if type(wearImages)=="table" and #wearImages>0 then
+                if type(data.GetWearImageForFloat)=="function" then
+                    local ok,image=pcall(data.GetWearImageForFloat,item,preview.CatalogWear)
+                    local asset=ok and skinImageAsset(image) or nil
+                    if asset then return asset end
+                end
+                local first=wearImages[1];local asset=type(first)=="table" and skinImageAsset(first.assetId) or nil
+                if asset then return asset end
+            end
+            local asset=skinImageAsset(item.imageAssetId);if asset then return asset end
+        end
+        if finish=="Stock" then
+            local dataWeapon=getModule("Database","Custom","Weapons",lookup)
+            if type(dataWeapon)=="table" then return skinImageAsset(dataWeapon.Icon) or skinImageAsset(dataWeapon.ReverseIcon) end
+        end
+        return nil
+    end
+    local cardSignatures={}
+    refreshSkinCards=function()
+        for _,entry in ipairs({{knifeCard,"knife",preview.KnifeModel,preview.KnifeSkin,knifeFin},
+                               {gloveCard,"glove",preview.GloveModel,preview.GloveSkin,gloveFin}}) do
+            local widget,kind,model,input,selection=entry[1],entry[2],entry[3],entry[4],entry[5]
+            local finish=preview.ResolveSkin(input,selection,model)
+            local asset=cardAsset(model,finish,kind)
+            local caption=tostring(model).." · "..tostring(finish):gsub("_PATTERN_(%d+)"," #%1"):gsub("_"," ")
+            if not asset then caption=caption.." · image unavailable" end
+            local signature=caption.."\0"..tostring(asset or "")
+            if cardSignatures[kind]~=signature then
+                widget:SetCaption(caption)
+                local ok,success=pcall(widget.SetImage,widget,asset)
+                if ok and success then cardSignatures[kind]=signature end
+            end
+        end
+    end
+    slider(skinPictures,"Catalog wear",0,1,0.01,preview.CatalogWear,"",function(v)preview.CatalogWear=v;if refreshSkinCards then refreshSkinCards() end end)
+    skinPictures:CreateLabel({Text="Wear affects catalog images only; it does not change the weapon"})
     refreshSkinLists()
     local lastSkinRefresh=0;local skinListConnection
     skinListConnection=RunService.Heartbeat:Connect(function()
