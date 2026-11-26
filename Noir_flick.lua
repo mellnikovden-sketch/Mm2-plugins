@@ -1,16 +1,16 @@
--- NoirFlick v3 · silent aim + ESP · Luau / Roblox executor (Delta-tuned)
--- protocol (CONFIRMED from the remote spy dumps, 8 screenshots):
+-- NoirFlick v4 · silent aim + ESP · Luau / Roblox executor (Delta-tuned)
+-- protocol (CONFIRMED from the remote spy dumps):
 --   ReplicatedStorage.Shared.Weapons.Net.Remote:FireServer("Hit", t, eyeCFrame, hitPos) <- damage call
---   ReplicatedStorage.Remotes.WeaponFX:FireServer("impact", t, impactPos, normal, bool, tracerStart)
---   ReplicatedStorage.Remotes.WeaponFX:FireServer("tracer", t, start, end)
--- v3 changes (v2 loaded clean on Delta but nothing worked, so everything is now observable):
---   · hook self-test at load: dummy namecall proves interception -> status shows live/dead
---   · live footer: net / fx / hook / tgt (target count) refreshed in real time
---   · targets now come from a workspace scan (players AND npc models with Humanoid+Root),
---     not just Players:GetPlayers() -- works even if enemies are not player characters
---   · buttons use InputBegan (touch + mouse) instead of Activated
---   · loop runs on RenderStepped AND Heartbeat (some executors skip one)
---   · fov ring turns red when a target is locked, esp box of the locked target is red too
+--     eyeCFrame look vector points at hitPos; t = tick()-style epoch seconds (dump: 1795729945.914422)
+--   own shots echo back: Remotes.WeaponFX OnClientEvent ("fire", myChar) -> free shot detection, no hooks
+-- v4 changes (v3 console: hook=live but no redirect + "esp error: Color is not a valid member of Frame"):
+--   · ESP crash fixed: hp bar used Drawing-style .Color on a Frame -> BackgroundColor3
+--   · hook installs RAW first (Delta's newcclosure silently drops varargs -> probe passed,
+--     redirect never matched); probe now also verifies varargs -> footer shows hook:ok/vars/DEAD
+--   · direct FireServer mode: on your own "fire" echo fires Net.Remote:FireServer("Hit", ...)
+--     straight at the locked target, no hook needed. plus a "hit test" button that fires one
+--     manual hit through the full chain (target picker -> protocol -> remote)
+--   · esp box stroke 1.5px, height cap 4x viewport (first-person close range)
 -- tags: OK = Roblox client API, VERIFY = executor global, FILL = value to confirm
 
 local Config = {
@@ -19,6 +19,7 @@ local Config = {
         ShowFov   = true,
         HitPart   = "Head", -- falls back to HumanoidRootPart
         WallCheck = true,
+        Direct    = true, -- direct FireServer mode: fire "Hit" on own shot echo, no hooks
     },
     Esp = {
         Box    = true,
@@ -79,8 +80,6 @@ do
 end
 
 -- target candidates: player characters AND humanoid models under workspace --
--- if enemies are npcs (not Players), Players-only iteration finds nothing and
--- both esp and silent aim look "dead" while the script itself loads clean
 
 local targetCount = 0
 
@@ -153,7 +152,7 @@ local function getEspObjects(model)
     e.box = espInstance("Frame", { ZIndex = 2 })
     local stroke = Instance.new("UIStroke") -- OK
     stroke.Color = Color3.fromRGB(255, 255, 255)
-    stroke.Thickness = 1
+    stroke.Thickness = 1.5
     stroke.Parent = e.box
     e.stroke = stroke
     e.name = espInstance("TextLabel", {
@@ -187,7 +186,8 @@ local function updateEsp(model, name, cam, hum, hrp, head)
     local bv, onB = cam:WorldToViewportPoint(hrp.Position - Vector3.new(0, 2.5, 0))
     if not onB or bv.Z <= 0 then hideEsp(e) return end
     local h = tv.Y - bv.Y
-    if h < 8 or h > cam.ViewportSize.Y * 2 then hideEsp(e) return end
+    -- first person: a target right next to you spans way more than the screen
+    if h < 6 or h > cam.ViewportSize.Y * 4 then hideEsp(e) return end
     local w = h * 0.55
     local x0, y0 = tv.X - w / 2, tv.Y
     e.box.Position = UDim2.fromOffset(x0, y0)
@@ -199,13 +199,14 @@ local function updateEsp(model, name, cam, hum, hrp, head)
     e.name.Text = name
     e.name.Position = UDim2.fromOffset(tv.X - 70, y0 - 17)
     e.name.Visible = Config.Esp.Name
-    local ratio = math.clamp(hum.Health / hum.MaxHealth, 0, 1) -- OK: Luau clamp
+    local ratio = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1) -- OK: Luau clamp
     e.hpBg.Position = UDim2.fromOffset(x0 - 6, y0)
     e.hpBg.Size = UDim2.fromOffset(4, h)
     e.hpBg.Visible = Config.Esp.Health
     e.hpFg.Position = UDim2.fromOffset(x0 - 5, y0 + (h - h * ratio))
     e.hpFg.Size = UDim2.fromOffset(2, h * ratio)
-    e.hpFg.Color = Color3.fromRGB(math.floor(255 * (1 - ratio)), math.floor(255 * ratio), 0)
+    -- Frame has BackgroundColor3 (v3 crashed here on Drawing-style .Color)
+    e.hpFg.BackgroundColor3 = Color3.fromRGB(math.floor(255 * (1 - ratio)), math.floor(255 * ratio), 0)
     e.hpFg.Visible = Config.Esp.Health
 end
 
@@ -253,20 +254,50 @@ local function pickTarget(candidates)
     if bestHead then State.target = { pos = bestHead.Position, model = bestModel } end
 end
 
--- silent aim hook ------------------------------------------------------------
+-- direct FireServer mode ------------------------------------------------------
+-- no hooks: fire the CONFIRMED "Hit" call ourselves at the locked target.
+-- trigger: our own "fire" echo from WeaponFX (free shot detection via OnClientEvent).
+
+local function directHit()
+    if not (NetRemote and State.target) then return end
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+    local eye = cam.CFrame.Position -- first person: camera == eye
+    local hitPos = State.target.pos
+    if (eye - hitPos).Magnitude < 0.05 then return end -- no degenerate lookAt
+    -- FILL: dump t was tick()-style epoch seconds; VERIFY server tolerance
+    NetRemote:FireServer("Hit", tick(), CFrame.lookAt(eye, hitPos), hitPos)
+end
+
+local echoConn
+if WeaponFX then
+    -- own shots echo back: WeaponFX OnClientEvent ("fire", myChar, ...)
+    echoConn = WeaponFX.OnClientEvent:Connect(function(action, who, ...) -- OK
+        if not (Config.SilentAim.Direct and State.sa and State.target) then return end
+        if action == "fire" and who == LocalPlayer.Character then
+            directHit()
+        end
+    end)
+end
+
+-- silent aim hook (secondary path: redirect the game's own Hit calls) -----------
 
 local oldNamecall
-local hookInstalled, hookMode, hookLive = false, "none", false
+local hookInstalled, hookLive, hookVarOK = false, false, false
 local hookIntercepts = 0
+local probeArgs = -1
 
 local function reaim(self, ...)
     hookIntercepts = hookIntercepts + 1 -- probe counter: proves the hook fires at all
+    local a1 = select(1, ...)
+    if a1 == "nfprobe" then
+        probeArgs = select("#", ...) -- probe also verifies varargs survive the wrapper
+    end
     if State.sa and State.target then
         local m = ""
         if type(getnamecallmethod) == "function" then m = getnamecallmethod() end -- VERIFY: executor global
         if (m == "" or m == "FireServer") and (self == NetRemote or self == WeaponFX) then
             local hitPos = State.target.pos
-            local a1 = select(1, ...)
             if self == NetRemote and a1 == "Hit" then
                 local cf = select(3, ...)
                 local v4 = select(4, ...)
@@ -301,35 +332,37 @@ end
 
 if NetRemote then
     if type(hookmetamethod) == "function" then -- VERIFY: executor global
-        if type(newcclosure) == "function" then -- VERIFY: executor global
-            local ok = pcall(function()
-                oldNamecall = hookmetamethod(game, "__namecall", newcclosure(reaim))
-            end)
-            if ok then hookInstalled, hookMode = true, "hook+closure" end
-        end
-        if not hookInstalled then
-            local ok = pcall(function() -- fallback: raw function, no closure wrapper
-                oldNamecall = hookmetamethod(game, "__namecall", reaim)
-            end)
-            if ok then hookInstalled, hookMode = true, "hook" end
+        -- RAW first: on some executors (Delta) newcclosure silently drops varargs,
+        -- the install succeeds, the redirect never matches anything
+        local okRaw = pcall(function()
+            oldNamecall = hookmetamethod(game, "__namecall", reaim)
+        end)
+        if okRaw then hookInstalled = true else
+            if type(newcclosure) == "function" then -- VERIFY: executor global
+                local okClosure = pcall(function()
+                    oldNamecall = hookmetamethod(game, "__namecall", newcclosure(reaim))
+                end)
+                if okClosure then hookInstalled = true end
+            end
         end
     end
-    -- self-test: hookmetamethod can return without error but never intercept
-    -- (reported on some mobile executors). fire a dummy namecall and count.
+    -- self-test: does the hook intercept, and do varargs survive?
     if hookInstalled then
-        local before = hookIntercepts
         local dummy = Instance.new("RemoteEvent") -- OK: client-only, never replicated
-        pcall(function() dummy:FireServer("nfprobe") end) -- OK
+        pcall(function() dummy:FireServer("nfprobe", 8, 9) end) -- OK
         dummy:Destroy()
-        hookLive = hookIntercepts > before
+        hookLive = hookIntercepts > 0 and probeArgs >= 0
+        hookVarOK = probeArgs == 3
         if not hookLive then
-            warn("[NoirFlick] hook installed but NEVER intercepts namecalls -> silent aim dead, ESP unaffected")
+            warn("[NoirFlick] hook never intercepts namecalls -> direct mode is the path (hook:DEAD)")
+        elseif not hookVarOK then
+            warn("[NoirFlick] hook drops varargs -> redirect dead, direct mode is the path (hook:vars)")
         end
     else
-        warn("[NoirFlick] hookmetamethod not available, silent aim inert (esp still up)")
+        warn("[NoirFlick] hookmetamethod not available -> direct mode is the path (hook:no)")
     end
 else
-    warn("[NoirFlick] Net.Remote not found, silent aim inert (esp still up)")
+    warn("[NoirFlick] Net.Remote not found -> silent aim inert, ESP still up")
 end
 
 -- main loop -----------------------------------------------------------------
@@ -338,11 +371,17 @@ local statusRef = nil -- footer label from buildUi, refreshed live
 local frame = 0
 local espErr = nil
 
+local function hookStateText()
+    if not hookInstalled then return "no" end
+    if not hookLive then return "DEAD" end
+    return hookVarOK and "ok" or "vars"
+end
+
 local function statusText()
     return ("net:%s fx:%s hook:%s tgt:%d"):format(
         NetRemote and "ok" or "no",
         WeaponFX and "ok" or "no",
-        hookInstalled and (hookLive and "live" or "DEAD") or "no",
+        hookStateText(),
         targetCount)
 end
 
@@ -386,8 +425,8 @@ local function step()
 end
 
 -- some executors skip RenderStepped, some Heartbeat; run on both, step() is idempotent
-local renderConn  = RunService.RenderStepped:Connect(step) -- OK
-local beatConn    = RunService.Heartbeat:Connect(step)     -- OK
+local renderConn = RunService.RenderStepped:Connect(step) -- OK
+local beatConn   = RunService.Heartbeat:Connect(step)     -- OK
 
 -- ui ------------------------------------------------------------------------
 
@@ -425,8 +464,9 @@ local function buildUi()
         end)
     end
 
-    local W, HEADER_H, BODY_H = 236, 38, 272
-    -- BODY_H math: padding 10+10, gaps 6*8, sections 12*2, toggles 26*4, slider 34, unload 30, status 12 = 272
+    local W, HEADER_H, BODY_H = 236, 38, 328
+    -- BODY_H math: padding 10+10, gaps 6*9, sections 12*2, toggles 26*5, slider 34,
+    --              hit test 24, unload 30, status 12 = 328
     local FULL_H = HEADER_H + BODY_H
 
     -- PlayerGui, not CoreGui: CoreGui can silently not render on some mobile executors
@@ -683,6 +723,31 @@ local function buildUi()
     toggleRow("fov ring", Config.SilentAim.ShowFov, function(on)
         Config.SilentAim.ShowFov = on
     end)
+    toggleRow("direct hit", Config.SilentAim.Direct, function(on)
+        Config.SilentAim.Direct = on
+    end)
+
+    -- hit test: one manual "Hit" through the full chain (picker -> protocol -> remote)
+    local hitBtn = mk("TextButton", {
+        Size = UDim2.new(1, 0, 0, 24),
+        LayoutOrder = nextOrder(),
+        BackgroundColor3 = Theme.panel,
+        BorderSizePixel = 0,
+        Text = "hit test",
+        Font = Enum.Font.GothamBold,
+        TextSize = 12,
+        TextColor3 = Theme.sub,
+        AutoButtonColor = false,
+    }, body)
+    mk("UICorner", { CornerRadius = UDim.new(0, 6) }, hitBtn)
+    mk("UIStroke", { Color = Theme.stroke, Transparency = 0.3 }, hitBtn)
+    pressable(hitBtn, function()
+        if not State.target then
+            pickTarget(collect()) -- standalone test works even with silent aim toggled off
+        end
+        directHit()
+    end)
+
     section("esp")
     toggleRow("esp", State.esp, function(on)
         State.esp = on
@@ -783,11 +848,12 @@ local unloaded = false
 local function Unload()
     if unloaded then return end
     unloaded = true
-    State.sa = false -- gates the namecall hook off permanently
+    State.sa = false -- gates the namecall hook and the direct mode off permanently
     State.esp = false
     State.target = nil
     if renderConn then renderConn:Disconnect() end
     if beatConn then beatConn:Disconnect() end
+    if echoConn then echoConn:Disconnect() end
     for _, c in ipairs(uiConns) do
         pcall(function() c:Disconnect() end)
     end
@@ -821,8 +887,8 @@ do
     for _, c in ipairs(cands) do
         if c.npc then npcN = npcN + 1 else plrN = plrN + 1 end
     end
-    print(("[NoirFlick] v3 ui=%s net=%s fx=%s hook=%s"):format(
-        okUi and "ok" or "FAIL", tostring(NetRemote), tostring(WeaponFX),
-        hookInstalled and (hookLive and "live" or "DEAD") or "no"))
-    print(("[NoirFlick] targets now: players=%d npcs=%d (footer shows live count)"):format(plrN, npcN))
+    print(("[NoirFlick] v4 ui=%s net=%s fx=%s hook=%s"):format(
+        okUi and "ok" or "FAIL", tostring(NetRemote), tostring(WeaponFX), hookStateText()))
+    print(("[NoirFlick] players=%d npcs=%d · direct hit %s · test with the 'hit test' button"):format(
+        plrN, npcN, Config.SilentAim.Direct and "on" or "off"))
 end
