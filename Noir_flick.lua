@@ -1,0 +1,677 @@
+-- NoirFlick · silent aim + ESP · Luau / Roblox executor
+-- protocol (from the remote spy dumps):
+--   Shared.Weapons.Net.Remote:FireServer("Hit", t, eyeCFrame, hitPos)   <- damage call
+--   Shared.Weapons.Net.Remote:FireServer("Fire", t, muzzlePos)          <- left untouched
+--   Remotes.WeaponFX:FireServer("impact", t, impactPos, normal, ...)    <- impactPos == Hit hitPos
+--   Remotes.WeaponFX:FireServer("tracer", t, start, end)               <- end == impactPos
+-- tags: OK = Roblox client API, VERIFY = executor global, FILL = value to confirm
+-- ui: instance-built menu (Instances + TweenService), no external libs; features are menu-only, Q/V removed
+
+local Config = {
+    TeamCheck = false, -- FFA by the leaderboard; flip true if the mode has teams
+    SilentAim = {
+        Enabled   = false, -- off by default, toggled from the menu
+        Fov       = 150,   -- px, radius around screen center
+        ShowFov   = true,
+        HitPart   = "Head", -- falls back to HumanoidRootPart
+        WallCheck = true,
+    },
+    Esp = {
+        Enabled = false,
+        Box     = true,
+        Name    = true,
+        Health  = true,
+    },
+    Ui = {
+        ShowKey = Enum.KeyCode.RightShift, -- OK: hides/shows the menu window itself, not the features
+    },
+}
+
+-- double-load guard: unload previous instance, never two loops
+local Env = _G
+if type(getgenv) == "function" then Env = getgenv() end -- VERIFY: getgenv
+if Env.NOIR_FLICK and Env.NOIR_FLICK.Unload then
+    pcall(Env.NOIR_FLICK.Unload)
+end
+
+local Players     = game:GetService("Players")         -- OK
+local RunService  = game:GetService("RunService")      -- OK
+local UIS         = game:GetService("UserInputService") -- OK
+local RS          = game:GetService("ReplicatedStorage") -- OK
+local LocalPlayer = Players.LocalPlayer                -- OK
+
+local State = {
+    sa     = Config.SilentAim.Enabled,
+    esp    = Config.Esp.Enabled,
+    target = nil, -- { pos = Vector3 }, refreshed every frame
+}
+
+-- helpers ---------------------------------------------------------------
+
+local function make(class, props)
+    local ok, d = pcall(function() return Drawing.new(class) end) -- VERIFY: Drawing
+    if not ok or not d then return nil end
+    for k, v in pairs(props) do pcall(function() d[k] = v end) end
+    d.Visible = false
+    return d
+end
+
+local function wallVisible(targetPos, targetPlr)
+    local cam = workspace.CurrentCamera
+    if not cam then return false end
+    local params = RaycastParams.new() -- OK
+    params.FilterType = Enum.RaycastFilterType.Exclude -- OK
+    local ignore = { cam } -- weapon viewmodels are usually parented to camera
+    local myChar = LocalPlayer.Character
+    if myChar then table.insert(ignore, myChar) end
+    local tchar = targetPlr.Character
+    if tchar then table.insert(ignore, tchar) end
+    params.FilterDescendantsInstances = ignore
+    local origin = cam.CFrame.Position
+    return workspace:Raycast(origin, targetPos - origin, params) == nil -- OK
+end
+
+-- remotes ----------------------------------------------------------------
+
+local RemotesFolder = RS:WaitForChild("Remotes", 10) -- OK
+local WeaponFX = RemotesFolder and RemotesFolder:WaitForChild("WeaponFX", 10) or nil
+
+local NetRemote
+do
+    local shared  = RS:WaitForChild("Shared", 10)
+    local weapons = shared and shared:WaitForChild("Weapons", 10)
+    local net     = weapons and weapons:WaitForChild("Net", 10)
+    NetRemote     = net and net:WaitForChild("Remote", 10) or nil
+end
+
+-- ESP --------------------------------------------------------------------
+
+local EspPool = {}
+
+local function killEsp(plr)
+    local e = EspPool[plr]
+    if not e then return end
+    for _, obj in ipairs({ e.box, e.name, e.hpBg, e.hpFg }) do
+        if obj then pcall(function() obj:Remove() end) end
+    end
+    EspPool[plr] = nil
+end
+
+local function hideEsp(e)
+    for _, obj in ipairs({ e.box, e.name, e.hpBg, e.hpFg }) do
+        if obj then obj.Visible = false end
+    end
+end
+
+local function getEspObjects(plr)
+    local e = EspPool[plr]
+    if e then return e end
+    e = {}
+    e.box  = make("Square", { Thickness = 1, Filled = false, Color = Color3.fromRGB(255, 255, 255) }) -- VERIFY
+    e.name = make("Text",   { Size = 13, Center = true, Outline = true, Color = Color3.fromRGB(255, 255, 255) }) -- VERIFY
+    e.hpBg = make("Square", { Thickness = 1, Filled = true, Color = Color3.fromRGB(0, 0, 0) }) -- VERIFY
+    e.hpFg = make("Square", { Thickness = 1, Filled = true, Color = Color3.fromRGB(0, 255, 0) }) -- VERIFY
+    if not (e.box and e.name and e.hpBg and e.hpFg) then e.dead = true end
+    EspPool[plr] = e
+    return e
+end
+
+local function updateEsp(plr, cam, hum, hrp, head)
+    local e = getEspObjects(plr)
+    if e.dead then return end
+    -- viewport convention: origin top-left, Y grows down
+    local tv, onT = cam:WorldToViewportPoint(head.Position + Vector3.new(0, 1, 0))
+    local bv, onB = cam:WorldToViewportPoint(hrp.Position - Vector3.new(0, 2.5, 0))
+    if not onB then hideEsp(e) return end
+    local h = tv.Y - bv.Y
+    if h < 8 or h > cam.ViewportSize.Y * 2 then hideEsp(e) return end
+    local w = h * 0.55
+    local x0, y0 = tv.X - w / 2, tv.Y
+    e.box.Position = Vector2.new(x0, y0)
+    e.box.Size = Vector2.new(w, h)
+    e.box.Visible = Config.Esp.Box
+    e.name.Text = plr.DisplayName -- OK
+    e.name.Position = Vector2.new(tv.X, y0 - 16)
+    e.name.Visible = Config.Esp.Name
+    local ratio = math.clamp(hum.Health / hum.MaxHealth, 0, 1) -- OK: Luau clamp
+    e.hpBg.Position = Vector2.new(x0 - 6, y0)
+    e.hpBg.Size = Vector2.new(4, h)
+    e.hpBg.Visible = Config.Esp.Health
+    e.hpFg.Position = Vector2.new(x0 - 5, y0 + (h - h * ratio))
+    e.hpFg.Size = Vector2.new(2, h * ratio)
+    e.hpFg.Color = Color3.fromRGB(math.floor(255 * (1 - ratio)), math.floor(255 * ratio), 0)
+    e.hpFg.Visible = Config.Esp.Health
+end
+
+-- target picker ------------------------------------------------------------
+
+local function pickTarget()
+    State.target = nil
+    if not State.sa then return end
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+    local center = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
+    local bestD, bestHead = math.huge, nil
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and (not Config.TeamCheck or plr.Team ~= LocalPlayer.Team) then
+            local char = plr.Character
+            local hum  = char and char:FindFirstChildOfClass("Humanoid")
+            local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+            local head = char and (char:FindFirstChild(Config.SilentAim.HitPart) or hrp)
+            if char and hum and hrp and head and hum.Health > 0 then
+                local sp, on = cam:WorldToViewportPoint(head.Position)
+                if on then
+                    local d = (Vector2.new(sp.X, sp.Y) - center).Magnitude
+                    if d <= Config.SilentAim.Fov and d < bestD then
+                        if not Config.SilentAim.WallCheck or wallVisible(head.Position, plr) then
+                            bestD, bestHead = d, head
+                        end
+                    end
+                end
+            end
+        end
+    end
+    if bestHead then State.target = { pos = bestHead.Position } end
+end
+
+-- silent aim hook ------------------------------------------------------------
+
+local oldNamecall
+local hookInstalled = false
+if NetRemote then
+    local ok = pcall(function()
+        -- VERIFY: hookmetamethod / newcclosure / getnamecallmethod (executor globals;
+        -- the spy in the dumps hooks the same path, so they should exist here)
+        oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+            if State.sa and State.target then
+                local m = getnamecallmethod()
+                if m == "FireServer" and (self == NetRemote or self == WeaponFX) then
+                    local hitPos = State.target.pos
+                    local a1 = select(1, ...)
+                    if self == NetRemote and a1 == "Hit" then
+                        local cf = select(3, ...)
+                        local v4 = select(4, ...)
+                        if typeof(cf) == "CFrame" and typeof(v4) == "Vector3" then
+                            -- keep the real eye position, re-aim the look vector
+                            -- convention: CFrame.lookAt(from, to), -Z forward, right-handed (Luau default)
+                            local t = table.pack(...) -- OK: preserves nil holes + n
+                            t[3] = CFrame.lookAt(cf.Position, hitPos)
+                            t[4] = hitPos
+                            return oldNamecall(self, table.unpack(t, 1, t.n)) -- OK
+                        end
+                    elseif self == WeaponFX and a1 == "impact" then
+                        local p3 = select(3, ...)
+                        if typeof(p3) == "Vector3" then
+                            local t = table.pack(...)
+                            t[3] = hitPos
+                            return oldNamecall(self, table.unpack(t, 1, t.n))
+                        end
+                    elseif self == WeaponFX and a1 == "tracer" then
+                        local p4 = select(4, ...)
+                        if typeof(p4) == "Vector3" then
+                            local t = table.pack(...)
+                            t[4] = hitPos
+                            return oldNamecall(self, table.unpack(t, 1, t.n))
+                        end
+                    end
+                end
+            end
+            return oldNamecall(self, ...)
+        end))
+    end)
+    hookInstalled = ok
+    if not hookInstalled then warn("[NoirFlick] hookmetamethod failed, silent aim inert") end
+else
+    warn("[NoirFlick] Net.Remote not found, silent aim inert (ESP still up)")
+end
+
+-- main loop -----------------------------------------------------------------
+
+local FovCircle = make("Circle", { Thickness = 1, Color = Color3.fromRGB(255, 255, 255), Filled = false, NumSides = 64, Radius = Config.SilentAim.Fov }) -- VERIFY
+
+local renderConn = RunService.RenderStepped:Connect(function() -- OK
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+    pickTarget()
+    if FovCircle then
+        FovCircle.Radius = Config.SilentAim.Fov
+        FovCircle.Position = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
+        FovCircle.Visible = State.sa and Config.SilentAim.ShowFov
+    end
+    local seen = {}
+    if State.esp then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and (not Config.TeamCheck or plr.Team ~= LocalPlayer.Team) then
+                local char = plr.Character
+                local hum  = char and char:FindFirstChildOfClass("Humanoid")
+                local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+                local head = char and char:FindFirstChild("Head")
+                if char and hum and hrp and head and hum.Health > 0 then
+                    seen[plr] = true
+                    pcall(updateEsp, plr, cam, hum, hrp, head)
+                end
+            end
+        end
+    end
+    for plr in pairs(EspPool) do
+        if not seen[plr] then killEsp(plr) end
+    end
+end)
+
+local leavingConn = Players.PlayerRemoving:Connect(killEsp) -- OK
+
+-- ui ------------------------------------------------------------------------
+
+local TweenService = game:GetService("TweenService") -- OK
+
+local Theme = {
+    bg     = Color3.fromRGB(16, 16, 21),
+    panel  = Color3.fromRGB(26, 26, 34),
+    stroke = Color3.fromRGB(48, 48, 60),
+    text   = Color3.fromRGB(238, 238, 244),
+    sub    = Color3.fromRGB(140, 140, 158),
+    accent = Color3.fromRGB(255, 63, 96),
+    off    = Color3.fromRGB(52, 52, 64),
+}
+
+local guiRef  = nil  -- ScreenGui, destroyed in Unload
+local uiConns = {}   -- UIS-level connections (drag / slider / show key), disconnected in Unload
+
+local function buildUi()
+    local function mk(class, props, parent)
+        local o = Instance.new(class) -- OK
+        if props then
+            for k, v in pairs(props) do o[k] = v end
+        end
+        if parent then o.Parent = parent end
+        return o
+    end
+
+    local W, HEADER_H, BODY_H = 236, 38, 286
+    -- BODY_H math: padding 10+10, gaps 6*8, sections 12*2, toggles 26*5, slider 34, unload 30 = 286
+    local FULL_H = HEADER_H + BODY_H
+
+    local gui = mk("ScreenGui", {
+        Name = "NoirFlickUi",
+        ResetOnSpawn = false,
+        IgnoreGuiInset = true, -- raw mouse coords align with AbsolutePosition, slider math stays simple
+        DisplayOrder = 999,
+    })
+
+    local main = mk("Frame", {
+        Size = UDim2.fromOffset(W, 0), -- opens with a grow tween to FULL_H
+        Position = UDim2.new(0.5, -W / 2, 0.5, -FULL_H / 2),
+        BackgroundColor3 = Theme.bg,
+        BorderSizePixel = 0,
+        ClipsDescendants = true,
+        Active = true,
+    }, gui)
+    mk("UICorner", { CornerRadius = UDim.new(0, 10) }, main)
+    mk("UIStroke", { Color = Theme.stroke, Transparency = 0.25 }, main)
+
+    -- header: drag zone
+    local header = mk("Frame", {
+        Size = UDim2.new(1, 0, 0, HEADER_H),
+        BackgroundColor3 = Theme.panel,
+        BorderSizePixel = 0,
+    }, main)
+    mk("UICorner", { CornerRadius = UDim.new(0, 10) }, header)
+    mk("Frame", { -- patch: square off the header's bottom corners
+        Size = UDim2.new(1, 0, 0.5, 0),
+        Position = UDim2.new(0, 0, 0.5, 0),
+        BackgroundColor3 = Theme.panel,
+        BorderSizePixel = 0,
+    }, header)
+    mk("Frame", { -- hairline under the header
+        Size = UDim2.new(1, 0, 0, 1),
+        Position = UDim2.new(0, 0, 1, -1),
+        BackgroundColor3 = Theme.stroke,
+        BorderSizePixel = 0,
+        ZIndex = 2,
+    }, header)
+    mk("TextLabel", {
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(12, 0),
+        Size = UDim2.new(1, -80, 1, 0),
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+        RichText = true,
+        Text = 'noir<font color="#FF3F60">.flick</font>',
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextColor3 = Theme.text,
+    }, header)
+
+    local function headerBtn(txt, xOffset)
+        local b = mk("TextButton", {
+            Size = UDim2.fromOffset(24, 24),
+            Position = UDim2.new(1, xOffset, 0.5, -12),
+            BackgroundColor3 = Color3.new(1, 1, 1),
+            BackgroundTransparency = 1,
+            Text = txt,
+            Font = Enum.Font.GothamBold,
+            TextSize = 14,
+            TextColor3 = Theme.sub,
+            AutoButtonColor = false,
+        }, header)
+        b.MouseEnter:Connect(function() -- OK
+            b.BackgroundTransparency = 0.88
+            b.TextColor3 = Theme.text
+        end)
+        b.MouseLeave:Connect(function()
+            b.BackgroundTransparency = 1
+            b.TextColor3 = Theme.sub
+        end)
+        return b
+    end
+    local collapseBtn = headerBtn("–", -54)
+    local hideBtn     = headerBtn("×", -28)
+
+    -- body: vertical list
+    local body = mk("Frame", {
+        Position = UDim2.fromOffset(0, HEADER_H),
+        Size = UDim2.new(1, 0, 1, -HEADER_H),
+        BackgroundTransparency = 1,
+    }, main)
+    mk("UIListLayout", {
+        Padding = UDim.new(0, 6),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+    }, body)
+    mk("UIPadding", {
+        PaddingTop    = UDim.new(0, 10),
+        PaddingBottom = UDim.new(0, 10),
+        PaddingLeft   = UDim.new(0, 12),
+        PaddingRight  = UDim.new(0, 12),
+    }, body)
+
+    local order = 0
+    local function nextOrder()
+        order = order + 1
+        return order
+    end
+
+    local function section(text)
+        mk("TextLabel", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 12),
+            LayoutOrder = nextOrder(),
+            Font = Enum.Font.GothamMedium,
+            Text = text,
+            TextSize = 11,
+            TextColor3 = Theme.sub,
+            TextXAlignment = Enum.TextXAlignment.Left,
+        }, body)
+    end
+
+    local function toggleRow(text, initial, onChange)
+        local row = mk("Frame", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 26),
+            LayoutOrder = nextOrder(),
+        }, body)
+        local label = mk("TextLabel", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -56, 1, 0),
+            Font = Enum.Font.Gotham,
+            Text = text,
+            TextSize = 13,
+            TextColor3 = Theme.text,
+            TextXAlignment = Enum.TextXAlignment.Left,
+        }, row)
+        local pill = mk("TextButton", {
+            Size = UDim2.fromOffset(40, 20),
+            Position = UDim2.new(1, -40, 0.5, -10),
+            BackgroundColor3 = initial and Theme.accent or Theme.off,
+            BorderSizePixel = 0,
+            Text = "",
+            AutoButtonColor = false,
+        }, row)
+        mk("UICorner", { CornerRadius = UDim.new(1, 0) }, pill)
+        mk("UIStroke", { Color = Theme.stroke, Transparency = 0.35 }, pill)
+        local knob = mk("Frame", {
+            Size = UDim2.fromOffset(14, 14),
+            Position = initial and UDim2.new(1, -17, 0.5, -7) or UDim2.fromOffset(3, 3),
+            BackgroundColor3 = Theme.text,
+            BorderSizePixel = 0,
+        }, pill)
+        mk("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
+        local state = initial
+        local function render()
+            local ti = TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) -- OK
+            TweenService:Create(pill, ti, { BackgroundColor3 = state and Theme.accent or Theme.off }):Play()
+            TweenService:Create(knob, ti, {
+                Position = state and UDim2.new(1, -17, 0.5, -7) or UDim2.fromOffset(3, 3),
+            }):Play()
+        end
+        pill.Activated:Connect(function() -- OK: fires for mouse and touch
+            state = not state
+            render()
+            onChange(state)
+        end)
+        row.MouseEnter:Connect(function() label.TextColor3 = Color3.new(1, 1, 1) end)
+        row.MouseLeave:Connect(function() label.TextColor3 = Theme.text end)
+        return row
+    end
+
+    local function sliderRow(text, minV, maxV, initial, onChange)
+        local row = mk("Frame", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 34),
+            LayoutOrder = nextOrder(),
+        }, body)
+        mk("TextLabel", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -70, 0, 16),
+            Font = Enum.Font.Gotham,
+            Text = text,
+            TextSize = 13,
+            TextColor3 = Theme.text,
+            TextXAlignment = Enum.TextXAlignment.Left,
+        }, row)
+        local value = mk("TextLabel", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0, 60, 0, 16),
+            Position = UDim2.new(1, -60, 0, 0),
+            Font = Enum.Font.Gotham,
+            Text = tostring(initial),
+            TextSize = 13,
+            TextColor3 = Theme.accent,
+            TextXAlignment = Enum.TextXAlignment.Right,
+        }, row)
+        local track = mk("Frame", {
+            Size = UDim2.new(1, 0, 0, 4),
+            Position = UDim2.new(0, 0, 0, 22),
+            BackgroundColor3 = Theme.off,
+            BorderSizePixel = 0,
+        }, row)
+        mk("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
+        local fill = mk("Frame", {
+            Size = UDim2.new((initial - minV) / (maxV - minV), 0, 1, 0),
+            BackgroundColor3 = Theme.accent,
+            BorderSizePixel = 0,
+        }, track)
+        mk("UICorner", { CornerRadius = UDim.new(1, 0) }, fill)
+        local knob = mk("Frame", {
+            Size = UDim2.fromOffset(10, 10),
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.new((initial - minV) / (maxV - minV), 0, 0.5, 0),
+            BackgroundColor3 = Theme.text,
+            BorderSizePixel = 0,
+            ZIndex = 2,
+        }, track)
+        mk("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
+
+        local dragging = false
+        local function apply(x)
+            -- x is a raw viewport coordinate; IgnoreGuiInset makes AbsolutePosition match it
+            local ratio = math.clamp((x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1), 0, 1)
+            local v = math.floor(minV + (maxV - minV) * ratio + 0.5)
+            fill.Size = UDim2.new(ratio, 0, 1, 0)
+            knob.Position = UDim2.new(ratio, 0, 0.5, 0)
+            value.Text = tostring(v)
+            onChange(v)
+        end
+        track.InputBegan:Connect(function(input) -- OK
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                apply(input.Position.X)
+            end
+        end)
+        uiConns[#uiConns + 1] = UIS.InputChanged:Connect(function(input) -- OK
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                apply(input.Position.X)
+            end
+        end)
+        uiConns[#uiConns + 1] = UIS.InputEnded:Connect(function(input) -- OK
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+        return row
+    end
+
+    -- rows
+    section("aim")
+    toggleRow("silent aim", State.sa, function(on)
+        State.sa = on
+        if not on then State.target = nil end
+    end)
+    sliderRow("fov", 20, 400, Config.SilentAim.Fov, function(v)
+        Config.SilentAim.Fov = v
+    end)
+    toggleRow("wall check", Config.SilentAim.WallCheck, function(on)
+        Config.SilentAim.WallCheck = on
+    end)
+    toggleRow("team check", Config.TeamCheck, function(on)
+        Config.TeamCheck = on
+    end)
+    toggleRow("fov ring", Config.SilentAim.ShowFov, function(on)
+        Config.SilentAim.ShowFov = on
+    end)
+    section("esp")
+    toggleRow("esp", State.esp, function(on)
+        State.esp = on
+    end)
+
+    -- unload button
+    local unloadBtn = mk("TextButton", {
+        Size = UDim2.new(1, 0, 0, 30),
+        LayoutOrder = nextOrder(),
+        BackgroundColor3 = Theme.panel,
+        BorderSizePixel = 0,
+        Text = "unload",
+        Font = Enum.Font.GothamBold,
+        TextSize = 13,
+        TextColor3 = Theme.sub,
+        AutoButtonColor = false,
+    }, body)
+    mk("UICorner", { CornerRadius = UDim.new(0, 6) }, unloadBtn)
+    mk("UIStroke", { Color = Theme.stroke, Transparency = 0.3 }, unloadBtn)
+    unloadBtn.MouseEnter:Connect(function()
+        local ti = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        TweenService:Create(unloadBtn, ti, { BackgroundColor3 = Color3.fromRGB(52, 18, 26), TextColor3 = Theme.accent }):Play()
+    end)
+    unloadBtn.MouseLeave:Connect(function()
+        local ti = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        TweenService:Create(unloadBtn, ti, { BackgroundColor3 = Theme.panel, TextColor3 = Theme.sub }):Play()
+    end)
+    unloadBtn.Activated:Connect(function()
+        if Env.NOIR_FLICK and Env.NOIR_FLICK.Unload then Env.NOIR_FLICK.Unload() end
+    end)
+
+    -- collapse / hide
+    local collapsed = false
+    collapseBtn.Activated:Connect(function()
+        collapsed = not collapsed
+        body.Visible = not collapsed
+        TweenService:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Size = UDim2.fromOffset(W, collapsed and HEADER_H or FULL_H),
+        }):Play()
+    end)
+    hideBtn.Activated:Connect(function()
+        gui.Enabled = false
+    end)
+    uiConns[#uiConns + 1] = UIS.InputBegan:Connect(function(input, gp) -- OK
+        if gp or input.KeyCode ~= Config.Ui.ShowKey then return end
+        gui.Enabled = not gui.Enabled
+    end)
+
+    -- drag by the header
+    do
+        local dragging, dragStart, startPos = false, nil, nil
+        header.InputBegan:Connect(function(input) -- OK
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                startPos = main.Position
+            end
+        end)
+        uiConns[#uiConns + 1] = UIS.InputChanged:Connect(function(input)
+            if not dragging then return end
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                local d = input.Position - dragStart
+                main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+            end
+        end)
+        uiConns[#uiConns + 1] = UIS.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+    end
+
+    -- open animation
+    main.Size = UDim2.fromOffset(W, 0)
+    TweenService:Create(main, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        Size = UDim2.fromOffset(W, FULL_H),
+    }):Play()
+
+    -- parent: CoreGui when the executor allows it, PlayerGui otherwise
+    local okCore = pcall(function()
+        gui.Parent = game:GetService("CoreGui") -- VERIFY: executor-specific, fallback below
+    end)
+    if not okCore then
+        gui.Parent = LocalPlayer:WaitForChild("PlayerGui") -- OK
+    end
+    guiRef = gui
+end
+
+-- unload ----------------------------------------------------------------
+
+local unloaded = false
+local function Unload()
+    if unloaded then return end
+    unloaded = true
+    State.sa = false -- gates the namecall hook off permanently
+    State.esp = false
+    State.target = nil
+    if renderConn then renderConn:Disconnect() end
+    if leavingConn then leavingConn:Disconnect() end
+    for _, c in ipairs(uiConns) do
+        pcall(function() c:Disconnect() end)
+    end
+    for plr in pairs(EspPool) do killEsp(plr) end
+    if FovCircle then pcall(function() FovCircle:Remove() end) end
+    if guiRef then pcall(function() guiRef:Destroy() end) end
+    Env.NOIR_FLICK = nil
+    print("[NoirFlick] unloaded")
+end
+Env.NOIR_FLICK = { Unload = Unload }
+
+-- init ------------------------------------------------------------------
+
+local okUi = pcall(buildUi)
+if not okUi then
+    warn("[NoirFlick] ui build failed, hotkey fallback armed (Q/V)")
+    uiConns[#uiConns + 1] = UIS.InputBegan:Connect(function(input, gp) -- OK
+        if gp then return end -- ignore typing into Roblox UI
+        if input.KeyCode == Enum.KeyCode.Q then
+            State.sa = not State.sa
+            if not State.sa then State.target = nil end
+        elseif input.KeyCode == Enum.KeyCode.V then
+            State.esp = not State.esp
+        end
+    end)
+end
+
+print(("[NoirFlick] loaded · ui=%s · sa=%s esp=%s · net=%s fx=%s hook=%s"):format(
+    tostring(okUi), tostring(State.sa), tostring(State.esp), tostring(NetRemote), tostring(WeaponFX), tostring(hookInstalled)))
