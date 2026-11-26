@@ -7682,6 +7682,86 @@ do
     local knife={['Butterfly Knife']=true,Karambit=true,['M9 Bayonet']=true,['Flip Knife']=true,['Gut Knife']=true,['Skeleton Knife']=true,['Stiletto Knife']=true,LightSaber=true}
     local glove={['Sports Gloves']=true,['Driver Gloves']=true,['Operator Gloves']=true,['Hand Wraps']=true}
     local mapping={['T Knife']={'Terrorists','Knife'},['CT Knife']={'Counter-Terrorists','Knife'},['T Glove']={'Terrorists','Glove'},['CT Glove']={'Counter-Terrorists','Glove'}}
+    local baseModels={knife={"Butterfly Knife","Karambit","M9 Bayonet","Flip Knife","Gut Knife","Skeleton Knife","Stiletto Knife","LightSaber"},
+                      glove={"Sports Gloves","Driver Gloves","Operator Gloves","Hand Wraps"}}
+    local function fallbackModels()
+        q.ModelSets={knife=table.clone(knife),glove=table.clone(glove)}
+        q.ModelLists={knife=table.clone(baseModels.knife),glove=table.clone(baseModels.glove)}
+    end
+    fallbackModels();q.SchemaStatus="fallback list"
+    local schemaModule,schemaStop,pendingSchema=nil,nil,nil
+    local schemaActive=false;local schemaSerial=0
+    local nonremovable=setmetatable({},{__mode="k"})
+    function q.GetModels(kind)
+        local result={"Stock"};for _,name in ipairs(q.ModelLists[kind] or {}) do result[#result+1]=name end
+        return result
+    end
+    local function applySchema(data)
+        if type(data)~="table" then return end
+        local sets={knife={},glove={}};local lists={knife=table.clone(baseModels.knife),glove=table.clone(baseModels.glove)}
+        for kind,names in pairs(baseModels) do for _,name in ipairs(names) do sets[kind][name]=true end end
+        local examined,rows,extras=0,0,{knife={},glove={}}
+        for name,entries in pairs(data) do
+            examined+=1;if examined>1500 then break end
+            if type(name)=="string" and name~="" and name~="Stock" and mapping[name]==nil and #name<=80 and not name:find("[%c<>]") and type(entries)=="table" then
+                for _,entry in pairs(entries) do
+                    rows+=1;if rows>8000 then break end
+                    if type(entry)=="table" and entry.isEnabled==true and type(entry.skin)=="string" and entry.skin~="" and entry.skin~="Stock" then
+                        local kind=entry.type=="Melee" and "knife" or (entry.type=="Glove" and "glove" or nil)
+                        if kind and not sets[kind][name] then
+                            sets[kind][name]=true;extras[kind][#extras[kind]+1]=name
+                        end
+                    end
+                end
+                if rows>8000 then break end
+            end
+        end
+        for _,kind in ipairs({"knife","glove"}) do
+            table.sort(extras[kind],function(a,b)local x,y=a:lower(),b:lower();return x==y and a<b or x<y end)
+            for _,name in ipairs(extras[kind]) do lists[kind][#lists[kind]+1]=name end
+        end
+        q.ModelSets=sets;q.ModelLists=lists
+        q.SchemaStatus="schema received · "..tostring(#extras.knife+#extras.glove).." extra model(s)"
+    end
+    function q.StopSchema()
+        schemaActive=false;schemaSerial+=1;pendingSchema=nil
+        local previous,stop=schemaModule,schemaStop;schemaStop=nil
+        local ok=true
+        if type(stop)=="function" then ok=pcall(stop)
+        elseif stop~=nil then ok=pcall(function()stop:Disconnect()end) end
+        if not ok and previous then nonremovable[previous]=true end
+        schemaModule=nil
+    end
+    function q.SyncSchema()
+        local target=getModule("Database","Components","Libraries","Skins")
+        if target~=schemaModule then
+            q.StopSchema();schemaModule=target
+            fallbackModels();q.SchemaStatus="fallback list"
+        end
+        if type(target)=="table" and type(target.ObserveItemStockSchemas)=="function" and not schemaActive and not nonremovable[target] then
+            schemaSerial+=1;local serial=schemaSerial;schemaActive=true
+            -- Callback игрового потока только сохраняет ссылку; разбор — на Heartbeat.
+            local function received(value)
+                if schemaActive and schemaSerial==serial and type(value)=="table" then pendingSchema=value end
+            end
+            -- Повтор после неоднозначной установки мог бы оставить два слушателя.
+            nonremovable[target]=true
+            local ok,result=pcall(target.ObserveItemStockSchemas,received)
+            if ok then
+                if type(result)=="function" or typeof(result)=="RBXScriptConnection" or (type(result)=="table" and type(result.Disconnect)=="function") then
+                    schemaStop=result;nonremovable[target]=nil
+                end
+                q.SchemaStatus="schema listener connected; waiting for data"
+            else
+                schemaActive=false;schemaSerial+=1;pendingSchema=nil;q.SchemaStatus="schema unavailable · fallback list"
+            end
+        end
+        local data=pendingSchema;pendingSchema=nil
+        if data then
+            local ok=pcall(applySchema,data)
+            if not ok then fallbackModels();q.SchemaStatus="schema invalid · fallback list" end
+        end
+    end
     local function viewmodelCaller()
         if not (debug and type(debug.info)=="function") then return false end
         for level=3,14 do
@@ -7727,7 +7807,7 @@ do
         if not desc or previewContext.team~=desc[1] or not viewmodelCaller() then return item,skin end
         if desc[2]=="Knife" and item~=previewContext.weaponName then return item,skin end
         local selected=desc[2]=="Knife" and q.KnifeModel or q.GloveModel
-        local allowed=desc[2]=="Knife" and knife or glove
+        local allowed=desc[2]=="Knife" and q.ModelSets.knife or q.ModelSets.glove
         if not allowed[selected] then return item,skin end
         return selected,desc[2]=="Knife" and previewContext.knifeSkin or previewContext.gloveSkin
     end
@@ -7767,7 +7847,7 @@ do
     end
     local last=0;local connection
     connection=RunService.Heartbeat:Connect(function()
-        if not gui.Parent then previewContext.allowed=false;connection:Disconnect();restore();return end
+        if not gui.Parent then previewContext.allowed=false;q.StopSchema();connection:Disconnect();restore();return end
         local updated=pcall(refreshPreviewContext);if not updated then previewContext.allowed=false end
         local now=os.clock();if now-last<1 then return end;last=now
         if not q.Enabled then if q.Ready then restore() end;return end
@@ -30151,7 +30231,7 @@ local function buildAirflow()
     local skinsPage=sub(visuals,"Skin preview")
     local skinPanel=left(skinsPage,"Local viewmodel preview","sparkles")
     -- Каталог читаем из базы игры. Выбранное сохраняется как отдельный флаг.
-    local knifeFin,gloveFin;local skinSignatures={};local refreshSkinCards
+    local knifeFin,gloveFin,knifeModel,gloveModel;local skinSignatures={};local modelSignatures={};local refreshSkinCards
     -- Имена с числовыми паттернами сортируются естественно, значения флагов не меняются.
     local function skinSortKey(name)
         return (tostring(name):gsub("%d+",function(n)
@@ -30196,11 +30276,21 @@ local function buildAirflow()
         if refreshSkinCards then refreshSkinCards() end
     end
 
+    local function refreshModels()
+        for _,item in ipairs({{knifeModel,"knife"},{gloveModel,"glove"}}) do
+            local widget,kind=item[1],item[2]
+            if widget and type(widget.Refresh)=="function" then
+                local options=preview.GetModels(kind);local signature=table.concat(options,"\0")
+                if signature~=modelSignatures[kind] then modelSignatures[kind]=signature;widget:Refresh(options,true,false) end
+            end
+        end
+    end
     skinPanel:CreateToggle({Name="Skin preview",Desc="Local only; change weapon after selecting; writable Skins module required",CurrentValue=false,Callback=function(v)preview.Enabled=v end})
-    dropdown(skinPanel,"Knife model",{"Stock","Butterfly Knife","Karambit","M9 Bayonet","Flip Knife","Gut Knife","Skeleton Knife","Stiletto Knife","LightSaber"},preview.KnifeModel,function(v)preview.KnifeModel=v;refreshSkinLists() end)
+    skinPanel:CreateLabel({Text="Catalog: fallback list",Update=function()return "Catalog: "..preview.SchemaStatus end,UpdateRate=1})
+    knifeModel=dropdown(skinPanel,"Knife model",preview.GetModels("knife"),preview.KnifeModel,function(v)preview.KnifeModel=type(v)=="string" and v or "Stock";refreshSkinLists() end)
     preview.KnifeInput=skinPanel:CreateInput({Name="Knife skin name",Desc="Manual name overrides the list; Stock uses list",CurrentValue="Stock",PlaceholderText="Exact game skin name",Callback=function(v)preview.KnifeSkin=tostring(v);if refreshSkinCards then refreshSkinCards() end end})
     knifeFin=dropdown(skinPanel,"Knife skin list",{"Stock"},"Stock",function()if refreshSkinCards then refreshSkinCards() end end);preview.KnifeList=knifeFin
-    dropdown(skinPanel,"Glove model",{"Stock","Sports Gloves","Driver Gloves","Operator Gloves","Hand Wraps"},preview.GloveModel,function(v)preview.GloveModel=v;refreshSkinLists() end)
+    gloveModel=dropdown(skinPanel,"Glove model",preview.GetModels("glove"),preview.GloveModel,function(v)preview.GloveModel=type(v)=="string" and v or "Stock";refreshSkinLists() end)
     preview.GloveInput=skinPanel:CreateInput({Name="Glove skin name",Desc="Manual name overrides the list; Stock uses list",CurrentValue="Stock",PlaceholderText="Exact game skin name",Callback=function(v)preview.GloveSkin=tostring(v);if refreshSkinCards then refreshSkinCards() end end})
     gloveFin=dropdown(skinPanel,"Glove skin list",{"Stock"},"Stock",function()if refreshSkinCards then refreshSkinCards() end end);preview.GloveList=gloveFin
 
@@ -30272,12 +30362,12 @@ local function buildAirflow()
     end
     slider(skinPictures,"Catalog wear",0,1,0.01,preview.CatalogWear,"",function(v)preview.CatalogWear=v;if refreshSkinCards then refreshSkinCards() end end)
     skinPictures:CreateLabel({Text="Wear affects catalog images only; it does not change the weapon"})
-    refreshSkinLists()
+    pcall(preview.SyncSchema);refreshModels();refreshSkinLists()
     local lastSkinRefresh=0;local skinListConnection
     skinListConnection=RunService.Heartbeat:Connect(function()
         if not gui.Parent then skinListConnection:Disconnect();return end
         local now=os.clock();if now-lastSkinRefresh<4 then return end;lastSkinRefresh=now
-        pcall(refreshSkinLists)
+        pcall(preview.SyncSchema);pcall(refreshModels);pcall(refreshSkinLists)
     end)
 
     local tools=tab("Tools","settings")
